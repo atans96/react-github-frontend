@@ -11,8 +11,8 @@ const Image = React.forwardRef(function (props, ref) {
   return (
     <img
       ref={ref}
-      // width={width}
-      // height={height}
+      width={width}
+      height={height}
       className={classNameImage}
       src={imageArr[imageIdx]}
       alt={alt}

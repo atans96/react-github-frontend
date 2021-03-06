@@ -15,6 +15,7 @@ const SideBySideRenderer = (props) => {
     itemDimensions, // props receive from react-input-position. the width and height are the original image size
     imageSrc,
     largeImageSrc,
+    itemRef,
     imageAlt,
     classNameImage,
     overlayOpacity,
@@ -172,6 +173,7 @@ const SideBySideRenderer = (props) => {
         }}
         src={imageSrc}
         height={height}
+        ref={itemRef}
         width={width}
         alt={imageAlt}
         onLoadRefresh={onLoadRefresh}
@@ -191,6 +193,7 @@ const SideBySideRenderer = (props) => {
           style={styles.getLargeImageStyle(position.x, position.y, true)}
           src={largeImageSrc || imageSrc}
           alt={imageAlt}
+          ref={itemRef}
           onImageLoad={onLargeImageLoad}
           onLoadRefresh={onLoadRefresh}
         />
