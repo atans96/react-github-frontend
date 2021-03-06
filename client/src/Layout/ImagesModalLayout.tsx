@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { Loading } from '../util';
 import { If } from '../util/react-if/If';
 import useImage from '../hooks/useImage';
+import { nanoid } from 'nanoid';
 
 interface SearchBarLayout {
   modal: boolean;
@@ -70,11 +71,11 @@ const ImagesModalLayout: React.FC<SearchBarLayout> = ({
               }}
             >
               <div className={'slides-inner'} ref={sliderInner}>
-                {renderImages.map((image: string, idx: number) => {
+                {renderImages.map((image: string) => {
                   return (
                     <ImageModal
                       urlLink={image}
-                      key={idx}
+                      key={nanoid()}
                       loader={<Loading />}
                       handleClick={handleClick}
                       onProgress={handleProgressPromiseUnrender}

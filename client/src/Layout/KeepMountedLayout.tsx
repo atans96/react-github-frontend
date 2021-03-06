@@ -8,7 +8,11 @@ class KeepMountedLayout extends React.Component<KeepMountedLayoutProps> {
   render() {
     const { mountedCondition, render } = this.props;
     this.hasBeenMounted = this.hasBeenMounted || mountedCondition;
-    return <div style={{ display: mountedCondition ? '' : 'none' }}>{this.hasBeenMounted ? render() : null}</div>;
+    return (
+      <div style={{ contentVisibility: mountedCondition ? 'visible' : 'hidden' }}>
+        {this.hasBeenMounted ? render() : null}
+      </div>
+    );
   }
 }
 export default KeepMountedLayout;

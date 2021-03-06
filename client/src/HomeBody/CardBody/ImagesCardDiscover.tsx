@@ -17,6 +17,7 @@ import { useClickOutside } from '../../hooks/hooks';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
+import { nanoid } from 'nanoid';
 
 interface ImagesCardProps {
   index: string;
@@ -158,9 +159,9 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
             </If>
             <div style={{ textAlign: 'center' }}>
               {renderImages.length > 0 &&
-                renderImages.slice(0, 2).map((image: string, idx: number) => {
+                renderImages.slice(0, 2).map((image: string) => {
                   return (
-                    <div key={idx}>
+                    <div key={nanoid()}>
                       <ImageComponentLayout
                         handleClick={handleClick}
                         onProgress={handleProgressPromiseUnrender}
@@ -175,9 +176,9 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
               <Then>
                 <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
                   {renderChildren &&
-                    renderImages.slice(2).map((image: string, idx: number) => {
+                    renderImages.slice(2).map((image: string) => {
                       return (
-                        <div key={idx}>
+                        <div key={nanoid()}>
                           <ImageComponentLayout
                             handleClick={handleClick}
                             onProgress={handleProgressPromiseUnrender}

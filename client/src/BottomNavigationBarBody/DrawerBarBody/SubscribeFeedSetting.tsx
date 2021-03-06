@@ -12,6 +12,7 @@ import { NavLink } from 'react-router-dom';
 import useApolloFactory from '../../hooks/useApolloFactory';
 import { IState } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
+import { nanoid } from 'nanoid';
 
 const useStyles = makeStyles<Theme>(() => ({
   typographyQuery: {
@@ -122,11 +123,11 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
             <Then>
               <div className="SelectMenu-list" style={{ background: 'var(--background-theme-color)' }}>
                 <table style={{ marginLeft: '5px', display: 'table', width: '100%' }}>
-                  {subscribedUsers.slice(0, 5).map((subscribedUsers, idx) => {
+                  {subscribedUsers.slice(0, 5).map((subscribedUsers) => {
                     return (
                       <Result
                         subscribedUsers={subscribedUsers}
-                        key={idx}
+                        key={nanoid()}
                         dispatch={dispatch}
                         dispatchStargazersUser={dispatchStargazersUser}
                       />
@@ -136,11 +137,11 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
                     <Then>
                       <React.Fragment>
                         <Collapse in={showMoreSubscribedUsers} timeout={0.1} unmountOnExit>
-                          {subscribedUsers.slice(5).map((subscribedUsers, idx) => {
+                          {subscribedUsers.slice(5).map((subscribedUsers) => {
                             return (
                               <Result
                                 subscribedUsers={subscribedUsers}
-                                key={idx}
+                                key={nanoid()}
                                 dispatch={dispatch}
                                 dispatchStargazersUser={dispatchStargazersUser}
                               />

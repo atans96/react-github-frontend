@@ -358,124 +358,127 @@ i.special {
     }
   }
 }
-.card {
-  padding: 0;
-  height: 100%;
-  /*TODO: make width to be flexible and resizable*/
-  width: 350px;
-  max-width: 500px;
-  border: 3px solid var(--border-theme-color);
-  opacity: 1;
-  visibility: visible;
-  margin-top: 0;
-  &.card-width-mobile {
-    width: 100%;
-    max-width: 100%;
-  }
-  .fade-in {
+.card-parent {
+  will-change: opacity;
+  .card {
+    padding: 0;
+    height: 100%;
+    /*TODO: make width to be flexible and resizable*/
+    width: 350px;
+    max-width: 500px;
+    border: 3px solid var(--border-theme-color);
     opacity: 1;
-    animation-name: fadeInOpacity;
-    animation-iteration-count: 1;
-    animation-timing-function: ease-in;
-    animation-duration: 0.5s;
-  }
-
-  @keyframes fadeInOpacity {
-    0% {
-      opacity: 0;
+    //visibility: visible;
+    margin-top: 0;
+    &.card-width-mobile {
+      width: 100%;
+      max-width: 100%;
     }
-    100% {
+    .fade-in {
       opacity: 1;
+      animation-name: fadeInOpacity;
+      animation-iteration-count: 1;
+      animation-timing-function: ease-in;
+      animation-duration: 0.5s;
     }
-  }
 
-  .language {
-    font-size: 40px;
-    text-align: left;
-    width: min-content;
-    margin: 0 auto;
-    line-height: 44px;
-  }
+    @keyframes fadeInOpacity {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
 
-  .language-list {
-    padding-left: 12px;
-  }
-  .language-list h6 {
-    transform: translate(-5px, -8px);
-  }
-  .language .language-list::marker {
-    content: '•';
-  }
-  a {
-    color: #cc4700;
-    text-decoration: none;
-    transition: all 0.3s;
-    cursor: pointer;
-  }
-  a:hover {
-    color: var(--bts-theme-color);
-    text-decoration: underline;
-  }
-  .avatarBackground {
-    background: var(--bts-theme-color);
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fbcabb', endColorstr='#a2c8ec', GradientType=1 );
-    a{
+    .language {
+      font-size: 40px;
+      text-align: left;
+      width: min-content;
+      margin: 0 auto;
+      line-height: 44px;
+    }
+
+    .language-list {
+      padding-left: 12px;
+    }
+    .language-list h6 {
+      transform: translate(-5px, -8px);
+    }
+    .language .language-list::marker {
+      content: '•';
+    }
+    a {
+      color: #cc4700;
+      text-decoration: none;
+      transition: all 0.3s;
       cursor: pointer;
-      color: black;
-      text-decoration: none;
-      &:hover {
-        text-decoration: underline;
-        color: red;
-        transition: all 0.3s;
+    }
+    a:hover {
+      color: var(--bts-theme-color);
+      text-decoration: underline;
+    }
+    .avatarBackground {
+      background: var(--bts-theme-color);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#fbcabb', endColorstr='#a2c8ec', GradientType=1 );
+      a{
+        cursor: pointer;
+        color: black;
+        text-decoration: none;
+        &:hover {
+          text-decoration: underline;
+          color: red;
+          transition: all 0.3s;
+        }
       }
     }
-  }
-  .trunctuatedTexts {
-    overflow: auto;
-    height: 100px;
-  }
-  .details {
-    height: 35px;
-    text-align: center;
-    border: 3px solid #000000;
-    justify-content: center;
-    margin: 10px;
-    border-radius: 4px;
-    background: var(--instagram-theme-color);
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f09433', endColorstr='#bc1888',GradientType=1 );
-    p {
+    .trunctuatedTexts {
+      overflow: auto;
+      height: 100px;
+    }
+    .details {
+      height: 35px;
       text-align: center;
-      font-size: 16px;
-      text-decoration: none;
-      color: black;
-      &:hover {
-        text-decoration: underline;
-        color: white;
-        transition: all 0.3s;
+      border: 3px solid #000000;
+      justify-content: center;
+      margin: 10px;
+      border-radius: 4px;
+      background: var(--instagram-theme-color);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f09433', endColorstr='#bc1888',GradientType=1 );
+      p {
+        text-align: center;
+        font-size: 16px;
+        text-decoration: none;
+        color: black;
+        &:hover {
+          text-decoration: underline;
+          color: white;
+          transition: all 0.3s;
+        }
       }
     }
-  }
-  .space-around {
-    justify-content: space-around;
-  }
-  .space-between {
-    justify-content: space-between;
-  }
-  .space-center {
-    justify-content: center;
-  }
-  .btn-clear {
-    border: none;
-    background: transparent;
-    cursor: pointer;
-  }
+    .space-around {
+      justify-content: space-around;
+    }
+    .space-between {
+      justify-content: space-between;
+    }
+    .space-center {
+      justify-content: center;
+    }
+    .btn-clear {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
 
-  .nav-link {
-    font-size: 18px;
-    font-weight: bold;
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
+    .nav-link {
+      font-size: 18px;
+      font-weight: bold;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
   }
 }
 .avatar-img {

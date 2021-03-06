@@ -35,6 +35,7 @@ import Search from './ManageProfileBody/Search';
 import _ from 'lodash';
 import useApolloFactory from './hooks/useApolloFactory';
 import { useResizeHandler } from './hooks/hooks';
+import { nanoid } from 'nanoid';
 
 interface StyleProps {
   drawerWidth: string;
@@ -368,12 +369,12 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
             >
               <FormControl component="fieldset" className={classes.formControl}>
                 <FormGroup>
-                  {languagePreferences.map((obj: any, idx: number) => {
+                  {languagePreferences.map((obj: any) => {
                     return (
                       <FormControlLabel
                         control={<Checkbox checked={obj.checked} onChange={handleCheckboxChange} name={obj.language} />}
                         label={obj.language}
-                        key={idx}
+                        key={nanoid()}
                       />
                     );
                   })}
@@ -411,11 +412,11 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
                   }}
                 >
                   <thead>
-                    {languageStarsInfo.map((languageStar, idx) => {
+                    {languageStarsInfo.map((languageStar) => {
                       return (
                         <LanguageStarsInfo
                           languageStar={languageStar}
-                          key={idx}
+                          key={nanoid()}
                           onClickLanguageStarInfo={onClickLanguageStarInfo}
                         />
                       );
@@ -477,12 +478,12 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
                       }
                     })
                     .filter((e) => !!e)
-                    .map((obj: RepoInfoProps, idx: number) => {
+                    .map((obj: RepoInfoProps) => {
                       return (
                         <RepoInfo
                           active={active}
                           obj={obj}
-                          key={idx}
+                          key={nanoid()}
                           onClickRepoInfo={onClickRepoInfo}
                           contributions={state.contributors}
                           dispatch={dispatch}

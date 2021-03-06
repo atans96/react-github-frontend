@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { NavLink, RouteComponentProps } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import Stargazers from './CardBody/Stargazers';
@@ -6,9 +6,9 @@ import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/LazyLoadLayout';
 import { IState } from '../typing/interface';
 import './CardStyle.scss';
-import ImagesCardWrapperDiscover from './CardBody/ImagesCardWrapperDiscover';
 import useApolloFactory from '../hooks/useApolloFactory';
 import clsx from 'clsx';
+import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
 
 export interface Card {
   index: string;
@@ -88,59 +88,65 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
           .then(() => {});
       }
     };
-
+    const isVisibleRef = useRef(false);
     if (!githubData) return <p>No githubData, sorry</p>;
     return (
       <VisibilitySensor>
         {({ isVisible }: any) => {
+          if (!isVisibleRef.current && isVisible) {
+            isVisibleRef.current = isVisible;
+          }
           return (
-            <div
-              className={clsx('card bg-light fade-in', {
-                'card-width-mobile': columnCount === 1,
-              })}
-            >
-              <UserCard
-                data={userCardMemoizedData()}
-                dispatch={dispatch}
-                dispatchStargazers={dispatchStargazersUser}
-                routerProps={routerPropsMemoizedData()}
-              />
-              <h3 style={{ textAlign: 'center' }}>
-                <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
-              </h3>
-              <ImagesCardWrapperDiscover isVisible={isVisible} index={index} state={imagesCardMemoizedData()} />
-              <div className="trunctuatedTexts">
-                <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
-              </div>
-              <Stargazers
-                dataMongoMemoize={dataMongoMemoize}
-                data={stargazersMemoizedGithubData()}
-                state={stargazersMemoizedData()}
-                dispatch={dispatch}
-                githubDataFullName={githubData.full_name}
-                githubDataId={githubData.id}
-              />
-              <ul
-                className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
-                style={{ backgroundColor: 'transparent' }}
+            <div className={'card-parent'}>
+              <div
+                className={clsx('card bg-light fade-in', {
+                  'card-width-mobile': columnCount === 1,
+                })}
+                style={!isVisibleRef.current ? { contentVisibility: 'auto' } : {}}
               >
-                <li className={'language-list'}>
-                  <h6 style={{ color: 'black' }}>{githubData.language}</h6>
-                </li>
-              </ul>
-              <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
-                <a href={githubData.html_url}>{githubData.html_url}</a>
-              </div>
-              <div className="details" onClick={handleDetailsClicked}>
-                <NavLink
-                  to={{
-                    pathname: `/detail/${githubData.id}`,
-                    state: { data: githubData, path: window.location.pathname },
-                  }}
-                  className="btn-clear nav-link"
+                <UserCard
+                  data={userCardMemoizedData()}
+                  dispatch={dispatch}
+                  dispatchStargazers={dispatchStargazersUser}
+                  routerProps={routerPropsMemoizedData()}
+                />
+                <h3 style={{ textAlign: 'center' }}>
+                  <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
+                </h3>
+                <ImagesCardDiscover index={index} visible={isVisibleRef.current} state={imagesCardMemoizedData()} />
+                <div className="trunctuatedTexts">
+                  <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
+                </div>
+                <Stargazers
+                  dataMongoMemoize={dataMongoMemoize}
+                  data={stargazersMemoizedGithubData()}
+                  state={stargazersMemoizedData()}
+                  dispatch={dispatch}
+                  githubDataFullName={githubData.full_name}
+                  githubDataId={githubData.id}
+                />
+                <ul
+                  className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
+                  style={{ backgroundColor: 'transparent' }}
                 >
-                  <p>MORE DETAILS</p>
-                </NavLink>
+                  <li className={'language-list'}>
+                    <h6 style={{ color: 'black' }}>{githubData.language}</h6>
+                  </li>
+                </ul>
+                <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
+                  <a href={githubData.html_url}>{githubData.html_url}</a>
+                </div>
+                <div className="details" onClick={handleDetailsClicked}>
+                  <NavLink
+                    to={{
+                      pathname: `/detail/${githubData.id}`,
+                      state: { data: githubData, path: window.location.pathname },
+                    }}
+                    className="btn-clear nav-link"
+                  >
+                    <p>MORE DETAILS</p>
+                  </NavLink>
+                </div>
               </div>
             </div>
           );

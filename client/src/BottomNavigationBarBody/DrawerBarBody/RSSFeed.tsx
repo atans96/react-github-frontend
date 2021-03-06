@@ -20,6 +20,7 @@ import { isEqualObjects, uniqFast } from '../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
 import useApolloFactory from '../../hooks/useApolloFactory';
+import { nanoid } from 'nanoid';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -328,16 +329,16 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                 </Then>
               </If>
               <React.Fragment>
-                {RSSFeed.slice(0, 5).map((feed, index) => {
+                {RSSFeed.slice(0, 5).map((feed) => {
                   if (unseenFeeds.current.includes(feed)) {
                     return (
-                      <Paper className={classes.paperUnseen} key={index}>
+                      <Paper className={classes.paperUnseen} key={nanoid()}>
                         <div dangerouslySetInnerHTML={{ __html: feed }} />
                       </Paper>
                     );
                   } else {
                     return (
-                      <Paper className={classes.paper} key={index}>
+                      <Paper className={classes.paper} key={nanoid()}>
                         <div dangerouslySetInnerHTML={{ __html: feed }} />
                       </Paper>
                     );
@@ -348,16 +349,16 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                 <Then>
                   <React.Fragment>
                     <Collapse in={showMoreRSS} timeout={0.1} unmountOnExit>
-                      {RSSFeed.slice(5).map((feed, index) => {
+                      {RSSFeed.slice(5).map((feed) => {
                         if (unseenFeeds.current.includes(feed)) {
                           return (
-                            <Paper className={classes.paperUnseen} key={index}>
+                            <Paper className={classes.paperUnseen} key={nanoid()}>
                               <div dangerouslySetInnerHTML={{ __html: feed }} />
                             </Paper>
                           );
                         } else {
                           return (
-                            <Paper className={classes.paper} key={index}>
+                            <Paper className={classes.paper} key={nanoid()}>
                               <div dangerouslySetInnerHTML={{ __html: feed }} />
                             </Paper>
                           );

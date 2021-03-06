@@ -2,6 +2,7 @@ import React from 'react';
 import numeral from 'numeral';
 
 import './monthly-chart.css';
+import { nanoid } from 'nanoid';
 
 const monthNames = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 
@@ -27,8 +28,8 @@ export const MonthlyChart = ({ values, showPlusSymbol }: any) => {
     <div>
       <div className="project-chart">
         <div className="project-chart-columns">
-          {monthlyDeltas.map((value, i) => (
-            <div key={i} className="project-chart-column">
+          {monthlyDeltas.map((value) => (
+            <div key={nanoid()} className="project-chart-column">
               <div
                 className="project-chart-bar"
                 style={{
@@ -47,8 +48,8 @@ export const MonthlyChart = ({ values, showPlusSymbol }: any) => {
           ))}
         </div>
         <div className="project-chart-months">
-          {months.map((monthName, i) => (
-            <div key={i} className="project-chart-month">
+          {months.map((monthName) => (
+            <div key={nanoid()} className="project-chart-month">
               {monthName}
             </div>
           ))}

@@ -43,6 +43,7 @@
     "imagesloaded": "^4.1.4",
     "mdi-react": "^7.0.0",
     "moment": "^2.29.1",
+    "nanoid": "^3.1.20",
     "node-sass": "^4.14.1",
     "numeral": "^2.0.6",
     "prettier": "^2.1.2",

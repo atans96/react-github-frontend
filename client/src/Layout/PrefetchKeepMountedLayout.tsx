@@ -6,7 +6,7 @@ interface PrefetchKeepMountedLayoutProps {
 class PrefetchKeepMountedLayout extends React.Component<PrefetchKeepMountedLayoutProps> {
   render() {
     const { mountedCondition, render } = this.props;
-    return <div style={{ display: mountedCondition ? '' : 'none' }}>{render()}</div>;
+    return <div style={{ contentVisibility: mountedCondition ? 'visible' : 'hidden' }}>{render()}</div>;
   }
 }
 export default PrefetchKeepMountedLayout;
