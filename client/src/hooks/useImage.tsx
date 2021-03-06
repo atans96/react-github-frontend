@@ -11,15 +11,6 @@ export type useImageProps = {
 const removeBlankArrayElements = (a: string[]) => a.filter((x) => x);
 const stringToArray = (x: useImageProps['srcList']) => (Array.isArray(x) ? x : [x]);
 const cache = {};
-// const getImageData = (image: any) => {
-//   const canvas = document.createElement('canvas');
-//   canvas.width = image.width;
-//   canvas.height = image.height;
-//   const context: any = canvas.getContext('2d');
-//   context.drawImage(image, 0, 0);
-//   return context.getImageData(0, 0, image.width, image.height);
-// };
-// sequential map.find for promises
 const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<void>) => {
   let done = false;
   return new Promise((resolve, reject) => {

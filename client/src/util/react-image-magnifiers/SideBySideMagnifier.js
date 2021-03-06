@@ -7,8 +7,6 @@ import SideBySideRenderer from './SideBySideRenderer';
 const SideBySideMagnifier = (props) => {
   const {
     imageSrc,
-    height,
-    width,
     largeImageSrc,
     imageAlt,
     overlayOpacity,
@@ -17,12 +15,14 @@ const SideBySideMagnifier = (props) => {
     overlayBoxColor,
     overlayBoxImage,
     overlayBoxImageSize,
+    onImageLoad,
     cursorStyle,
+    height,
+    width,
     alwaysInPlace,
     transitionSpeed,
     transitionSpeedInPlace,
     renderOverlay,
-    shouldRenderBlurHashCanvas,
     className,
     classNameImage,
     style,
@@ -56,7 +56,6 @@ const SideBySideMagnifier = (props) => {
     >
       <SideBySideRenderer
         imageSrc={imageSrc}
-        shouldRenderBlurHashCanvas={shouldRenderBlurHashCanvas}
         largeImageSrc={largeImageSrc}
         imageAlt={imageAlt}
         height={height}
@@ -75,6 +74,7 @@ const SideBySideMagnifier = (props) => {
         cursorStyle={cursorStyle}
         onLargeImageLoad={onLargeImageLoad}
         switchSides={switchSides}
+        onImageLoad={onImageLoad}
         fillAvailableSpace={fillAvailableSpace}
         fillAlignTop={fillAlignTop}
         fillGapLeft={fillGapLeft}
@@ -93,9 +93,9 @@ SideBySideMagnifier.propTypes = {
   imageSrc: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
   largeImageSrc: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]),
   imageAlt: PropTypes.string,
+  overlayOpacity: PropTypes.number,
   height: PropTypes.number,
   width: PropTypes.number,
-  overlayOpacity: PropTypes.number,
   overlayBoxOpacity: PropTypes.number,
   overlayBackgroundColor: PropTypes.string,
   overlayBoxColor: PropTypes.string,
@@ -103,8 +103,8 @@ SideBySideMagnifier.propTypes = {
   overlayBoxImageSize: PropTypes.string,
   cursorStyle: PropTypes.string,
   alwaysInPlace: PropTypes.bool,
-  shouldRenderBlurHashCanvas: PropTypes.bool,
   transitionSpeed: PropTypes.number,
+  onImageLoad: PropTypes.func,
   transitionSpeedInPlace: PropTypes.number,
   renderOverlay: PropTypes.func,
   className: PropTypes.string,
@@ -138,6 +138,7 @@ SideBySideMagnifier.defaultProps = {
   transitionSpeed: 0.4,
   transitionSpeedInPlace: 0.4,
   onLargeImageLoad: utils.noop,
+  onImageLoad: utils.noop,
   fillAvailableSpace: true,
   fillAlignTop: false,
   shouldRenderBlurHashCanvas: true,

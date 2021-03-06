@@ -1,8 +1,8 @@
 import React from 'react';
 import utils from './utils';
 
-const Image = React.forwardRef(function (props, ref) {
-  const { onImageLoad, onLoadRefresh, src, alt, classNameImage, height, width, ...otherProps } = props;
+const ImageMagnify = React.forwardRef(function (props, ref) {
+  const { onImageLoad, onLoadRefresh, src, alt, classNameImage, ...otherProps } = props;
 
   const [imageIdx, setImageIdx] = React.useState(0);
   const imageErrorRef = React.useRef(false);
@@ -11,8 +11,6 @@ const Image = React.forwardRef(function (props, ref) {
   return (
     <img
       ref={ref}
-      width={width}
-      height={height}
       className={classNameImage}
       src={imageArr[imageIdx]}
       alt={alt}
@@ -34,9 +32,9 @@ const Image = React.forwardRef(function (props, ref) {
   );
 });
 
-Image.defaultProps = {
+ImageMagnify.defaultProps = {
   onImageLoad: utils.noop,
   onLoadRefresh: utils.noop,
 };
 
-export default Image;
+export default ImageMagnify;

@@ -11,19 +11,21 @@ interface ImageComponentProps {
 }
 
 export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, visible, onProgress, handleClick }) => {
-  const { src, isLoading, error, height } = useImage({
+  const { src, isLoading, error, height, width } = useImage({
     srcList: urlLink,
     useSuspense: false,
   });
   if (isLoading) {
     return <Loading />;
-  } else if (!isLoading && height) {
+  } else if (!isLoading && height && width) {
     onProgress(Math.random().toString(36).substring(7));
     if (visible) {
       return (
         <div onClick={handleClick}>
           <SideBySideMagnifier
             classNameImage={'img-loaded'}
+            width={width}
+            height={height}
             fillAvailableSpace={false}
             cursorStyle={'pointer'}
             fillAlignTop={true}

@@ -1,8 +1,8 @@
 /* eslint-disable */
 import React from 'react';
 import imagesLoaded from 'imagesloaded';
-import difference from 'lodash.difference';
 import deepKeys from 'deep-keys';
+import _ from 'lodash';
 
 export function readEnvironmentVariable(key) {
   // See https://create-react-app.dev/docs/adding-custom-environment-variables/#docsNav
@@ -25,7 +25,7 @@ export function missingDeepKeys(o1, o2, showIntermediate) {
   o2 = o2 || {};
   showIntermediate = showIntermediate || false;
 
-  return difference(deepKeys(o1, showIntermediate), deepKeys(o2, showIntermediate));
+  return _.difference(deepKeys(o1, showIntermediate), deepKeys(o2, showIntermediate));
 }
 export function millisToMinutesAndSeconds(millis) {
   const minutes = Math.floor(millis / 60000);

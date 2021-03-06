@@ -3,6 +3,7 @@ import utils from './utils';
 import styles from './styles';
 import Image from './Image';
 import ImagePreviewOverlay from './ImagePreviewOverlay';
+import ImageMagnify from './ImageMagnify';
 
 const SideBySideRenderer = (props) => {
   const {
@@ -14,15 +15,13 @@ const SideBySideRenderer = (props) => {
     itemDimensions, // props receive from react-input-position. the width and height are the original image size
     imageSrc,
     largeImageSrc,
-    height,
-    width,
     imageAlt,
     classNameImage,
     overlayOpacity,
+    onImageLoad,
     overlayBoxOpacity,
     overlayBackgroundColor,
     overlayBoxColor,
-    shouldRenderBlurHashCanvas,
     overlayBoxImage,
     overlayBoxImageSize,
     alwaysInPlace,
@@ -30,6 +29,8 @@ const SideBySideRenderer = (props) => {
     transitionSpeedInPlace,
     renderOverlay,
     cursorStyle,
+    height,
+    width,
     onLargeImageLoad,
     onLoadRefresh,
     switchSides,
@@ -171,9 +172,10 @@ const SideBySideRenderer = (props) => {
           cursor: legalSize ? cursorStyle : 'default',
         }}
         src={imageSrc}
-        alt={imageAlt}
         height={height}
         width={width}
+        onImageLoad={onImageLoad}
+        alt={imageAlt}
         onLoadRefresh={onLoadRefresh}
       />
       <div
@@ -187,11 +189,10 @@ const SideBySideRenderer = (props) => {
           boxShadow: zoomContainerBoxShadow,
         }}
       >
-        <Image
+        <ImageMagnify
           style={styles.getLargeImageStyle(position.x, position.y, true)}
           src={largeImageSrc || imageSrc}
           alt={imageAlt}
-          shouldRenderBlurHashCanvas={shouldRenderBlurHashCanvas}
           onImageLoad={onLargeImageLoad}
           onLoadRefresh={onLoadRefresh}
         />
