@@ -18,7 +18,6 @@ const SideBySideRenderer = (props) => {
     imageAlt,
     classNameImage,
     overlayOpacity,
-    onImageLoad,
     overlayBoxOpacity,
     overlayBackgroundColor,
     overlayBoxColor,
@@ -174,7 +173,6 @@ const SideBySideRenderer = (props) => {
         src={imageSrc}
         height={height}
         width={width}
-        onImageLoad={onImageLoad}
         alt={imageAlt}
         onLoadRefresh={onLoadRefresh}
       />

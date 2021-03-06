@@ -15,7 +15,6 @@ const SideBySideMagnifier = (props) => {
     overlayBoxColor,
     overlayBoxImage,
     overlayBoxImageSize,
-    onImageLoad,
     cursorStyle,
     height,
     width,
@@ -74,7 +73,6 @@ const SideBySideMagnifier = (props) => {
         cursorStyle={cursorStyle}
         onLargeImageLoad={onLargeImageLoad}
         switchSides={switchSides}
-        onImageLoad={onImageLoad}
         fillAvailableSpace={fillAvailableSpace}
         fillAlignTop={fillAlignTop}
         fillGapLeft={fillGapLeft}
@@ -104,7 +102,6 @@ SideBySideMagnifier.propTypes = {
   cursorStyle: PropTypes.string,
   alwaysInPlace: PropTypes.bool,
   transitionSpeed: PropTypes.number,
-  onImageLoad: PropTypes.func,
   transitionSpeedInPlace: PropTypes.number,
   renderOverlay: PropTypes.func,
   className: PropTypes.string,
@@ -138,7 +135,6 @@ SideBySideMagnifier.defaultProps = {
   transitionSpeed: 0.4,
   transitionSpeedInPlace: 0.4,
   onLargeImageLoad: utils.noop,
-  onImageLoad: utils.noop,
   fillAvailableSpace: true,
   fillAlignTop: false,
   shouldRenderBlurHashCanvas: true,

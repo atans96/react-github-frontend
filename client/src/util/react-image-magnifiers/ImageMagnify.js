@@ -2,7 +2,7 @@ import React from 'react';
 import utils from './utils';
 
 const ImageMagnify = React.forwardRef(function (props, ref) {
-  const { onImageLoad, onLoadRefresh, src, alt, classNameImage, ...otherProps } = props;
+  const { onLoadRefresh, src, alt, classNameImage, onImageLoad, ...otherProps } = props;
 
   const [imageIdx, setImageIdx] = React.useState(0);
   const imageErrorRef = React.useRef(false);
@@ -11,12 +11,10 @@ const ImageMagnify = React.forwardRef(function (props, ref) {
   return (
     <img
       ref={ref}
-      className={classNameImage}
       src={imageArr[imageIdx]}
       alt={alt}
       onLoad={(e) => {
         onImageLoad(e);
-
         if (imageErrorRef.current) {
           onLoadRefresh();
         }

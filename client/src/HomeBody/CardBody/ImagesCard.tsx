@@ -112,30 +112,6 @@ const ImagesCard = React.memo<ImagesCardProps>(
       }
     }, [sliderContainer.current, sliderInner.current]);
 
-    // this code will work if you don't filter images based on height and width
-    // because the sliderInner.current.querySelectorAll('.slide').length === renderImages.length won't be equal
-    //after filter, thus new SliderImage won't be declared
-    // useUpdateEffect(() => {
-    //   if (
-    //     sliderContainer.current &&
-    //     sliderInner.current &&
-    //     sliderInner.current.querySelectorAll('.slide').length === renderImages.length
-    //   ) {
-    //     const slider = new SliderImage({
-    //       slider: sliderContainer.current,
-    //       sliderInner: sliderInner.current,
-    //       slide: sliderInner.current.querySelectorAll('.slide'),
-    //     });
-    //     slider.init();
-    //     return () => {
-    //       sliderContainer.current = null;
-    //       sliderInner.current = null;
-    //       sliderInner.current = null;
-    //       slider.destroy();
-    //     };
-    //   }
-    // }, [sliderContainer.current, sliderInner.current]);
-
     const handleClick = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
       setModal(true);
