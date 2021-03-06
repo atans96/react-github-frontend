@@ -7,7 +7,6 @@ import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import { Else } from '../../util/react-if/Else';
 import { IState } from '../../typing/interface';
-import { nanoid } from 'nanoid';
 
 interface Results {
   isLoading: boolean;
@@ -41,12 +40,12 @@ const Results: React.FC<Results> = React.forwardRef(({ state, data, isLoading, s
             <If condition={data && data.length > 0}>
               <Then>
                 <ul className={'results'}>
-                  {data.map((result) => (
+                  {data.map((result, idx) => (
                     <Result
                       state={state}
                       getRootProps={getRootProps}
                       userName={Object.keys(result).toString()}
-                      key={nanoid()}
+                      key={idx}
                     >
                       <div className={classes.wrapper} style={{ borderBottom: 0 }}>
                         <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />

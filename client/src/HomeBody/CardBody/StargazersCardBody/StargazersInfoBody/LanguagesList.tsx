@@ -5,7 +5,6 @@ import './LanguageListStyle.scss';
 import { IStateStargazers } from '../../../../typing/interface';
 import { StargazerProps } from '../../../../typing/type';
 import { languageList } from '../../../../util';
-import { nanoid } from 'nanoid';
 
 export interface LanguagesList {
   stateStargazers: IStateStargazers;
@@ -85,9 +84,9 @@ const LanguagesList: React.FC<LanguagesList> = ({ stateStargazers, dispatchStarg
         <span className="caret" />
       </button>
       <ul className="dropdown-menu scrollable-menu">
-        {languageList.map((language: string) => {
+        {languageList.map((language: string, idx: number) => {
           return (
-            <li key={nanoid()}>
+            <li key={idx}>
               <a href="/" onClick={handleClick}>
                 <If condition={selectedLanguage === language}>
                   <Then>

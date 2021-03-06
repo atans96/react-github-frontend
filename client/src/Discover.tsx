@@ -21,7 +21,6 @@ import { filterActionResolvedPromiseData } from './util/util';
 import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
 import useApolloFactory from './hooks/useApolloFactory';
-import { nanoid } from 'nanoid';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -423,9 +422,9 @@ const Discover = React.memo<DiscoverProps>(
             <Then>
               <MasonryLayoutMemo data={state.mergedDataDiscover} state={state}>
                 {(columnCount: number) => {
-                  return Object.keys(state.mergedDataDiscover).map((key) => (
+                  return Object.keys(state.mergedDataDiscover).map((key, idx) => (
                     <CardDiscover
-                      key={nanoid()}
+                      key={idx}
                       columnCount={columnCount}
                       routerProps={routerProps}
                       dataMongoMemoize={dataMongoMemoize()}

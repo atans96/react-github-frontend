@@ -28,7 +28,7 @@ import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { RouteComponentProps } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import useApolloFactory from './hooks/useApolloFactory';
-import { nanoid } from 'nanoid';
+
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
 // A common situation that makes a component render with the same props is being forced to render by a parent component.
@@ -709,9 +709,9 @@ const Home = React.memo<HomeProps>(
             <Then>
               <MasonryLayoutMemo data={whichToUse()} state={state}>
                 {(columnCount: number) => {
-                  return Object.keys(whichToUse()).map((key) => (
+                  return Object.keys(whichToUse()).map((key, idx) => (
                     <Card
-                      key={nanoid()}
+                      key={idx}
                       columnCount={columnCount}
                       routerProps={routerProps}
                       dataMongoMemoize={dataMongoMemoize()}
@@ -731,7 +731,7 @@ const Home = React.memo<HomeProps>(
             <Then>
               <MasonryLayoutMemo data={whichToUse()} state={state}>
                 {() => {
-                  return Object.keys(state.mergedData).map(() => <CardSkeleton key={nanoid()} />);
+                  return Object.keys(state.mergedData).map((_, idx) => <CardSkeleton key={idx} />);
                 }}
               </MasonryLayoutMemo>
             </Then>

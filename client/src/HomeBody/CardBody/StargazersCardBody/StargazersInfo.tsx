@@ -11,7 +11,6 @@ import { IStateStargazers } from '../../../typing/interface';
 import { StargazerProps } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
 import { dragMove } from '../../../util';
-import { nanoid } from 'nanoid';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -113,7 +112,7 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
                       }
                       return (
                         <Result
-                          key={nanoid()}
+                          key={idx}
                           stargazer={stargazer}
                           getRootPropsCard={getRootPropsCard}
                           dispatch={dispatch}

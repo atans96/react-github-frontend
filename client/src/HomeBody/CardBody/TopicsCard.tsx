@@ -2,7 +2,6 @@ import React from 'react';
 import Topic from './TopicsCardBody/Topic';
 import { isEqualObjects } from '../../util';
 import { IState } from '../../typing/interface';
-import { nanoid } from 'nanoid';
 
 interface TopicsCard {
   data: string[];
@@ -16,7 +15,7 @@ const TopicsCard = React.memo<TopicsCard>(
     return (
       <ul className="masonry space-center">
         {data?.map((topic, idx) => (
-          <Topic key={nanoid()} idx={idx} topic={topic} getRootProps={getRootProps} />
+          <Topic key={idx} idx={idx} topic={topic} getRootProps={getRootProps} />
         ))}
       </ul>
     );

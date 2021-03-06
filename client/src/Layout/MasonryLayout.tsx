@@ -1,5 +1,4 @@
 import React from 'react';
-import { nanoid } from 'nanoid';
 
 interface MasonryLayout {
   children: any;
@@ -20,7 +19,7 @@ const MasonryLayout = (props: MasonryLayout) => {
   for (let i = 0; i < props.children.length; i++) {
     const columnIndex = i % props.columns;
     columnWrapper[`column${columnIndex}`].push(
-      <div key={nanoid()} style={{ marginBottom: `${props.gap ? props.gap : 10}px` }}>
+      <div key={i} style={{ marginBottom: `${props.gap ? props.gap : 10}px` }}>
         {props.children[i]}
       </div>
     );
@@ -29,7 +28,7 @@ const MasonryLayout = (props: MasonryLayout) => {
   // wrap children in each column with a div
   for (let i = 0; i < props.columns; i++) {
     result.push(
-      <div key={nanoid()} className="masonry-column">
+      <div key={i} className="masonry-column">
         {columnWrapper[`column${i}`]}
       </div>
     );

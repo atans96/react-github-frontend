@@ -22,7 +22,6 @@ import _ from 'lodash';
 import { NavLink } from 'react-router-dom';
 import useApolloFactory from '../../hooks/useApolloFactory';
 import { IState } from '../../typing/interface';
-import { nanoid } from 'nanoid';
 
 const useStyles = makeStyles<Theme>(() => ({
   list: {
@@ -411,16 +410,16 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
           <If condition={!loading && state.isLoggedIn}>
             <Then>
               <React.Fragment>
-                {xmlFileListAppend.slice(0, 5).map((xml: string) => {
+                {xmlFileListAppend.slice(0, 5).map((xml: string, idx: number) => {
                   if (displayUnseenFeeds.includes(xml)) {
                     return (
-                      <Paper className={classes.paperUnseen} key={nanoid()}>
+                      <Paper className={classes.paperUnseen} key={idx}>
                         <div dangerouslySetInnerHTML={{ __html: xml }} />
                       </Paper>
                     );
                   } else {
                     return (
-                      <Paper className={classes.paper} key={nanoid()}>
+                      <Paper className={classes.paper} key={idx}>
                         <div dangerouslySetInnerHTML={{ __html: xml }} />
                       </Paper>
                     );
@@ -431,16 +430,16 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                 <Then>
                   <React.Fragment>
                     <Collapse in={showMore} timeout={0.1} unmountOnExit>
-                      {xmlFileListAppend.slice(5).map((xml: string) => {
+                      {xmlFileListAppend.slice(5).map((xml: string, idx: number) => {
                         if (displayUnseenFeeds.includes(xml)) {
                           return (
-                            <Paper className={classes.paperUnseen} key={nanoid()}>
+                            <Paper className={classes.paperUnseen} key={idx}>
                               <div dangerouslySetInnerHTML={{ __html: xml }} />
                             </Paper>
                           );
                         } else {
                           return (
-                            <Paper className={classes.paper} key={nanoid()}>
+                            <Paper className={classes.paper} key={idx}>
                               <div dangerouslySetInnerHTML={{ __html: xml }} />
                             </Paper>
                           );

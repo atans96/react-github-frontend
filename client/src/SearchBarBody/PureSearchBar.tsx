@@ -22,7 +22,6 @@ import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
 import HistoryIcon from '@material-ui/icons/History';
 import { Loading } from '../util';
 import useApolloFactory from '../hooks/useApolloFactory';
-import { nanoid } from 'nanoid';
 
 const defaultTheme = createMuiTheme();
 const theme = createMuiTheme({
@@ -210,9 +209,9 @@ const SearchBar = React.memo<SearchBarProps>(
       } else {
         return createPortal(
           <div className={'tags'} {...collapseTopicTags()}>
-            {state.topics.map((obj) => {
+            {state.topics.map((obj, idx) => {
               if (renderTopicTags) {
-                return <Tags key={nanoid()} obj={obj} clicked={obj.clicked} state={state} dispatch={dispatch} />;
+                return <Tags key={idx} obj={obj} clicked={obj.clicked} state={state} dispatch={dispatch} />;
               }
               return <></>;
             })}
@@ -365,13 +364,13 @@ const SearchBar = React.memo<SearchBarProps>(
                   <ul className={'results'}>
                     {filter(searchesData?.getSearches, valueRef)
                       .sort((a, b) => b.count - a.count) //the most frequent searches at the top
-                      .map((search: any) => {
+                      .map((search: any, idx) => {
                         const newBody = search.search.replace(
                           new RegExp(valueRef.toLowerCase(), 'gi'),
                           (match: any) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
                         );
                         return (
-                          <Result state={state} getRootProps={getRootProps} userName={search.search} key={nanoid()}>
+                          <Result state={state} getRootProps={getRootProps} userName={search.search} key={idx}>
                             <div className={classes.wrapper} style={{ borderBottom: 0 }}>
                               <HistoryIcon style={{ transform: 'scale(1.5)' }} />
                               <div className={classes.nameWrapper}>
@@ -401,12 +400,12 @@ const SearchBar = React.memo<SearchBarProps>(
                               }, []) || [];
                             return !temp.includes(Object.keys(search)[0]);
                           })
-                          .map((result) => (
+                          .map((result, idx) => (
                             <Result
                               state={state}
                               getRootProps={getRootProps}
                               userName={Object.keys(result).toString()}
-                              key={nanoid()}
+                              key={idx}
                             >
                               <div className={classes.wrapper} style={{ borderBottom: 0 }}>
                                 <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />

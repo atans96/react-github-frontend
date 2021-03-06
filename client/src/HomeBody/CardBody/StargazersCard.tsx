@@ -14,7 +14,6 @@ import { Then } from '../../util/react-if/Then';
 import { removeStarredMe, setStarredMe } from '../../services';
 import useApolloFactory from '../../hooks/useApolloFactory';
 import clsx from 'clsx';
-import { nanoid } from 'nanoid';
 
 interface GQL {
   GQL_variables: {
@@ -213,8 +212,8 @@ const StargazersCard = React.memo<StargazersCard>(
               }
             }}
           >
-            {[...Array(50)].map(() => {
-              return <i key={nanoid()} />;
+            {[...Array(50)].map((_, idx) => {
+              return <i key={idx} />;
             })}
             <div style={{ marginLeft: '5px', cursor: 'pointer' }}>
               <If condition={starClicked}>

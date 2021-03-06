@@ -9,7 +9,6 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { RouteComponentProps } from 'react-router-dom';
 import Contributor from './ContributorsBody/Contributor';
-import { nanoid } from 'nanoid';
 
 interface ContributorsProps {
   fullName: string;
@@ -63,8 +62,8 @@ const Contributors = React.memo<ContributorsProps>(
             </ListItem>
             <Collapse in={openContributors} timeout={0.1} unmountOnExit>
               <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
-                {contributionRepo.map((obj) => {
-                  return <Contributor key={nanoid()} dispatch={dispatch} obj={obj} />;
+                {contributionRepo.map((obj, idx) => {
+                  return <Contributor key={idx} dispatch={dispatch} obj={obj} />;
                 })}
               </div>
             </Collapse>

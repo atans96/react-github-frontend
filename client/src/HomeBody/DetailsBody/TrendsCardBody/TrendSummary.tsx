@@ -3,7 +3,6 @@ import { OnlyYesterday } from './TrendSummaryBody/OnlyYesterday';
 import { Section } from '../../../Layout/DetailsLayout';
 import styled from 'styled-components';
 import { MonthlyTrendsItem } from './TrendSummaryBody/MonthlyTrendsItem';
-import { nanoid } from 'nanoid';
 
 interface TrendSummaryProps {
   project: any;
@@ -40,8 +39,8 @@ export const TrendSummary = React.memo<TrendSummaryProps>(({ project }) => {
         <div>
           <p>Stars added on GitHub, per day, on average</p>
           <Div>
-            {items.map((item) => (
-              <MonthlyTrendsItem item={item} key={nanoid()} trends={trends} />
+            {items.map((item, idx) => (
+              <MonthlyTrendsItem item={item} key={idx} trends={trends} />
             ))}
           </Div>
         </div>
