@@ -46,10 +46,6 @@ const Card: React.FC<CardRef> = React.forwardRef(
     const { mutation } = useApolloFactory();
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
     // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
-    const imagesCardMemoizedData = useCallback(() => {
-      return state;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.imagesData]);
 
     const userCardMemoizedData = useCallback(() => {
       return githubData;
@@ -125,7 +121,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
               <h3 style={{ textAlign: 'center' }}>
                 <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
               </h3>
-              <ImagesCard index={index} visible={isVisibleRef.current} state={imagesCardMemoizedData()} />
+              <ImagesCard index={index} visible={isVisibleRef.current} state={state} />
               <div className="trunctuatedTexts">
                 <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
               </div>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { createRef, useCallback, useEffect, useRef, useState } from 'react';
 import './ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -14,7 +14,6 @@ import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import SliderImage from './SliderImage';
 import { useClickOutside } from '../../hooks/hooks';
-import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
 
@@ -64,15 +63,11 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible]);
 
-    useDeepCompareEffect(() => {
+    useEffect(() => {
       let isCancelled = false;
-      if (
-        !isCancelled &&
-        Array.isArray(state.imagesDataDiscover) &&
-        state.imagesDataDiscover.length > 0 &&
-        state.imagesDataDiscover.find((obj) => obj.id === index)?.value.length !== undefined
-      ) {
-        setRenderImages(state.imagesDataDiscover.find((obj) => obj.id === index).value);
+      if (!isCancelled && Array.isArray(state.imagesDataDiscover) && state.imagesDataDiscover.length > 0) {
+        const temp = state.imagesDataDiscover.find((obj) => obj.id === index)?.value || [];
+        setRenderImages(temp);
       }
       return () => {
         isCancelled = true;
@@ -123,7 +118,18 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
       }
     };
     useClickOutside(sliderContainer, () => setModal(false));
-
+    const imagesCount = useRef(0);
+    const imgSrcFirstTwo = createRef<HTMLDivElement>();
+    const getImageSrcs = useCallback(() => {
+      if (imgSrcFirstTwo.current) {
+        let res = [];
+        for (let i = 0; i < imgSrcFirstTwo.current?.childNodes.length; i++) {
+          res.push(imgSrcFirstTwo.current?.getElementsByTagName('img')[i].src || '');
+        }
+        return res.filter((e) => !!e);
+      }
+      return [];
+    }, [imgSrcFirstTwo]);
     return (
       <React.Fragment>
         <If
@@ -156,49 +162,48 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
                 />
               </Then>
             </If>
-            <div style={{ textAlign: 'center' }}>
+            <div style={{ textAlign: 'center' }} ref={imgSrcFirstTwo}>
               {renderImages.length > 0 &&
-                renderImages.slice(0, 2).map((image: string, idx: number) => {
+                renderImages.map((image: string, idx: number) => {
                   return (
-                    <div key={idx}>
-                      <ImageComponentLayout
-                        handleClick={handleClick}
-                        onProgress={handleProgressPromiseUnrender}
-                        visible={visible}
-                        urlLink={image}
-                      />
-                    </div>
+                    <ImageComponentLayout
+                      handleClick={handleClick}
+                      restOfTheImages={false}
+                      imagesCount={imagesCount}
+                      onProgress={handleProgressPromiseUnrender}
+                      visible={visible}
+                      key={idx}
+                      urlLink={image}
+                    />
                   );
                 })}
             </div>
-            <If condition={renderImages.slice(2).length > 0}>
-              <Then>
-                <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
-                  {renderChildren &&
-                    renderImages.slice(2).map((image: string, idx: number) => {
-                      return (
-                        <div key={idx}>
-                          <ImageComponentLayout
-                            handleClick={handleClick}
-                            onProgress={handleProgressPromiseUnrender}
-                            visible={visible}
-                            urlLink={image}
-                          />
-                        </div>
-                      );
-                    })}
-                </div>
-                <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
-                  <ListItemIcon>
-                    <SupervisorAccountIcon />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.slice(2).length} More Images`}
-                  />
-                  {renderChildren ? <ExpandLess /> : <ExpandMore />}
-                </ListItem>
-              </Then>
-            </If>
+            <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
+              {renderChildren &&
+                renderImages.map((image: string, idx: number) => {
+                  return (
+                    <ImageComponentLayout
+                      handleClick={handleClick}
+                      restOfTheImages={true}
+                      getImageSrcs={getImageSrcs}
+                      imagesCount={imagesCount}
+                      onProgress={handleProgressPromiseUnrender}
+                      visible={visible}
+                      key={idx}
+                      urlLink={image}
+                    />
+                  );
+                })}
+            </div>
+            <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
+              <ListItemIcon>
+                <SupervisorAccountIcon />
+              </ListItemIcon>
+              <ListItemText
+                primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.slice(2).length} More Images`}
+              />
+              {renderChildren ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
           </Then>
         </If>
         <ImagesModalLayout
@@ -214,7 +219,8 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.visible, nextProps.visible) &&
-      isEqualObjects(prevProps.state.imagesDataDiscover, nextProps.state.imagesDataDiscover)
+      isEqualObjects(prevProps.state.imagesDataDiscover, nextProps.state.imagesDataDiscover) &&
+      isEqualObjects(prevProps.index, nextProps.index)
     );
   }
 );
