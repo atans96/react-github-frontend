@@ -115,10 +115,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
     const unrenderImages = useRef<string[]>([]);
 
     const checkNode = (addedNode: any) => {
-      if (typeof addedNode.getElementsByTagName !== 'function') {
-        return;
-      }
-      if (addedNode.nodeType === 1 && addedNode.tagName === 'img') {
+      if (addedNode.getElementsByTagName === 'function' && addedNode.nodeType === 1 && addedNode.tagName === 'img') {
         unrenderImages.current.push(addedNode.src);
       }
     };
@@ -198,20 +195,22 @@ const ImagesCard = React.memo<ImagesCardProps>(
             <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
               {renderChildren &&
                 renderImages.length > 0 &&
-                renderImages.map((image: string, idx: number) => {
-                  return (
-                    <ImageComponentLayout
-                      handleClick={handleClick}
-                      restOfTheImages={true}
-                      loadingCount={loadingCount}
-                      imagesCount={imagesCount}
-                      onProgress={handleProgressPromiseUnrender}
-                      visible={visible}
-                      key={idx}
-                      urlLink={image}
-                    />
-                  );
-                })}
+                renderImages
+                  .filter((src) => !unrenderImages.current.includes(src))
+                  .map((image: string, idx: number) => {
+                    return (
+                      <ImageComponentLayout
+                        handleClick={handleClick}
+                        restOfTheImages={true}
+                        loadingCount={loadingCount}
+                        imagesCount={imagesCount}
+                        onProgress={handleProgressPromiseUnrender}
+                        visible={visible}
+                        key={idx}
+                        urlLink={image}
+                      />
+                    );
+                  })}
             </div>
             <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
               <ListItemIcon>
