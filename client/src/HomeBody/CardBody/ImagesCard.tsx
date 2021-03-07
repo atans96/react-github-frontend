@@ -1,4 +1,4 @@
-import React, { createRef, useCallback, useEffect, useRef, useState } from 'react';
+import React, { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -107,21 +107,45 @@ const ImagesCard = React.memo<ImagesCardProps>(
       },
       [showProgressBarUnRenderImagesRef.current]
     );
-    const imagesCount = useRef(0);
     useClickOutside(sliderContainer, () => setModal(false));
     // useRef() is basically useState({current: initialValue })[0] so no need to re-render the component
     // TODO: animated card for showing users suggested gits: https://codyhouse.co/ds/components/app/animated-cards
-    const imgSrcFirstTwo = createRef<HTMLDivElement>();
-    const getImageSrcs = useCallback(() => {
-      if (imgSrcFirstTwo.current) {
-        let res = [];
-        for (let i = 0; i < imgSrcFirstTwo.current?.childNodes.length; i++) {
-          res.push(imgSrcFirstTwo.current?.getElementsByTagName('img')[i].src || '');
-        }
-        return res.filter((e) => !!e);
+    const imagesCount = useRef(0);
+    const loadingCount = useRef(0);
+    const unrenderImages = useRef<string[]>([]);
+
+    const checkNode = (addedNode: any) => {
+      if (typeof addedNode.getElementsByTagName !== 'function') {
+        return;
       }
-      return [];
+      if (addedNode.nodeType === 1 && addedNode.tagName === 'img') {
+        unrenderImages.current.push(addedNode.src);
+      }
+    };
+    const observer = useMemo(
+      () =>
+        new MutationObserver(function (mutations) {
+          for (let i = 0; i < mutations.length; i++) {
+            for (let j = 0; j < mutations[i].addedNodes.length; j++) {
+              checkNode(mutations[i].addedNodes[j]);
+            }
+          }
+        }),
+      []
+    );
+    const imgSrcFirstTwo = createRef<HTMLDivElement>();
+    useEffect(() => {
+      if (imgSrcFirstTwo.current) {
+        observer.observe(imgSrcFirstTwo.current, {
+          childList: true,
+          subtree: true,
+        });
+      }
+      return () => {
+        observer.disconnect();
+      };
     }, [imgSrcFirstTwo]);
+
     return (
       // maxWidth: '100%', maxHeight: '100% to automatically resize the image to fit inside the div
       // _isMounted.current need to be in the IF condition because if not yet mounted,
@@ -161,6 +185,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
                     <ImageComponentLayout
                       handleClick={handleClick}
                       restOfTheImages={false}
+                      loadingCount={loadingCount}
                       imagesCount={imagesCount}
                       onProgress={handleProgressPromiseUnrender}
                       visible={visible}
@@ -178,7 +203,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
                     <ImageComponentLayout
                       handleClick={handleClick}
                       restOfTheImages={true}
-                      getImageSrcs={getImageSrcs}
+                      loadingCount={loadingCount}
                       imagesCount={imagesCount}
                       onProgress={handleProgressPromiseUnrender}
                       visible={visible}
