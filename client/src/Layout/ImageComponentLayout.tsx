@@ -11,7 +11,6 @@ interface ImageComponentProps {
   restOfTheImages: boolean;
   imagesCount: any;
   loadingCount: any;
-  getImageSrcs?: any;
 }
 
 export const ImageComponentLayout: React.FC<ImageComponentProps> = ({
@@ -22,7 +21,6 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({
   onProgress,
   handleClick,
   loadingCount,
-  getImageSrcs,
 }) => {
   const { src, isLoading, error, height, width } = useImage({
     srcList: urlLink,
@@ -37,7 +35,7 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({
     restOfTheImages: boolean
   ) => {
     if (restOfTheImages) {
-      return visible && height > 193 && width > 64 && getImageSrcs().indexOf(src) === -1 && error === null;
+      return visible && height > 193 && width > 64 && error === null;
     } else {
       return visible && height > 193 && width > 64 && count < 2 && error === null;
     }
@@ -45,9 +43,11 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({
   const [JSXRender, setJSXRender] = useState<any>();
   const whichToRender = () => {
     onProgress(Math.random().toString(36).substring(7));
-    if (isLoading && loadingCount.current < 2) {
+    if (isLoading && !restOfTheImages && loadingCount.current < 2) {
       const count = loadingCount.current.valueOf();
       loadingCount.current = count + 1;
+      return <Loading />;
+    } else if (isLoading && restOfTheImages) {
       return <Loading />;
     } else if (
       !isLoading &&
