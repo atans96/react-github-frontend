@@ -119,17 +119,8 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     };
     useClickOutside(sliderContainer, () => setModal(false));
     const imagesCount = useRef(0);
-    const imgSrcFirstTwo = createRef<HTMLDivElement>();
-    const getImageSrcs = useCallback(() => {
-      if (imgSrcFirstTwo.current) {
-        let res = [];
-        for (let i = 0; i < imgSrcFirstTwo.current?.childNodes.length; i++) {
-          res.push(imgSrcFirstTwo.current?.getElementsByTagName('img')[i].src || '');
-        }
-        return res.filter((e) => !!e);
-      }
-      return [];
-    }, [imgSrcFirstTwo]);
+    const loadingCount = useRef(0);
+
     return (
       <React.Fragment>
         <If
@@ -162,13 +153,14 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
                 />
               </Then>
             </If>
-            <div style={{ textAlign: 'center' }} ref={imgSrcFirstTwo}>
+            <div style={{ textAlign: 'center' }}>
               {renderImages.length > 0 &&
                 renderImages.map((image: string, idx: number) => {
                   return (
                     <ImageComponentLayout
                       handleClick={handleClick}
                       restOfTheImages={false}
+                      loadingCount={loadingCount}
                       imagesCount={imagesCount}
                       onProgress={handleProgressPromiseUnrender}
                       visible={visible}
@@ -185,7 +177,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
                     <ImageComponentLayout
                       handleClick={handleClick}
                       restOfTheImages={true}
-                      getImageSrcs={getImageSrcs}
+                      loadingCount={loadingCount}
                       imagesCount={imagesCount}
                       onProgress={handleProgressPromiseUnrender}
                       visible={visible}
