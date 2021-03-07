@@ -17,10 +17,9 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, v
   });
   if (isLoading) {
     return <Loading />;
-  } else if (!isLoading && height && width) {
+  } else if (!isLoading && height && width && error === null && visible) {
     onProgress(Math.random().toString(36).substring(7));
-    if (visible) {
-      return (
+    return (
         <div onClick={handleClick}>
           <SideBySideMagnifier
             classNameImage={'img-loaded'}
@@ -34,7 +33,7 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, v
           />
         </div>
       );
-    }
+  } else {
+  return <></>; 
   }
-  return <></>;
 };
