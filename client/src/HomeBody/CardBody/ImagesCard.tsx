@@ -1,4 +1,4 @@
-import React, { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -22,6 +22,7 @@ interface ImagesCardProps {
   visible: boolean;
   state: IState;
 }
+
 const ImagesCard = React.memo<ImagesCardProps>(
   ({ index, visible, state }) => {
     const [renderChildren, setRenderChildren] = useState(false);
@@ -112,37 +113,46 @@ const ImagesCard = React.memo<ImagesCardProps>(
     // TODO: animated card for showing users suggested gits: https://codyhouse.co/ds/components/app/animated-cards
     const imagesCount = useRef(0);
     const loadingCount = useRef(0);
-    const unrenderImages = useRef<string[]>([]);
 
-    const checkNode = (addedNode: any) => {
-      if (addedNode.getElementsByTagName === 'function' && addedNode.nodeType === 1 && addedNode.tagName === 'img') {
-        unrenderImages.current.push(addedNode.src);
-      }
-    };
-    const observer = useMemo(
-      () =>
-        new MutationObserver(function (mutations) {
-          for (let i = 0; i < mutations.length; i++) {
-            for (let j = 0; j < mutations[i].addedNodes.length; j++) {
-              checkNode(mutations[i].addedNodes[j]);
-            }
-          }
-        }),
-      []
-    );
-    const imgSrcFirstTwo = createRef<HTMLDivElement>();
+    const [unrenderImages, setUnrenderImages] = useState<string[]>([]);
+    const unrenderImagesRef = useRef<string[]>([]);
     useEffect(() => {
-      if (imgSrcFirstTwo.current) {
-        observer.observe(imgSrcFirstTwo.current, {
-          childList: true,
-          subtree: true,
-        });
-      }
-      return () => {
-        observer.disconnect();
-      };
-    }, [imgSrcFirstTwo]);
-
+      unrenderImagesRef.current = [...unrenderImages]; //shallow copy works because no nested array
+    });
+    const getImageSrc = useCallback((src) => {
+      setUnrenderImages((prevState) => {
+        prevState.push(src);
+        return prevState;
+      });
+    }, []);
+    // const checkNode = (addedNode: any) => {
+    //   if (addedNode.getElementsByTagName === 'function' && addedNode.nodeType === 1 && addedNode.tagName === 'img') {
+    //     unrenderImages.current.push(addedNode.src);
+    //   }
+    // };
+    // const observer = useMemo(
+    //   () =>
+    //     new MutationObserver(function (mutations) {
+    //       for (let i = 0; i < mutations.length; i++) {
+    //         for (let j = 0; j < mutations[i].addedNodes.length; j++) {
+    //           checkNode(mutations[i].addedNodes[j]);
+    //         }
+    //       }
+    //     }),
+    //   []
+    // );
+    // const imgSrcFirstTwo = createRef<HTMLDivElement>();
+    // useEffect(() => {
+    //   if (imgSrcFirstTwo.current) {
+    //     observer.observe(imgSrcFirstTwo.current, {
+    //       childList: true,
+    //       subtree: true,
+    //     });
+    //   }
+    //   return () => {
+    //     observer.disconnect();
+    //   };
+    // }, [imgSrcFirstTwo]);
     return (
       // maxWidth: '100%', maxHeight: '100% to automatically resize the image to fit inside the div
       // _isMounted.current need to be in the IF condition because if not yet mounted,
@@ -175,7 +185,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
                 />
               </Then>
             </If>
-            <div style={{ textAlign: 'center' }} ref={imgSrcFirstTwo}>
+            <div style={{ textAlign: 'center' }}>
               {renderImages.length > 0 &&
                 renderImages.map((image: string, idx: number) => {
                   return (
@@ -184,6 +194,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
                       restOfTheImages={false}
                       loadingCount={loadingCount}
                       imagesCount={imagesCount}
+                      getImageSrc={getImageSrc}
                       onProgress={handleProgressPromiseUnrender}
                       visible={visible}
                       key={idx}
@@ -195,9 +206,8 @@ const ImagesCard = React.memo<ImagesCardProps>(
             <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
               {renderChildren &&
                 renderImages.length > 0 &&
-                renderImages
-                  .filter((src) => !unrenderImages.current.includes(src))
-                  .map((image: string, idx: number) => {
+                renderImages.map((image: string, idx: number) => {
+                  if (!unrenderImagesRef.current.includes(image)) {
                     return (
                       <ImageComponentLayout
                         handleClick={handleClick}
@@ -210,15 +220,14 @@ const ImagesCard = React.memo<ImagesCardProps>(
                         urlLink={image}
                       />
                     );
-                  })}
+                  }
+                })}
             </div>
             <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
               <ListItemIcon>
                 <SupervisorAccountIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.slice(2).length} More Images`}
-              />
+              <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
               {renderChildren ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
           </Then>

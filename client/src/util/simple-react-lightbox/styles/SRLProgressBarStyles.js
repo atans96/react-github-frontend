@@ -1,4 +1,4 @@
-import styled from '@emotion/styled'
+import styled from '@emotion/styled';
 
 export const SRLProgressBarWrapper = styled.div`
   width: 100%;
@@ -8,7 +8,7 @@ export const SRLProgressBarWrapper = styled.div`
   top: 0;
   left: 0;
   z-index: 9999;
-`
+`;
 
 export const SRLProgressBar = styled.div`
   height: ${(props) => props.barHeight};

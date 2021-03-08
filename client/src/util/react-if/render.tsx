@@ -1,4 +1,4 @@
-import React, { FC, Fragment } from 'react';
+import React, {FC, Fragment} from 'react';
 
 /**
  * Renders a React component while also checking whether the children are a function or not
