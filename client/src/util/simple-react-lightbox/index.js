@@ -1,9 +1,9 @@
-import React from 'react'
-import PropTypes from 'prop-types'
-import SRLContextComponent from './SRLContext'
-import SRLWrapper from './SRLWrapper'
-import SRLLightbox from './SRLLightbox'
-import { useLightbox } from './SRLHooks'
+import React from 'react';
+import PropTypes from 'prop-types';
+import SRLContextComponent from './SRLContext';
+import SRLWrapper from './SRLWrapper';
+import SRLLightbox from './SRLLightbox';
+import { useLightbox } from './SRLHooks';
 
 const SimpleReactLightbox = ({ children }) => {
   return (
