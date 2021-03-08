@@ -12,7 +12,7 @@ import {
 } from '@material-ui/core';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { isEqualObjects, uniqFast } from '../../util';
+import { fastFilter, isEqualObjects, uniqFast } from '../../util';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
@@ -138,7 +138,9 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                     );
                   });
                   if (!openSubscription) {
-                    const feeds = uniqFast(HTML.filter((x: any) => x.login === obj.login).map((x: any) => x.feeds));
+                    const feeds = uniqFast(fastFilter((obj: any) => obj.login === obj.login, HTML)).map(
+                      (x: any) => x.feeds
+                    );
                     useApolloFactorySelector((mutation: any) => mutation)
                       .watchUsersFeedsAdded({
                         variables: {
@@ -149,19 +151,21 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                       })
                       .then((res: any) => {
                         if (res.data.watchUsersFeedsAdded && res.data.watchUsersFeedsAdded.login.length > 0) {
+                          const temp = res.data.watchUsersFeedsAdded.login.find((x: any) => x.login === obj.login)
+                            .feeds;
+                          const result = fastFilter(
+                            (obj: any) =>
+                              res.data.watchUsersFeedsAdded.login
+                                .find((x: any) => x.login === obj.login)
+                                .lastSeenFeeds.indexOf(obj) === -1,
+                            temp
+                          ).length;
                           notification.current.push(
                             Object.assign(
                               {},
                               {
                                 login: obj.login,
-                                notification: res.data.watchUsersFeedsAdded.login
-                                  .find((x: any) => x.login === obj.login)
-                                  .feeds.filter(
-                                    (x: string) =>
-                                      res.data.watchUsersFeedsAdded.login
-                                        .find((x: any) => x.login === obj.login)
-                                        .lastSeenFeeds.indexOf(x) === -1
-                                  ).length,
+                                notification: result,
                               }
                             )
                           );
@@ -170,20 +174,16 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                               {},
                               {
                                 login: obj.login,
-                                unseenFeeds: res.data.watchUsersFeedsAdded.login
-                                  .find((x: any) => x.login === obj.login)
-                                  .feeds.filter(
-                                    (x: string) =>
-                                      res.data.watchUsersFeedsAdded.login
-                                        .find((x: any) => x.login === obj.login)
-                                        .lastSeenFeeds.indexOf(x) === -1
-                                  ),
+                                unseenFeeds: result,
                               }
                             )
                           );
                           unseenFeeds.current = _.uniqBy(unseenFeeds.current, 'login');
                           notification.current = _.uniqBy(notification.current, 'login');
-                          notification.current = notification.current.filter((x) => logins.includes(x.login)); //handle for the user unsubscribe
+                          notification.current = fastFilter(
+                            (obj: any) => logins.includes(obj.login),
+                            notification.current
+                          ); //handle for the user unsubscribe
                           const notificationLength = notification.current.reduce((acc, obj) => {
                             acc += obj.notification;
                             return acc;
@@ -194,13 +194,13 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                       .catch(() => {});
                   } else {
                     const unseenFeedss =
-                      unseenFeeds.current
-                        .filter((x) => x.login === obj.login)
-                        .reduce((acc, obj) => {
-                          acc.push(...obj.unseenFeeds);
-                          return acc;
-                        }, []) || [];
-                    const feeds = uniqFast(HTML.filter((x: any) => x.login === obj.login).map((x: any) => x.feeds));
+                      fastFilter((x: any) => x.login === obj.login, unseenFeeds.current).reduce((acc, obj) => {
+                        acc.push(...obj.unseenFeeds);
+                        return acc;
+                      }, []) || [];
+                    const feeds = uniqFast(
+                      fastFilter((x: any) => x.login === obj.login, HTML).map((x: any) => x.feeds)
+                    );
                     useApolloFactorySelector((mutation: any) => mutation)
                       .watchUsersFeedsAdded({
                         variables: {
@@ -224,7 +224,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                             }
                           )
                         );
-                        uniqqRef.current = uniqqRef.current.filter((x) => logins.includes(x.login)); //handle for the user unsubscribe
+                        uniqqRef.current = fastFilter((x: any) => logins.includes(x.login), uniqqRef.current); //handle for the user unsubscribe
                       })
                       .catch(() => {});
                   }
@@ -256,7 +256,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
       promisesRef.current = updater(data, logins);
       if (logins.length > 0) {
         return Promise.allSettled(promisesRef.current).then((v) => {
-          const isAllFulfilled = v.filter((obj) => obj.status === 'fulfilled').length;
+          const isAllFulfilled = fastFilter((obj: any) => obj.status === 'fulfilled', v).length;
           if (
             openSubscription &&
             uniqqRef.current.length > 0 &&
@@ -288,7 +288,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
             uniqqRef.current = [];
             return { status: 200 };
           } else if (!openSubscription && notification.current.length > 0 && isAllFulfilled === logins.length) {
-            notification.current = notification.current.filter((x) => logins.includes(x.login)); //handle for the user unsubscribe
+            notification.current = fastFilter((obj: any) => logins.includes(obj.login), notification.current); //handle for the user unsubscribe
             const notificationLength = notification.current.reduce((acc, obj) => {
               acc += obj.notification;
               return acc;
@@ -366,7 +366,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
           acc.push(obj.login);
           return acc;
         }, []);
-        unseenFeeds.current = unseenFeeds.current.filter((x) => logins.includes(x.login)); //handle for the user unsubscribe
+        unseenFeeds.current = fastFilter((x: any) => logins.includes(x.login), unseenFeeds.current); //handle for the user unsubscribe
         execWrapper(watchUsersData, logins);
       } else if (
         !loadingWatchUsersData &&

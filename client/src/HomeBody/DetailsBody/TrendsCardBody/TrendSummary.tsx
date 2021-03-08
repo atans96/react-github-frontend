@@ -3,6 +3,7 @@ import { OnlyYesterday } from './TrendSummaryBody/OnlyYesterday';
 import { Section } from '../../../Layout/DetailsLayout';
 import styled from 'styled-components';
 import { MonthlyTrendsItem } from './TrendSummaryBody/MonthlyTrendsItem';
+import { fastFilter } from '../../../util';
 
 interface TrendSummaryProps {
   project: any;
@@ -24,15 +25,18 @@ const Div = styled.div`
 
 export const TrendSummary = React.memo<TrendSummaryProps>(({ project }) => {
   const { trends } = project;
-  const items = [
-    { label: 'Yesterday', category: 'daily' },
-    { label: 'Last week', category: 'weekly' },
-    { label: 'Last month', category: 'monthly' },
-    { label: 'Last 12 months', category: 'yearly' },
-  ].filter(({ category }) => {
-    const value = trends[category];
-    return value !== undefined && value !== null;
-  });
+  const items = fastFilter(
+    ({ category }: any) => {
+      const value = trends[category];
+      return value !== undefined && value !== null;
+    },
+    [
+      { label: 'Yesterday', category: 'daily' },
+      { label: 'Last week', category: 'weekly' },
+      { label: 'Last month', category: 'monthly' },
+      { label: 'Last 12 months', category: 'yearly' },
+    ]
+  );
   return (
     <Section>
       {trends.weekly || trends.weekly === 0 ? (

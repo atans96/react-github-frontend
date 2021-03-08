@@ -3,7 +3,7 @@ interface KeepMountedLayoutProps {
   mountedCondition: boolean;
   render: () => React.ReactNode;
 }
-class KeepMountedLayout extends React.Component<KeepMountedLayoutProps> {
+class KeepMountedLayout extends React.PureComponent<KeepMountedLayoutProps> {
   hasBeenMounted = false;
   render() {
     const { mountedCondition, render } = this.props;

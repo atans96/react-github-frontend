@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import './RateLimitInfo.css';
+import { Context } from '../index';
 import { epochToJsDate } from '../util';
 import { IState } from '../typing/interface';
 import clsx from 'clsx';
-import { useStateSelector } from '../selectors/stateSelector';
 
 interface RateLimitInfo {
   data: IState['rateLimit'];
@@ -11,7 +11,7 @@ interface RateLimitInfo {
 }
 
 const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch }) => {
-  const rateLimitAnimationAdded = useStateSelector((state: any) => state.rateLimitAnimationAdded);
+  const { state } = useContext(Context);
   const [resetTime, setResetTime] = useState<string>('');
   useEffect(() => {
     const interval = setInterval(() => {
@@ -32,7 +32,7 @@ const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch }) => {
     <div id="container">
       <div
         className={clsx('', {
-          added: rateLimitAnimationAdded,
+          added: state.rateLimitAnimationAdded,
         })}
         id="box"
         style={{ borderRight: '1px solid black' }}
@@ -41,7 +41,7 @@ const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch }) => {
       </div>
       <div
         className={clsx('', {
-          added: rateLimitAnimationAdded,
+          added: state.rateLimitAnimationAdded,
         })}
         id="box"
         style={{ borderRight: '1px solid black' }}
@@ -50,7 +50,7 @@ const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch }) => {
       </div>
       <div
         className={clsx('', {
-          added: rateLimitAnimationAdded,
+          added: state.rateLimitAnimationAdded,
         })}
         id="box"
       >

@@ -10,6 +10,15 @@ export function Counter(array) {
   array.forEach((val) => (count[val] = (count[val] || 0) + 1));
   return count;
 }
+export const fastFilter = (fn, a) => {
+  const f = []; //final
+  for (let i = 0; i < a.length; i++) {
+    if (fn(a[i])) {
+      f.push(a[i]);
+    }
+  }
+  return f;
+};
 export function missingDeepKeys(o1, o2, showIntermediate) {
   import deepKeys from 'deep-keys';
   //const o1 = {a: {b: 2}}; // Base object

@@ -20,7 +20,7 @@ import Result from './PureSearchBarBody/ResultsBody/Result';
 import { Typography } from '@material-ui/core';
 import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
 import HistoryIcon from '@material-ui/icons/History';
-import { Loading } from '../util';
+import { fastFilter, Loading } from '../util';
 import { useApolloFactorySelector } from '../selectors/stateSelector';
 
 const defaultTheme = createMuiTheme();
@@ -229,14 +229,14 @@ const SearchBar = React.memo<SearchBarProps>(
         dispatch({
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
-            filteredMergedData: state.mergedData.filter((x) => {
+            filteredMergedData: fastFilter((x: MergedDataProps) => {
               const topics = [...x.topics];
               if (x.language) {
                 topics.push(x.language.toLowerCase());
               }
               return _.intersection(topics, state.filteredTopics).length > 0;
               // return _.intersection(topics, state.filteredTopics).length === state.filteredTopics.length;
-            }),
+            }, state.mergedData),
           },
         });
       } else {
@@ -343,7 +343,6 @@ const SearchBar = React.memo<SearchBarProps>(
               state={state}
               dispatch={dispatch}
               handleChange={handleChange}
-              searchesHistory={searchesData?.getSearches}
               ref={username}
               dispatchStargazersUser={dispatchStargazersUser}
             />
@@ -390,32 +389,30 @@ const SearchBar = React.memo<SearchBarProps>(
                     </If>
                     <If condition={!state.isLoading}>
                       <Then>
-                        {state.searchUsers
-                          .filter((search) => {
-                            const temp =
-                              searchesData?.getSearches?.reduce((acc: any, obj: any) => {
-                                acc.push(obj.search);
-                                return acc;
-                              }, []) || [];
-                            return !temp.includes(Object.keys(search)[0]);
-                          })
-                          .map((result, idx) => (
-                            <Result
-                              state={state}
-                              getRootProps={getRootProps}
-                              userName={Object.keys(result).toString()}
-                              key={idx}
-                            >
-                              <div className={classes.wrapper} style={{ borderBottom: 0 }}>
-                                <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
-                                <div className={classes.nameWrapper}>
-                                  <Typography variant="subtitle2" className={classes.typography}>
-                                    {Object.keys(result)}
-                                  </Typography>
-                                </div>
+                        {fastFilter((search: any) => {
+                          const temp =
+                            searchesData?.getSearches?.reduce((acc: any, obj: any) => {
+                              acc.push(obj.search);
+                              return acc;
+                            }, []) || [];
+                          return !temp.includes(Object.keys(search)[0]);
+                        }, state.searchUsers).map((result, idx) => (
+                          <Result
+                            state={state}
+                            getRootProps={getRootProps}
+                            userName={Object.keys(result).toString()}
+                            key={idx}
+                          >
+                            <div className={classes.wrapper} style={{ borderBottom: 0 }}>
+                              <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
+                              <div className={classes.nameWrapper}>
+                                <Typography variant="subtitle2" className={classes.typography}>
+                                  {Object.keys(result)}
+                                </Typography>
                               </div>
-                            </Result>
-                          ))}
+                            </div>
+                          </Result>
+                        ))}
                       </Then>
                     </If>
                   </ul>

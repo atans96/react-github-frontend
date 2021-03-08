@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import imagePromiseFactory from '../util/imagePromiseFactory';
 import { Nullable } from '../typing/type';
+import { fastFilter } from '../util';
 
 export type useImageProps = {
   srcList: string | string[];
   imgPromise?: (...args: any[]) => Promise<void>;
   useSuspense?: boolean;
 };
-
-const removeBlankArrayElements = (a: string[]) => a.filter((x) => x);
+const removeBlankArrayElements = (a: string[]) => fastFilter((x: any) => x, a);
 const stringToArray = (x: useImageProps['srcList']) => (Array.isArray(x) ? x : [x]);
 const cache = {};
 const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<void>) => {

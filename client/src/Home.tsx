@@ -21,20 +21,17 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { isEqualObjects } from './util';
+import { fastFilter, isEqualObjects } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { RouteComponentProps } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import {
-  dataRepoImagesSelector,
-  dataRepoUnrenderImages,
-  mergedDataSelector,
-  dispatchImagesReplaceSelector,
-  filterMergedDataSelector,
   mutationSeenAddedSelector,
   useApolloFactorySelector,
+  alreadySeenCardSelector,
 } from './selectors/stateSelector';
+import { filterActionResolvedPromiseData } from './util/util';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -137,19 +134,22 @@ const Home = React.memo<HomeProps>(
     const actionResolvedPromise = (action: string, data?: IDataOne, error?: string) => {
       if (data && action === 'append') {
         if (state.filterBySeen) {
-          const alreadySeenCards =
-            seenData.getSeen?.seenCards.reduce((acc: any[], obj: { id: number }) => {
-              acc.push(obj.id);
-              return acc;
-            }, []) || [];
-          const temp = filterMergedDataSelector(
-            alreadySeenCards,
-            userData?.getUserData?.languagePreference
-          )(data.dataOne).map((obj) => {
+          const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.seenCards);
+          const filter1 = fastFilter(
+            (obj: any) =>
+              filterActionResolvedPromiseData(
+                obj,
+                !alreadySeenCards.includes(obj.id),
+                userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked)
+              ),
+            data.dataOne
+          );
+          const temp = fastFilter((obj: any) => !!obj, filter1).map((obj) => {
             obj['isQueue'] = false;
             return obj;
           });
-          const tempImages = data.renderImages.filter((obj) => !alreadySeenCards.includes(obj.id));
+
+          const tempImages = fastFilter((obj: any) => !alreadySeenCards.includes(obj.id), data.renderImages);
           if (tempImages.length === 0) {
             dispatchImagesData('no data', dispatch);
           } else {
@@ -225,12 +225,7 @@ const Home = React.memo<HomeProps>(
           let promises: Promise<any>[] = [];
           userNameTransformed.forEach((name) => {
             promises.push(
-              getUser(
-                name,
-                state.perPage,
-                state.page,
-                userData && userData.getUserData ? userData.getUserData.token : ''
-              )
+              getUser(name, state.perPage, state.page, userData && userData ? userData.token : '')
                 .then((data) => {
                   const [oldID, newID] = isDataExists(data);
                   // compare new with old data, if they differ, that means it still has data to fetch
@@ -242,12 +237,7 @@ const Home = React.memo<HomeProps>(
                     setLoading(false);
                     actionResolvedPromise(Action.mergedData.append, data);
                   } else if (data !== undefined && (data.error_403 || data.error_404)) {
-                    getOrg(
-                      name,
-                      state.perPage,
-                      state.page,
-                      userData && userData.getUserData ? userData.getUserData.token : ''
-                    )
+                    getOrg(name, state.perPage, state.page, userData && userData ? userData.token : '')
                       .then((data: IDataOne) => {
                         const [oldID, newID] = isDataExists(data);
                         // compare new with old data, if they differ, that means it still has data to fetch
@@ -298,7 +288,7 @@ const Home = React.memo<HomeProps>(
       let paginationInfo = 0;
       userNameTransformed.forEach((name) => {
         promises.push(
-          getUser(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
+          getUser(name, state.perPage, 1, userData && userData ? userData.token : '')
             .then((data: IDataOne) => {
               if (_isMounted && data?.dataOne?.length > 0) {
                 setLoading(false);
@@ -316,7 +306,7 @@ const Home = React.memo<HomeProps>(
                 setNotification('Sorry, API rate limit exceeded.');
                 setLoading(false);
               } else if (data?.dataOne?.length === 0 || data?.error_404) {
-                getOrg(name, state.perPage, 1, data && userData.getUserData ? userData.getUserData.token : '')
+                getOrg(name, state.perPage, 1, data && userData ? userData.token : '')
                   .then((data: IDataOne) => {
                     if (_isMounted && data.dataOne?.length > 0) {
                       setLoading(false);
@@ -368,7 +358,7 @@ const Home = React.memo<HomeProps>(
         document.location.pathname === '/' &&
         notification === '' &&
         state.filterBySeen;
-      mutationSeenAddedSelector(handleBottomHitCallback, dispatcher, condition)(state);
+      mutationSeenAddedSelector(handleBottomHitCallback, dispatcher, condition, 'data')(state);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
       isFetchFinish.current,
@@ -429,47 +419,62 @@ const Home = React.memo<HomeProps>(
       if (
         !userDataLoading &&
         !userDataError &&
-        userData.getUserData?.tokenRSS &&
-        userData.getUserData?.tokenRSS !== '' &&
+        userData?.tokenRSS &&
+        userData?.tokenRSS !== '' &&
         state.tokenRSS === ''
       ) {
         dispatch({
           type: 'TOKEN_RSS_ADDED',
           payload: {
-            tokenRSS: userData.getUserData.tokenRSS,
+            tokenRSS: userData.tokenRSS,
           },
         });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userDataLoading, userDataError]);
 
-    const callback = useCallback((images: any, temp: any) => {
-      dispatch({
-        type: 'IMAGES_DATA_REPLACE',
-        payload: {
-          imagesData: images,
-        },
-      });
-      dispatchMergedData(temp, dispatch);
-    }, []);
-
     useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData && seenData.getSeen !== null) {
+      if (!seenDataLoading && !seenDataError && seenData && seenData !== null) {
         if (!state.filterBySeen) {
-          dispatchImagesData(dataRepoUnrenderImages(state), dispatch);
+          const images = state.undisplayMergedData.reduce((acc, obj: any) => {
+            acc.push(
+              Object.assign(
+                {},
+                {
+                  id: obj.id,
+                  value: [...obj.imagesData],
+                }
+              )
+            );
+            return acc;
+          }, [] as any[]);
+          dispatchImagesData(images, dispatch);
           dispatchMergedData(state.undisplayMergedData, dispatch);
         } else {
-          dispatchImagesReplaceSelector(callback)(state);
+          const ids = state.undisplayMergedData.reduce((acc, obj) => {
+            acc.push(obj.id);
+            return acc;
+          }, [] as number[]);
+          fastFilter((obj: any) => !ids.includes(obj.id), state.mergedData);
+          const temp = fastFilter((obj: any) => !ids.includes(obj.id), state.mergedData);
+          const images = fastFilter((obj: any) => !ids.includes(obj.id), state.imagesData);
+          dispatch({
+            type: 'IMAGES_DATA_REPLACE',
+            payload: {
+              imagesData: images,
+            },
+          });
+          dispatchMergedData(temp, dispatch);
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.filterBySeen]);
     useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData.getSeen !== null && seenData.getSeen.seenCards.length > 0) {
+      if (!seenDataLoading && !seenDataError && seenData !== null && seenData.seenCards.length > 0) {
         dispatch({
           type: 'UNDISPLAY_MERGED_DATA',
           payload: {
-            undisplayMergedData: seenData.getSeen.seenCards,
+            undisplayMergedData: seenData.seenCards,
           },
         });
       }
@@ -480,9 +485,23 @@ const Home = React.memo<HomeProps>(
         _isMounted.current = true;
         if (_isMounted.current && state.mergedData.length > 0 && state.shouldFetchImages) {
           // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
-
-          const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          getRepoImages(dataRepoImagesSelector(state), clickedGQLTopic.variables.queryTopic, state.page, token)
+          const data = state.mergedData.reduce((acc, object) => {
+            acc.push(
+              Object.assign(
+                {},
+                {
+                  id: object.id,
+                  value: {
+                    full_name: object.full_name,
+                    branch: object.default_branch,
+                  },
+                }
+              )
+            );
+            return acc;
+          }, [] as any[]);
+          const token = userData && userData ? userData.token : '';
+          getRepoImages(data, clickedGQLTopic.variables.queryTopic, state.page, token)
             .then((repoImage) => {
               if (repoImage.renderImages.length > 0) {
                 dispatchShouldFetchImagesData(false, dispatch);
@@ -573,7 +592,17 @@ const Home = React.memo<HomeProps>(
     const dataMongoMemoize = useCallback(() => {
       return userStarred;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userStarred?.getUserInfoStarred?.starred]);
+    }, [userStarred?.starred]);
+
+    const whichToUse = useCallback(() => {
+      // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
+      // is not part of the dependencies for the callback.
+      if (state.filteredMergedData.length > 0) {
+        return state.filteredMergedData;
+      }
+      return state.mergedData; // return this if filteredTopics.length === 0
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.mergedData, state.filteredMergedData]);
 
     // TODO: change the styling like: https://gatsby.pizza/ or maybe styling like nested menu (NOT SURE YET)
 
@@ -616,25 +645,23 @@ const Home = React.memo<HomeProps>(
           <If condition={!state.filterBySeen && seenData?.getSeen}>
             <Then>
               <div style={{ textAlign: 'center' }}>
-                <h3>
-                  Your {seenData?.getSeen?.seenCards?.length > 0 ? seenData.getSeen.seenCards.length : ''} Card History:
-                </h3>
+                <h3>Your {seenData?.getSeen?.seenCards?.length > 0 ? seenData.seenCards.length : ''} Card History:</h3>
               </div>
             </Then>
           </If>
           <If condition={state.mergedData?.length > 0 && !shouldRenderSkeleton}>
             <Then>
-              <MasonryLayoutMemo data={mergedDataSelector(state)} state={state}>
+              <MasonryLayoutMemo data={whichToUse()} state={state}>
                 {(columnCount: number) => {
-                  return Object.keys(mergedDataSelector(state)).map((key, idx) => (
+                  return Object.keys(whichToUse()).map((key, idx) => (
                     <Card
                       key={idx}
                       columnCount={columnCount}
                       routerProps={routerProps}
                       dataMongoMemoize={dataMongoMemoize()}
                       getRootProps={getRootProps}
-                      index={mergedDataSelector(state)[key].id}
-                      githubData={mergedDataSelector(state)[key]}
+                      index={whichToUse()[key].id}
+                      githubData={whichToUse()[key]}
                       state={stateMemoize()}
                       dispatchStargazersUser={dispatchStargazersUserMemoize()}
                       dispatch={dispatchMemoize()}
@@ -646,7 +673,7 @@ const Home = React.memo<HomeProps>(
           </If>
           <If condition={shouldRenderSkeleton}>
             <Then>
-              <MasonryLayoutMemo data={mergedDataSelector(state)} state={state}>
+              <MasonryLayoutMemo data={whichToUse()} state={state}>
                 {() => {
                   return Object.keys(state.mergedData).map((_, idx) => <CardSkeleton key={idx} />);
                 }}

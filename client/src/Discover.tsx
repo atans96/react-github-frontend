@@ -5,22 +5,30 @@ import {
   dispatchAppendMergedDataDiscover,
   dispatchImagesDataDiscover,
   dispatchLastPageDiscover,
+  dispatchPage,
   dispatchPageDiscover,
 } from './store/dispatcher';
 import { useResizeHandler } from './hooks/hooks';
 import { IDataOne, IState } from './typing/interface';
-import { MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { Nullable, SeenProps } from './typing/type';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { isEqualObjects } from './util';
+import { fastFilter, isEqualObjects } from './util';
 import { RouteComponentProps } from 'react-router-dom';
 import { filterActionResolvedPromiseData } from './util/util';
 import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
-import { dataRepoImagesSelector, useApolloFactorySelector } from './selectors/stateSelector';
+import {
+  alreadySeenCardSelector,
+  getIdsSelector,
+  mutationSeenAddedSelector,
+  sortedRepoInfoSelector,
+  starRankingFilteredSelector,
+  useApolloFactorySelector,
+} from './selectors/stateSelector';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -100,29 +108,42 @@ const Discover = React.memo<DiscoverProps>(
     const windowScreenRef = useRef<HTMLDivElement>(null);
     const actionResolvedPromise = async (action: string, data?: Nullable<IDataOne | any>) => {
       if (data && action === 'append') {
-        const alreadySeenCards =
-          seenData.getSeen?.seenCards.reduce((acc: any[], obj: { id: number }) => {
-            acc.push(obj.id);
-            return acc;
-          }, []) || [];
+        const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.seenCards);
         let temp: any[];
-        temp = data
-          .filter((obj: any) =>
+        const filter1 = fastFilter(
+          (obj: any) =>
             filterActionResolvedPromiseData(
               obj,
               !alreadySeenCards.includes(obj.id),
               userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked)
-            )
-          )
-          .filter((e: any) => !!e);
+            ),
+          data
+        );
+        temp = fastFilter((obj: any) => !!obj, filter1);
         if (temp.length > 0) {
-          temp = temp.filter((obj: any) => userStarred.getUserInfoStarred.starred.includes(obj.id) === false);
+          temp = fastFilter((obj: any) => userStarred.getUserInfoStarred.starred.includes(obj.id) === false, temp);
         }
+        let inputForImagesData = [];
         if (temp.length > 0) {
           dispatchAppendMergedDataDiscover(temp, dispatch);
           setLoading(false);
           const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          getRepoImages(dataRepoImagesSelector(state), 'wa1618i', state.pageDiscover + 1, token).then((repoImage) => {
+          inputForImagesData = data.reduce((acc: any[], object: any) => {
+            acc.push(
+              Object.assign(
+                {},
+                {
+                  id: object.id,
+                  value: {
+                    full_name: object.full_name,
+                    branch: object.default_branch,
+                  },
+                }
+              )
+            );
+            return acc;
+          }, []);
+          getRepoImages(inputForImagesData, 'wa1618i', state.pageDiscover + 1, token).then((repoImage) => {
             if (repoImage.renderImages.length > 0) {
               dispatchImagesDataDiscover(repoImage.renderImages, dispatch);
             } else {
@@ -213,104 +234,50 @@ const Discover = React.memo<DiscoverProps>(
     const fetchUser = () => {
       isFetchFinish.current = false;
       dispatchLastPageDiscover(Math.ceil(suggestedData?.getSuggestedRepo?.repoInfo?.length / state.perPage), dispatch);
-      const ids = suggestedData?.getSuggestedRepo?.repoInfo?.map((obj: any) => obj.id);
-      const starRankingFiltered =
-        starRankingData?.getStarRanking?.starRanking
-          ?.filter((xx: any) => ids.includes(xx.id))
-          .reduce((acc: any[], obj: any) => {
-            const temp = Object.assign({}, { trends: obj.trends, id: obj.id });
-            acc.push(temp);
-            return acc;
-          }, [])
-          .sort((a: any, b: any) => b['trends']['daily'] - a['trends']['daily']) || [];
+      const starRankingFiltered: any[] = starRankingFilteredSelector(
+        getIdsSelector(suggestedData?.getSuggestedRepo?.repoInfo)
+      )(starRankingData?.getStarRanking?.starRanking);
       //TODO: make 'daily' to be sortable by the user in the monitor
-      const sortedIds = starRankingFiltered.map((obj: any) => obj.id);
-      sortedDataRef.current = suggestedData?.getSuggestedRepo?.repoInfo
-        ?.slice()
-        .sort((a: any, b: any) => {
-          return sortedIds.indexOf(a.id) - sortedIds.indexOf(b.id);
-        })
-        .map((obj: any) => {
-          const copyObj = Object.assign({}, obj);
-          copyObj.trends = starRankingFiltered.find((xx: any) => xx.id === obj.id)
-            ? starRankingFiltered.find((xx: any) => xx.id === obj.id).trends.daily
-            : 0;
-          return copyObj;
-        });
+      const sortedIds: any[] = getIdsSelector(starRankingFiltered);
+      sortedDataRef.current = sortedRepoInfoSelector(
+        sortedIds,
+        starRankingFiltered
+      )(suggestedData?.getSuggestedRepo?.repoInfo) as [];
       if (sortedDataRef.current.slice(0, state.perPage).length === 0) {
         actionResolvedPromise(Action.mergedData.noData).then(() => {});
       } else {
         actionResolvedPromise(Action.mergedData.append, sortedDataRef.current.slice(0, state.perPage)).then(() => {});
       }
     };
-    const mergedDataRef = useRef<any[]>([]);
-    const imagesDataRef = useRef<any[]>([]);
-    const isLoadingRef = useRef<boolean>(true);
-    const notificationRef = useRef<string>('');
-    useEffect(() => {
-      mergedDataRef.current = state.mergedDataDiscover;
-    });
-    useEffect(() => {
-      imagesDataRef.current = state.imagesDataDiscover;
-    });
-    useEffect(() => {
-      isLoadingRef.current = isLoading;
-    });
-    useEffect(() => {
-      notificationRef.current = notification;
-    });
+
+    const handleBottomHitCallback = useCallback((result: SeenProps[]) => {
+      useApolloFactorySelector((mutation: any) => mutation)
+        .seenAdded({
+          variables: {
+            seenCards: result,
+          },
+        })
+        .then(() => {});
+    }, []);
+
     const handleBottomHit = useCallback(() => {
-      if (
+      const dispatcher = () => dispatchPage(dispatch);
+      const condition =
         !isFetchFinish.current &&
-        mergedDataRef.current.length > 0 &&
-        !isLoadingRef.current &&
-        document.location.pathname === '/discover' &&
-        notificationRef.current === ''
-      ) {
-        dispatchPageDiscover(dispatch);
-        const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
-          const temp = Object.assign(
-            {},
-            {
-              stargazers_count: obj.stargazers_count,
-              full_name: obj.full_name,
-              default_branch: obj.default_branch,
-              owner: {
-                login: obj.owner.login,
-                avatar_url: obj.owner.avatar_url,
-                html_url: obj.owner.html_url,
-              },
-              description: obj.description,
-              language: obj.language,
-              topics: obj.topics,
-              html_url: obj.html_url,
-              id: obj.id,
-              imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
-              name: obj.name,
-              is_queried: false,
-            }
-          );
-          acc.push(temp);
-          return acc;
-        }, [] as SeenProps[]);
-        if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
-          //don't add to database yet when imagesData still loading.
-          useApolloFactorySelector((mutation: any) => mutation)
-            .seenAdded({
-              variables: {
-                seenCards: result,
-              },
-            })
-            .then(() => {});
-        }
-      }
+        state.mergedDataDiscover.length > 0 &&
+        !isLoading &&
+        document.location.pathname === '/' &&
+        notification === '' &&
+        state.filterBySeen;
+      mutationSeenAddedSelector(handleBottomHitCallback, dispatcher, condition, 'discover')(state);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
       isFetchFinish.current,
-      mergedDataRef.current,
-      isLoadingRef.current,
-      imagesDataRef.current,
-      notificationRef.current,
+      state.mergedDataDiscover,
+      isLoading,
+      notification,
       document.location.pathname,
+      state.filterBySeen,
       state.isLoggedIn,
     ]);
 

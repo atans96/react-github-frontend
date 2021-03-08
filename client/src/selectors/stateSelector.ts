@@ -1,107 +1,64 @@
 import { createSelector } from 'reselect';
-import { MergedDataProps, SeenProps } from '../typing/type';
+import { MergedDataProps } from '../typing/type';
 import { IState } from '../typing/interface';
 import { ApolloFactory } from '../hooks/useApolloFactory';
-import { initialStateContainer, initialStateStargazersContainer } from '../store/reducer';
-
-export const filterMergedDataSelector = (alreadySeenCards: number[], languagePreference: any) =>
-  createSelector<MergedDataProps[], MergedDataProps[], MergedDataProps[]>(
-    [
-      (dataOne: MergedDataProps[]) =>
-        dataOne.filter(
-          (obj) =>
-            !!obj.language &&
-            !alreadySeenCards.includes(obj.id) &&
-            languagePreference.find((xx: any) => xx.language === obj.language && xx.checked)
-        ),
-    ],
-    (state: MergedDataProps[]) => {
-      return state.filter((e) => !!e);
-    }
-  );
-export const alreadySeenCardSelector = createSelector<IState, MergedDataProps[], Record<number, any>>(
-  [(state: IState) => state.mergedData],
-  (state: MergedDataProps[]) => {
-    return state.reduce((acc: any[], object: MergedDataProps) => {
-      acc.push(
-        Object.assign(
-          {},
-          {
-            id: object.id,
-            value: {
-              full_name: object.full_name,
-              branch: object.default_branch,
-            },
-          }
-        )
-      );
-      return acc;
-    }, [] as any[]);
-  }
-);
-export const dataRepoImagesSelector = createSelector<IState, MergedDataProps[], Record<number, any>>(
-  [(state: IState) => state.mergedData],
-  (state: MergedDataProps[]) => {
-    return state.reduce((acc: any[], object: MergedDataProps) => {
-      acc.push(
-        Object.assign(
-          {},
-          {
-            id: object.id,
-            value: {
-              full_name: object.full_name,
-              branch: object.default_branch,
-            },
-          }
-        )
-      );
-      return acc;
-    }, [] as any[]);
-  }
-);
-export const dataRepoUnrenderImages = createSelector<IState, SeenProps[], Record<number, string>>(
-  [(state: IState) => state.undisplayMergedData],
-  (state: SeenProps[]) => {
-    return state.reduce((acc: any[], object: SeenProps) => {
-      acc.push(
-        Object.assign(
-          {},
-          {
-            id: object.id,
-            value: [...object.imagesData],
-          }
-        )
-      );
-      return acc;
-    }, [] as any[]);
-  }
-);
-export const mergedDataSelector = createSelector<IState, MergedDataProps[], MergedDataProps[]>(
-  [(state) => state.filteredMergedData, (state) => state.mergedData],
-  (filteredMergedData, mergedData) => {
-    if (filteredMergedData.length > 0) {
-      return filteredMergedData;
-    }
-    return mergedData; // return this if filteredTopics.length === 0
-  }
-);
-export const dispatchImagesReplaceSelector = (callback: any) =>
-  createSelector<IState, any, MergedDataProps[]>(
-    [(state) => state.undisplayMergedData, (state) => state.mergedData, (state) => state.imagesData],
-    (undisplayMergedData: SeenProps[], mergedData: MergedDataProps[], imagesData: any) => {
-      const ids = undisplayMergedData.reduce((acc, obj) => {
+import { fastFilter } from '../util';
+//only use when you have a static database (not change everytime the user takes action)
+const selectFunction = {
+  data: {
+    images: (state: IState) => state.imagesData,
+    mergedData: (state: IState) => state.mergedData,
+  },
+  discover: {
+    'images-discover': (state: IState) => state.imagesDataDiscover,
+    'mergedData-discover': (state: IState) => state.mergedDataDiscover,
+  },
+};
+export const alreadySeenCardSelector = createSelector<any, any, []>(
+  [(seenCards: any) => seenCards],
+  (seenCard: any) => {
+    const alreadySeenCards =
+      seenCard.reduce((acc: any[], obj: { id: number }) => {
         acc.push(obj.id);
         return acc;
-      }, [] as number[]);
-      const temp = mergedData.filter((obj) => !ids.includes(obj.id));
-      const images = imagesData.filter((obj: any) => !ids.includes(obj.id));
-
-      return callback(images, temp);
-    }
-  );
-export const mutationSeenAddedSelector = (callback: any, dispatch: any, condition: boolean) =>
+      }, []) || [];
+    return alreadySeenCards;
+  }
+);
+export const getIdsSelector = createSelector<any, any, any[]>([(dataList: any) => dataList], (data: any) => {
+  return data.map((obj: any) => obj.id);
+});
+export const sortedRepoInfoSelector = (sortedIds: any[], starRankingFiltered: any[]) =>
+  createSelector<any, any, any[]>([(repoInfos: any) => repoInfos], (repoInfo: any) => {
+    const result = repoInfo
+      ?.slice()
+      .sort((a: any, b: any) => {
+        return sortedIds.indexOf(a.id) - sortedIds.indexOf(b.id);
+      })
+      .map((obj: any) => {
+        const copyObj = Object.assign({}, obj);
+        copyObj.trends = starRankingFiltered.find((xx: any) => xx.id === obj.id)
+          ? starRankingFiltered.find((xx: any) => xx.id === obj.id).trends.daily
+          : 0;
+        return copyObj;
+      });
+    return result;
+  });
+export const starRankingFilteredSelector = (ids: number[]) =>
+  createSelector<any, any, any[]>([(starRankings: any) => starRankings, (ids: any) => ids], (starRanking: any) => {
+    const starRankingFiltered =
+      fastFilter((xx: any) => ids.includes(xx.id), starRanking)
+        .reduce((acc: any[], obj: any) => {
+          const temp = Object.assign({}, { trends: obj.trends, id: obj.id });
+          acc.push(temp);
+          return acc;
+        }, [])
+        .sort((a: any, b: any) => b['trends']['daily'] - a['trends']['daily']) || [];
+    return starRankingFiltered;
+  });
+export const mutationSeenAddedSelector = (callback: any, dispatch: any, condition: boolean, type: string) =>
   createSelector<IState, any, () => void>(
-    [(state) => state.mergedData, (state) => state.imagesData, (state) => state.isLoggedIn],
+    [selectFunction[type].images, selectFunction[type].mergedData, (state) => state.isLoggedIn],
     (mergedData: MergedDataProps[], imagesData: any[], isLoggedIn: boolean) => {
       if (condition) {
         dispatch();
@@ -122,7 +79,7 @@ export const mutationSeenAddedSelector = (callback: any, dispatch: any, conditio
               topics: obj.topics,
               html_url: obj.html_url,
               id: obj.id,
-              imagesData: imagesData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+              imagesData: fastFilter((xx: any) => xx.id === obj.id, imagesData).map((obj) => [...obj.value])[0] || [],
               name: obj.name,
               is_queried: false,
             }
@@ -139,25 +96,5 @@ export const mutationSeenAddedSelector = (callback: any, dispatch: any, conditio
 
 export function useApolloFactorySelector(selector: any) {
   const state = ApolloFactory.useContainer();
-  return selector(state);
-}
-
-export function useStateSelector(selector: any) {
-  const state = initialStateContainer.useContainer();
-  return selector(state);
-}
-
-export function useStateStargazersSelector(selector: any) {
-  const state = initialStateStargazersContainer.useContainer();
-  return selector(state);
-}
-
-export function useDispatchStateSelector(selector: any) {
-  const state = initialStateContainer.useContainer();
-  return selector(state);
-}
-
-export function useDispatchStateStargazersSelector(selector: any) {
-  const state = initialStateContainer.useContainer();
   return selector(state);
 }

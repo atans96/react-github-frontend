@@ -1,7 +1,6 @@
 import { IAction, IState, IStateStargazers } from '../typing/interface';
 import { HasNextPage } from '../typing/type';
-import { readEnvironmentVariable } from '../util';
-import { createContainer } from 'unstated-next';
+import { fastFilter, readEnvironmentVariable } from '../util';
 
 const _ = require('lodash');
 type Action =
@@ -60,7 +59,6 @@ export const initialStateStargazers: IStateStargazers = {
   stargazersUsers: parseInt(localStorage.getItem('users')!) || 2, //setting
   stargazersUsersStarredRepositories: parseInt(localStorage.getItem('repos')!) || 2, //setting
 };
-export const initialStateStargazersContainer = createContainer(() => initialStateStargazers);
 export const reducerStargazers = (state = initialStateStargazers, action: IAction<Action>): IStateStargazers => {
   switch (action.type) {
     case 'LOGOUT': {
@@ -95,7 +93,7 @@ export const reducerStargazers = (state = initialStateStargazers, action: IActio
       return {
         ...state,
         stargazersQueueData: state.stargazersQueueData.find((obj) => action.payload.stargazersQueueData.id === obj.id)
-          ? state.stargazersQueueData.filter((obj) => obj.id !== action.payload.stargazersQueueData.id)
+          ? fastFilter((obj: any) => obj.id !== action.payload.stargazersQueueData.id, state.stargazersQueueData)
           : _.uniqBy([...state.stargazersQueueData, action.payload.stargazersQueueData], 'id'),
       };
     }
@@ -106,11 +104,13 @@ export const reducerStargazers = (state = initialStateStargazers, action: IActio
       };
     }
     case 'STARGAZERS_ADDED': {
+      const temp = _.uniqBy([...state.stargazersData, action.payload.stargazersData], 'id');
       return {
         ...state,
-        stargazersData: _.uniqBy([...state.stargazersData, action.payload.stargazersData], 'id').filter((obj: any) => {
-          return state.stargazersQueueData.findIndex((xx) => xx.id === obj.id) === -1;
-        }),
+        stargazersData: fastFilter(
+          (obj: any) => state.stargazersQueueData.findIndex((xx) => xx.id === obj.id) === -1,
+          temp
+        ),
       };
     }
     case 'STARGAZERS_ADDED_WITHOUT_FILTER': {
@@ -183,7 +183,6 @@ export const initialState: IState = {
   drawerWidth: 0, //persist drawer width once it's dragged and moved by the user
   shouldFetchImages: false,
 };
-export const initialStateContainer = createContainer(() => initialState);
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
     case 'REPO_INFO_ADDED': {
@@ -261,7 +260,7 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
     case 'FILTER_SET_TOPICS_REMOVE': {
       return {
         ...state,
-        filteredTopics: state.filteredTopics.filter((topic) => topic !== action.payload.filteredTopics),
+        filteredTopics: fastFilter((obj: any) => obj !== action.payload.filteredTopics, state.filteredTopics),
       };
     }
     case 'FILTER_SET_TOPICS': {

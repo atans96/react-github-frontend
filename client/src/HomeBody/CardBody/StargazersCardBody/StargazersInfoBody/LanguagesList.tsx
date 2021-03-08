@@ -4,7 +4,7 @@ import { Then } from '../../../../util/react-if/Then';
 import './LanguageListStyle.scss';
 import { IStateStargazers } from '../../../../typing/interface';
 import { StargazerProps } from '../../../../typing/type';
-import { languageList } from '../../../../util';
+import { fastFilter, languageList } from '../../../../util';
 
 export interface LanguagesList {
   stateStargazers: IStateStargazers;
@@ -28,9 +28,10 @@ const LanguagesList: React.FC<LanguagesList> = ({ stateStargazers, dispatchStarg
   const handleClickSort = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     const temp = stateStargazers.stargazersData.reduce((acc: any[], stargazer: StargazerProps) => {
-      const languages = stargazer.starredRepositories.nodes
-        .map((obj: any) => obj.languages.nodes.map((obj: any) => obj.name)[0])
-        .filter((language: string) => language === stateStargazers.language);
+      const temp = stargazer.starredRepositories.nodes.map(
+        (obj: any) => obj.languages.nodes.map((obj: any) => obj.name)[0]
+      );
+      const languages = fastFilter((language: string) => language === stateStargazers.language, temp);
       acc.push(Object.assign({}, { id: stargazer.id, languages: languages.length }));
       return acc;
     }, []);
