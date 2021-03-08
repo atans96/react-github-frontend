@@ -236,7 +236,6 @@ const ImagesCard = React.memo<ImagesCardProps>(
           handleClick={handleClick}
           handleProgressPromiseUnrender={handleProgressPromiseUnrender}
           modal={modal}
-          Visible={visible}
           renderImages={renderImages}
         />
       </React.Fragment>

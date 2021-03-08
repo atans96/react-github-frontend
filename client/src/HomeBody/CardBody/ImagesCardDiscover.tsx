@@ -27,7 +27,6 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
   ({ index, visible, state }) => {
     const [renderChildren, setRenderChildren] = useState(false);
     const [modal, setModal] = useState(false);
-    const [Visible, setVisible] = useState(false);
     const [showProgressBarUnRenderImages, setShowProgressBarUnRenderImages] = useState(false);
     const [renderImages, setRenderImages] = useState<string[]>([]);
     const showProgressBarUnRenderImagesRef = useRef<boolean>(true);
@@ -50,18 +49,6 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
       previousStringUnRenderImages.current.push(src); // because ImageComponent will re-render, don't ever set state
       // when rendering. Instead, use useRef
     }, []);
-
-    // when visible props changes, ImagesCard will re-render, thus causing unmount to execute.
-    useEffect(() => {
-      let isCancelled = false;
-      if (!isCancelled && visible && !Visible) {
-        setVisible(visible);
-      }
-      return () => {
-        isCancelled = true;
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [visible]);
 
     useEffect(() => {
       let isCancelled = false;
@@ -120,7 +107,17 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     useClickOutside(sliderContainer, () => setModal(false));
     const imagesCount = useRef(0);
     const loadingCount = useRef(0);
-
+    const [unrenderImages, setUnrenderImages] = useState<string[]>([]);
+    const unrenderImagesRef = useRef<string[]>([]);
+    useEffect(() => {
+      unrenderImagesRef.current = [...unrenderImages]; //shallow copy works because no nested array
+    });
+    const getImageSrc = useCallback((src) => {
+      setUnrenderImages((prevState) => {
+        prevState.push(src);
+        return prevState;
+      });
+    }, []);
     return (
       <React.Fragment>
         <If
@@ -137,11 +134,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
             </div>
           </Then>
         </If>
-        <If
-          condition={
-            Array.isArray(state.imagesDataDiscover) && state.imagesDataDiscover.length > 0 && renderImages.length > 0
-          }
-        >
+        <If condition={Array.isArray(state.imagesDataDiscover) && state.imagesDataDiscover.length > 0}>
           <Then>
             <If condition={showProgressBarUnRenderImages && renderImages.slice(2).length > 0}>
               <Then>
@@ -162,6 +155,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
                       restOfTheImages={false}
                       loadingCount={loadingCount}
                       imagesCount={imagesCount}
+                      getImageSrc={getImageSrc}
                       onProgress={handleProgressPromiseUnrender}
                       visible={visible}
                       key={idx}
@@ -173,18 +167,20 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
             <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
               {renderChildren &&
                 renderImages.map((image: string, idx: number) => {
-                  return (
-                    <ImageComponentLayout
-                      handleClick={handleClick}
-                      restOfTheImages={true}
-                      loadingCount={loadingCount}
-                      imagesCount={imagesCount}
-                      onProgress={handleProgressPromiseUnrender}
-                      visible={visible}
-                      key={idx}
-                      urlLink={image}
-                    />
-                  );
+                  if (!unrenderImagesRef.current.includes(image)) {
+                    return (
+                      <ImageComponentLayout
+                        handleClick={handleClick}
+                        restOfTheImages={true}
+                        loadingCount={loadingCount}
+                        imagesCount={imagesCount}
+                        onProgress={handleProgressPromiseUnrender}
+                        visible={visible}
+                        key={idx}
+                        urlLink={image}
+                      />
+                    );
+                  }
                 })}
             </div>
             <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
@@ -202,7 +198,6 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
           handleClick={handleClick}
           handleProgressPromiseUnrender={handleProgressPromiseUnrender}
           modal={modal}
-          Visible={Visible}
           renderImages={renderImages}
         />
       </React.Fragment>

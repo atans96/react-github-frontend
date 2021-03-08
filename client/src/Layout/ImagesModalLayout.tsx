@@ -12,17 +12,15 @@ interface SearchBarLayout {
   renderImages: any;
   handleClick: any;
   handleProgressPromiseUnrender: any;
-  Visible: boolean;
 }
 interface ImageComponentProps {
   urlLink: string;
-  visible: boolean;
   onProgress: (arg: string) => void;
   handleClick: (arg: any) => void;
   loader?: JSX.Element;
 }
-const ImageModal: React.FC<ImageComponentProps> = ({ urlLink, visible }) => {
-  const { src, isLoading, error, height, width } = useImage({
+const ImageModal: React.FC<ImageComponentProps> = ({ urlLink }) => {
+  const { isLoading, error, height, width } = useImage({
     srcList: urlLink,
     useSuspense: false,
   });
@@ -42,7 +40,6 @@ const ImagesModalLayout: React.FC<SearchBarLayout> = ({
   renderImages,
   handleClick,
   handleProgressPromiseUnrender,
-  Visible,
 }) => {
   const [mouseGrabbing, setMouseGrabbing] = useState(false);
   const sliderInner = useRef<HTMLDivElement | null>(null);
@@ -78,7 +75,6 @@ const ImagesModalLayout: React.FC<SearchBarLayout> = ({
                       loader={<Loading />}
                       handleClick={handleClick}
                       onProgress={handleProgressPromiseUnrender}
-                      visible={Visible}
                     />
                   );
                 })}
