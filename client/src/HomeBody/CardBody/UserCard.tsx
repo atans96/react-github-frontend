@@ -1,8 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { useUserCardStyles } from './UserCardStyle';
 import { Typography } from '@material-ui/core';
 import { dispatchUsername } from '../../store/dispatcher';
-import useHover from '../../hooks/useHover';
 import { isEqualObjects } from '../../util';
 import { RouteComponentProps } from 'react-router-dom';
 import { If } from '../../util/react-if/If';
@@ -34,6 +33,7 @@ const UserCard = React.memo<UserCard>(
       });
       dispatchUsername(login, dispatch);
     }
+
     return (
       <div className="avatarBackground">
         <div className={classes.wrapper}>

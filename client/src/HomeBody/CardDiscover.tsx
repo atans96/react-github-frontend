@@ -3,12 +3,12 @@ import { NavLink, RouteComponentProps } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
-import VisibilitySensor from '../Layout/LazyLoadLayout';
+import VisibilitySensor from '../Layout/VisibilitySensor';
 import { IState } from '../typing/interface';
 import './CardStyle.scss';
-import useApolloFactory from '../hooks/useApolloFactory';
 import clsx from 'clsx';
 import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
+import { useApolloFactorySelector } from '../selectors/stateSelector';
 
 export interface Card {
   index: string;
@@ -42,7 +42,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
     },
     ref
   ) => {
-    const { mutation } = useApolloFactory();
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
     // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
 
@@ -65,7 +64,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
     const handleDetailsClicked = (e: React.MouseEvent) => {
       e.preventDefault();
       if (state.isLoggedIn) {
-        mutation
+        useApolloFactorySelector((mutation: any) => mutation)
           .clickedAdded({
             variables: {
               clickedInfo: [
@@ -136,7 +135,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
                 <NavLink
                   to={{
                     pathname: `/detail/${githubData.id}`,
-                    state: { data: githubData, path: window.location.pathname },
+                    state: { data: githubData, path: document.location.pathname },
                   }}
                   className="btn-clear nav-link"
                 >

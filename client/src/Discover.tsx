@@ -8,8 +8,8 @@ import {
   dispatchPageDiscover,
 } from './store/dispatcher';
 import { useResizeHandler } from './hooks/hooks';
-import { IState } from './typing/interface';
-import { MergedDataProps, SeenProps } from './typing/type';
+import { IDataOne, IState } from './typing/interface';
+import { MergedDataProps, Nullable, SeenProps } from './typing/type';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
@@ -20,7 +20,7 @@ import { RouteComponentProps } from 'react-router-dom';
 import { filterActionResolvedPromiseData } from './util/util';
 import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
-import useApolloFactory from './hooks/useApolloFactory';
+import { dataRepoImagesSelector, useApolloFactorySelector } from './selectors/stateSelector';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -79,12 +79,17 @@ interface DiscoverProps {
 
 const Discover = React.memo<DiscoverProps>(
   ({ state, dispatch, dispatchStargazers, routerProps }) => {
-    const { mutation, query } = useApolloFactory();
-    const { userData, userDataLoading, userDataError } = query.getUserData;
-    const { seenData, seenDataLoading, seenDataError } = query.getSeen;
-    const { starRankingData, starRankingDataLoading, starRankingDataError } = query.getStarRanking;
-    const { userStarred, loadingUserStarred, errorUserStarred } = query.getUserInfoStarred;
-    const { suggestedData, suggestedDataLoading, suggestedDataError } = query.getSuggestedRepo;
+    const { suggestedData, suggestedDataLoading, suggestedDataError } = useApolloFactorySelector(
+      (query: any) => query.getSuggestedRepo
+    );
+    const { seenData, seenDataLoading, seenDataError } = useApolloFactorySelector((query: any) => query.getSeen);
+    const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactorySelector(
+      (query: any) => query.getUserData
+    );
+    const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getStarRanking);
+    const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactorySelector(
+      (query: any) => query.getUserInfoStarred
+    );
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(true);
     const paginationRef = useRef(state.perPage);
@@ -93,7 +98,7 @@ const Discover = React.memo<DiscoverProps>(
     const [notification, setNotification] = useState('');
     const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
     const windowScreenRef = useRef<HTMLDivElement>(null);
-    const actionResolvedPromise = async (action: string, data?: any) => {
+    const actionResolvedPromise = async (action: string, data?: Nullable<IDataOne | any>) => {
       if (data && action === 'append') {
         const alreadySeenCards =
           seenData.getSeen?.seenCards.reduce((acc: any[], obj: { id: number }) => {
@@ -113,27 +118,11 @@ const Discover = React.memo<DiscoverProps>(
         if (temp.length > 0) {
           temp = temp.filter((obj: any) => userStarred.getUserInfoStarred.starred.includes(obj.id) === false);
         }
-        let inputForImagesData = [];
         if (temp.length > 0) {
           dispatchAppendMergedDataDiscover(temp, dispatch);
           setLoading(false);
           const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          inputForImagesData = data.reduce((acc: any[], object: any) => {
-            acc.push(
-              Object.assign(
-                {},
-                {
-                  id: object.id,
-                  value: {
-                    full_name: object.full_name,
-                    branch: object.default_branch,
-                  },
-                }
-              )
-            );
-            return acc;
-          }, []);
-          getRepoImages(inputForImagesData, 'wa1618i', state.pageDiscover + 1, token).then((repoImage) => {
+          getRepoImages(dataRepoImagesSelector(state), 'wa1618i', state.pageDiscover + 1, token).then((repoImage) => {
             if (repoImage.renderImages.length > 0) {
               dispatchImagesDataDiscover(repoImage.renderImages, dispatch);
             } else {
@@ -275,7 +264,7 @@ const Discover = React.memo<DiscoverProps>(
         !isFetchFinish.current &&
         mergedDataRef.current.length > 0 &&
         !isLoadingRef.current &&
-        window.location.pathname === '/discover' &&
+        document.location.pathname === '/discover' &&
         notificationRef.current === ''
       ) {
         dispatchPageDiscover(dispatch);
@@ -306,7 +295,7 @@ const Discover = React.memo<DiscoverProps>(
         }, [] as SeenProps[]);
         if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
           //don't add to database yet when imagesData still loading.
-          mutation
+          useApolloFactorySelector((mutation: any) => mutation)
             .seenAdded({
               variables: {
                 seenCards: result,
@@ -321,7 +310,7 @@ const Discover = React.memo<DiscoverProps>(
       isLoadingRef.current,
       imagesDataRef.current,
       notificationRef.current,
-      window.location.pathname,
+      document.location.pathname,
       state.isLoggedIn,
     ]);
 

@@ -1,8 +1,8 @@
 import React, { useContext, useState } from 'react';
 import { dispatchUsername } from '../../../store/dispatcher';
 import { Context, ContextStargazers } from '../../../index';
-import useApolloFactory from '../../../hooks/useApolloFactory';
 import { IState } from '../../../typing/interface';
+import { useApolloFactorySelector } from '../../../selectors/stateSelector';
 
 interface Result {
   children: React.ReactNode;
@@ -12,7 +12,6 @@ interface Result {
 }
 
 const Result: React.FC<Result> = ({ state, children, userName, getRootProps }) => {
-  const { mutation } = useApolloFactory();
   const { dispatch } = useContext(Context);
   const { dispatchStargazers } = useContext(ContextStargazers);
   const [isHovered, setIsHovered] = useState(false);
@@ -32,7 +31,7 @@ const Result: React.FC<Result> = ({ state, children, userName, getRootProps }) =
     });
     dispatchUsername(userName, dispatch);
     if (state.isLoggedIn) {
-      mutation
+      useApolloFactorySelector((mutation: any) => mutation)
         .searchesAdded({
           variables: {
             search: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })],

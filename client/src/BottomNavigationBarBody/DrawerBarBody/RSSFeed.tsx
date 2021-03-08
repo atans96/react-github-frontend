@@ -19,7 +19,7 @@ import { IState } from '../../typing/interface';
 import { isEqualObjects, uniqFast } from '../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
-import useApolloFactory from '../../hooks/useApolloFactory';
+import { useApolloFactorySelector } from '../../selectors/stateSelector';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -46,7 +46,6 @@ interface RSSFeedProps {
 
 const RSSFeed: React.FC<RSSFeedProps> = React.memo(
   ({ state, dispatch }) => {
-    const { mutation } = useApolloFactory();
     const classes = useStyles();
     const [openRSS, setOpenRSS] = useState(false);
     const [showMoreRSS, setShowMoreRSS] = useState(false);
@@ -110,7 +109,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               if (state.tokenRSS === '') {
                 setLoading(false);
                 setToken('');
-                mutation
+                useApolloFactorySelector((mutation: any) => mutation)
                   .tokenRSSAdded({
                     variables: {
                       tokenRSS: token,
@@ -124,7 +123,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                   },
                 });
                 setRSSFeed(HTML.reverse());
-                mutation
+                useApolloFactorySelector((mutation: any) => mutation)
                   .rssFeedAdded({
                     variables: {
                       rss: HTML,
@@ -135,7 +134,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               }
               if (!openRSS) {
                 unseenFeeds.current = [];
-                mutation
+                useApolloFactorySelector((mutation: any) => mutation)
                   .rssFeedAdded({
                     variables: {
                       rss: HTML,
@@ -151,7 +150,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                       resolve({ status: 200 });
                     }
                   })
-                  .catch((e) => {
+                  .catch((e: any) => {
                     setLoading(false);
                     setNotification(e.message);
                     resolve({ status: 400 });
@@ -159,7 +158,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               } else {
                 if (state.tokenRSS !== '') {
                   const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
-                  mutation
+                  useApolloFactorySelector((mutation: any) => mutation)
                     .rssFeedAdded({
                       variables: {
                         rss: HTML,
@@ -174,7 +173,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                       }
                       resolve({ status: 200 });
                     })
-                    .catch((e) => {
+                    .catch((e: any) => {
                       setLoading(false);
                       setNotification(e.message);
                       resolve({ status: 400 });

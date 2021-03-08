@@ -9,8 +9,8 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import { CircularProgress } from '@material-ui/core';
 import { TrendsCard } from './HomeBody/DetailsBody/TrendsCard';
-import useApolloFactory from './hooks/useApolloFactory';
 import { Helmet } from 'react-helmet';
+import { useApolloFactorySelector } from './selectors/stateSelector';
 
 interface StateProps {
   data: {
@@ -32,8 +32,9 @@ const Details: React.FC = () => {
   const [data, setData] = useState(undefined);
   let history = useHistory();
   let location = useLocation<StateProps>();
-  const { query } = useApolloFactory();
-  const { starRankingData, starRankingDataLoading, starRankingDataError } = query.getStarRanking;
+  const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactorySelector(
+    (query: any) => query.getStarRanking
+  );
   useEffect(() => {
     if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
       const temp = starRankingData.getStarRanking.starRanking.find((obj: any) => obj.id === location.state.data.id);

@@ -1,7 +1,4 @@
 /* eslint-disable */
-import React from 'react';
-import imagesLoaded from 'imagesloaded';
-import deepKeys from 'deep-keys';
 import _ from 'lodash';
 
 export function readEnvironmentVariable(key) {
@@ -14,6 +11,7 @@ export function Counter(array) {
   return count;
 }
 export function missingDeepKeys(o1, o2, showIntermediate) {
+  import deepKeys from 'deep-keys';
   //const o1 = {a: {b: 2}}; // Base object
   // const o2 = {c: 1}; // Comparison object
   //
@@ -294,6 +292,7 @@ export function isEqualObjects(a, b) {
   }
 }
 export function checkImagesLoaded(array, callback) {
+  import imagesLoaded from 'imagesloaded';
   // Grabs images in the ref
   const collectedElements = array.querySelectorAll('img');
   // Checks if the are elements in the DOM first of all

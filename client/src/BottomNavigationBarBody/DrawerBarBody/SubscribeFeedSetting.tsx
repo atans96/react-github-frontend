@@ -9,9 +9,9 @@ import Result from './SubscribFeedSettingBody/Result';
 import SendIcon from 'mdi-react/SendIcon';
 import { dispatchUsername } from '../../store/dispatcher';
 import { NavLink } from 'react-router-dom';
-import useApolloFactory from '../../hooks/useApolloFactory';
 import { IState } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
+import { useApolloFactorySelector } from '../../selectors/stateSelector';
 
 const useStyles = makeStyles<Theme>(() => ({
   typographyQuery: {
@@ -50,8 +50,9 @@ interface SubscribeFeedSettingProps {
 
 const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
   ({ state, dispatch, dispatchStargazersUser }) => {
-    const { query } = useApolloFactory();
-    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = query.getWatchUsers;
+    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactorySelector(
+      (query: any) => query.getWatchUsers
+    );
     const classes = useStyles();
     const [openSubscriptionSetting, setSubscriptionSetting] = useState(false);
     const [showMoreSubscribedUsers, setShowMoreSubscribedUsers] = useState(false);

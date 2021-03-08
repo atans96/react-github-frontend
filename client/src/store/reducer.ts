@@ -1,6 +1,7 @@
 import { IAction, IState, IStateStargazers } from '../typing/interface';
 import { HasNextPage } from '../typing/type';
 import { readEnvironmentVariable } from '../util';
+import { createContainer } from 'unstated-next';
 
 const _ = require('lodash');
 type Action =
@@ -59,6 +60,7 @@ export const initialStateStargazers: IStateStargazers = {
   stargazersUsers: parseInt(localStorage.getItem('users')!) || 2, //setting
   stargazersUsersStarredRepositories: parseInt(localStorage.getItem('repos')!) || 2, //setting
 };
+export const initialStateStargazersContainer = createContainer(() => initialStateStargazers);
 export const reducerStargazers = (state = initialStateStargazers, action: IAction<Action>): IStateStargazers => {
   switch (action.type) {
     case 'LOGOUT': {
@@ -181,6 +183,7 @@ export const initialState: IState = {
   drawerWidth: 0, //persist drawer width once it's dragged and moved by the user
   shouldFetchImages: false,
 };
+export const initialStateContainer = createContainer(() => initialState);
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
     case 'REPO_INFO_ADDED': {

@@ -20,8 +20,8 @@ import { subscribeUser } from '../../services';
 import Parser from 'rss-parser';
 import _ from 'lodash';
 import { NavLink } from 'react-router-dom';
-import useApolloFactory from '../../hooks/useApolloFactory';
 import { IState } from '../../typing/interface';
+import { useApolloFactorySelector } from '../../selectors/stateSelector';
 
 const useStyles = makeStyles<Theme>(() => ({
   list: {
@@ -60,8 +60,9 @@ interface SubscribeFeedProps {
 }
 const SubscribeFeed = React.memo<SubscribeFeedProps>(
   ({ state }) => {
-    const { query, mutation } = useApolloFactory();
-    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = query.getWatchUsers;
+    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactorySelector(
+      (query: any) => query.getWatchUsers
+    );
     const classes = useStyles();
     const [openSubscription, setSubscription] = useState(false);
     const [xmlFileListAppend, setXmlFileListAppend] = useState<string[]>([]);
@@ -138,7 +139,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                   });
                   if (!openSubscription) {
                     const feeds = uniqFast(HTML.filter((x: any) => x.login === obj.login).map((x: any) => x.feeds));
-                    mutation
+                    useApolloFactorySelector((mutation: any) => mutation)
                       .watchUsersFeedsAdded({
                         variables: {
                           login: obj.login,
@@ -200,7 +201,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                           return acc;
                         }, []) || [];
                     const feeds = uniqFast(HTML.filter((x: any) => x.login === obj.login).map((x: any) => x.feeds));
-                    mutation
+                    useApolloFactorySelector((mutation: any) => mutation)
                       .watchUsersFeedsAdded({
                         variables: {
                           login: obj.login,

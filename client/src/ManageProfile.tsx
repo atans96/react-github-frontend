@@ -26,15 +26,13 @@ import LanguageStarsInfo from './ManageProfileBody/LanguageStarsInfo';
 import RepoInfo from './ManageProfileBody/RepoInfo';
 import Details from './ManageProfileBody/Details';
 import { IState } from './typing/interface';
-import { RouteComponentProps } from 'react-router-dom';
 import { RepoInfoProps } from './typing/type';
 import { epochToJsDate } from './util/util';
-import { Helmet } from 'react-helmet';
 import Checkboxes from './ManageProfileBody/Checkboxes';
 import Search from './ManageProfileBody/Search';
 import _ from 'lodash';
-import useApolloFactory from './hooks/useApolloFactory';
 import { useResizeHandler } from './hooks/hooks';
+import { useApolloFactorySelector } from './selectors/stateSelector';
 
 interface StyleProps {
   drawerWidth: string;
@@ -89,9 +87,10 @@ interface ManageProfileProps {
 }
 
 const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
-  const { mutation, query } = useApolloFactory();
-  const { userData, userDataLoading, userDataError } = query.getUserData;
-  const { userInfoData, userInfoDataLoading, userInfoDataError } = query.getUserInfoData;
+  const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getUserData);
+  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactorySelector(
+    (query: any) => query.getUserInfoData
+  );
   const [openLanguages, setOpenLanguages] = useState(false);
   const classes = useStyles({ drawerWidth: '250px' });
   const handleOpenLanguages = (e: React.MouseEvent) => {
@@ -117,7 +116,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
 
   useDeepCompareEffect(() => {
     if (state.isLoggedIn) {
-      mutation
+      useApolloFactorySelector((mutation: any) => mutation)
         .languagesPreferenceAdded({
           variables: {
             languagePreference: languagePreferences,
@@ -345,7 +344,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
   const manageProfileRef = useRef<HTMLDivElement>(null);
   const [innerWidth, setInnerWidth] = useState(window.innerWidth);
   const handleResize = () => {
-    if (window.location.pathname === '/profile') {
+    if (document.location.pathname === '/profile') {
       setInnerWidth(window.innerWidth);
     }
   };

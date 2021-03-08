@@ -23,6 +23,7 @@ import {
   GET_WATCH_USERS,
 } from '../queries';
 import { useDeepMemo } from './useDeepMemo';
+import { createContainer } from 'unstated-next';
 
 function useApolloFactory() {
   const [seenAdded] = useMutation(SEEN_ADDED, {
@@ -207,5 +208,4 @@ function useApolloFactory() {
     },
   };
 }
-
-export default useApolloFactory;
+export const ApolloFactory = createContainer(useApolloFactory);

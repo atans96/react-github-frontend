@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import useApolloFactory from './useApolloFactory';
 import { verifyJWTToken } from '../services';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from '../util';
 import { useHistory } from 'react-router-dom';
 import { logoutAction } from '../util/util';
+import { useApolloFactorySelector } from '../selectors/stateSelector';
 
 interface useUserVerificationProps {
   componentProps: ComponentProps;
@@ -17,7 +17,7 @@ interface ComponentProps {
 
 function useUserVerification(props: useUserVerificationProps) {
   const [username, setUsername] = useState<any>(undefined);
-  const { query } = useApolloFactory();
+  const { userDataLoading } = useApolloFactorySelector((query: any) => query.getUserData);
   const history = useHistory();
   const isMounted = useRef(false); //when the first time is mounted, that means the user hasn't queried anything yet so
   //if the token is expired, logout. Else, when already mounted but token not expired, we prolong the token.
@@ -49,7 +49,7 @@ function useUserVerification(props: useUserVerificationProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return {
-    verifiedLoading: query.getUserData.userDataLoading,
+    verifiedLoading: userDataLoading,
     username:
       username === undefined || localStorage.getItem('jbb') === null || localStorage.getItem('sess') === null
         ? ''
