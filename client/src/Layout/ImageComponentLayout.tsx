@@ -81,7 +81,8 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = React.memo(
     return (
       isEqualObjects(prevProps.visible, nextProps.visible) &&
       isEqualObjects(prevProps.getImageSrc, nextProps.getImageSrc) &&
-      isEqualObjects(prevProps.handleClick, nextProps.handleClick)
+      isEqualObjects(prevProps.handleClick, nextProps.handleClick) &&
+      isEqualObjects(prevProps.urlLink, nextProps.urlLink)
     );
   }
 );

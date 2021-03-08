@@ -20,14 +20,12 @@ interface SearchBarProps {
   visibleSearchesHistory: any;
   setVisibleSearchesHistory: any;
   state: IState;
-  searchesHistory: any;
 }
 
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
 export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
   (
     {
-      searchesHistory,
       visibleSearchesHistory,
       setVisibleSearchesHistory,
       setVisible,
@@ -40,7 +38,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     },
     ref
   ) => {
-    const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getUserData);
+    const { userData } = useApolloFactorySelector((query: any) => query.getUserData);
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
     const handler = useCallback(

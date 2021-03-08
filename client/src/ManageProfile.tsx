@@ -17,7 +17,7 @@ import {
   Theme,
 } from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
-import { Counter, readEnvironmentVariable } from './util';
+import { Counter, fastFilter, readEnvironmentVariable } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
@@ -178,7 +178,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
             temp.data.forEach((obj: any) => {
               promises.push(
                 new Promise<any>((resolve, reject) => {
-                  (async () => {
+                  (async (data) => {
                     let timeout = 0;
                     let breakout = false;
                     let i = 0;
@@ -190,7 +190,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
                       if (timeout > 0) {
                         timeout = 0; //clear the timeout
                       }
-                      await getTopContributors(obj.fullName, userData.getUserData.token)
+                      await getTopContributors(data.fullName, userData.getUserData.token)
                         .then((res) => {
                           if (res.error_403) {
                             timeout = epochToJsDate(res.rateLimit.reset);
@@ -201,7 +201,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
                         })
                         .catch((err) => reject(err));
                     }
-                  })();
+                  })(obj);
                 })
               );
               return obj;
@@ -223,17 +223,15 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
         if (!isApiExceeded) {
           Promise.allSettled(promises)
             .then((result) => {
-              const cont = result
-                .map((obj: any) => {
-                  if (obj.status === 'fulfilled') {
-                    return obj.value.data;
-                  }
-                })
-                .filter((e) => !!e);
+              const temp = result.map((obj: any) => {
+                if (obj.status === 'fulfilled') {
+                  return obj.value.data;
+                }
+              });
               dispatch({
                 type: 'CONTRIBUTORS_ADDED',
                 payload: {
-                  contributors: [...cont],
+                  contributors: [...fastFilter((x: any) => !!x, temp)],
                 },
               });
             })
@@ -319,7 +317,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
       });
     } else {
       setLanguageFilter((prevState) => {
-        const updated = prevState.filter((xx) => xx !== language);
+        const updated = fastFilter((obj: any) => obj !== language, prevState);
         return updated;
       });
     }
@@ -347,6 +345,32 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
     if (document.location.pathname === '/profile') {
       setInnerWidth(window.innerWidth);
     }
+  };
+  const render = () => {
+    const filter1 = fastFilter((obj: RepoInfoProps) => {
+      if (languageFilter.length > 0 && languageFilter.includes(obj.language)) {
+        return obj;
+      } else if (languageFilter.length === 0) {
+        return obj;
+      }
+    }, state.repoInfo);
+    const filter2 = fastFilter((obj: any) => {
+      if (
+        (typedFilter.length > 0 &&
+          checkedItems.descriptionTitle &&
+          !!obj.description &&
+          obj.description.includes(typedFilter)) ||
+        (checkedItems.descriptionTitle && !!obj.fullName && obj.fullName.includes(typedFilter)) ||
+        (checkedItems.descriptionTitle && !!obj.topics && obj.topics.includes(typedFilter)) ||
+        (checkedItems.readme && !!obj.readme && obj.readme.includes(typedFilter))
+      ) {
+        return obj;
+      } else if (typedFilter.length === 0) {
+        return obj;
+      }
+    }, filter1);
+    const filter3 = fastFilter((obj: any) => !!obj, filter2);
+    return filter3;
   };
   useResizeHandler(manageProfileRef, handleResize);
   return (
@@ -452,42 +476,18 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
                     display: 'inline-block',
                   }}
                 >
-                  {state.repoInfo
-                    .filter((obj: RepoInfoProps) => {
-                      if (languageFilter.length > 0 && languageFilter.includes(obj.language)) {
-                        return obj;
-                      } else if (languageFilter.length === 0) {
-                        return obj;
-                      }
-                    })
-                    .filter((obj) => {
-                      if (
-                        (typedFilter.length > 0 &&
-                          checkedItems.descriptionTitle &&
-                          !!obj.description &&
-                          obj.description.includes(typedFilter)) ||
-                        (checkedItems.descriptionTitle && !!obj.fullName && obj.fullName.includes(typedFilter)) ||
-                        (checkedItems.descriptionTitle && !!obj.topics && obj.topics.includes(typedFilter)) ||
-                        (checkedItems.readme && !!obj.readme && obj.readme.includes(typedFilter))
-                      ) {
-                        return obj;
-                      } else if (typedFilter.length === 0) {
-                        return obj;
-                      }
-                    })
-                    .filter((e) => !!e)
-                    .map((obj: RepoInfoProps, idx) => {
-                      return (
-                        <RepoInfo
-                          active={active}
-                          obj={obj}
-                          key={idx}
-                          onClickRepoInfo={onClickRepoInfo}
-                          contributions={state.contributors}
-                          dispatch={dispatch}
-                        />
-                      );
-                    })}
+                  {render().map((obj: RepoInfoProps, idx) => {
+                    return (
+                      <RepoInfo
+                        active={active}
+                        obj={obj}
+                        key={idx}
+                        onClickRepoInfo={onClickRepoInfo}
+                        contributions={state.contributors}
+                        dispatch={dispatch}
+                      />
+                    );
+                  })}
                 </div>
               </td>
               <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>

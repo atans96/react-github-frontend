@@ -4,6 +4,7 @@ import { Body, DetailsLayout, Header, Section } from '../../Layout/DetailsLayout
 import { TrendSummary } from './TrendsCardBody/TrendSummary';
 import MonthlyTrends from './TrendsCardBody/MonthlyTrends';
 import { HeatMapContainer } from './TrendsCardBody/HeatMapContainer';
+import { fastFilter } from '../../util';
 
 interface TrendsCardProps {
   project: any;
@@ -11,7 +12,7 @@ interface TrendsCardProps {
 
 export const TrendsCard = React.memo<TrendsCardProps>(({ project }) => {
   const dailyDeltas = project.timeSeries?.daily || [];
-  const numberOfDailyDeltas = dailyDeltas.filter((delta: any) => delta !== null);
+  const numberOfDailyDeltas = fastFilter((delta: any) => delta !== null, dailyDeltas);
   const showHeatMap = numberOfDailyDeltas.length > 1; // show the heatmap only if we at least 2 numbers
 
   const monthlyDeltas = project.timeSeries && project.timeSeries.monthly;

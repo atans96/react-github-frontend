@@ -9,6 +9,7 @@ import { WATCH_USER_REMOVED } from '../../../mutations';
 import { GET_WATCH_USERS } from '../../../queries';
 import useHover from '../../../hooks/useHover';
 import { dispatchUsername } from '../../../store/dispatcher';
+import { fastFilter } from '../../../util';
 
 interface ResultProps {
   subscribedUsers: SubscribeUsersProps;
@@ -27,7 +28,7 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatch, dispatchStar
       const { getWatchUsers }: any = cache.readQuery({
         query: GET_WATCH_USERS,
       });
-      const filtered = getWatchUsers.login.filter((obj: any) => obj.login !== subscribedUsers.login);
+      const filtered = fastFilter((obj: any) => obj.login !== subscribedUsers.login, getWatchUsers.login);
       cache.writeQuery({
         query: GET_WATCH_USERS,
         data: {

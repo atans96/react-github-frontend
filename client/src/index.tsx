@@ -130,74 +130,65 @@ export const Main = () => {
 
   return (
     <CustomApolloProvider client={client} tokenGQL={tokenGQLMemo()} session={session()}>
-      <Context.Provider
-        value={{
-          state,
-          dispatch,
-        }}
-      >
-        <ContextStargazers.Provider value={{ stateStargazers, dispatchStargazers }}>
-          <Router>
-            <AuthedHandler
-              component={RateLimit}
-              path="/profile"
-              authenticator={state.width > 830}
-              componentProps={{ state, dispatch }}
-            />
-            <AuthedHandler
-              component={NavBar}
-              authenticator={true}
-              componentProps={{ state, dispatch, dispatchStargazers }}
-            />
-            <Switch>
-              <AuthedHandler
-                exact
-                path="/"
-                component={Global}
-                authenticator={true}
-                componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
-              />
-              <AuthedHandler
-                exact
-                path="/login"
-                component={Global}
-                authenticator={state.isLoggedIn === false}
-                componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
-              />
-              <AuthedHandler
-                exact
-                path="/discover"
-                component={Global}
-                authenticator={state.isLoggedIn === true}
-                componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
-              />
-              <AuthedHandler
-                exact
-                path="/trending"
-                component={Global}
-                authenticator={state.isLoggedIn === true}
-                componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
-              />
-              <AuthedHandler
-                exact
-                path="/profile"
-                component={Global}
-                authenticator={state.isLoggedIn === true}
-                componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
-              />
-              <AuthedHandler
-                exact
-                path="/detail/:id"
-                redirect="/login"
-                component={Global}
-                authenticator={state.isLoggedIn === true}
-                componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
-              />
-              <Route render={() => <h1>404</h1>} />
-            </Switch>
-          </Router>
-        </ContextStargazers.Provider>
-      </Context.Provider>
+      <Router>
+        <AuthedHandler
+          component={RateLimit}
+          path="/profile"
+          authenticator={state.width > 830}
+          componentProps={{ state, dispatch }}
+        />
+        <AuthedHandler
+          component={NavBar}
+          authenticator={true}
+          componentProps={{ state, dispatch, dispatchStargazers }}
+        />
+        <Switch>
+          <AuthedHandler
+            exact
+            path="/"
+            component={Global}
+            authenticator={true}
+            componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+          />
+          <AuthedHandler
+            exact
+            path="/login"
+            component={Global}
+            authenticator={state.isLoggedIn === false}
+            componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+          />
+          <AuthedHandler
+            exact
+            path="/discover"
+            component={Global}
+            authenticator={state.isLoggedIn === true}
+            componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+          />
+          <AuthedHandler
+            exact
+            path="/trending"
+            component={Global}
+            authenticator={state.isLoggedIn === true}
+            componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+          />
+          <AuthedHandler
+            exact
+            path="/profile"
+            component={Global}
+            authenticator={state.isLoggedIn === true}
+            componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+          />
+          <AuthedHandler
+            exact
+            path="/detail/:id"
+            redirect="/login"
+            component={Global}
+            authenticator={state.isLoggedIn === true}
+            componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+          />
+          <Route render={() => <h1>404</h1>} />
+        </Switch>
+      </Router>
     </CustomApolloProvider>
   );
 };

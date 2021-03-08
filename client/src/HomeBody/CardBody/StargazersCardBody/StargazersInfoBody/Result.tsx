@@ -11,7 +11,8 @@ import VisibilityIcon from '@material-ui/icons/Visibility';
 import { useMutation } from '@apollo/client';
 import { WATCH_USER_REMOVED } from '../../../../mutations';
 import { GET_WATCH_USERS } from '../../../../queries';
-import useApolloFactory from '../../../../hooks/useApolloFactory';
+import { useApolloFactorySelector } from '../../../../selectors/stateSelector';
+import { fastFilter } from '../../../../util';
 
 export interface Result {
   getRootPropsCard: any;
@@ -25,15 +26,16 @@ export interface Result {
 const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatch, stargazer, getRootPropsCard }) => {
   const [hovered, setHovered] = useState('');
   const classes = useUserCardStyles();
-  const { query, mutation } = useApolloFactory();
-  const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = query.getWatchUsers;
+  const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactorySelector(
+    (query: any) => query.getWatchUsers
+  );
   const [removed] = useMutation(WATCH_USER_REMOVED, {
     context: { clientName: 'mongo' },
     update: (cache) => {
       const { getWatchUsers }: any = cache.readQuery({
         query: GET_WATCH_USERS,
       });
-      const filtered = getWatchUsers.login.filter((obj: any) => obj.login !== stargazer.login);
+      const filtered = fastFilter((obj: any) => obj.login !== stargazer.login, getWatchUsers.login);
       cache.writeQuery({
         query: GET_WATCH_USERS,
         data: {
@@ -71,7 +73,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
       subscribeStatus = false;
     }
     if (subscribeStatus) {
-      mutation
+      useApolloFactorySelector((mutation: any) => mutation)
         .watchUsersAdded({
           variables: {
             login: Object.assign(

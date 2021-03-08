@@ -16,7 +16,7 @@ import { addRSSFeed } from '../../util/util';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import { IState } from '../../typing/interface';
-import { isEqualObjects, uniqFast } from '../../util';
+import { fastFilter, isEqualObjects, uniqFast } from '../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
 import { useApolloFactorySelector } from '../../selectors/stateSelector';
@@ -143,8 +143,9 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                   })
                   .then((res: any) => {
                     if (res.data.rssFeedAdded) {
-                      unseenFeeds.current = res.data.rssFeedAdded.rss.filter(
-                        (x: string) => res.data.rssFeedAdded.rssLastSeen.indexOf(x) === -1
+                      unseenFeeds.current = fastFilter(
+                        (x: string) => res.data.rssFeedAdded.rssLastSeen.indexOf(x) === -1,
+                        res.data.rssFeedAdded.rss
                       );
                       setNotificationBadge(unseenFeeds.current.length);
                       resolve({ status: 200 });
