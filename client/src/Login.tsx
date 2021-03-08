@@ -9,13 +9,12 @@ import './Login.scss';
 import CryptoJS from 'crypto-js';
 import { languageList, readEnvironmentVariable } from './util';
 import { Helmet } from 'react-helmet';
-import useApolloFactory from './hooks/useApolloFactory';
+import { useApolloFactorySelector } from './selectors/stateSelector';
 
 const Login: React.FC = () => {
   const { state, dispatch } = useContext(Context);
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const { client_id, redirect_uri } = state;
-  const { mutation } = useApolloFactory();
   let history = useHistory();
   useEffect(() => {
     // After requesting Github access by logging using user account's Github
@@ -42,7 +41,7 @@ const Login: React.FC = () => {
       requestGithubLogin(proxy_url, requestData)
         .then((response) => {
           if (response.data) {
-            mutation
+            useApolloFactorySelector((mutation: any) => mutation)
               .signUpAdded({
                 variables: {
                   username: response.data.login,
@@ -55,7 +54,7 @@ const Login: React.FC = () => {
                   }, [] as any[]),
                 },
               })
-              .then(({ data }) => {
+              .then(({ data }: any) => {
                 localStorage.setItem('sess', data.signUp.token);
                 localStorage.setItem(
                   'jbb',

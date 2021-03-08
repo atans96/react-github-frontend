@@ -21,7 +21,7 @@ import { Typography } from '@material-ui/core';
 import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
 import HistoryIcon from '@material-ui/icons/History';
 import { Loading } from '../util';
-import useApolloFactory from '../hooks/useApolloFactory';
+import { useApolloFactorySelector } from '../selectors/stateSelector';
 
 const defaultTheme = createMuiTheme();
 const theme = createMuiTheme({
@@ -44,8 +44,7 @@ interface SearchBarProps {
 
 const SearchBar = React.memo<SearchBarProps>(
   ({ portalExpandable, dispatch, dispatchStargazersUser, state, stateStargazers }) => {
-    const { query, mutation } = useApolloFactory();
-    const { searchesData } = query.getSearchesData;
+    const { searchesData } = useApolloFactorySelector((query: any) => query.getSearchesData);
     const username = useRef<any>();
     const classes = useUserCardStyles({ avatarSize: 20 });
     const size = {
@@ -127,7 +126,7 @@ const SearchBar = React.memo<SearchBarProps>(
       setVisible(false);
       setVisibleSearchesHistory(false);
       if (state.isLoggedIn) {
-        mutation
+        useApolloFactorySelector((mutation: any) => mutation)
           .searchesAdded({
             variables: {
               search: [

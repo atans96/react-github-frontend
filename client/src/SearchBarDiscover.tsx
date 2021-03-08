@@ -16,7 +16,7 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ state }) => {
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
     <div
       style={{
-        marginLeft: `${state.drawerWidth > 60 && window.location.pathname === '/discover' ? state.drawerWidth : 0}px`,
+        marginLeft: `${state.drawerWidth > 60 && document.location.pathname === '/discover' ? state.drawerWidth : 0}px`,
         display: 'grid',
       }}
     >

@@ -45,15 +45,16 @@ export type StargazerProps = {
 };
 export type SeenProps = {
   id: number;
-  stargazers_count: string;
-  full_name: string;
   default_branch: string;
+  stargazers_count: number;
+  full_name: string;
   owner: OwnerProps;
-  name: string;
   description: string;
   language: string;
-  topics: string[];
+  topics: [string];
   html_url: string;
+  name: string;
+  imagesData: [string];
   is_queried: boolean;
 };
 export type TopicsProps = {

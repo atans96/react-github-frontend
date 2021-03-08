@@ -1,5 +1,5 @@
 import React from 'react';
-import { HasNextPage, MergedDataProps, Nullable, RateLimit } from '../typing/type';
+import { HasNextPage, MergedDataProps, Nullable, RateLimit, SeenProps } from '../typing/type';
 
 export const dispatchRateLimit = (core: RateLimit, graphql: RateLimit, dispatch: React.Dispatch<any>) => {
   dispatch({
@@ -76,7 +76,7 @@ export const dispatchAppendMergedData = (data: MergedDataProps[], dispatch: Reac
     },
   });
 };
-export const dispatchMergedData = (data: MergedDataProps[], dispatch: React.Dispatch<any>) => {
+export const dispatchMergedData = (data: MergedDataProps[] | SeenProps[], dispatch: React.Dispatch<any>) => {
   dispatch({
     type: 'MERGED_DATA_ADDED',
     payload: {

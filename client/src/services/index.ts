@@ -15,7 +15,7 @@ async function rotateTokens() {
   let validToken = '';
   for (const token of tokens) {
     const rateLimit: any = await rateLimitInfo(token);
-    if (rateLimit.rateLimit.used < 10 || rateLimit.rateLimitGQL.used < 10 || rateLimit.rateLimitSearch.used < 5) {
+    if (rateLimit.rateLimit.used > 10 || rateLimit.rateLimitGQL.used > 10 || rateLimit.rateLimitSearch.used > 5) {
       validToken = token;
       break;
     }

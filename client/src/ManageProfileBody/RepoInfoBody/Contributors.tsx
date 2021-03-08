@@ -7,7 +7,6 @@ import { isEqualObjects } from '../../util';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
-import { RouteComponentProps } from 'react-router-dom';
 import Contributor from './ContributorsBody/Contributor';
 
 interface ContributorsProps {

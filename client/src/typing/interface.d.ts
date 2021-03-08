@@ -8,6 +8,7 @@ import {
   RateLimit,
   RenderImagesProps,
   RepoInfoProps,
+  SeenProps,
   StargazerProps,
   TopicsProps,
 } from './type';
@@ -51,7 +52,7 @@ export interface IState {
   rateLimitAnimationAdded: boolean;
   mergedDataDiscover: MergedDataProps[]; // assign object of MergedData to your array
   mergedData: MergedDataProps[];
-  undisplayMergedData: MergedDataProps[];
+  undisplayMergedData: SeenProps[];
   filteredMergedData: MergedDataProps[];
   imagesData: any[];
   imagesDataDiscover: any[];

@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { RouteComponentProps, useHistory, useLocation } from 'react-router-dom';
-import { getRateLimitInfo, removeTokenGQL } from './services';
-import { dispatchRateLimit, dispatchRateLimitAnimation } from './store/dispatcher';
+import { useHistory, useLocation } from 'react-router-dom';
 import useHover from './hooks/useHover';
 import Profile from './NavBarBody/Profile';
 import AuthedHandler from './AuthedHandler';
@@ -11,8 +9,8 @@ import Home from './NavBarBody/Home';
 import { IState } from './typing/interface';
 import Discover from './NavBarBody/SearchSuggested';
 import Trending from './NavBarBody/Trending';
-import useApolloFactory from './hooks/useApolloFactory';
 import { logoutAction } from './util/util';
+import { useApolloFactorySelector } from './selectors/stateSelector';
 
 interface NavBarProps {
   state: IState;
@@ -34,8 +32,7 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
   const [isHoveredTrending, bindTrending] = useHover();
   const [isHoveredHome, bindHome] = useHover();
   const Active = url.split('/');
-  const { query } = useApolloFactory();
-  const { userData, userDataLoading, userDataError } = query.getUserData;
+  const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getUserData);
   useEffect(() => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home');
     // eslint-disable-next-line react-hooks/exhaustive-deps

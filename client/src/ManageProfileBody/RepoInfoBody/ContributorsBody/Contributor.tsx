@@ -1,5 +1,5 @@
 import React from 'react';
-import { RouteComponentProps, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import { isEqualObjects } from '../../../util';
 import { ContributorsProps } from '../../../typing/type';
 
@@ -7,6 +7,7 @@ interface ContributorProps {
   obj: ContributorsProps;
   dispatch: any;
 }
+
 const Contributor = React.memo<ContributorProps>(
   ({ obj, dispatch }) => {
     let history = useHistory();

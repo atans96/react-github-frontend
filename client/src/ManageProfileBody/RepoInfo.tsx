@@ -5,7 +5,6 @@ import { ForkIcon } from '../util/icons';
 import './LanguageStarsInfoStyle.scss';
 import { isEqualObjects } from '../util';
 import Contributors from './RepoInfoBody/Contributors';
-import { RouteComponentProps } from 'react-router-dom';
 
 interface RepoInfoProps {
   obj: any;
@@ -57,11 +56,7 @@ const RepoInfo = React.memo<RepoInfoProps>(
               </div>
             </div>
           </div>
-          <Contributors
-            contributions={contributions}
-            fullName={obj.fullName}
-            dispatch={dispatch}
-          />
+          <Contributors contributions={contributions} fullName={obj.fullName} dispatch={dispatch} />
         </div>
       </div>
     );
