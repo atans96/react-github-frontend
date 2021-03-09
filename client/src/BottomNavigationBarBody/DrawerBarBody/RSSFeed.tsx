@@ -19,7 +19,7 @@ import { IState } from '../../typing/interface';
 import { fastFilter, isEqualObjects, uniqFast } from '../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
-import { useApolloFactorySelector } from '../../selectors/stateSelector';
+import {useApolloFactory} from "../../hooks/useApolloFactory";
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -47,6 +47,8 @@ interface RSSFeedProps {
 const RSSFeed: React.FC<RSSFeedProps> = React.memo(
   ({ state, dispatch }) => {
     const classes = useStyles();
+    const tokenRSSAdded = useApolloFactory().mutation.tokenRSSAdded;
+    const rssFeedAdded = useApolloFactory().mutation.rssFeedAdded;
     const [openRSS, setOpenRSS] = useState(false);
     const [showMoreRSS, setShowMoreRSS] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -109,8 +111,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               if (state.tokenRSS === '') {
                 setLoading(false);
                 setToken('');
-                useApolloFactorySelector((mutation: any) => mutation)
-                  .tokenRSSAdded({
+                tokenRSSAdded({
                     variables: {
                       tokenRSS: token,
                     },
@@ -123,8 +124,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                   },
                 });
                 setRSSFeed(HTML.reverse());
-                useApolloFactorySelector((mutation: any) => mutation)
-                  .rssFeedAdded({
+                rssFeedAdded({
                     variables: {
                       rss: HTML,
                       rssLastSeen: HTML,
@@ -134,8 +134,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               }
               if (!openRSS) {
                 unseenFeeds.current = [];
-                useApolloFactorySelector((mutation: any) => mutation)
-                  .rssFeedAdded({
+                rssFeedAdded({
                     variables: {
                       rss: HTML,
                       rssLastSeen: [],
@@ -159,8 +158,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               } else {
                 if (state.tokenRSS !== '') {
                   const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
-                  useApolloFactorySelector((mutation: any) => mutation)
-                    .rssFeedAdded({
+                  rssFeedAdded({
                       variables: {
                         rss: HTML,
                         rssLastSeen: uniqq,

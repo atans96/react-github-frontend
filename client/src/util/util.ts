@@ -234,8 +234,8 @@ export async function addRSSFeed(url: string) {
     throw e;
   }
 }
-export function logoutAction(history: any, dispatch: any, dispatchStargazers: any) {
-  history.push('/');
+export function logoutAction(dispatch: any, dispatchStargazers: any) {
+  window.location.href = '/';
   removeTokenGQL().then(() => {});
   dispatch({ type: 'LOGOUT' });
   dispatchStargazers({ type: 'LOGOUT' });

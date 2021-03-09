@@ -21,7 +21,7 @@ import Parser from 'rss-parser';
 import _ from 'lodash';
 import { NavLink } from 'react-router-dom';
 import { IState } from '../../typing/interface';
-import { useApolloFactorySelector } from '../../selectors/stateSelector';
+import {useApolloFactory} from "../../hooks/useApolloFactory";
 
 const useStyles = makeStyles<Theme>(() => ({
   list: {
@@ -60,9 +60,8 @@ interface SubscribeFeedProps {
 }
 const SubscribeFeed = React.memo<SubscribeFeedProps>(
   ({ state }) => {
-    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactorySelector(
-      (query: any) => query.getWatchUsers
-    );
+    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory().query.getWatchUsers;
+    const watchUsersFeedsAdded = useApolloFactory().mutation.watchUsersFeedsAdded;
     const classes = useStyles();
     const [openSubscription, setSubscription] = useState(false);
     const [xmlFileListAppend, setXmlFileListAppend] = useState<string[]>([]);
@@ -141,8 +140,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                     const feeds = uniqFast(fastFilter((obj: any) => obj.login === obj.login, HTML)).map(
                       (x: any) => x.feeds
                     );
-                    useApolloFactorySelector((mutation: any) => mutation)
-                      .watchUsersFeedsAdded({
+                    watchUsersFeedsAdded({
                         variables: {
                           login: obj.login,
                           feeds: feeds,
@@ -201,8 +199,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                     const feeds = uniqFast(
                       fastFilter((x: any) => x.login === obj.login, HTML).map((x: any) => x.feeds)
                     );
-                    useApolloFactorySelector((mutation: any) => mutation)
-                      .watchUsersFeedsAdded({
+                    watchUsersFeedsAdded({
                         variables: {
                           login: obj.login,
                           feeds: feeds,

@@ -5,13 +5,13 @@ import TopicsCard from './CardBody/TopicsCard';
 import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
-import { IState } from '../typing/interface';
+import { IState, IStateStargazers } from '../typing/interface';
 import './CardStyle.scss';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import clsx from 'clsx';
 import ImagesCard from './CardBody/ImagesCard';
-import { useApolloFactorySelector } from '../selectors/stateSelector';
+import { useApolloFactory } from '../hooks/useApolloFactory';
 
 export interface Card {
   index: string;
@@ -21,6 +21,7 @@ export interface Card {
 
 interface CardRef extends Card {
   state: IState;
+  stateStargazersMemoize: IStateStargazers;
   dispatch: any;
   dispatchStargazersUser: any;
   dataMongoMemoize: any;
@@ -38,6 +39,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
       dispatch,
       githubData,
       index,
+      stateStargazersMemoize,
       getRootProps,
       dispatchStargazersUser,
     },
@@ -45,7 +47,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
   ) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
     // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
-
+    const clickedAdded = useApolloFactory().mutation.clickedAdded;
     const userCardMemoizedData = useCallback(() => {
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,24 +72,22 @@ const Card: React.FC<CardRef> = React.forwardRef(
       (e: React.MouseEvent) => {
         e.preventDefault();
         if (state.isLoggedIn) {
-          useApolloFactorySelector((mutation: any) => mutation)
-            .clickedAdded({
-              variables: {
-                clickedInfo: [
-                  Object.assign(
-                    {},
-                    {
-                      full_name: githubData.full_name,
-                      owner: {
-                        login: githubData.owner.login,
-                      },
-                      is_queried: false,
-                    }
-                  ),
-                ],
-              },
-            })
-            .then(() => {});
+          clickedAdded({
+            variables: {
+              clickedInfo: [
+                Object.assign(
+                  {},
+                  {
+                    full_name: githubData.full_name,
+                    owner: {
+                      login: githubData.owner.login,
+                    },
+                    is_queried: false,
+                  }
+                ),
+              ],
+            },
+          }).then(() => {});
         }
       },
       [state.isLoggedIn, githubData.full_name, githubData.owner.login]
@@ -128,7 +128,9 @@ const Card: React.FC<CardRef> = React.forwardRef(
                 dataMongoMemoize={dataMongoMemoize}
                 data={stargazersMemoizedGithubData()}
                 state={stargazersMemoizedData()}
+                stateStargazers={stateStargazersMemoize}
                 dispatch={dispatch}
+                dispatchStargazersUser={dispatchStargazersUser}
                 githubDataFullName={githubData.full_name}
                 githubDataId={githubData.id}
               />

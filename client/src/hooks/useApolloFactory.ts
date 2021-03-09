@@ -23,9 +23,8 @@ import {
   GET_WATCH_USERS,
 } from '../queries';
 import { useDeepMemo } from './useDeepMemo';
-import { createContainer } from 'unstated-next';
 
-function useApolloFactory() {
+export function useApolloFactory() {
   const [seenAdded] = useMutation(SEEN_ADDED, {
     context: { clientName: 'mongo' },
     update: (cache, data: any) => {
@@ -208,4 +207,3 @@ function useApolloFactory() {
     },
   };
 }
-export const ApolloFactory = createContainer(useApolloFactory);

@@ -1,4 +1,4 @@
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import { markdownParsing } from './services';
 import { Body, DetailsLayout, Footer, Header, Section } from './Layout/DetailsLayout';
@@ -10,7 +10,7 @@ import { If } from './util/react-if/If';
 import { CircularProgress } from '@material-ui/core';
 import { TrendsCard } from './HomeBody/DetailsBody/TrendsCard';
 import { Helmet } from 'react-helmet';
-import { useApolloFactorySelector } from './selectors/stateSelector';
+import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface StateProps {
   data: {
@@ -30,11 +30,9 @@ const Details: React.FC = () => {
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
   const [data, setData] = useState(undefined);
-  let history = useHistory();
   let location = useLocation<StateProps>();
-  const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactorySelector(
-    (query: any) => query.getStarRanking
-  );
+
+  const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory().query.getStarRanking;
   useEffect(() => {
     if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
       const temp = starRankingData.getStarRanking.starRanking.find((obj: any) => obj.id === location.state.data.id);
@@ -72,7 +70,7 @@ const Details: React.FC = () => {
           e.preventDefault();
           if (e.target === e.currentTarget) {
             const path = location.state.path === '/' ? '/' : '/discover';
-            history.push(path);
+            window.location.href = path;
           }
         }}
       >

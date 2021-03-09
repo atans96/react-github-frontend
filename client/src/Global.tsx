@@ -81,6 +81,7 @@ const Global: React.FC<{
             <React.Fragment>
               <SearchBarDiscover state={props.componentProps.state} />
               <Discover
+                stateStargazers={props.componentProps.stateStargazers}
                 dispatchStargazers={props.componentProps.dispatchStargazers}
                 dispatch={props.componentProps.dispatch}
                 state={props.componentProps.state}
@@ -106,7 +107,7 @@ const Global: React.FC<{
       />
       <If condition={props.routerProps.location.pathname === '/login'}>
         <Then>
-          <Login />
+          <Login dispatch={props.componentProps.dispatch} state={props.componentProps.state} />
         </Then>
       </If>
 

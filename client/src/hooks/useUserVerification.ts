@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { verifyJWTToken } from '../services';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from '../util';
-import { useHistory } from 'react-router-dom';
 import { logoutAction } from '../util/util';
-import { useApolloFactorySelector } from '../selectors/stateSelector';
+import { useApolloFactory } from './useApolloFactory';
 
 interface useUserVerificationProps {
   componentProps: ComponentProps;
@@ -17,8 +16,7 @@ interface ComponentProps {
 
 function useUserVerification(props: useUserVerificationProps) {
   const [username, setUsername] = useState<any>(undefined);
-  const { userDataLoading } = useApolloFactorySelector((query: any) => query.getUserData);
-  const history = useHistory();
+  const { userDataLoading } = useApolloFactory().query.getUserData;
   const isMounted = useRef(false); //when the first time is mounted, that means the user hasn't queried anything yet so
   //if the token is expired, logout. Else, when already mounted but token not expired, we prolong the token.
   useEffect(() => {
@@ -37,10 +35,10 @@ function useUserVerification(props: useUserVerificationProps) {
             setUsername(response.username);
             localStorage.setItem('sess', response.token);
           } else {
-            logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+            logoutAction(props.componentProps.dispatch, props.componentProps.dispatchStargazers);
           }
         } catch (e) {
-          logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+          logoutAction(props.componentProps.dispatch, props.componentProps.dispatchStargazers);
           console.error(e);
         }
         isMounted.current = true;

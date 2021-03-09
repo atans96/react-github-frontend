@@ -21,7 +21,7 @@ import { Typography } from '@material-ui/core';
 import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
 import HistoryIcon from '@material-ui/icons/History';
 import { fastFilter, Loading } from '../util';
-import { useApolloFactorySelector } from '../selectors/stateSelector';
+import { useApolloFactory } from '../hooks/useApolloFactory';
 
 const defaultTheme = createMuiTheme();
 const theme = createMuiTheme({
@@ -44,7 +44,8 @@ interface SearchBarProps {
 
 const SearchBar = React.memo<SearchBarProps>(
   ({ portalExpandable, dispatch, dispatchStargazersUser, state, stateStargazers }) => {
-    const { searchesData } = useApolloFactorySelector((query: any) => query.getSearchesData);
+    const { searchesData } = useApolloFactory().query.getSearchesData;
+    const searchesAdded = useApolloFactory().mutation.searchesAdded;
     const username = useRef<any>();
     const classes = useUserCardStyles({ avatarSize: 20 });
     const size = {
@@ -126,22 +127,20 @@ const SearchBar = React.memo<SearchBarProps>(
       setVisible(false);
       setVisibleSearchesHistory(false);
       if (state.isLoggedIn) {
-        useApolloFactorySelector((mutation: any) => mutation)
-          .searchesAdded({
-            variables: {
-              search: [
-                Object.assign(
-                  {},
-                  {
-                    search: username.current.getState(),
-                    updatedAt: new Date(),
-                    count: 1,
-                  }
-                ),
-              ],
-            },
-          })
-          .then(() => {});
+        searchesAdded({
+          variables: {
+            search: [
+              Object.assign(
+                {},
+                {
+                  search: username.current.getState(),
+                  updatedAt: new Date(),
+                  count: 1,
+                }
+              ),
+            ],
+          },
+        }).then(() => {});
       }
       username.current.clearState();
     };
@@ -368,7 +367,14 @@ const SearchBar = React.memo<SearchBarProps>(
                           (match: any) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
                         );
                         return (
-                          <Result state={state} getRootProps={getRootProps} userName={search.search} key={idx}>
+                          <Result
+                            state={state}
+                            getRootProps={getRootProps}
+                            userName={search.search}
+                            key={idx}
+                            dispatch={dispatch}
+                            dispatchStargazer={dispatchStargazersUser}
+                          >
                             <div className={classes.wrapper} style={{ borderBottom: 0 }}>
                               <HistoryIcon style={{ transform: 'scale(1.5)' }} />
                               <div className={classes.nameWrapper}>
@@ -402,6 +408,8 @@ const SearchBar = React.memo<SearchBarProps>(
                             getRootProps={getRootProps}
                             userName={Object.keys(result).toString()}
                             key={idx}
+                            dispatch={dispatch}
+                            dispatchStargazer={dispatchStargazersUser}
                           >
                             <div className={classes.wrapper} style={{ borderBottom: 0 }}>
                               <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
@@ -429,6 +437,8 @@ const SearchBar = React.memo<SearchBarProps>(
                   data={state.searchUsers}
                   isLoading={state.isLoading}
                   style={style}
+                  dispatch={dispatch}
+                  dispatchStargazer={dispatchStargazersUser}
                 />
               </Then>
             </If>
