@@ -3,7 +3,7 @@ import RateLimitInfo from './RateLimitInfoBody/RateLimitInfo';
 import { getRateLimitInfo } from './services';
 import { dispatchRateLimit, dispatchRateLimitAnimation } from './store/dispatcher';
 import { IState } from './typing/interface';
-import { useApolloFactorySelector } from './selectors/stateSelector';
+import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface RateLimitProps {
   state: IState;
@@ -11,8 +11,8 @@ interface RateLimitProps {
 }
 
 const RateLimit: React.FC<{ componentProps: RateLimitProps }> = (props) => {
-  const [refetch, setRefetch] = useState(false);
-  const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getUserData);
+  const [refetch, setRefetch] = useState(true);
+  const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
   useEffect(
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and
@@ -38,6 +38,12 @@ const RateLimit: React.FC<{ componentProps: RateLimitProps }> = (props) => {
       userData,
     ]
   );
-  return <RateLimitInfo data={props.componentProps.state.rateLimit} setRefetch={setRefetch} />;
+  return (
+    <RateLimitInfo
+      data={props.componentProps.state.rateLimit}
+      setRefetch={setRefetch}
+      rateLimitAnimationAdded={props.componentProps.state.rateLimitAnimationAdded}
+    />
+  );
 };
 export default RateLimit;

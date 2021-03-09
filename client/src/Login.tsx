@@ -1,6 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import { Context } from './index';
+import React, { useEffect, useState } from 'react';
 import { getRateLimitInfo, requestGithubLogin } from './services';
 import { dispatchRateLimit, dispatchRateLimitAnimation } from './store/dispatcher';
 import LoginLayout from './Layout/LoginLayout';
@@ -9,13 +7,17 @@ import './Login.scss';
 import CryptoJS from 'crypto-js';
 import { languageList, readEnvironmentVariable } from './util';
 import { Helmet } from 'react-helmet';
-import { useApolloFactorySelector } from './selectors/stateSelector';
+import { useApolloFactory } from './hooks/useApolloFactory';
+import { IState } from './typing/interface';
 
-const Login: React.FC = () => {
-  const { state, dispatch } = useContext(Context);
+interface LoginProps {
+  state: IState;
+  dispatch: any;
+}
+
+const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
-  const { client_id, redirect_uri } = state;
-  let history = useHistory();
+  const signUpAdded = useApolloFactory().mutation.signUpAdded;
   useEffect(() => {
     // After requesting Github access by logging using user account's Github
     // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
@@ -41,26 +43,24 @@ const Login: React.FC = () => {
       requestGithubLogin(proxy_url, requestData)
         .then((response) => {
           if (response.data) {
-            useApolloFactorySelector((mutation: any) => mutation)
-              .signUpAdded({
-                variables: {
-                  username: response.data.login,
-                  avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
-                  token: response.token,
-                  code: newUrl[1],
-                  languagePreference: languageList.reduce((acc, language: string) => {
-                    acc.push(Object.assign({}, { language, checked: true }));
-                    return acc;
-                  }, [] as any[]),
-                },
-              })
-              .then(({ data }: any) => {
-                localStorage.setItem('sess', data.signUp.token);
-                localStorage.setItem(
-                  'jbb',
-                  CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
-                );
-              });
+            signUpAdded({
+              variables: {
+                username: response.data.login,
+                avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
+                token: response.token,
+                code: newUrl[1],
+                languagePreference: languageList.reduce((acc, language: string) => {
+                  acc.push(Object.assign({}, { language, checked: true }));
+                  return acc;
+                }, [] as any[]),
+              },
+            }).then(({ data }: any) => {
+              localStorage.setItem('sess', data.signUp.token);
+              localStorage.setItem(
+                'jbb',
+                CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
+              );
+            });
             dispatch({
               type: 'LOGIN',
               payload: { isLoggedIn: true },
@@ -80,7 +80,7 @@ const Login: React.FC = () => {
           }
         })
         .then(() => {
-          history.push('/');
+          window.location.href = '/';
         })
         .catch(() => {
           setData({
@@ -102,7 +102,7 @@ const Login: React.FC = () => {
         {() => (
           <a
             className="login-link"
-            href={`https://github.com/login/oauth/authorize?scope=user&client_id=${client_id}&redirect_uri=${redirect_uri}`}
+            href={`https://github.com/login/oauth/authorize?scope=user&client_id=${state.client_id}&redirect_uri=${state.redirect_uri}`}
             onClick={() => {
               setData({ ...data, errorMessage: '' });
             }}

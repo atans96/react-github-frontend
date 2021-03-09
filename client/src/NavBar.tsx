@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import useHover from './hooks/useHover';
 import Profile from './NavBarBody/Profile';
 import AuthedHandler from './AuthedHandler';
@@ -10,7 +10,7 @@ import { IState } from './typing/interface';
 import Discover from './NavBarBody/SearchSuggested';
 import Trending from './NavBarBody/Trending';
 import { logoutAction } from './util/util';
-import { useApolloFactorySelector } from './selectors/stateSelector';
+import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface NavBarProps {
   state: IState;
@@ -21,7 +21,6 @@ interface NavBarProps {
 const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
   const [active, setActiveBar] = useState('home');
   const navBarRef = useRef<HTMLDivElement>(null);
-  let history = useHistory();
   let location = useLocation();
   const url = location.pathname;
 
@@ -32,7 +31,7 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
   const [isHoveredTrending, bindTrending] = useHover();
   const [isHoveredHome, bindHome] = useHover();
   const Active = url.split('/');
-  const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getUserData);
+  const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
   useEffect(() => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,11 +41,11 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     setActiveBar(event.currentTarget.id);
     if (event.currentTarget.id === 'home') {
-      history.push('/');
+      window.location.href = '/';
     } else if (event.currentTarget.id === 'logout') {
-      logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+      logoutAction(props.componentProps.dispatch, props.componentProps.dispatchStargazers);
     } else {
-      history.push(`/${event.currentTarget.id.toLowerCase()}`);
+      window.location.href = `/${event.currentTarget.id.toLowerCase()}`;
     }
   };
   return (

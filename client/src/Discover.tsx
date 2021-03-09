@@ -5,12 +5,11 @@ import {
   dispatchAppendMergedDataDiscover,
   dispatchImagesDataDiscover,
   dispatchLastPageDiscover,
-  dispatchPage,
   dispatchPageDiscover,
 } from './store/dispatcher';
 import { useResizeHandler } from './hooks/hooks';
-import { IDataOne, IState } from './typing/interface';
-import { Nullable, SeenProps } from './typing/type';
+import { IDataOne, IState, IStateStargazers } from './typing/interface';
+import { Nullable, SeenProps, MergedDataProps } from './typing/type';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
@@ -24,11 +23,10 @@ import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover'
 import {
   alreadySeenCardSelector,
   getIdsSelector,
-  mutationSeenAddedSelector,
   sortedRepoInfoSelector,
   starRankingFilteredSelector,
-  useApolloFactorySelector,
 } from './selectors/stateSelector';
+import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -80,24 +78,20 @@ const Action = {
 
 interface DiscoverProps {
   state: IState;
+  stateStargazers: IStateStargazers;
   dispatch: any;
   dispatchStargazers: any;
   routerProps: RouteComponentProps<{}, {}, {}>;
 }
 
 const Discover = React.memo<DiscoverProps>(
-  ({ state, dispatch, dispatchStargazers, routerProps }) => {
-    const { suggestedData, suggestedDataLoading, suggestedDataError } = useApolloFactorySelector(
-      (query: any) => query.getSuggestedRepo
-    );
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactorySelector((query: any) => query.getSeen);
-    const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactorySelector(
-      (query: any) => query.getUserData
-    );
-    const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getStarRanking);
-    const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactorySelector(
-      (query: any) => query.getUserInfoStarred
-    );
+  ({ state, stateStargazers, dispatch, dispatchStargazers, routerProps }) => {
+    const seenAdded = useApolloFactory().mutation.seenAdded;
+    const { suggestedData, suggestedDataLoading, suggestedDataError } = useApolloFactory().query.getSuggestedRepo;
+    const { seenData, seenDataLoading, seenDataError } = useApolloFactory().query.getSeen;
+    const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory().query.getStarRanking;
+    const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
+    const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory().query.getUserInfoStarred;
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(true);
     const paginationRef = useRef(state.perPage);
@@ -108,7 +102,7 @@ const Discover = React.memo<DiscoverProps>(
     const windowScreenRef = useRef<HTMLDivElement>(null);
     const actionResolvedPromise = async (action: string, data?: Nullable<IDataOne | any>) => {
       if (data && action === 'append') {
-        const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.seenCards);
+        const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.getSeen?.seenCards);
         let temp: any[];
         const filter1 = fastFilter(
           (obj: any) =>
@@ -250,34 +244,72 @@ const Discover = React.memo<DiscoverProps>(
       }
     };
 
-    const handleBottomHitCallback = useCallback((result: SeenProps[]) => {
-      useApolloFactorySelector((mutation: any) => mutation)
-        .seenAdded({
-          variables: {
-            seenCards: result,
-          },
-        })
-        .then(() => {});
-    }, []);
-
+    const mergedDataRef = useRef<any[]>([]);
+    const imagesDataRef = useRef<any[]>([]);
+    const isLoadingRef = useRef<boolean>(true);
+    const notificationRef = useRef<string>('');
+    useEffect(() => {
+      mergedDataRef.current = state.mergedDataDiscover;
+    });
+    useEffect(() => {
+      imagesDataRef.current = state.imagesDataDiscover;
+    });
+    useEffect(() => {
+      isLoadingRef.current = isLoading;
+    });
+    useEffect(() => {
+      notificationRef.current = notification;
+    });
     const handleBottomHit = useCallback(() => {
-      const dispatcher = () => dispatchPage(dispatch);
-      const condition =
+      if (
         !isFetchFinish.current &&
-        state.mergedDataDiscover.length > 0 &&
-        !isLoading &&
-        document.location.pathname === '/' &&
-        notification === '' &&
-        state.filterBySeen;
-      mutationSeenAddedSelector(handleBottomHitCallback, dispatcher, condition, 'discover')(state);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+        mergedDataRef.current.length > 0 &&
+        !isLoadingRef.current &&
+        window.location.pathname === '/discover' &&
+        notificationRef.current === ''
+      ) {
+        dispatchPageDiscover(dispatch);
+        const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
+          const temp = Object.assign(
+            {},
+            {
+              stargazers_count: obj.stargazers_count,
+              full_name: obj.full_name,
+              default_branch: obj.default_branch,
+              owner: {
+                login: obj.owner.login,
+                avatar_url: obj.owner.avatar_url,
+                html_url: obj.owner.html_url,
+              },
+              description: obj.description,
+              language: obj.language,
+              topics: obj.topics,
+              html_url: obj.html_url,
+              id: obj.id,
+              imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+              name: obj.name,
+              is_queried: false,
+            }
+          );
+          acc.push(temp);
+          return acc;
+        }, [] as SeenProps[]);
+        if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
+          //don't add to database yet when imagesData still loading.
+          seenAdded({
+            variables: {
+              seenCards: result,
+            },
+          }).then(() => {});
+        }
+      }
     }, [
       isFetchFinish.current,
-      state.mergedDataDiscover,
-      isLoading,
-      notification,
-      document.location.pathname,
-      state.filterBySeen,
+      mergedDataRef.current,
+      isLoadingRef.current,
+      imagesDataRef.current,
+      notificationRef.current,
+      window.location.pathname,
       state.isLoggedIn,
     ]);
 
@@ -362,6 +394,11 @@ const Discover = React.memo<DiscoverProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userStarred?.getUserInfoStarred?.starred]);
 
+    const stateStargazersMemoize = useCallback(() => {
+      return stateStargazers;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stateStargazers]);
+
     return (
       <React.Fragment>
         {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
@@ -388,6 +425,7 @@ const Discover = React.memo<DiscoverProps>(
                       githubData={state.mergedDataDiscover[key]}
                       state={stateMemoize()}
                       dispatchStargazersUser={dispatchStargazersUserMemoize()}
+                      stateStargazersMemoize={stateStargazersMemoize()}
                       dispatch={dispatchMemoize()}
                     />
                   ));

@@ -1,20 +1,20 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { dispatchUsername } from '../../../store/dispatcher';
-import { Context, ContextStargazers } from '../../../index';
 import { IState } from '../../../typing/interface';
-import { useApolloFactorySelector } from '../../../selectors/stateSelector';
+import { useApolloFactory } from '../../../hooks/useApolloFactory';
 
 interface Result {
   children: React.ReactNode;
   userName: string;
   getRootProps: any;
   state: IState;
+  dispatch: any;
+  dispatchStargazer: any;
 }
 
-const Result: React.FC<Result> = ({ state, children, userName, getRootProps }) => {
-  const { dispatch } = useContext(Context);
-  const { dispatchStargazers } = useContext(ContextStargazers);
+const Result: React.FC<Result> = ({ state, children, userName, getRootProps, dispatch, dispatchStargazer }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const searchesAdded = useApolloFactory().mutation.searchesAdded;
   const onMouseOver = () => {
     setIsHovered(true);
   };
@@ -26,18 +26,16 @@ const Result: React.FC<Result> = ({ state, children, userName, getRootProps }) =
     dispatch({
       type: 'REMOVE_ALL',
     });
-    dispatchStargazers({
+    dispatchStargazer({
       type: 'REMOVE_ALL',
     });
     dispatchUsername(userName, dispatch);
     if (state.isLoggedIn) {
-      useApolloFactorySelector((mutation: any) => mutation)
-        .searchesAdded({
-          variables: {
-            search: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })],
-          },
-        })
-        .then(() => {});
+      searchesAdded({
+        variables: {
+          search: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })],
+        },
+      }).then(() => {});
     }
   };
   return (

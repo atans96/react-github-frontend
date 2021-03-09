@@ -1,9 +1,8 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useCallback } from 'react';
 import StargazersCard from './StargazersCard';
 import { MergedDataProps } from '../../typing/type';
 import { isEqualObjects } from '../../util';
-import { IState } from '../../typing/interface';
-import { ContextStargazers } from '../../index';
+import { IState, IStateStargazers } from '../../typing/interface';
 import { useApolloClient } from '@apollo/client';
 import { dispatchStargazersHasNextPage, dispatchStargazersInfo } from '../../store/dispatcher';
 import { useEventHandlerComposer } from '../../hooks/hooks';
@@ -11,16 +10,25 @@ import { useEventHandlerComposer } from '../../hooks/hooks';
 interface StargazersProps {
   data: MergedDataProps;
   state: IState;
+  stateStargazers: IStateStargazers;
   dispatch: any;
+  dispatchStargazersUser: any;
   dataMongoMemoize: any;
   githubDataId: number;
   githubDataFullName: string;
 }
 
 const Stargazers = React.memo<StargazersProps>(
-  ({ githubDataFullName, githubDataId, dataMongoMemoize, dispatch, state, data }) => {
-    const { stateStargazers, dispatchStargazers } = useContext(ContextStargazers); // the reason we don't pass ContextStargazers from Home.tsx to Stargazers.tsx
-    // is to prevent other Card children to re-render despite them not consuming ContextStargazers.
+  ({
+    githubDataFullName,
+    githubDataId,
+    dataMongoMemoize,
+    dispatch,
+    dispatchStargazersUser,
+    state,
+    data,
+    stateStargazers,
+  }) => {
     const stargazerCountMemoized = useCallback(() => {
       return data.stargazers_count;
     }, [data.stargazers_count]);
@@ -56,9 +64,9 @@ const Stargazers = React.memo<StargazersProps>(
               result.data.repository.stargazers.nodes.map((node: any) => {
                 const newNode = { ...node };
                 newNode['isQueue'] = false;
-                return dispatchStargazersInfo(newNode, dispatchStargazers);
+                return dispatchStargazersInfo(newNode, dispatchStargazersUser);
               });
-              dispatchStargazersHasNextPage(result.data.repository.stargazers.pageInfo, dispatchStargazers);
+              dispatchStargazersHasNextPage(result.data.repository.stargazers.pageInfo, dispatchStargazersUser);
             });
         }
       },
@@ -66,10 +74,6 @@ const Stargazers = React.memo<StargazersProps>(
       [state.tokenGQL] // if not specified, tokenGQL !== '' will always true when you click it again, even though tokenGQL already updated
     );
     const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickCb });
-    const stateStargazersMemoizedData = useCallback(() => {
-      return stateStargazers;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateStargazers]);
     return (
       <StargazersCard
         stargazerCount={stargazerCountMemoized()}
@@ -79,8 +83,8 @@ const Stargazers = React.memo<StargazersProps>(
         dataMongoMemoize={dataMongoMemoize}
         dispatch={dispatch}
         getRootProps={getRootProps}
-        dispatchStargazers={dispatchStargazers}
-        stateStargazers={stateStargazersMemoizedData()}
+        dispatchStargazers={dispatchStargazersUser}
+        stateStargazers={stateStargazers}
         GQL_VARIABLES={{
           GQL_variables,
           GQL_pagination_variables,

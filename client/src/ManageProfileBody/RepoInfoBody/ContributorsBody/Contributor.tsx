@@ -1,5 +1,4 @@
 import React from 'react';
-import { useHistory } from 'react-router-dom';
 import { isEqualObjects } from '../../../util';
 import { ContributorsProps } from '../../../typing/type';
 
@@ -10,7 +9,6 @@ interface ContributorProps {
 
 const Contributor = React.memo<ContributorProps>(
   ({ obj, dispatch }) => {
-    let history = useHistory();
     const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
       e.preventDefault();
       dispatch({
@@ -19,7 +17,7 @@ const Contributor = React.memo<ContributorProps>(
           username: contributor,
         },
       });
-      history.push('/');
+      window.location.href = '/';
     };
     return (
       <div title={obj.login} className={'contributor'} onClick={(e) => handleContributorsClicked(e)(obj.login)}>

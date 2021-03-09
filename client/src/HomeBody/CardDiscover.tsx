@@ -4,11 +4,11 @@ import UserCard from './CardBody/UserCard';
 import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
-import { IState } from '../typing/interface';
+import { IState, IStateStargazers } from '../typing/interface';
 import './CardStyle.scss';
 import clsx from 'clsx';
 import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
-import { useApolloFactorySelector } from '../selectors/stateSelector';
+import { useApolloFactory } from '../hooks/useApolloFactory';
 
 export interface Card {
   index: string;
@@ -19,6 +19,7 @@ export interface Card {
 
 interface CardRef extends Card {
   state: IState;
+  stateStargazersMemoize: IStateStargazers;
   dispatch: any;
   dispatchStargazersUser: any;
   dataMongoMemoize: any;
@@ -39,6 +40,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
       getInputProps,
       dispatchStargazersUser,
       columnCount,
+      stateStargazersMemoize,
     },
     ref
   ) => {
@@ -60,28 +62,26 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
     const stargazersMemoizedGithubData = useCallback(() => {
       return githubData;
     }, [githubData.name, githubData.owner.login]);
-
+    const clickedAdded = useApolloFactory().mutation.clickedAdded;
     const handleDetailsClicked = (e: React.MouseEvent) => {
       e.preventDefault();
       if (state.isLoggedIn) {
-        useApolloFactorySelector((mutation: any) => mutation)
-          .clickedAdded({
-            variables: {
-              clickedInfo: [
-                Object.assign(
-                  {},
-                  {
-                    full_name: githubData.full_name,
-                    owner: {
-                      login: githubData.owner.login,
-                    },
-                    is_queried: false,
-                  }
-                ),
-              ],
-            },
-          })
-          .then(() => {});
+        clickedAdded({
+          variables: {
+            clickedInfo: [
+              Object.assign(
+                {},
+                {
+                  full_name: githubData.full_name,
+                  owner: {
+                    login: githubData.owner.login,
+                  },
+                  is_queried: false,
+                }
+              ),
+            ],
+          },
+        }).then(() => {});
       }
     };
     const isVisibleRef = useRef(false);
@@ -116,7 +116,9 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
                 dataMongoMemoize={dataMongoMemoize}
                 data={stargazersMemoizedGithubData()}
                 state={stargazersMemoizedData()}
+                stateStargazers={stateStargazersMemoize}
                 dispatch={dispatch}
+                dispatchStargazersUser={dispatchStargazersUser}
                 githubDataFullName={githubData.full_name}
                 githubDataId={githubData.id}
               />

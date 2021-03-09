@@ -32,7 +32,7 @@ import Checkboxes from './ManageProfileBody/Checkboxes';
 import Search from './ManageProfileBody/Search';
 import _ from 'lodash';
 import { useResizeHandler } from './hooks/hooks';
-import { useApolloFactorySelector } from './selectors/stateSelector';
+import {useApolloFactory} from "./hooks/useApolloFactory";
 
 interface StyleProps {
   drawerWidth: string;
@@ -87,10 +87,9 @@ interface ManageProfileProps {
 }
 
 const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
-  const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getUserData);
-  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactorySelector(
-    (query: any) => query.getUserInfoData
-  );
+  const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
+  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactory().query.getUserInfoData;
+  const languagesPreferenceAdded = useApolloFactory().mutation.languagesPreferenceAdded;
   const [openLanguages, setOpenLanguages] = useState(false);
   const classes = useStyles({ drawerWidth: '250px' });
   const handleOpenLanguages = (e: React.MouseEvent) => {
@@ -116,8 +115,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
 
   useDeepCompareEffect(() => {
     if (state.isLoggedIn) {
-      useApolloFactorySelector((mutation: any) => mutation)
-        .languagesPreferenceAdded({
+      languagesPreferenceAdded({
           variables: {
             languagePreference: languagePreferences,
           },

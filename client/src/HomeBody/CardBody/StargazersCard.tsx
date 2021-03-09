@@ -13,7 +13,7 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { removeStarredMe, setStarredMe } from '../../services';
 import clsx from 'clsx';
-import { useApolloFactorySelector } from '../../selectors/stateSelector';
+import {useApolloFactory} from "../../hooks/useApolloFactory";
 
 interface GQL {
   GQL_variables: {
@@ -52,6 +52,8 @@ const StargazersCard = React.memo<StargazersCard>(
     stargazerCount,
     GQL_VARIABLES,
   }) => {
+    const addedStarredMe = useApolloFactory().mutation.addedStarredMe;
+    const removeStarred = useApolloFactory().mutation.removeStarred;
     const modalWidth = useRef('400px');
     const [starClicked, setStarClicked] = useState(
       dataMongoMemoize?.getUserInfoStarred?.starred?.includes(githubDataId) || false
@@ -169,8 +171,7 @@ const StargazersCard = React.memo<StargazersCard>(
       if (state.tokenGQL !== '' && !starClicked) {
         await setStarredMe(githubDataFullName, state.tokenGQL).then(() => {
           if (state.isLoggedIn) {
-            useApolloFactorySelector((mutation: any) => mutation)
-              .addedStarredMe({
+            addedStarredMe({
                 variables: {
                   starred: [githubDataId],
                 },
@@ -181,8 +182,7 @@ const StargazersCard = React.memo<StargazersCard>(
       } else if (state.tokenGQL !== '' && starClicked) {
         await removeStarredMe(githubDataFullName, state.tokenGQL).then(() => {
           if (state.isLoggedIn) {
-            useApolloFactorySelector((mutation: any) => mutation)
-              .removeStarred({
+            removeStarred({
                 variables: {
                   removeStarred: githubDataId,
                 },

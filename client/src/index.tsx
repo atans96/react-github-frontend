@@ -1,10 +1,9 @@
-import React, { createContext, useCallback, useMemo, useReducer } from 'react';
+import React, { useCallback, useMemo, useReducer } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { IContext, IContextStargazers } from './typing/interface';
 import { initialState, initialStateStargazers, reducer, reducerStargazers } from './store/reducer';
-import { BrowserRouter as Router, Route, Switch, useHistory } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import NavBar from './NavBar';
 import RateLimit from './RateLimit';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
@@ -15,6 +14,7 @@ import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from './util';
 import { logoutAction } from './util/util';
+
 const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
   const ApolloContext = getApolloContext();
   const value = useMemo(
@@ -25,10 +25,7 @@ const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
   return <ApolloContext.Provider value={value}>{children}</ApolloContext.Provider>;
 };
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
-export const Context = createContext({} as IContext);
-export const ContextStargazers = createContext({} as IContextStargazers);
 export const Main = () => {
-  const history = useHistory();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [stateStargazers, dispatchStargazers] = useReducer(reducerStargazers, initialStateStargazers);
   // Create First Link for querying data to external Github GQL API
@@ -84,7 +81,7 @@ export const Main = () => {
         graphQLErrors.map(({ message, locations, path }) => {
           console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`);
           if (message === 'Unauthorized') {
-            logoutAction(history, dispatch, dispatchStargazers);
+            logoutAction(dispatch, dispatchStargazers);
           }
         });
       }

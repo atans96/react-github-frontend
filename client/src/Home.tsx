@@ -26,12 +26,9 @@ import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { RouteComponentProps } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import {
-  mutationSeenAddedSelector,
-  useApolloFactorySelector,
-  alreadySeenCardSelector,
-} from './selectors/stateSelector';
+import { alreadySeenCardSelector } from './selectors/stateSelector';
 import { filterActionResolvedPromiseData } from './util/util';
+import { useApolloFactory } from './hooks/useApolloFactory';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -100,9 +97,10 @@ interface HomeProps {
 
 const Home = React.memo<HomeProps>(
   ({ state, dispatch, dispatchStargazers, stateStargazers, routerProps }) => {
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactorySelector((query: any) => query.getSeen);
-    const { userData, userDataLoading, userDataError } = useApolloFactorySelector((query: any) => query.getUserData);
-    const { userStarred } = useApolloFactorySelector((query: any) => query.getUserInfoStarred);
+    const { seenData, seenDataLoading, seenDataError } = useApolloFactory().query.getSeen;
+    const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
+    const { userStarred } = useApolloFactory().query.getUserInfoStarred;
+    const seenAdded = useApolloFactory().mutation.seenAdded;
     // useState is used when the HTML depends on it directly to render something
     const [shouldRenderSkeleton, setRenderSkeleton] = useState(false);
     const [isLoading, setLoading] = useState(false);
@@ -134,7 +132,7 @@ const Home = React.memo<HomeProps>(
     const actionResolvedPromise = (action: string, data?: IDataOne, error?: string) => {
       if (data && action === 'append') {
         if (state.filterBySeen) {
-          const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.seenCards);
+          const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.getSeen?.seenCards);
           const filter1 = fastFilter(
             (obj: any) =>
               filterActionResolvedPromiseData(
@@ -225,7 +223,12 @@ const Home = React.memo<HomeProps>(
           let promises: Promise<any>[] = [];
           userNameTransformed.forEach((name) => {
             promises.push(
-              getUser(name, state.perPage, state.page, userData && userData ? userData.token : '')
+              getUser(
+                name,
+                state.perPage,
+                state.page,
+                userData && userData.getUserData ? userData.getUserData.token : ''
+              )
                 .then((data) => {
                   const [oldID, newID] = isDataExists(data);
                   // compare new with old data, if they differ, that means it still has data to fetch
@@ -237,7 +240,12 @@ const Home = React.memo<HomeProps>(
                     setLoading(false);
                     actionResolvedPromise(Action.mergedData.append, data);
                   } else if (data !== undefined && (data.error_403 || data.error_404)) {
-                    getOrg(name, state.perPage, state.page, userData && userData ? userData.token : '')
+                    getOrg(
+                      name,
+                      state.perPage,
+                      state.page,
+                      userData && userData.getUserData ? userData.getUserData.token : ''
+                    )
                       .then((data: IDataOne) => {
                         const [oldID, newID] = isDataExists(data);
                         // compare new with old data, if they differ, that means it still has data to fetch
@@ -288,7 +296,7 @@ const Home = React.memo<HomeProps>(
       let paginationInfo = 0;
       userNameTransformed.forEach((name) => {
         promises.push(
-          getUser(name, state.perPage, 1, userData && userData ? userData.token : '')
+          getUser(name, state.perPage, 1, userData ? userData.getUserData.token : '')
             .then((data: IDataOne) => {
               if (_isMounted && data?.dataOne?.length > 0) {
                 setLoading(false);
@@ -306,7 +314,7 @@ const Home = React.memo<HomeProps>(
                 setNotification('Sorry, API rate limit exceeded.');
                 setLoading(false);
               } else if (data?.dataOne?.length === 0 || data?.error_404) {
-                getOrg(name, state.perPage, 1, data && userData ? userData.token : '')
+                getOrg(name, state.perPage, 1, data && userData ? userData.getUserData.token : '')
                   .then((data: IDataOne) => {
                     if (_isMounted && data.dataOne?.length > 0) {
                       setLoading(false);
@@ -339,34 +347,78 @@ const Home = React.memo<HomeProps>(
       });
       Promise.all(promises).then(() => {});
     };
-    const handleBottomHitCallback = useCallback((result: SeenProps[]) => {
-      useApolloFactorySelector((mutation: any) => mutation)
-        .seenAdded({
-          variables: {
-            seenCards: result,
-          },
-        })
-        .then(() => {});
-    }, []);
-
+    const mergedDataRef = useRef<any[]>([]);
+    const isLoadingRef = useRef<boolean>(false);
+    const imagesDataRef = useRef<any[]>([]);
+    const filterBySeenRef = useRef<boolean>(state.filterBySeen);
+    const notificationRef = useRef<string>('');
+    useEffect(() => {
+      mergedDataRef.current = state.mergedData;
+    });
+    useEffect(() => {
+      isLoadingRef.current = isLoading;
+    });
+    useEffect(() => {
+      notificationRef.current = notification;
+    });
+    useEffect(() => {
+      imagesDataRef.current = state.imagesData;
+    });
+    useEffect(() => {
+      filterBySeenRef.current = state.filterBySeen;
+    });
     const handleBottomHit = useCallback(() => {
-      const dispatcher = () => dispatchPage(dispatch);
-      const condition =
+      if (
         !isFetchFinish.current &&
-        state.mergedData.length > 0 &&
-        !isLoading &&
-        document.location.pathname === '/' &&
-        notification === '' &&
-        state.filterBySeen;
-      mutationSeenAddedSelector(handleBottomHitCallback, dispatcher, condition, 'data')(state);
+        mergedDataRef.current.length > 0 &&
+        !isLoadingRef.current &&
+        window.location.pathname === '/' &&
+        notificationRef.current === '' &&
+        filterBySeenRef.current
+      ) {
+        dispatchPage(dispatch);
+        const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
+          const temp = Object.assign(
+            {},
+            {
+              stargazers_count: obj.stargazers_count,
+              full_name: obj.full_name,
+              default_branch: obj.default_branch,
+              owner: {
+                login: obj.owner.login,
+                avatar_url: obj.owner.avatar_url,
+                html_url: obj.owner.html_url,
+              },
+              description: obj.description,
+              language: obj.language,
+              topics: obj.topics,
+              html_url: obj.html_url,
+              id: obj.id,
+              imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+              name: obj.name,
+              is_queried: false,
+            }
+          );
+          acc.push(temp);
+          return acc;
+        }, [] as SeenProps[]);
+        if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
+          seenAdded({
+            variables: {
+              seenCards: result,
+            },
+          }).then(() => {});
+        }
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [
       isFetchFinish.current,
-      state.mergedData,
-      isLoading,
-      notification,
-      document.location.pathname,
-      state.filterBySeen,
+      mergedDataRef.current,
+      isLoadingRef.current,
+      imagesDataRef.current,
+      notificationRef.current,
+      window.location.pathname,
+      filterBySeenRef.current,
       state.isLoggedIn,
     ]);
 
@@ -419,14 +471,14 @@ const Home = React.memo<HomeProps>(
       if (
         !userDataLoading &&
         !userDataError &&
-        userData?.tokenRSS &&
-        userData?.tokenRSS !== '' &&
+        userData?.getUserData?.tokenRSS &&
+        userData?.getUserData?.tokenRSS !== '' &&
         state.tokenRSS === ''
       ) {
         dispatch({
           type: 'TOKEN_RSS_ADDED',
           payload: {
-            tokenRSS: userData.tokenRSS,
+            tokenRSS: userData?.getUserData?.tokenRSS,
           },
         });
       }
@@ -434,7 +486,7 @@ const Home = React.memo<HomeProps>(
     }, [userDataLoading, userDataError]);
 
     useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData && seenData !== null) {
+      if (!seenDataLoading && !seenDataError && seenData && seenData.getSeen !== null) {
         if (!state.filterBySeen) {
           const images = state.undisplayMergedData.reduce((acc, obj: any) => {
             acc.push(
@@ -470,11 +522,11 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.filterBySeen]);
     useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData !== null && seenData.seenCards.length > 0) {
+      if (!seenDataLoading && !seenDataError && seenData.getSeen !== null && seenData.getSeen.seenCards.length > 0) {
         dispatch({
           type: 'UNDISPLAY_MERGED_DATA',
           payload: {
-            undisplayMergedData: seenData.seenCards,
+            undisplayMergedData: seenData.getSeen.seenCards,
           },
         });
       }
@@ -500,7 +552,7 @@ const Home = React.memo<HomeProps>(
             );
             return acc;
           }, [] as any[]);
-          const token = userData && userData ? userData.token : '';
+          const token = userData && userData.getUserData ? userData.getUserData.token : '';
           getRepoImages(data, clickedGQLTopic.variables.queryTopic, state.page, token)
             .then((repoImage) => {
               if (repoImage.renderImages.length > 0) {
@@ -584,6 +636,11 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state]);
 
+    const stateStargazersMemoize = useCallback(() => {
+      return stateStargazers;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stateStargazers]);
+
     const stateBottomNavigationBarMemoize = useCallback(() => {
       return state;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -592,7 +649,7 @@ const Home = React.memo<HomeProps>(
     const dataMongoMemoize = useCallback(() => {
       return userStarred;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userStarred?.starred]);
+    }, [userStarred?.getUserInfoStarred?.starred]);
 
     const whichToUse = useCallback(() => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
@@ -645,7 +702,9 @@ const Home = React.memo<HomeProps>(
           <If condition={!state.filterBySeen && seenData?.getSeen}>
             <Then>
               <div style={{ textAlign: 'center' }}>
-                <h3>Your {seenData?.getSeen?.seenCards?.length > 0 ? seenData.seenCards.length : ''} Card History:</h3>
+                <h3>
+                  Your {seenData?.getSeen?.seenCards?.length > 0 ? seenData.getSeen.seenCards.length : ''} Card History:
+                </h3>
               </div>
             </Then>
           </If>
@@ -657,6 +716,7 @@ const Home = React.memo<HomeProps>(
                     <Card
                       key={idx}
                       columnCount={columnCount}
+                      stateStargazersMemoize={stateStargazersMemoize()}
                       routerProps={routerProps}
                       dataMongoMemoize={dataMongoMemoize()}
                       getRootProps={getRootProps}

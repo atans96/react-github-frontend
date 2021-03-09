@@ -11,8 +11,8 @@ import VisibilityIcon from '@material-ui/icons/Visibility';
 import { useMutation } from '@apollo/client';
 import { WATCH_USER_REMOVED } from '../../../../mutations';
 import { GET_WATCH_USERS } from '../../../../queries';
-import { useApolloFactorySelector } from '../../../../selectors/stateSelector';
 import { fastFilter } from '../../../../util';
+import {useApolloFactory} from "../../../../hooks/useApolloFactory";
 
 export interface Result {
   getRootPropsCard: any;
@@ -26,9 +26,7 @@ export interface Result {
 const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatch, stargazer, getRootPropsCard }) => {
   const [hovered, setHovered] = useState('');
   const classes = useUserCardStyles();
-  const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactorySelector(
-    (query: any) => query.getWatchUsers
-  );
+  const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory().query.getWatchUsers;
   const [removed] = useMutation(WATCH_USER_REMOVED, {
     context: { clientName: 'mongo' },
     update: (cache) => {
@@ -62,6 +60,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
     }
     return style;
   };
+  const watchUsersAdded = useApolloFactory().mutation.watchUsersAdded;
   const onClickSubscribe = (e: React.MouseEvent) => {
     e.preventDefault();
     let subscribeStatus: boolean;
@@ -73,16 +72,14 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
       subscribeStatus = false;
     }
     if (subscribeStatus) {
-      useApolloFactorySelector((mutation: any) => mutation)
-        .watchUsersAdded({
-          variables: {
-            login: Object.assign(
-              {},
-              { id: stargazer.id, login: stargazer.login, createdAt: Date.now(), avatarUrl: stargazer.avatarUrl }
-            ),
-          },
-        })
-        .then(() => {});
+      watchUsersAdded({
+        variables: {
+          login: Object.assign(
+            {},
+            { id: stargazer.id, login: stargazer.login, createdAt: Date.now(), avatarUrl: stargazer.avatarUrl }
+          ),
+        },
+      }).then(() => {});
     } else {
       removed({
         variables: {

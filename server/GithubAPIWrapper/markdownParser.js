@@ -1,5 +1,3 @@
-import { fastFilter } from "../../client/src/util";
-
 const axios = require("axios");
 const urlExist = require("url-exist");
 var base64 = require("js-base64").Base64;
@@ -90,8 +88,7 @@ const markdownImagesExtractor = (result, object, images) => {
   if (result.match(/image:: (.*)/g) !== null) {
     image1 = result.match(/image:: (.*)/g).map((x) => x.split(" ")[1]);
   }
-  const concat = (...arrays) =>
-    [].concat(...fastFilter((xx) => Array.isArray(xx), arrays));
+  const concat = (...arrays) => [].concat(...arrays.filter(Array.isArray));
   const totalImages = concat(
     imageWithHTMLTag,
     imageWithHTMLTag1,

@@ -7,7 +7,7 @@ import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import { Result } from './PureInputBody/Result';
 import { StargazerProps } from '../typing/type';
-import { useApolloFactorySelector } from '../selectors/stateSelector';
+import {useApolloFactory} from "../hooks/useApolloFactory";
 
 interface SearchBarProps {
   setVisible: any;
@@ -38,7 +38,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     },
     ref
   ) => {
-    const { userData } = useApolloFactorySelector((query: any) => query.getUserData);
+    const { userData } = useApolloFactory().query.getUserData;
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
     const handler = useCallback(

@@ -15,62 +15,68 @@ interface Results {
   getRootProps: any;
   ref: React.Ref<HTMLDivElement>;
   state: IState;
+  dispatch: any;
+  dispatchStargazer: any;
 }
 
 const avatarSize = 20;
-const Results: React.FC<Results> = React.forwardRef(({ state, data, isLoading, style, getRootProps }, ref) => {
-  const classes = useUserCardStyles({ avatarSize });
-  return (
-    <>
-      <If condition={isLoading}>
-        <Then>
-          <div className="resultsContainer" style={style} ref={ref}>
-            <ul className={'results'}>
-              <li className={'clearfix'}>
-                <Loading />
-              </li>
-            </ul>
-          </div>
-        </Then>
-      </If>
+const Results: React.FC<Results> = React.forwardRef(
+  ({ state, data, isLoading, style, getRootProps, dispatch, dispatchStargazer }, ref) => {
+    const classes = useUserCardStyles({ avatarSize });
+    return (
+      <>
+        <If condition={isLoading}>
+          <Then>
+            <div className="resultsContainer" style={style} ref={ref}>
+              <ul className={'results'}>
+                <li className={'clearfix'}>
+                  <Loading />
+                </li>
+              </ul>
+            </div>
+          </Then>
+        </If>
 
-      <If condition={!isLoading}>
-        <Then>
-          <div className="resultsContainer" style={style} ref={ref}>
-            <If condition={data && data.length > 0}>
-              <Then>
-                <ul className={'results'}>
-                  {data.map((result, idx) => (
-                    <Result
-                      state={state}
-                      getRootProps={getRootProps}
-                      userName={Object.keys(result).toString()}
-                      key={idx}
-                    >
-                      <div className={classes.wrapper} style={{ borderBottom: 0 }}>
-                        <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
-                        <div className={classes.nameWrapper}>
-                          <Typography variant="subtitle2" className={classes.typography}>
-                            {Object.keys(result)}
-                          </Typography>
+        <If condition={!isLoading}>
+          <Then>
+            <div className="resultsContainer" style={style} ref={ref}>
+              <If condition={data && data.length > 0}>
+                <Then>
+                  <ul className={'results'}>
+                    {data.map((result, idx) => (
+                      <Result
+                        state={state}
+                        getRootProps={getRootProps}
+                        userName={Object.keys(result).toString()}
+                        key={idx}
+                        dispatch={dispatch}
+                        dispatchStargazer={dispatchStargazer}
+                      >
+                        <div className={classes.wrapper} style={{ borderBottom: 0 }}>
+                          <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
+                          <div className={classes.nameWrapper}>
+                            <Typography variant="subtitle2" className={classes.typography}>
+                              {Object.keys(result)}
+                            </Typography>
+                          </div>
                         </div>
-                      </div>
-                    </Result>
-                  ))}
-                </ul>
-              </Then>
+                      </Result>
+                    ))}
+                  </ul>
+                </Then>
 
-              <Else>
-                <ul className={'results'}>
-                  <li className={'clearfix'}>No Result Found</li>
-                </ul>
-              </Else>
-            </If>
-          </div>
-        </Then>
-      </If>
-    </>
-  );
-});
+                <Else>
+                  <ul className={'results'}>
+                    <li className={'clearfix'}>No Result Found</li>
+                  </ul>
+                </Else>
+              </If>
+            </div>
+          </Then>
+        </If>
+      </>
+    );
+  }
+);
 
 export default Results;

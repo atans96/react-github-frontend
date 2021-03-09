@@ -52,8 +52,7 @@
     "rss-parser": "^3.9.0",
     "styled-components": "^5.2.1",
     "tinytime": "^0.2.6",
-    "typescript": "^3.7.5",
-    "unstated-next": "^1.1.0"
+    "typescript": "^3.7.5"
   },
   "proxy": "http://localhost:5000/",
   "scripts": {
