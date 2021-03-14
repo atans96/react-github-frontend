@@ -11,7 +11,7 @@ import { dispatchUsername } from '../../store/dispatcher';
 import { NavLink } from 'react-router-dom';
 import { IState } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
-import {useApolloFactory} from "../../hooks/useApolloFactory";
+import { useApolloFactory } from '../../hooks/useApolloFactory';
 
 const useStyles = makeStyles<Theme>(() => ({
   typographyQuery: {
@@ -209,4 +209,5 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
     return isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn);
   }
 );
+SubscribeFeedSetting.displayName = 'SubscribeFeedSetting';
 export default SubscribeFeedSetting;

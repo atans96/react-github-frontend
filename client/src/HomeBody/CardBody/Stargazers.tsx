@@ -100,4 +100,5 @@ const Stargazers = React.memo<StargazersProps>(
     );
   }
 );
+Stargazers.displayName = 'Stargazers';
 export default Stargazers;

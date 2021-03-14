@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { NavLink, RouteComponentProps } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
 import Stargazers from './CardBody/Stargazers';
@@ -14,7 +14,7 @@ import ImagesCard from './CardBody/ImagesCard';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 
 export interface Card {
-  index: string;
+  index: number;
   githubData: MergedDataProps;
   getRootProps?: any;
 }
@@ -25,7 +25,6 @@ interface CardRef extends Card {
   dispatch: any;
   dispatchStargazersUser: any;
   dataMongoMemoize: any;
-  routerProps: RouteComponentProps<{}, {}, {}>;
   columnCount: number;
 }
 
@@ -34,7 +33,6 @@ const Card: React.FC<CardRef> = React.forwardRef(
     {
       columnCount,
       dataMongoMemoize,
-      routerProps,
       state,
       dispatch,
       githubData,
@@ -173,4 +171,5 @@ const Card: React.FC<CardRef> = React.forwardRef(
     );
   }
 );
+Card.displayName = 'Card';
 export default Card;

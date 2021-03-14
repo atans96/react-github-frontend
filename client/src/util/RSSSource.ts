@@ -8,7 +8,7 @@ export class RSSSource {
   }
 
   static async fetchMetaData(source: RSSSource) {
-    let feed = await parseRSS(source.url);
+    const feed = await parseRSS(source.url);
     return feed;
   }
 }
@@ -17,23 +17,21 @@ const CHARSET_RE = /charset=([^()<>@,;:\"/[\]?.=\s]*)/i; //eslint-disable-line
 const XML_ENCODING_RE = /^<\?xml.+encoding="(.+)".*?\?>/i;
 export async function decodeFetchResponse(response: Response, isHTML = false) {
   const buffer = await response.arrayBuffer();
-  let ctype = response.headers.has('content-type') && response.headers.get('content-type');
-  // @ts-ignore
-  let charset = ctype && CHARSET_RE.test(ctype) ? CHARSET_RE.exec(ctype)[1] : undefined;
+  let ctype: string | null | undefined | boolean =
+    response.headers.has('content-type') && response.headers.get('content-type');
+  let charset: '' | null | undefined | false | string =
+    ctype && CHARSET_RE.test(ctype) ? CHARSET_RE.exec(ctype)![1] : undefined;
   let content = new TextDecoder(charset).decode(buffer);
   if (charset === undefined) {
     if (isHTML) {
       const dom = domParser.parseFromString(content, 'text/html');
       charset = dom.querySelector('meta[charset]')?.getAttribute('charset')?.toLowerCase();
       if (!charset) {
-        // @ts-ignore
         ctype = dom.querySelector("meta[http-equiv='Content-Type']")?.getAttribute('content');
-        // @ts-ignore
-        charset = ctype && CHARSET_RE.test(ctype) && CHARSET_RE.exec(ctype)[1].toLowerCase();
+        charset = ctype && CHARSET_RE.test(ctype) && CHARSET_RE.exec(ctype)![1].toLowerCase();
       }
     } else {
-      // @ts-ignore
-      charset = XML_ENCODING_RE.test(content) && XML_ENCODING_RE.exec(content)[1].toLowerCase();
+      charset = XML_ENCODING_RE.test(content) && XML_ENCODING_RE.exec(content)![1].toLowerCase();
     }
     if (charset && charset !== 'utf-8' && charset !== 'utf8') {
       content = new TextDecoder(charset).decode(buffer);

@@ -11,10 +11,8 @@ import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 
 export interface Card {
-  index: string;
+  index: number;
   githubData: MergedDataProps;
-  getRootProps?: any;
-  getInputProps?: any;
 }
 
 interface CardRef extends Card {
@@ -23,7 +21,7 @@ interface CardRef extends Card {
   dispatch: any;
   dispatchStargazersUser: any;
   dataMongoMemoize: any;
-  routerProps: RouteComponentProps<{}, {}, {}>;
+  routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   columnCount: number;
 }
 
@@ -36,8 +34,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
       dispatch,
       githubData,
       index,
-      getRootProps,
-      getInputProps,
       dispatchStargazersUser,
       columnCount,
       stateStargazersMemoize,
@@ -151,4 +147,5 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
     );
   }
 );
+CardDiscover.displayName = 'CardDiscover';
 export default CardDiscover;

@@ -68,7 +68,6 @@ const Global: React.FC<{
                 dispatchStargazers={props.componentProps.dispatchStargazers}
                 dispatch={props.componentProps.dispatch}
                 state={props.componentProps.state}
-                routerProps={props.routerProps}
               />
             </React.Fragment>
           );
@@ -125,4 +124,5 @@ const Global: React.FC<{
     </React.Fragment>
   );
 };
+Global.displayName = 'Global';
 export default Global;

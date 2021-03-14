@@ -38,7 +38,7 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   ({ children, data, state }) => {
     let columnCount = 1;
     let increment = 300;
-    let baseWidth = 760;
+    const baseWidth = 760;
     if (state.width > 760) {
       while (baseWidth + increment <= state.width) {
         columnCount += 1;
@@ -421,8 +421,8 @@ const Discover = React.memo<DiscoverProps>(
                       columnCount={columnCount}
                       routerProps={routerProps}
                       dataMongoMemoize={dataMongoMemoize()}
-                      index={state.mergedDataDiscover[key].id}
-                      githubData={state.mergedDataDiscover[key]}
+                      index={state.mergedDataDiscover[idx].id}
+                      githubData={state.mergedDataDiscover[idx]}
                       state={stateMemoize()}
                       dispatchStargazersUser={dispatchStargazersUserMemoize()}
                       stateStargazersMemoize={stateStargazersMemoize()}
@@ -464,4 +464,5 @@ const Discover = React.memo<DiscoverProps>(
     );
   }
 );
+Discover.displayName = 'Discover';
 export default Discover;

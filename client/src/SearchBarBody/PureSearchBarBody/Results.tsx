@@ -78,5 +78,5 @@ const Results: React.FC<Results> = React.forwardRef(
     );
   }
 );
-
+Results.displayName = 'Results';
 export default Results;

@@ -1,12 +1,12 @@
-import React from 'react'
-import { FeedPostSkeletonProps, useFeedPostSkeletonStyles } from './CardSkeletonStyle'
+import React from 'react';
+import { FeedPostSkeletonProps, useFeedPostSkeletonStyles } from './CardSkeletonStyle';
 
 interface CardSkeleton {
   props?: any;
 }
-const CardSkeleton: React.FC<CardSkeleton> = React.forwardRef((props, ref) => {
-  const styleProps: FeedPostSkeletonProps = {} as any
-  const classes = useFeedPostSkeletonStyles(styleProps)
+const CardSkeleton: React.FC<CardSkeleton> = React.forwardRef(() => {
+  const styleProps: FeedPostSkeletonProps = {} as any;
+  const classes = useFeedPostSkeletonStyles(styleProps);
 
   return (
     <div className={classes.container}>
@@ -19,6 +19,7 @@ const CardSkeleton: React.FC<CardSkeleton> = React.forwardRef((props, ref) => {
       </div>
       <div className={classes.mediaSkeleton} />
     </div>
-  )
-})
-export default CardSkeleton
+  );
+});
+CardSkeleton.displayName = 'CardSkeleton';
+export default CardSkeleton;

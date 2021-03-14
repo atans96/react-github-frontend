@@ -103,7 +103,7 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatch, dispatchStar
           <Then>
             <td onClick={handleClickUnsubscribe} title={'Unsubscribe'}>
               <button style={{ height: '50px', width: '40px', background: 'red', border: '0' }}>
-                <span style={{ transform: 'scale(1.5)' }} className="glyphicon glyphicon-remove"></span>
+                <span style={{ transform: 'scale(1.5)' }} className="glyphicon glyphicon-remove" />
               </button>
             </td>
           </Then>

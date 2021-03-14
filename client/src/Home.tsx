@@ -24,7 +24,6 @@ import useBottomHit from './hooks/useBottomHit';
 import { fastFilter, isEqualObjects } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
-import { RouteComponentProps } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { alreadySeenCardSelector } from './selectors/stateSelector';
 import { filterActionResolvedPromiseData } from './util/util';
@@ -49,7 +48,7 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   ({ children, data, state }) => {
     let columnCount = state.width < 760 ? 1 : 2;
     let increment = 300;
-    let baseWidth = 760;
+    const baseWidth = 760;
     if (state.width > 760) {
       while (baseWidth + increment < state.width) {
         columnCount += 1;
@@ -92,11 +91,10 @@ interface HomeProps {
   stateStargazers: IStateStargazers;
   dispatch: any;
   dispatchStargazers: any;
-  routerProps: RouteComponentProps<{}, {}, {}>;
 }
 
 const Home = React.memo<HomeProps>(
-  ({ state, dispatch, dispatchStargazers, stateStargazers, routerProps }) => {
+  ({ state, dispatch, dispatchStargazers, stateStargazers }) => {
     const { seenData, seenDataLoading, seenDataError } = useApolloFactory().query.getSeen;
     const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
     const { userStarred } = useApolloFactory().query.getUserInfoStarred;
@@ -220,7 +218,7 @@ const Home = React.memo<HomeProps>(
           } else {
             userNameTransformed = state.username;
           }
-          let promises: Promise<any>[] = [];
+          const promises: Promise<void>[] = [];
           userNameTransformed.forEach((name) => {
             promises.push(
               getUser(
@@ -278,7 +276,9 @@ const Home = React.memo<HomeProps>(
                 })
             );
           });
-          Promise.all(promises).then(() => {});
+          Promise.all(promises).then((e) => {
+            console.debug(e);
+          });
         }
       }
     };
@@ -292,7 +292,7 @@ const Home = React.memo<HomeProps>(
       } else {
         userNameTransformed = state.username;
       }
-      let promises: Promise<any>[] = [];
+      const promises: Promise<void>[] = [];
       let paginationInfo = 0;
       userNameTransformed.forEach((name) => {
         promises.push(
@@ -345,9 +345,11 @@ const Home = React.memo<HomeProps>(
             })
         );
       });
-      Promise.all(promises).then(() => {});
+      Promise.all(promises).then((e) => {
+        console.debug(e);
+      });
     };
-    const mergedDataRef = useRef<any[]>([]);
+    const mergedDataRef = useRef<MergedDataProps[]>([]);
     const isLoadingRef = useRef<boolean>(false);
     const imagesDataRef = useRef<any[]>([]);
     const filterBySeenRef = useRef<boolean>(state.filterBySeen);
@@ -401,13 +403,15 @@ const Home = React.memo<HomeProps>(
           );
           acc.push(temp);
           return acc;
-        }, [] as SeenProps[]);
+        }, [] as MergedDataProps[]);
         if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
           seenAdded({
             variables: {
               seenCards: result,
             },
-          }).then(() => {});
+          }).then((e) => {
+            console.debug(e);
+          });
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -488,7 +492,7 @@ const Home = React.memo<HomeProps>(
     useEffect(() => {
       if (!seenDataLoading && !seenDataError && seenData && seenData.getSeen !== null) {
         if (!state.filterBySeen) {
-          const images = state.undisplayMergedData.reduce((acc, obj: any) => {
+          const images = state.undisplayMergedData.reduce((acc: any[], obj: SeenProps) => {
             acc.push(
               Object.assign(
                 {},
@@ -499,7 +503,7 @@ const Home = React.memo<HomeProps>(
               )
             );
             return acc;
-          }, [] as any[]);
+          }, [] as SeenProps[]);
           dispatchImagesData(images, dispatch);
           dispatchMergedData(state.undisplayMergedData, dispatch);
         } else {
@@ -507,9 +511,8 @@ const Home = React.memo<HomeProps>(
             acc.push(obj.id);
             return acc;
           }, [] as number[]);
-          fastFilter((obj: any) => !ids.includes(obj.id), state.mergedData);
-          const temp = fastFilter((obj: any) => !ids.includes(obj.id), state.mergedData);
-          const images = fastFilter((obj: any) => !ids.includes(obj.id), state.imagesData);
+          const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
+          const images = fastFilter((obj: Record<string, any>) => !ids.includes(obj.id), state.imagesData);
           dispatch({
             type: 'IMAGES_DATA_REPLACE',
             payload: {
@@ -717,11 +720,10 @@ const Home = React.memo<HomeProps>(
                       key={idx}
                       columnCount={columnCount}
                       stateStargazersMemoize={stateStargazersMemoize()}
-                      routerProps={routerProps}
                       dataMongoMemoize={dataMongoMemoize()}
                       getRootProps={getRootProps}
-                      index={whichToUse()[key].id}
-                      githubData={whichToUse()[key]}
+                      index={whichToUse()[idx].id}
+                      githubData={whichToUse()[idx]}
                       state={stateMemoize()}
                       dispatchStargazersUser={dispatchStargazersUserMemoize()}
                       dispatch={dispatchMemoize()}
@@ -775,4 +777,5 @@ const Home = React.memo<HomeProps>(
     );
   }
 );
+Home.displayName = 'Home';
 export default Home;

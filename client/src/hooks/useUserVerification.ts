@@ -4,6 +4,7 @@ import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from '../util';
 import { logoutAction } from '../util/util';
 import { useApolloFactory } from './useApolloFactory';
+import {useHistory} from "react-router";
 
 interface useUserVerificationProps {
   componentProps: ComponentProps;
@@ -15,6 +16,7 @@ interface ComponentProps {
 }
 
 function useUserVerification(props: useUserVerificationProps) {
+  const history = useHistory();
   const [username, setUsername] = useState<any>(undefined);
   const { userDataLoading } = useApolloFactory().query.getUserData;
   const isMounted = useRef(false); //when the first time is mounted, that means the user hasn't queried anything yet so
@@ -35,10 +37,10 @@ function useUserVerification(props: useUserVerificationProps) {
             setUsername(response.username);
             localStorage.setItem('sess', response.token);
           } else {
-            logoutAction(props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+            logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
           }
         } catch (e) {
-          logoutAction(props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+          logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
           console.error(e);
         }
         isMounted.current = true;

@@ -24,4 +24,5 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ state }) => {
     </div>
   );
 };
+SearchBarDiscover.displayName = 'SearchBarDiscover';
 export default SearchBarDiscover;

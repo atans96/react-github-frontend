@@ -7,7 +7,7 @@ import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import { Result } from './PureInputBody/Result';
 import { StargazerProps } from '../typing/type';
-import {useApolloFactory} from "../hooks/useApolloFactory";
+import { useApolloFactory } from '../hooks/useApolloFactory';
 
 interface SearchBarProps {
   setVisible: any;
@@ -196,3 +196,4 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     );
   }
 );
+PureInput.displayName = 'PureInput';

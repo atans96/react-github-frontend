@@ -80,6 +80,7 @@ export type MergedDataProps = {
   html_url: string;
   viewerHasStarred?: boolean;
   trends?: number;
+  [key: string]: any;
 };
 export type RouterProps = {
   location: string; // This one is coming from the router
@@ -103,6 +104,6 @@ export type BooleanLike = boolean | string | number | null | undefined;
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ComponentWithConditionProps
-  extends PropsWithChildren<{
-    condition: (() => BooleanLike) | BooleanLike;
-  }> {}
+    extends PropsWithChildren<{
+      condition: (() => BooleanLike) | BooleanLike;
+    }> {}

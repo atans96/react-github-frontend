@@ -9,6 +9,7 @@ import { languageList, readEnvironmentVariable } from './util';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { IState } from './typing/interface';
+import {useHistory} from "react-router";
 
 interface LoginProps {
   state: IState;
@@ -18,6 +19,7 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const signUpAdded = useApolloFactory().mutation.signUpAdded;
+  const history = useHistory();
   useEffect(() => {
     // After requesting Github access by logging using user account's Github
     // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
@@ -80,7 +82,7 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
           }
         })
         .then(() => {
-          window.location.href = '/';
+          history.push('/');
         })
         .catch(() => {
           setData({
@@ -115,4 +117,5 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
     </React.Fragment>
   );
 };
+Login.displayName = 'Login';
 export default Login;

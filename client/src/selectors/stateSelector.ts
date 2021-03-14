@@ -5,12 +5,12 @@ import { fastFilter } from '../util';
 export const alreadySeenCardSelector = createSelector<any, any, []>(
   [(seenCards: any) => seenCards],
   (seenCard: any) => {
-    const alreadySeenCards =
+    return (
       seenCard?.reduce((acc: any[], obj: { id: number }) => {
         acc.push(obj.id);
         return acc;
-      }, []) || [];
-    return alreadySeenCards;
+      }, []) || []
+    );
   }
 );
 export const getIdsSelector = createSelector<any, any, any[]>([(dataList: any) => dataList], (data: any) => {
@@ -18,7 +18,7 @@ export const getIdsSelector = createSelector<any, any, any[]>([(dataList: any) =
 });
 export const sortedRepoInfoSelector = (sortedIds: any[], starRankingFiltered: any[]) =>
   createSelector<any, any, any[]>([(repoInfos: any) => repoInfos], (repoInfo: any) => {
-    const result = repoInfo
+    return repoInfo
       ?.slice()
       .sort((a: any, b: any) => {
         return sortedIds.indexOf(a.id) - sortedIds.indexOf(b.id);
@@ -30,17 +30,16 @@ export const sortedRepoInfoSelector = (sortedIds: any[], starRankingFiltered: an
           : 0;
         return copyObj;
       });
-    return result;
   });
 export const starRankingFilteredSelector = (ids: number[]) =>
   createSelector<any, any, any[]>([(starRankings: any) => starRankings, (ids: any) => ids], (starRanking: any) => {
-    const starRankingFiltered =
+    return (
       fastFilter((xx: any) => ids.includes(xx.id), starRanking)
         .reduce((acc: any[], obj: any) => {
           const temp = Object.assign({}, { trends: obj.trends, id: obj.id });
           acc.push(temp);
           return acc;
         }, [])
-        .sort((a: any, b: any) => b['trends']['daily'] - a['trends']['daily']) || [];
-    return starRankingFiltered;
+        .sort((a: any, b: any) => b['trends']['daily'] - a['trends']['daily']) || []
+    );
   });

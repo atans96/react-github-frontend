@@ -67,4 +67,5 @@ const UserCard = React.memo<UserCard>(
     );
   }
 );
+UserCard.displayName = 'UserCard';
 export default UserCard;

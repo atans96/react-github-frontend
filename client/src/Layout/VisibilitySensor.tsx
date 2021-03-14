@@ -1,6 +1,6 @@
-import React from 'react'
-import ReactDOM from 'react-dom'
-import PropTypes from 'prop-types'
+import React from 'react';
+import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 
 interface Direction {
   top: number;
@@ -17,56 +17,56 @@ interface Offset {
   direction: Placement;
   value: number;
 }
-function isVisibleWithOffset (offset: Offset, rect: Direction, containmentRect: Direction) {
-  const offsetDir = offset.direction
-  const offsetVal = offset.value
+function isVisibleWithOffset(offset: Offset, rect: Direction, containmentRect: Direction) {
+  const offsetDir = offset.direction;
+  const offsetVal = offset.value;
 
   // Rules for checking different kind of offsets. In example if the element is
   // 90px below viewport and offsetTop is 100, it is considered visible.
   switch (offsetDir) {
     case 'top':
       return (
-        containmentRect.top + offsetVal < rect.top &&
-        containmentRect.bottom > rect.bottom &&
-        containmentRect.left < rect.left &&
-        containmentRect.right > rect.right
-      )
+          containmentRect.top + offsetVal < rect.top &&
+          containmentRect.bottom > rect.bottom &&
+          containmentRect.left < rect.left &&
+          containmentRect.right > rect.right
+      );
 
     case 'left':
       return (
-        containmentRect.left + offsetVal < rect.left &&
-        containmentRect.bottom > rect.bottom &&
-        containmentRect.top < rect.top &&
-        containmentRect.right > rect.right
-      )
+          containmentRect.left + offsetVal < rect.left &&
+          containmentRect.bottom > rect.bottom &&
+          containmentRect.top < rect.top &&
+          containmentRect.right > rect.right
+      );
 
     case 'bottom':
       return (
-        containmentRect.bottom - offsetVal > rect.bottom &&
-        containmentRect.left < rect.left &&
-        containmentRect.right > rect.right &&
-        containmentRect.top < rect.top
-      )
+          containmentRect.bottom - offsetVal > rect.bottom &&
+          containmentRect.left < rect.left &&
+          containmentRect.right > rect.right &&
+          containmentRect.top < rect.top
+      );
 
     case 'right':
       return (
-        containmentRect.right - offsetVal > rect.right &&
-        containmentRect.left < rect.left &&
-        containmentRect.top < rect.top &&
-        containmentRect.bottom > rect.bottom
-      )
+          containmentRect.right - offsetVal > rect.right &&
+          containmentRect.left < rect.left &&
+          containmentRect.top < rect.top &&
+          containmentRect.bottom > rect.bottom
+      );
   }
 }
-function normalizeRect (rect: Measurement) {
+function normalizeRect(rect: Measurement) {
   if (rect.width === undefined) {
-    rect.width = rect.right - rect.left
+    rect.width = rect.right - rect.left;
   }
 
   if (rect.height === undefined) {
-    rect.height = rect.bottom - rect.top
+    rect.height = rect.bottom - rect.top;
   }
 
-  return rect
+  return rect;
 }
 interface VisibilitySensorProps {
   onChange?: (isVisible: boolean) => void; // no defined in defaultProps so make it optional here
@@ -106,7 +106,7 @@ export default class VisibilitySensor extends React.Component<VisibilitySensorPr
     delayedCall: false,
     offset: {},
     containment: null,
-    children: <span />
+    children: <span />,
   };
 
   static propTypes = {
@@ -119,13 +119,13 @@ export default class VisibilitySensor extends React.Component<VisibilitySensorPr
         top: PropTypes.number,
         left: PropTypes.number,
         bottom: PropTypes.number,
-        right: PropTypes.number
+        right: PropTypes.number,
       }),
       // deprecated offset property
       PropTypes.shape({
         direction: PropTypes.oneOf(['top', 'right', 'bottom', 'left']),
-        value: PropTypes.number
-      })
+        value: PropTypes.number,
+      }),
     ]),
     scrollCheck: PropTypes.bool,
     scrollDelay: PropTypes.number,
@@ -137,115 +137,115 @@ export default class VisibilitySensor extends React.Component<VisibilitySensorPr
     intervalDelay: PropTypes.number,
     containment: typeof window !== 'undefined' ? PropTypes.instanceOf(window.Element) : PropTypes.any,
     children: PropTypes.oneOfType([PropTypes.element, PropTypes.func]),
-    minTopValue: PropTypes.number
+    minTopValue: PropTypes.number,
   };
 
-  private debounceCheck: {} | undefined | null;
+  private debounceCheck: Record<string, any> | undefined | null;
   private interval: any;
   private node: any;
 
-  constructor (props: VisibilitySensorProps) {
-    super(props)
+  constructor(props: VisibilitySensorProps) {
+    super(props);
 
     this.state = {
       isVisible: null,
-      visibilityRect: {}
-    }
+      visibilityRect: {},
+    };
   }
 
-  componentDidMount () {
-    this.node = ReactDOM.findDOMNode(this) as Element
+  componentDidMount() {
+    this.node = ReactDOM.findDOMNode(this) as Element;
     if (this.props.active) {
-      this.startWatching()
+      this.startWatching();
     }
   }
 
-  componentWillUnmount () {
-    this.stopWatching()
+  componentWillUnmount() {
+    this.stopWatching();
   }
 
-  componentDidUpdate (prevProps: VisibilitySensorProps) {
+  componentDidUpdate(prevProps: VisibilitySensorProps) {
     // re-register node in componentDidUpdate if children diffs [#103]
-    this.node = ReactDOM.findDOMNode(this) as Element
+    this.node = ReactDOM.findDOMNode(this) as Element;
 
     if (this.props.active && !prevProps.active) {
       this.setState({
         isVisible: null,
-        visibilityRect: {}
-      })
+        visibilityRect: {},
+      });
 
-      this.startWatching()
+      this.startWatching();
     } else if (!this.props.active) {
-      this.stopWatching()
+      this.stopWatching();
     }
   }
 
   getContainer = () => {
-    return this.props.containment || window
+    return this.props.containment || window;
   };
 
   addEventListener = (
-    target: { addEventListener: (arg0: any, arg1: () => void) => void },
-    event: string | number,
-    delay: any,
-    throttle?: number
+      target: { addEventListener: (arg0: any, arg1: () => void) => void },
+      event: string | number,
+      delay: any,
+      throttle?: number
   ): void => {
     if (!this.debounceCheck) {
-      this.debounceCheck = {}
+      this.debounceCheck = {};
     }
 
-    let timeout: any
-    let func
+    let timeout: any;
+    let func;
 
     const later = () => {
-      timeout = null
-      this.check()
-    }
+      timeout = null;
+      this.check();
+    };
 
     if (throttle && throttle > -1) {
       func = () => {
         if (!timeout) {
-          timeout = setTimeout(later, throttle || 0)
+          timeout = setTimeout(later, throttle || 0);
         }
-      }
+      };
     } else {
       func = () => {
-        clearTimeout(timeout)
-        timeout = setTimeout(later, delay || 0)
-      }
+        clearTimeout(timeout);
+        timeout = setTimeout(later, delay || 0);
+      };
     }
 
     const info = {
       target: target,
       fn: func,
       getLastTimeout: () => {
-        return timeout
-      }
-    }
+        return timeout;
+      },
+    };
 
-    target.addEventListener(event, info.fn)
-    this.debounceCheck[event] = info
+    target.addEventListener(event, info.fn);
+    this.debounceCheck[event] = info;
   };
 
   startWatching = () => {
     if (this.debounceCheck || this.interval) {
-      return
+      return;
     }
 
     if (this.props.intervalCheck) {
-      this.interval = setInterval(this.check, this.props.intervalDelay)
+      this.interval = setInterval(this.check, this.props.intervalDelay);
     }
 
     if (this.props.scrollCheck) {
-      this.addEventListener(this.getContainer(), 'scroll', this.props.scrollDelay, this.props.scrollThrottle)
+      this.addEventListener(this.getContainer(), 'scroll', this.props.scrollDelay, this.props.scrollThrottle);
     }
 
     if (this.props.resizeCheck) {
-      this.addEventListener(window, 'resize', this.props.resizeDelay, this.props.resizeThrottle)
+      this.addEventListener(window, 'resize', this.props.resizeDelay, this.props.resizeThrottle);
     }
 
     // if dont need delayed call, check on load ( before the first interval fires )
-    !this.props.delayedCall && this.check()
+    !this.props.delayedCall && this.check();
   };
 
   stopWatching = () => {
@@ -253,141 +253,140 @@ export default class VisibilitySensor extends React.Component<VisibilitySensorPr
       // clean up event listeners and their debounce callers
       for (const debounceEvent in this.debounceCheck) {
         if (this.debounceCheck.hasOwnProperty(debounceEvent)) {
-          const debounceInfo = this.debounceCheck[debounceEvent]
+          const debounceInfo = this.debounceCheck[debounceEvent];
 
-          clearTimeout(debounceInfo.getLastTimeout())
-          debounceInfo.target.removeEventListener(debounceEvent, debounceInfo.fn)
+          clearTimeout(debounceInfo.getLastTimeout());
+          debounceInfo.target.removeEventListener(debounceEvent, debounceInfo.fn);
 
-          this.debounceCheck[debounceEvent] = null
+          this.debounceCheck[debounceEvent] = null;
         }
       }
     }
-    this.debounceCheck = null
+    this.debounceCheck = null;
 
     if (this.interval) {
-      this.interval = clearInterval(this.interval)
+      this.interval = clearInterval(this.interval);
     }
   };
 
-  roundRectDown (rect: Measurement) {
+  roundRectDown(rect: Measurement) {
     return {
       top: Math.floor(rect.top),
       left: Math.floor(rect.left),
       bottom: Math.floor(rect.bottom),
       right: Math.floor(rect.right),
       width: undefined,
-      height: undefined
-    }
+      height: undefined,
+    };
   }
 
   /**
    * Check if the element is within the visible viewport
    */
   check = () => {
-    const el = this.node
-    let rect
-    let containmentRect
+    const el = this.node;
+    let containmentRect;
 
     // if the component has rendered to null, dont update visibility
     if (!el) {
-      return this.state
+      return this.state;
     }
 
-    rect = normalizeRect(this.roundRectDown(el.getBoundingClientRect()))
+    const rect = normalizeRect(this.roundRectDown(el.getBoundingClientRect()));
 
     if (this.props.containment) {
-      const containmentDOMRect = this.props.containment.getBoundingClientRect()
+      const containmentDOMRect = this.props.containment.getBoundingClientRect();
       containmentRect = {
         top: containmentDOMRect.top,
         left: containmentDOMRect.left,
         bottom: containmentDOMRect.bottom,
-        right: containmentDOMRect.right
-      }
+        right: containmentDOMRect.right,
+      };
     } else {
       containmentRect = {
         top: 0,
         left: 0,
         bottom: window.innerHeight || document.documentElement.clientHeight,
-        right: window.innerWidth || document.documentElement.clientWidth
-      }
+        right: window.innerWidth || document.documentElement.clientWidth,
+      };
     }
 
     // Check if visibility is wanted via offset?
-    const offset = this.props.offset || {}
-    const hasValidOffset = typeof offset === 'object'
+    const offset = this.props.offset || {};
+    const hasValidOffset = typeof offset === 'object';
 
     if (hasValidOffset) {
-      containmentRect.top += offset.top || 0
-      containmentRect.left += offset.left || 0
-      containmentRect.bottom -= offset.bottom || 0
-      containmentRect.right -= offset.right || 0
+      containmentRect.top += offset.top || 0;
+      containmentRect.left += offset.left || 0;
+      containmentRect.bottom -= offset.bottom || 0;
+      containmentRect.right -= offset.right || 0;
     }
 
     const visibilityRect = {
       top: rect.top >= containmentRect.top,
       left: rect.left >= containmentRect.left,
       bottom: rect.bottom <= containmentRect.bottom,
-      right: rect.right <= containmentRect.right
-    } as any
+      right: rect.right <= containmentRect.right,
+    } as any;
 
     // https://github.com/joshwnj/react-visibility-sensor/pull/114
-    const hasSize = rect.height && rect.height > 0 && rect.width && rect.width > 0
+    const hasSize = rect.height && rect.height > 0 && rect.width && rect.width > 0;
 
     let isVisible =
-      hasSize && visibilityRect.top && visibilityRect.left && visibilityRect.bottom && visibilityRect.right
+        hasSize && visibilityRect.top && visibilityRect.left && visibilityRect.bottom && visibilityRect.right;
 
     // check for partial visibility
     if (hasSize && this.props.partialVisibility) {
       let partialVisible =
-        rect.top <= containmentRect.bottom &&
-        rect.bottom >= containmentRect.top &&
-        rect.left <= containmentRect.right &&
-        rect.right >= containmentRect.left
+          rect.top <= containmentRect.bottom &&
+          rect.bottom >= containmentRect.top &&
+          rect.left <= containmentRect.right &&
+          rect.right >= containmentRect.left;
 
       // account for partial visibility on a single edge
       if (typeof this.props.partialVisibility === 'string') {
-        partialVisible = visibilityRect[this.props.partialVisibility]
+        partialVisible = visibilityRect[this.props.partialVisibility];
       }
 
       // if we have minimum top visibility set by props, lets check, if it meets the passed value
       // so if for instance element is at least 200px in viewport, then show it.
       isVisible = this.props.minTopValue
-        ? partialVisible && rect.top <= containmentRect.bottom - this.props.minTopValue
-        : partialVisible
+          ? partialVisible && rect.top <= containmentRect.bottom - this.props.minTopValue
+          : partialVisible;
     }
 
     // Deprecated options for calculating offset.
     if (typeof offset.direction === 'string' && typeof offset.value === 'number') {
       console.warn(
-        '[notice] offset.direction and offset.value have been deprecated. They still work for now, but will be removed in next major version. Please upgrade to the new syntax: { %s: %d }',
-        offset.direction,
-        offset.value
-      )
+          '[notice] offset.direction and offset.value have been deprecated. They still work for now, but will be removed in next major version. Please upgrade to the new syntax: { %s: %d }',
+          offset.direction,
+          offset.value
+      );
 
-      isVisible = isVisibleWithOffset(offset, rect, containmentRect)
+      isVisible = isVisibleWithOffset(offset, rect, containmentRect);
     }
 
-    let state = this.state
+    let state = this.state;
     // notify the parent when the value changes
     if (this.state.isVisible !== isVisible) {
       state = {
         isVisible: isVisible,
-        visibilityRect: visibilityRect
-      }
-      this.setState(state)
-      if (this.props.onChange && isVisible) this.props.onChange(isVisible)
+        visibilityRect: visibilityRect,
+      };
+      this.setState(state);
+      if (this.props.onChange && isVisible) this.props.onChange(isVisible);
     }
 
-    return state
+    return state;
   };
 
-  render () {
+  render() {
     if (this.props.children instanceof Function) {
       return this.props.children({
         isVisible: this.state.isVisible,
-        visibilityRect: this.state.visibilityRect
-      })
+        visibilityRect: this.state.visibilityRect,
+      });
     }
-    return React.Children.only(this.props.children)
+    return React.Children.only(this.props.children);
   }
 }

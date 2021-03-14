@@ -1,6 +1,6 @@
-import React, { useRef } from 'react'
-import '../Login.scss'
-import { Nullable } from '../typing/type'
+import React, { useRef } from 'react';
+import '../Login.scss';
+import { Nullable } from '../typing/type';
 
 interface DataProps {
   errorMessage: string;
@@ -20,8 +20,8 @@ interface LoginLayout {
 }
 
 const LoginLayout: React.FC<LoginLayout> = ({ style, notification, data, apiType, children }) => {
-  const loginLayoutRef = useRef<HTMLDivElement>(null)
-  const portalRef = useRef<HTMLDivElement>(null)
+  const loginLayoutRef = useRef<HTMLDivElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   return (
     <section
       ref={loginLayoutRef}
@@ -43,7 +43,7 @@ const LoginLayout: React.FC<LoginLayout> = ({ style, notification, data, apiType
         <div
           className="login-container"
           style={{
-            width: (!data?.isLoading && style?.width) || ''
+            width: (!data?.isLoading && style?.width) || '',
           }}
         >
           {data?.isLoading ? (
@@ -56,6 +56,7 @@ const LoginLayout: React.FC<LoginLayout> = ({ style, notification, data, apiType
         </div>
       </div>
     </section>
-  )
-}
-export default LoginLayout
+  );
+};
+LoginLayout.displayName = 'LoginLayout';
+export default LoginLayout;

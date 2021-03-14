@@ -58,4 +58,5 @@ const SearchBar: React.FC<SearchBarProps> = ({ state, stateStargazers, dispatchS
     </div>
   );
 };
+SearchBar.displayName = 'SearchBar';
 export default SearchBar;

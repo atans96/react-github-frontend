@@ -32,13 +32,13 @@ const SearchBarDiscover = React.memo<SearchBarDiscoverProps>(({ state }) => {
       console.log(res);
       //TODO: display the filtered cards
       //TODO: when waiting
-      query?.current?.clearState();
+      // query?.current?.clearState();
     });
   };
 
   return (
     <SearchBarLayout style={{ width: `${state.width} px` }} onSubmit={handleSubmit}>
-      {(portal) => (
+      {() => (
         <React.Fragment>
           <PureInputDiscover style={style} ref={query} />
         </React.Fragment>
@@ -46,4 +46,5 @@ const SearchBarDiscover = React.memo<SearchBarDiscoverProps>(({ state }) => {
     </SearchBarLayout>
   );
 });
+SearchBarDiscover.displayName = 'SearchBarDiscover';
 export default SearchBarDiscover;

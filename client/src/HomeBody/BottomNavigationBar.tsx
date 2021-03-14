@@ -17,4 +17,5 @@ const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({ dispatchStarg
     </React.Fragment>
   );
 };
+BottomNavigationBar.displayName = 'BottomNavigationBar';
 export default BottomNavigationBar;

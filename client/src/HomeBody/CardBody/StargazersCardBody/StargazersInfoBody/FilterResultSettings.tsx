@@ -1,15 +1,15 @@
-import React from 'react'
-import InputSlider from '../../../../Layout/SliderLayout'
-import { CheckIcon, PeopleIcon, ReposIcon } from '../../../../util/icons'
-import makeStyles from '@material-ui/core/styles/makeStyles'
-import Button from '@material-ui/core/Button'
-import { dispatchStargazersUsers, dispatchStargazersUsersRepos } from '../../../../store/dispatcher'
+import React from 'react';
+import InputSlider from '../../../../Layout/SliderLayout';
+import { CheckIcon, PeopleIcon, ReposIcon } from '../../../../util/icons';
+import makeStyles from '@material-ui/core/styles/makeStyles';
+import Button from '@material-ui/core/Button';
+import { dispatchStargazersUsers, dispatchStargazersUsersRepos } from '../../../../store/dispatcher';
 
 const useStyles = makeStyles((theme) => ({
   button: {
-    margin: theme.spacing(1)
-  }
-}))
+    margin: theme.spacing(1),
+  },
+}));
 
 export interface FilterResultSettings {
   props: any;
@@ -17,7 +17,7 @@ export interface FilterResultSettings {
 }
 
 const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch }) => {
-  const classes = useStyles()
+  const classes = useStyles();
   return (
     <div style={{ borderBottom: '1px solid #eaecef' }}>
       <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -29,7 +29,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
             type={'users'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={parseInt(localStorage.getItem('users')!) || 2}
+            defaultValue={parseInt(localStorage.getItem('users') as string) || 2}
             dispatcher={dispatchStargazersUsers}
             dispatch={dispatch}
             icon={<PeopleIcon />}
@@ -43,7 +43,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
             type={'repos'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={parseInt(localStorage.getItem('repos')!) || 2}
+            defaultValue={parseInt(localStorage.getItem('repos') as string) || 2}
             dispatcher={dispatchStargazersUsersRepos}
             dispatch={dispatch}
             icon={<ReposIcon />}
@@ -63,6 +63,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
         </Button>
       </div>
     </div>
-  )
-}
-export default FilterResultSettings
+  );
+};
+FilterResultSettings.displayName = 'FilterResultSettings';
+export default FilterResultSettings;

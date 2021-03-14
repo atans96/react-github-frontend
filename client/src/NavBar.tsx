@@ -11,6 +11,7 @@ import Discover from './NavBarBody/SearchSuggested';
 import Trending from './NavBarBody/Trending';
 import { logoutAction } from './util/util';
 import { useApolloFactory } from './hooks/useApolloFactory';
+import {useHistory} from "react-router";
 
 interface NavBarProps {
   state: IState;
@@ -21,7 +22,7 @@ interface NavBarProps {
 const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
   const [active, setActiveBar] = useState('home');
   const navBarRef = useRef<HTMLDivElement>(null);
-  let location = useLocation();
+  const location = useLocation();
   const url = location.pathname;
 
   const [isHoveredLogin, bindLogin] = useHover();
@@ -36,16 +37,16 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
-
+    const history = useHistory();
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     setActiveBar(event.currentTarget.id);
     if (event.currentTarget.id === 'home') {
-      window.location.href = '/';
+        history.push('/')
     } else if (event.currentTarget.id === 'logout') {
-      logoutAction(props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+      logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
     } else {
-      window.location.href = `/${event.currentTarget.id.toLowerCase()}`;
+        history.push(`/${event.currentTarget.id.toLowerCase()}`)
     }
   };
   return (
@@ -175,4 +176,5 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
     </div>
   );
 };
+NavBar.displayName = 'NavBar';
 export default NavBar;

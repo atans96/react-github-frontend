@@ -19,7 +19,7 @@ import { IState } from '../../typing/interface';
 import { fastFilter, isEqualObjects, uniqFast } from '../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
-import {useApolloFactory} from "../../hooks/useApolloFactory";
+import { useApolloFactory } from '../../hooks/useApolloFactory';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -80,22 +80,26 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
         await addRSSFeed(tokenAdd)
           .then((res: any) => {
             let matches;
-            let output: any[] = [];
-            let HTML: string[] = [];
+            const output: any[] = [];
+            const HTML: string[] = [];
             try {
               res.items.forEach((obj: any) => {
                 while ((matches = re.exec(obj.content))) {
-                  const match = matches[0].match('href="(.*?)"')![1];
-                  output.push(
-                    Object.assign(
-                      {},
-                      {
-                        index: matches.index,
-                        value: 'href=https://github.com' + match,
-                        len: matches[0].match('href="(.*?)"')![0].length,
-                      }
-                    )
-                  );
+                  if (matches) {
+                    const match = matches[0].match('href="(.*?)"')[1];
+                    output.push(
+                      Object.assign(
+                        {},
+                        {
+                          index: matches.index,
+                          value: 'href=https://github.com' + match,
+                          len: matches[0].match('href="(.*?)"')[0].length,
+                        }
+                      )
+                    );
+                  } else {
+                    break;
+                  }
                 }
                 const a = obj.content.toString().replace(/./g, (c: any, i: any) => {
                   if (output.length > 0 && i === parseInt(output[0].index)) {
@@ -112,11 +116,10 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                 setLoading(false);
                 setToken('');
                 tokenRSSAdded({
-                    variables: {
-                      tokenRSS: token,
-                    },
-                  })
-                  .then(() => {});
+                  variables: {
+                    tokenRSS: token,
+                  },
+                }).then(() => {});
                 dispatch({
                   type: 'TOKEN_RSS_ADDED',
                   payload: {
@@ -125,21 +128,20 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                 });
                 setRSSFeed(HTML.reverse());
                 rssFeedAdded({
-                    variables: {
-                      rss: HTML,
-                      rssLastSeen: HTML,
-                    },
-                  })
-                  .then(() => {});
+                  variables: {
+                    rss: HTML,
+                    rssLastSeen: HTML,
+                  },
+                }).then(() => {});
               }
               if (!openRSS) {
                 unseenFeeds.current = [];
                 rssFeedAdded({
-                    variables: {
-                      rss: HTML,
-                      rssLastSeen: [],
-                    },
-                  })
+                  variables: {
+                    rss: HTML,
+                    rssLastSeen: [],
+                  },
+                })
                   .then((res: any) => {
                     if (res.data.rssFeedAdded) {
                       unseenFeeds.current = fastFilter(
@@ -159,11 +161,11 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                 if (state.tokenRSS !== '') {
                   const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
                   rssFeedAdded({
-                      variables: {
-                        rss: HTML,
-                        rssLastSeen: uniqq,
-                      },
-                    })
+                    variables: {
+                      rss: HTML,
+                      rssLastSeen: uniqq,
+                    },
+                  })
                     .then((res: any) => {
                       const uniqq = uniqFast([...res.data.rssFeedAdded.rssLastSeen, ...res.data.rssFeedAdded.rss]);
                       setRSSFeed(uniqq.reverse()); //show it to the user
@@ -384,4 +386,5 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
     );
   }
 );
+RSSFeed.displayName = 'RSSFeed';
 export default RSSFeed;

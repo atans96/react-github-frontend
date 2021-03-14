@@ -19,3 +19,4 @@ export const OnlyYesterday = React.memo<OnlyYesterdayProps>(({ trends }) => {
     </div>
   );
 });
+OnlyYesterday.displayName = 'OnlyYesterday';

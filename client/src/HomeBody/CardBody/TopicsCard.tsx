@@ -32,4 +32,5 @@ const TopicsCard = React.memo<TopicsCard>(
     );
   }
 );
+TopicsCard.displayName = 'TopicsCard';
 export default TopicsCard;

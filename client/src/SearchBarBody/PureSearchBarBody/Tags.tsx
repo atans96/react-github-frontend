@@ -55,3 +55,4 @@ export const Tags: React.FC<TagsProps> = ({ obj, clicked, state, dispatch }) => 
     </button>
   );
 };
+Tags.displayName = 'Tags';

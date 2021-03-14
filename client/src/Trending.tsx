@@ -12,4 +12,5 @@ interface TrendingProps {
 const Trending = React.memo<TrendingProps>(({ state, dispatch, dispatchStargazers, stateStargazers, routerProps }) => {
   return <p>Hi</p>;
 });
+Trending.displayName = 'Trending';
 export default Trending;

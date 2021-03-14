@@ -14,5 +14,4 @@ export const MonthlyTrends = ({ deltas }: any) => {
     </>
   );
 };
-
 export default MonthlyTrends;
