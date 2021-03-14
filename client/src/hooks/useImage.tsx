@@ -10,7 +10,7 @@ export type useImageProps = {
 };
 const removeBlankArrayElements = (a: string[]) => fastFilter((x: any) => x, a);
 const stringToArray = (x: useImageProps['srcList']) => (Array.isArray(x) ? x : [x]);
-const cache = {};
+const cache: any = {};
 const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<void>) => {
   let done = false;
   return new Promise((resolve, reject) => {
@@ -21,21 +21,21 @@ const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<
       });
     };
     arr
-      .reduce((p, src) => {
-        // ensure we aren't done before enquing the next source
-        return p.catch(() => {
-          if (!done) return queueNext(src);
-        });
-      }, queueNext(arr.shift()))
-      .catch(reject);
+        .reduce((p, src) => {
+          // ensure we aren't done before enquing the next source
+          return p.catch(() => {
+            if (!done) return queueNext(src);
+          });
+        }, queueNext(arr.shift()))
+        .catch(reject);
   });
 };
 
 export default function useImage({
-  srcList,
-  imgPromise = imagePromiseFactory({ decode: true }),
-  useSuspense = true,
-}: useImageProps): {
+                                   srcList,
+                                   imgPromise = imagePromiseFactory({ decode: true }),
+                                   useSuspense = true,
+                                 }: useImageProps): {
   src: string | undefined;
   isLoading: boolean;
   error: any;
@@ -57,19 +57,19 @@ export default function useImage({
 
   // when promise resolves/reject, update cache & state
   cache[sourceKey].promise
-    // if a source was found, update cache
-    // when not using suspense, update state to force a rerender
-    .then((data: any) => {
-      cache[sourceKey] = { ...cache[sourceKey], cache: 'resolved', data };
-      if (!useSuspense) setIsLoading(false);
-    })
+      // if a source was found, update cache
+      // when not using suspense, update state to force a rerender
+      .then((data: any) => {
+        cache[sourceKey] = { ...cache[sourceKey], cache: 'resolved', data };
+        if (!useSuspense) setIsLoading(false);
+      })
 
-    // if no source was found, or if another error occured, update cache
-    // when not using suspense, update state to force a rerender
-    .catch((error: any) => {
-      cache[sourceKey] = { ...cache[sourceKey], cache: 'rejected', error };
-      if (!useSuspense) setIsLoading(false);
-    });
+      // if no source was found, or if another error occured, update cache
+      // when not using suspense, update state to force a rerender
+      .catch((error: any) => {
+        cache[sourceKey] = { ...cache[sourceKey], cache: 'rejected', error };
+        if (!useSuspense) setIsLoading(false);
+      });
 
   if (cache[sourceKey].cache === 'resolved') {
     // const imageData = getImageData(cache[sourceKey].data.image);

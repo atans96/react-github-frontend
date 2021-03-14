@@ -13,4 +13,5 @@ const BottomNavigationBarDiscover: React.FC<BottomNavigationBarProps> = ({ state
     </React.Fragment>
   );
 };
+BottomNavigationBarDiscover.displayName = 'BottomNavigationBarDiscover';
 export default BottomNavigationBarDiscover;

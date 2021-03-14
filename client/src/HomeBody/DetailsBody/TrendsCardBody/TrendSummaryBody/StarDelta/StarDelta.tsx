@@ -28,9 +28,8 @@ const StarDeltaContainer = styled.div`
   justify-content: center;
 `;
 
-export const StarDelta: React.FC<StarDeltaProps> = ({ average, ...props }) =>
-  // @ts-ignore
-  average ? <StarDeltaAverage {...props} /> : <StarDeltaNormal {...props} />;
+export const StarDelta: React.FC<StarDeltaProps> = ({ average, value, ...props }) =>
+  average ? <StarDeltaAverage {...props} value={value} /> : <StarDeltaNormal {...props} value={value} />;
 
 const StarDeltaNormal: React.FC<StarProps> = ({ value, ...props }) => {
   const sign = getSign(value);

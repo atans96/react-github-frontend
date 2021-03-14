@@ -21,7 +21,7 @@ import Parser from 'rss-parser';
 import _ from 'lodash';
 import { NavLink } from 'react-router-dom';
 import { IState } from '../../typing/interface';
-import {useApolloFactory} from "../../hooks/useApolloFactory";
+import { useApolloFactory } from '../../hooks/useApolloFactory';
 
 const useStyles = makeStyles<Theme>(() => ({
   list: {
@@ -88,8 +88,8 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
     const controller = new AbortController();
     const signal = controller.signal;
     const updater = (data: any, logins: any) => {
-      let promises: Promise<void>[] = [];
-      let HTML: any[] = [];
+      const promises: Promise<void>[] = [];
+      const HTML: any[] = [];
       let temp: Promise<void>;
       data.getWatchUsers.login.forEach((obj: any) => {
         if (logins.includes(obj.login)) {
@@ -99,21 +99,25 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
               if (result.items) {
                 const re = new RegExp('href="([^"]+)"', 'g');
                 let matches;
-                let output: any[] = [];
+                const output: any[] = [];
                 try {
                   result.items.forEach((obj: any) => {
                     while ((matches = re.exec(obj.content))) {
-                      const match = matches[0].match('href="(.*?)"')![1];
-                      output.push(
-                        Object.assign(
-                          {},
-                          {
-                            index: matches.index,
-                            value: 'href=https://github.com' + match,
-                            len: matches[0].match('href="(.*?)"')![0].length,
-                          }
-                        )
-                      );
+                      if (matches) {
+                        const match = matches[0].match('href="(.*?)"')![1];
+                        output.push(
+                          Object.assign(
+                            {},
+                            {
+                              index: matches.index,
+                              value: 'href=https://github.com' + match,
+                              len: matches[0].match('href="(.*?)"')![0].length,
+                            }
+                          )
+                        );
+                      } else {
+                        break;
+                      }
                     }
                     const a = obj.content.toString().replace(/./g, (c: any, i: any) => {
                       if (output.length > 0 && i === parseInt(output[0].index)) {
@@ -141,12 +145,12 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                       (x: any) => x.feeds
                     );
                     watchUsersFeedsAdded({
-                        variables: {
-                          login: obj.login,
-                          feeds: feeds,
-                          lastSeenFeeds: [],
-                        },
-                      })
+                      variables: {
+                        login: obj.login,
+                        feeds: feeds,
+                        lastSeenFeeds: [],
+                      },
+                    })
                       .then((res: any) => {
                         if (res.data.watchUsersFeedsAdded && res.data.watchUsersFeedsAdded.login.length > 0) {
                           const temp = res.data.watchUsersFeedsAdded.login.find((x: any) => x.login === obj.login)
@@ -200,12 +204,12 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                       fastFilter((x: any) => x.login === obj.login, HTML).map((x: any) => x.feeds)
                     );
                     watchUsersFeedsAdded({
-                        variables: {
-                          login: obj.login,
-                          feeds: feeds,
-                          lastSeenFeeds: [...feeds, ...unseenFeedss],
-                        },
-                      })
+                      variables: {
+                        login: obj.login,
+                        feeds: feeds,
+                        lastSeenFeeds: [...feeds, ...unseenFeedss],
+                      },
+                    })
                       .then((res: any) => {
                         //we want to show both feeds and lastSeenFeeds together
                         const uniqq = uniqFast([
@@ -261,7 +265,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
             isAllFulfilled === logins.length
           ) {
             //because Promise will return different order of user, we need to sort it based on original one (sortingData.current)
-            let sorted: string[] = [];
+            const sorted: string[] = [];
             sortingData.current.forEach((sorting: string) => {
               //the order of uniqqRef need to be the reverse of what's in the database
               //in order to show the latest subscribed user at the the top of the stack
@@ -498,4 +502,5 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
     return isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn);
   }
 );
+SubscribeFeed.displayName = 'SubscribeFeed';
 export default SubscribeFeed;

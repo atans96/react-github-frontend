@@ -1,5 +1,5 @@
-import { Redirect, Route, RouteComponentProps, withRouter } from 'react-router-dom'
-import React from 'react'
+import { Redirect, Route, RouteComponentProps, withRouter } from 'react-router-dom';
+import React from 'react';
 
 interface AuthedHandlerProps extends RouteComponentProps {
   component: React.ComponentClass<any>;
@@ -10,25 +10,24 @@ interface AuthedHandlerProps extends RouteComponentProps {
 }
 
 class AuthedHandler extends React.Component<AuthedHandlerProps> {
-  render () {
-    const { component, authenticator, componentProps, ...rest } = this.props
-    const Component = component
+  render() {
+    const { component, authenticator, componentProps, redirect, ...rest } = this.props;
+    const Component = component;
     return (
       <Route
         {...rest}
         render={(props) => {
           if (authenticator) {
-            return <Component componentProps={componentProps} routerProps={props} />
+            return <Component componentProps={componentProps} routerProps={props} />;
           } else {
-            if (this.props.redirect) {
-              return <Redirect to={this.props.redirect} />
+            if (redirect) {
+              return <Redirect to={redirect} />;
             }
-            return <div />
+            return <div />;
           }
         }}
       />
-    )
+    );
   }
 }
-
-export default withRouter(AuthedHandler)
+export default withRouter(AuthedHandler);

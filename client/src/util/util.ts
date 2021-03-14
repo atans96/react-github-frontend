@@ -5,6 +5,7 @@ import { MergedDataProps } from '../typing/type';
 import { RSSSource } from './RSSSource';
 import { getRateLimitInfo, removeTokenGQL } from '../services';
 import { dispatchRateLimit, dispatchRateLimitAnimation } from '../store/dispatcher';
+import {useHistory} from "react-router";
 
 type AnyFunction = (...args: any[]) => unknown;
 
@@ -234,8 +235,8 @@ export async function addRSSFeed(url: string) {
     throw e;
   }
 }
-export function logoutAction(dispatch: any, dispatchStargazers: any) {
-  window.location.href = '/';
+export function logoutAction(history: any, dispatch: any, dispatchStargazers: any) {
+  history.push('/')
   removeTokenGQL().then(() => {});
   dispatch({ type: 'LOGOUT' });
   dispatchStargazers({ type: 'LOGOUT' });

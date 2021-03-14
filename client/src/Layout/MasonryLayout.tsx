@@ -1,4 +1,5 @@
 import React from 'react';
+import { MasonryContainerStyle } from '../style/MasonryStyle';
 
 interface MasonryLayout {
   children: any;
@@ -7,7 +8,7 @@ interface MasonryLayout {
   gap?: number | null;
 }
 const MasonryLayout = (props: MasonryLayout) => {
-  const columnWrapper = {};
+  const columnWrapper: any = {};
   const result = [];
 
   // create columns
@@ -19,21 +20,21 @@ const MasonryLayout = (props: MasonryLayout) => {
   for (let i = 0; i < props.children.length; i++) {
     const columnIndex = i % props.columns;
     columnWrapper[`column${columnIndex}`].push(
-      <div key={i} style={{ marginBottom: `${props.gap ? props.gap : 10}px` }}>
-        {props.children[i]}
-      </div>
+        <div key={i} style={{ marginBottom: `${props.gap ? props.gap : 10}px` }}>
+          {props.children[i]}
+        </div>
     );
   }
 
   // wrap children in each column with a div
   for (let i = 0; i < props.columns; i++) {
     result.push(
-      <div key={i} className="masonry-column">
-        {columnWrapper[`column${i}`]}
-      </div>
+        <div key={i} className="masonry-column">
+          {columnWrapper[`column${i}`]}
+        </div>
     );
   }
 
-  return <div className="masonry-parent-container">{result}</div>;
+  return <MasonryContainerStyle>{result}</MasonryContainerStyle>;
 };
 export default MasonryLayout;

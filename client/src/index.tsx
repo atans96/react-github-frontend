@@ -14,6 +14,7 @@ import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from './util';
 import { logoutAction } from './util/util';
+import {useHistory} from "react-router";
 
 const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
   const ApolloContext = getApolloContext();
@@ -75,13 +76,14 @@ export const Main = () => {
       },
     },
   });
-  let link = ApolloLink.from([
+  const history = useHistory();
+  const link = ApolloLink.from([
     onError(({ graphQLErrors, networkError }) => {
       if (graphQLErrors) {
         graphQLErrors.map(({ message, locations, path }) => {
           console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`);
           if (message === 'Unauthorized') {
-            logoutAction(dispatch, dispatchStargazers);
+            logoutAction(history, dispatch, dispatchStargazers);
           }
         });
       }

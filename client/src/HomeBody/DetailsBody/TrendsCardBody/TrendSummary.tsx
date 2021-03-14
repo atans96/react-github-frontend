@@ -54,3 +54,4 @@ export const TrendSummary = React.memo<TrendSummaryProps>(({ project }) => {
     </Section>
   );
 });
+TrendSummary.displayName = 'TrendSummary';

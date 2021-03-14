@@ -33,5 +33,5 @@ const Checkboxes: React.FC<CheckboxesProps> = ({ handleCheckboxClick, checkedIte
     </div>
   );
 };
-
+Checkboxes.displayName = 'Checkboxes';
 export default Checkboxes;

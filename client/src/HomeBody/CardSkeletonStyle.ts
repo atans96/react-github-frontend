@@ -1,13 +1,13 @@
-import { makeStyles, Theme } from '@material-ui/core'
+import { makeStyles, Theme } from '@material-ui/core';
 
 export interface FeedPostSkeletonProps {
-  container: object;
-  headerSkeleton: object;
-  avatarSkeleton: object;
-  headerTextSkeleton: object;
-  primaryTextSkeleton: object;
-  secondaryTextSkeleton: object;
-  mediaSkeleton: object;
+  container: Record<string, string>;
+  headerSkeleton: Record<string, string>;
+  avatarSkeleton: Record<string, string>;
+  headerTextSkeleton: Record<string, string>;
+  primaryTextSkeleton: Record<string, string>;
+  secondaryTextSkeleton: Record<string, string>;
+  mediaSkeleton: Record<string, string>;
 }
 export const useFeedPostSkeletonStyles = makeStyles<Theme, FeedPostSkeletonProps>({
   container: {
@@ -22,14 +22,14 @@ export const useFeedPostSkeletonStyles = makeStyles<Theme, FeedPostSkeletonProps
     border: '1px solid rgba(var(--b6a,219,219,219),1)',
     backgroundColor: 'rgba(var(--cdc,255,255,255),1)',
     padding: '0',
-    height: '100%'
+    height: '100%',
   },
   headerSkeleton: {
     display: 'flex',
     flexDirection: 'row',
     height: '60px',
     padding: '16px',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   avatarSkeleton: {
     backgroundColor: 'rgba(var(--c90,239,239,239),1)',
@@ -37,26 +37,26 @@ export const useFeedPostSkeletonStyles = makeStyles<Theme, FeedPostSkeletonProps
     flexGrow: 0,
     height: '30px',
     marginRight: '12px',
-    width: '30px'
+    width: '30px',
   },
   headerTextSkeleton: {
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   primaryTextSkeleton: {
     flexGrow: 0,
     height: '10px',
     marginBottom: '4px',
     width: '140px',
-    backgroundColor: 'rgba(var(--c90,239,239,239),1)'
+    backgroundColor: 'rgba(var(--c90,239,239,239),1)',
   },
   secondaryTextSkeleton: {
     backgroundColor: 'rgba(var(--c90,239,239,239),1)',
     flexGrow: 0,
     height: '10px',
-    width: '100px'
+    width: '100px',
   },
   mediaSkeleton: {
     backgroundColor: 'rgba(var(--c90,239,239,239),1)',
@@ -68,7 +68,7 @@ export const useFeedPostSkeletonStyles = makeStyles<Theme, FeedPostSkeletonProps
       display: 'block',
       content: '""',
       paddingBottom: '100%',
-      width: '100%'
-    }
-  }
-})
+      width: '100%',
+    },
+  },
+});

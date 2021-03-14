@@ -1,8 +1,7 @@
 /* eslint-disable */
 import React from 'react';
-import _ from 'lodash';
-import deepKeys from 'deep-keys';
-import imagesLoaded from 'imagesloaded';
+// import deepKeys from 'deep-keys';
+// import imagesLoaded from 'imagesloaded';
 
 export function readEnvironmentVariable(key) {
   // See https://create-react-app.dev/docs/adding-custom-environment-variables/#docsNav
@@ -22,20 +21,20 @@ export const fastFilter = (fn, a) => {
   }
   return f;
 };
-export function missingDeepKeys(o1, o2, showIntermediate) {
-  //const o1 = {a: {b: 2}}; // Base object
-  // const o2 = {c: 1}; // Comparison object
-  //
-  // const result = missingDeepKeys(o1, o2);
-  //
-  // // Prints keys present in o1 but missing in o2
-  // console.log(result); // => ['a.b']
-  o1 = o1 || {};
-  o2 = o2 || {};
-  showIntermediate = showIntermediate || false;
-
-  return _.difference(deepKeys(o1, showIntermediate), deepKeys(o2, showIntermediate));
-}
+// export function missingDeepKeys(o1, o2, showIntermediate) {
+//   //const o1 = {a: {b: 2}}; // Base object
+//   // const o2 = {c: 1}; // Comparison object
+//   //
+//   // const result = missingDeepKeys(o1, o2);
+//   //
+//   // // Prints keys present in o1 but missing in o2
+//   // console.log(result); // => ['a.b']
+//   o1 = o1 || {};
+//   o2 = o2 || {};
+//   showIntermediate = showIntermediate || false;
+//
+//   return _.difference(deepKeys(o1, showIntermediate), deepKeys(o2, showIntermediate));
+// }
 export function millisToMinutesAndSeconds(millis) {
   const minutes = Math.floor(millis / 60000);
   const seconds = ((millis % 60000) / 1000).toFixed(0);
@@ -302,23 +301,23 @@ export function isEqualObjects(a, b) {
     throw error;
   }
 }
-export function checkImagesLoaded(array, callback) {
-  // Grabs images in the ref
-  const collectedElements = array.querySelectorAll('img');
-  // Checks if the are elements in the DOM first of all
-  if (collectedElements.length !== 0) {
-    imagesLoaded(collectedElements, function (instance) {
-      if (instance.isComplete) {
-        const elements = instance.images.map((e, index) => {
-          // If the images is loaded and not broken
-          if (e.isLoaded) {
-            callback({ height: e.img.naturalHeight, src: e.img.src });
-          }
-        });
-      }
-    });
-  }
-}
+// export function checkImagesLoaded(array, callback) {
+//   // Grabs images in the ref
+//   const collectedElements = array.querySelectorAll('img');
+//   // Checks if the are elements in the DOM first of all
+//   if (collectedElements.length !== 0) {
+//     imagesLoaded(collectedElements, function (instance) {
+//       if (instance.isComplete) {
+//         const elements = instance.images.map((e, index) => {
+//           // If the images is loaded and not broken
+//           if (e.isLoaded) {
+//             callback({ height: e.img.naturalHeight, src: e.img.src });
+//           }
+//         });
+//       }
+//     });
+//   }
+// }
 export function progressPromise(promises, tickCallback) {
   const len = promises.length;
   let progress = 0;

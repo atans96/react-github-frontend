@@ -314,7 +314,7 @@ const SearchBar = React.memo<SearchBarProps>(
       dispatchVisible(false, dispatch);
     });
     const filter = (searchesHistory: any[] | undefined, valueRef: string) => {
-      let result: any[] = [];
+      const result: any[] = [];
       if (searchesHistory && searchesHistory.length > 0) {
         for (const searchHistory of searchesHistory) {
           if (searchHistory.search.toLowerCase().indexOf(valueRef.toLowerCase()) >= 0) {
@@ -531,4 +531,5 @@ const SearchBar = React.memo<SearchBarProps>(
     );
   }
 );
+SearchBar.displayName = 'SearchBar';
 export default SearchBar;

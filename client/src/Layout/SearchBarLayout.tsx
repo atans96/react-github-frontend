@@ -21,4 +21,5 @@ const SearchBarLayout: React.FC<SearchBarLayout> = ({ onSubmit, children, style 
     </div>
   );
 };
+SearchBarLayout.displayName = 'SearchBarLayout';
 export default SearchBarLayout;

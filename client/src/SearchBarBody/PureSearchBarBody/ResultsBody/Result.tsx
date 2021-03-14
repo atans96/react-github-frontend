@@ -49,5 +49,5 @@ const Result: React.FC<Result> = ({ state, children, userName, getRootProps, dis
     </li>
   );
 };
-
+Result.displayName = 'Result';
 export default Result;

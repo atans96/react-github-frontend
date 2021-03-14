@@ -32,7 +32,7 @@ import Checkboxes from './ManageProfileBody/Checkboxes';
 import Search from './ManageProfileBody/Search';
 import _ from 'lodash';
 import { useResizeHandler } from './hooks/hooks';
-import {useApolloFactory} from "./hooks/useApolloFactory";
+import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface StyleProps {
   drawerWidth: string;
@@ -116,11 +116,10 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
   useDeepCompareEffect(() => {
     if (state.isLoggedIn) {
       languagesPreferenceAdded({
-          variables: {
-            languagePreference: languagePreferences,
-          },
-        })
-        .then(() => {});
+        variables: {
+          languagePreference: languagePreferences,
+        },
+      }).then(() => {});
     }
   }, [languagePreferences]);
   useEffect(() => {
@@ -137,7 +136,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
     ) {
       (async () => {
         let isApiExceeded = false;
-        let promises: Promise<any>[] = [];
+        const promises: Promise<any>[] = [];
         await getUser(
           userData?.getUserData?.userName,
           Number(readEnvironmentVariable('QUERY_GITHUB_API')),
@@ -508,4 +507,5 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
     </div>
   );
 });
+ManageProfile.displayName = 'ManageProfile';
 export default ManageProfile;

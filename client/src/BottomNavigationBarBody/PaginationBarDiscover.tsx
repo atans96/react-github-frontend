@@ -69,4 +69,5 @@ const PaginationBarDiscover: React.FC<PaginationBarProps> = React.memo(
     );
   }
 );
+PaginationBarDiscover.displayName = 'PaginationBarDiscover';
 export default PaginationBarDiscover;

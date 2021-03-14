@@ -1,5 +1,6 @@
 import React from 'react';
 import { StarDelta } from './StarDelta/StarDelta';
+
 interface TrendSummaryProps {
   item: any;
   trends: any;
@@ -8,15 +9,15 @@ export const MonthlyTrendsItem = React.memo<TrendSummaryProps>(({ item, trends }
   const { label, category } = item;
   const value = getDeltaByDay(category)({ trends });
   return (
-    <div>
-      <div>{label}</div>
-      <StarDelta value={value} average={category !== 'daily'} />
-    </div>
+      <div>
+        <div>{label}</div>
+        <StarDelta value={value} average={category !== 'daily'} />
+      </div>
   );
 });
 
 export const getDeltaByDay = (period: string) => ({ trends }: any) => {
-  const periods = {
+  const periods: any = {
     daily: 1,
     weekly: 7,
     monthly: 30,

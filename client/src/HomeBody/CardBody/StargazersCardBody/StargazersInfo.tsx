@@ -195,4 +195,5 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
     );
   }
 );
+StargazersInfo.displayName = 'StargazersInfo';
 export default StargazersInfo;

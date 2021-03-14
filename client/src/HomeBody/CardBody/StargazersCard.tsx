@@ -13,7 +13,7 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { removeStarredMe, setStarredMe } from '../../services';
 import clsx from 'clsx';
-import {useApolloFactory} from "../../hooks/useApolloFactory";
+import { useApolloFactory } from '../../hooks/useApolloFactory';
 
 interface GQL {
   GQL_variables: {
@@ -172,22 +172,20 @@ const StargazersCard = React.memo<StargazersCard>(
         await setStarredMe(githubDataFullName, state.tokenGQL).then(() => {
           if (state.isLoggedIn) {
             addedStarredMe({
-                variables: {
-                  starred: [githubDataId],
-                },
-              })
-              .then(() => {});
+              variables: {
+                starred: [githubDataId],
+              },
+            }).then(() => {});
           }
         });
       } else if (state.tokenGQL !== '' && starClicked) {
         await removeStarredMe(githubDataFullName, state.tokenGQL).then(() => {
           if (state.isLoggedIn) {
             removeStarred({
-                variables: {
-                  removeStarred: githubDataId,
-                },
-              })
-              .then(() => {});
+              variables: {
+                removeStarred: githubDataId,
+              },
+            }).then(() => {});
           }
         });
       }
@@ -279,4 +277,5 @@ const StargazersCard = React.memo<StargazersCard>(
     );
   }
 );
+StargazersCard.displayName = 'StargazersCard';
 export default StargazersCard;

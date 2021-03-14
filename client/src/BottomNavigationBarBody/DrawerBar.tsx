@@ -107,11 +107,11 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
     const factor = direction === 'e' || direction === 's' ? -1 : 1;
 
     // modify the size based on the drag delta
-    let delta = direction === 'e' || direction === 'w' ? ui.deltaX : ui.deltaY;
+    const delta = direction === 'e' || direction === 'w' ? ui.deltaX : ui.deltaY;
     setDrawerWidth(Math.max(200, drawerWidth - delta * factor));
   };
 
-  const handleDragEnd = (e: any, ui: any) => {
+  const handleDragEnd = () => {
     validateSize();
   };
   const dragHandlers = {
@@ -126,7 +126,7 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
       let minSize =
         direction === 'e' || direction === 'w' ? drawerRef.current.scrollWidth : drawerRef.current.scrollHeight;
 
-      let margins =
+      const margins =
         direction === 'e' || direction === 'w'
           ? $(drawerRef.current).outerWidth(true) - $(drawerRef.current).outerWidth()
           : $(drawerRef.current).outerHeight(true) - $(drawerRef.current).outerHeight();

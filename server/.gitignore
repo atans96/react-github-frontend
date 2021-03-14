@@ -1,7 +1,0 @@
-public.pub
-private
-rsa_generator.bat
-node_modules
-scratch
-.env
-package-lock.json

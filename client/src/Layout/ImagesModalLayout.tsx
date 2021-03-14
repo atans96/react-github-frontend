@@ -86,4 +86,5 @@ const ImagesModalLayout: React.FC<SearchBarLayout> = ({
     </If>
   );
 };
+ImagesModalLayout.displayName = 'ImagesModalLayout';
 export default ImagesModalLayout;

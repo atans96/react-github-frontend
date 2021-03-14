@@ -86,3 +86,4 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = React.memo(
     );
   }
 );
+ImageComponentLayout.displayName = 'ImageComponentLayout';

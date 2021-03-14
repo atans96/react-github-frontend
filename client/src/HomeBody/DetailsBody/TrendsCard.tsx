@@ -40,3 +40,4 @@ export const TrendsCard = React.memo<TrendsCardProps>(({ project }) => {
     </DetailsLayout>
   );
 });
+TrendsCard.displayName = 'TrendsCard';

@@ -58,4 +58,5 @@ const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch, rateLimitAni
     </div>
   );
 };
+RateLimitInfo.displayName = 'RateLimitInfo';
 export default RateLimitInfo;

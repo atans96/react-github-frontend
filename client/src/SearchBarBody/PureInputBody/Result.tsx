@@ -67,3 +67,4 @@ export const Result: React.FC<SearchBarProps> = React.forwardRef(
     );
   }
 );
+Result.displayName = 'Result';

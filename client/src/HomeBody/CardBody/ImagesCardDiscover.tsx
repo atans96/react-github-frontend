@@ -18,7 +18,7 @@ import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
 
 interface ImagesCardProps {
-  index: string;
+  index: number;
   visible: boolean;
   state: IState;
 }
@@ -211,4 +211,5 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     );
   }
 );
+ImagesCardDiscover.displayName = 'ImagesCardDiscover';
 export default ImagesCardDiscover;

@@ -64,3 +64,4 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
     </div>
   );
 });
+PureInputDiscover.displayName = 'PureInputDiscover';

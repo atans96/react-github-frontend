@@ -1,9 +1,9 @@
-import React, { useImperativeHandle } from 'react'
-import Grid from '@material-ui/core/Grid'
-import Slider from '@material-ui/core/Slider'
-import Input from '@material-ui/core/Input'
-import makeStyles from '@material-ui/core/styles/makeStyles'
-import { Theme } from '@material-ui/core'
+import React, { useImperativeHandle } from 'react';
+import Grid from '@material-ui/core/Grid';
+import Slider from '@material-ui/core/Slider';
+import Input from '@material-ui/core/Input';
+import makeStyles from '@material-ui/core/styles/makeStyles';
+import { Theme } from '@material-ui/core';
 
 interface StyleProps {
   sliderWidth: number;
@@ -11,12 +11,12 @@ interface StyleProps {
 }
 const useStyles = makeStyles<Theme, StyleProps>({
   root: {
-    width: (props) => props.sliderWidth
+    width: (props) => props.sliderWidth,
   },
   input: {
-    width: (props) => props.inputWidth
-  }
-})
+    width: (props) => props.inputWidth,
+  },
+});
 
 interface InputSlider {
   type: string;
@@ -43,27 +43,27 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
       minSliderRange = 1,
       shouldShowInput = false,
       sliderWidth,
-      inputWidth
+      inputWidth,
     },
     ref
   ) => {
-    const [value, setValue] = React.useState(defaultValue)
-    const styleProps: StyleProps = { sliderWidth: sliderWidth, inputWidth: inputWidth }
-    const classes = useStyles(styleProps)
+    const [value, setValue] = React.useState(defaultValue);
+    const styleProps: StyleProps = { sliderWidth: sliderWidth, inputWidth: inputWidth };
+    const classes = useStyles(styleProps);
     const handleSliderChange = (event: any, newValue: any) => {
-      localStorage.setItem(type, newValue)
+      localStorage.setItem(type, newValue);
       if (newValue <= minSliderRange || !newValue) {
-        setValue(minSliderRange) // don't set dispatcher here since it will trigger re-render to all component that
+        setValue(minSliderRange); // don't set dispatcher here since it will trigger re-render to all component that
         // use useContext in the component
       } else {
-        setValue(newValue)
+        setValue(newValue);
       }
-    }
+    };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setValue(parseInt(event.target.value))
-      localStorage.setItem(type, event.target.value)
-    }
+      setValue(parseInt(event.target.value));
+      localStorage.setItem(type, event.target.value);
+    };
     const shouldShowInputFn = () => {
       return (
         <div style={{ marginLeft: '1em' }}>
@@ -79,22 +79,22 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
                 min: { minSliderRange },
                 max: { maxSliderRange },
                 type: 'number',
-                'aria-labelledby': 'input-slider'
+                'aria-labelledby': 'input-slider',
               }}
             />
           </Grid>
         </div>
-      )
-    }
+      );
+    };
     useImperativeHandle(
       ref,
       () => ({
-        getState () {
-          return value
-        }
+        getState() {
+          return value;
+        },
       }),
       [value]
-    )
+    );
     return (
       <div className={classes.root}>
         <Grid container alignItems="center">
@@ -114,12 +114,13 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
           {shouldShowInput && shouldShowInputFn()}
         </Grid>
       </div>
-    )
+    );
   }
-)
+);
 InputSlider.defaultProps = {
   shouldShowInput: true,
   maxSliderRange: 100,
-  minSliderRange: 1
-}
-export default InputSlider
+  minSliderRange: 1,
+};
+InputSlider.displayName = 'InputSlider';
+export default InputSlider;
