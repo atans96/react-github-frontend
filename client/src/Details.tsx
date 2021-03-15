@@ -32,7 +32,7 @@ const Details: React.FC = () => {
   const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory(
     displayName!
-  ).query.getStarRanking;
+  ).query.getStarRanking();
   useEffect(() => {
     if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
       const temp = starRankingData.getStarRanking.starRanking.find((obj: any) => obj.id === location.state.data.id);

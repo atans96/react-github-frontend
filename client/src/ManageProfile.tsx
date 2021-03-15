@@ -85,7 +85,8 @@ interface ManageProfileProps {
   state: IState;
   dispatch: any;
 }
-
+//TODO: use https://github.com/nathancahill/split/tree/master/packages/react-split for splitting between component
+//TODO: use https://github.com/andreiduca/use-async-resource if state.fetchDataPath !== ''
 const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
   const displayName: string | undefined = (ManageProfile as React.ComponentType<any>).displayName;
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();

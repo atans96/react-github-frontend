@@ -22,6 +22,7 @@ interface GlobalProps {
   dispatch: any;
   dispatchStargazers: any;
 }
+//TODO: create code snippet like: https://snipit.io/ or https://github.com/hackjutsu/Lepton
 const Global: React.FC<{
   routerProps: RouteComponentProps<any, any, any>;
   componentProps: GlobalProps;

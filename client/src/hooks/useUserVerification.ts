@@ -6,19 +6,19 @@ import { logoutAction } from '../util/util';
 import { useApolloFactory } from './useApolloFactory';
 import { useHistory } from 'react-router';
 
-interface useUserVerificationProps {
-  componentProps: ComponentProps;
-}
-
 interface ComponentProps {
   dispatch: any;
   dispatchStargazers: any;
 }
 
+interface useUserVerificationProps {
+  componentProps: ComponentProps;
+}
+
 function useUserVerification(props: useUserVerificationProps) {
   const history = useHistory();
   const [username, setUsername] = useState<any>(undefined);
-  const { userDataLoading } = useApolloFactory(Function.name).query.getUserData;
+  const { userDataLoading } = useApolloFactory(Function.name).query.getUserData();
   const isMounted = useRef(false); //when the first time is mounted, that means the user hasn't queried anything yet so
   //if the token is expired, logout. Else, when already mounted but token not expired, we prolong the token.
   useEffect(() => {

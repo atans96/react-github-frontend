@@ -29,7 +29,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
   const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
   const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory(
     displayName!
-  ).query.getWatchUsers;
+  ).query.getWatchUsers();
   const [removed] = useMutation(WATCH_USER_REMOVED, {
     context: { clientName: 'mongo' },
     update: (cache) => {

@@ -16,11 +16,11 @@ function convertWidthToPx(width, containerWidth) {
     throw new Error(`Received: ${width} - Size must be a number or string`);
   }
   if (width.substr(-1) === '%') {
-    const percent = 100 / +(width.slice(0, -1));
+    const percent = 100 / +width.slice(0, -1);
     return containerWidth / percent;
   }
   if (width.substr(-2) === 'px') {
-    return +(width.slice(0, -2));
+    return +width.slice(0, -2);
   }
   return +width;
 }
