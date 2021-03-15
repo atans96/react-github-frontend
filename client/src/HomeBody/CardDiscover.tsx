@@ -5,7 +5,6 @@ import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
 import { IState, IStateStargazers } from '../typing/interface';
-import './CardStyle.scss';
 import clsx from 'clsx';
 import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
@@ -126,7 +125,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
                 githubDataId={githubData.id}
               />
               <ul
-                className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
+                className={`language-github-color language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
                 style={{ backgroundColor: 'transparent' }}
               >
                 <li className={'language-list'}>

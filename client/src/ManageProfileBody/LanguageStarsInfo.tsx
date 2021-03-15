@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import './LanguageStarsInfoStyle.scss';
 import { isEqualObjects } from '../util';
 interface LanguageStarsInfoProps {
   languageStar: any;
@@ -20,7 +19,9 @@ const LanguageStarsInfo = React.memo<LanguageStarsInfoProps>(
         style={{ backgroundColor: clicked ? 'grey' : '' }}
       >
         <th style={{ width: '80%' }}>{languageStar[0]}</th>
-        <th className={`badge language ${languageStar[0]?.replace(/\+\+|#|\s/, '-')}`}>{languageStar[1]}</th>
+        <th className={`badge language-github-background-color language ${languageStar[0]?.replace(/\+\+|#|\s/, '-')}`}>
+          {languageStar[1]}
+        </th>
       </tr>
     );
   },
