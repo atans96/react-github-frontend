@@ -135,14 +135,13 @@ const Card: React.FC<CardRef> = React.forwardRef(
                 githubDataFullName={githubData.full_name}
                 githubDataId={githubData.id}
               />
-              <ul
-                className={`language-github-color language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
-                style={{ backgroundColor: 'transparent' }}
-              >
-                <li className={'language-list'}>
-                  <h6 style={{ color: 'black' }}>{githubData.language}</h6>
-                </li>
-              </ul>
+              <div className={'language-github-color'}>
+                <ul className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}>
+                  <li className={'language-list'}>
+                    <h6 style={{ color: 'black' }}>{githubData.language}</h6>
+                  </li>
+                </ul>
+              </div>
               <If condition={!!githubData.topics}>
                 <Then>
                   <TopicsCard

@@ -10,6 +10,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const autoprefixer = require('autoprefixer');
 const cssnano = require('cssnano');
+const { ESBuildMinifyPlugin } = require('esbuild-loader');
 
 const config: webpack.Configuration = {
   mode: 'production',
@@ -32,6 +33,7 @@ const config: webpack.Configuration = {
         cssProcessor: require('cssnano'),
       }),
       new CssMinimizerPlugin(),
+      new ESBuildMinifyPlugin({ target: 'es2015', minify: true }),
     ],
   },
   module: {
@@ -41,9 +43,11 @@ const config: webpack.Configuration = {
         exclude: /node_modules/,
         use: [
           {
-            loader: 'babel-loader?cacheDirectory=true',
+            loader: 'esbuild-loader',
             options: {
-              presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
+              loader: 'jsx',
+              target: 'es2015',
+              tsconfigRaw: require('./tsconfig.json'),
             },
           },
           {
@@ -55,6 +59,15 @@ const config: webpack.Configuration = {
             },
           },
         ],
+      },
+      {
+        test: /\.ts$/,
+        loader: 'esbuild-loader',
+        options: {
+          loader: 'ts',
+          target: 'es2015',
+          tsconfigRaw: require('./tsconfig.json'),
+        },
       },
       {
         test: /\.css$/,

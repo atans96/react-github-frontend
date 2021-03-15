@@ -23,7 +23,6 @@ const verifyUsername = require("../middleware/username");
 const Schema = require("../fastifySchema");
 
 async function routes(fastify, opts, done) {
-  const axios = opts.axios;
   fastify.get(
     "/api/users",
     {
@@ -35,7 +34,7 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       userRepoInfo(req, res, fastify, {
         url,
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -51,7 +50,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       verifyJWTToken(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         jwtService: opts.jwtService,
       });
     }
@@ -74,7 +73,7 @@ async function routes(fastify, opts, done) {
         } else if (!err && !val) {
           orgRepoInfo(req, res, fastify, {
             url,
-            axios,
+            axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         }
@@ -91,7 +90,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       contributorsRepoInfo(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -105,7 +104,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       imagesRepoInfo(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -126,7 +125,7 @@ async function routes(fastify, opts, done) {
           readmeRepoInfo(req, res, fastify, {
             urlReadMe,
             url,
-            axios,
+            axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         }
@@ -151,7 +150,7 @@ async function routes(fastify, opts, done) {
         } else if (!err && !val) {
           topicSearchInfo(req, res, fastify, {
             url,
-            axios,
+            axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         }
@@ -168,7 +167,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       discoverElasticSearchInfo(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
         elastic: opts.elastic,
       });
@@ -184,7 +183,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       usersSearchInfo(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -194,7 +193,10 @@ async function routes(fastify, opts, done) {
     "/api/setStarredMe",
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
-      setStarredMe(req, res, fastify, { axios, github: opts.githubAPIWrapper });
+      setStarredMe(req, res, fastify, {
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
+      });
     }
   );
 
@@ -203,7 +205,7 @@ async function routes(fastify, opts, done) {
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
       removeStarredMe(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -218,7 +220,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       githubAccessToken(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -232,7 +234,10 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      getRateLimit(req, res, fastify, { axios, github: opts.githubAPIWrapper });
+      getRateLimit(req, res, fastify, {
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
+      });
     }
   );
 
@@ -245,7 +250,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       subscribeUserFeed(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -255,7 +260,10 @@ async function routes(fastify, opts, done) {
     "/api/setTokenGQL",
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
-      setTokenGQL(req, res, fastify, { axios, github: opts.githubAPIWrapper });
+      setTokenGQL(req, res, fastify, {
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
+      });
     }
   );
 
@@ -263,7 +271,10 @@ async function routes(fastify, opts, done) {
     "/api/getTokenGQL",
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
-      getTokenGQL(req, res, fastify, { axios, github: opts.githubAPIWrapper });
+      getTokenGQL(req, res, fastify, {
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
+      });
     }
   );
 
@@ -272,7 +283,7 @@ async function routes(fastify, opts, done) {
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
       destroyTokenGQL(req, res, fastify, {
-        axios,
+        axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -286,7 +297,10 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      testTokenGQL(req, res, fastify, { axios, github: opts.githubAPIWrapper });
+      testTokenGQL(req, res, fastify, {
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
+      });
     }
   );
   fastify.get(

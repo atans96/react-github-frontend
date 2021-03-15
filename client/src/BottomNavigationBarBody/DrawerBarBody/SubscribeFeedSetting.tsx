@@ -53,7 +53,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
     const displayName: string | undefined = (SubscribeFeedSetting as React.ComponentType<any>).displayName;
     const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory(
       displayName!
-    ).query.getWatchUsers;
+    ).query.getWatchUsers();
     const classes = useStyles();
     const [openSubscriptionSetting, setSubscriptionSetting] = useState(false);
     const [showMoreSubscribedUsers, setShowMoreSubscribedUsers] = useState(false);
