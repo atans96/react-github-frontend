@@ -1,22 +1,4 @@
-import styled, { css } from 'styled-components';
-
-export const TopicText = styled.h6`
-  text-align: center;
-  color: var(--textSecondaryColor);
-  &:hover {
-    text-decoration: underline;
-    color: red;
-    cursor: pointer;
-  }
-  &:active,
-  &:focus {
-    outline: 0;
-  }
-  ${(props) => props.primary && PrimaryButtonMixin}
-  ${(props) => props.disabled && DisabledButtonMixin}
-`;
-
-export const Button = styled.button`
+@mixin topic-button {
   display: flex;
   align-items: center;
   background-color: var(--button-theme-color);
@@ -38,11 +20,33 @@ export const Button = styled.button`
   &:focus {
     outline: 0;
   }
-  ${(props) => props.primary && PrimaryButtonMixin}
-  ${(props) => props.disabled && DisabledButtonMixin}
-`;
-
-const PrimaryButtonMixin = css`
+  @content
+}
+.topic-text {
+  text-align: center;
+  color: var(--textSecondaryColor);
+  &:hover {
+    text-decoration: underline;
+    color: red;
+    cursor: pointer;
+  }
+  &:active,
+  &:focus {
+    outline: 0;
+  }
+}
+.tag {
+  @include topic-button {
+    display: inline-block;
+    font-size: 13px;
+    border-radius: 12px;
+    padding: 4px 8px;
+    margin-right: 10px;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+}
+.topic-button-primary {
   background-color: var(--bestofjsOrange);
   color: white;
   border-color: var(--boxBorderColor);
@@ -50,9 +54,8 @@ const PrimaryButtonMixin = css`
     background-color: var(--bestofjsPurple);
     color: white;
   }
-`;
-
-const DisabledButtonMixin = css`
+}
+.topic-button-disabled {
   cursor: not-allowed;
   background-color: transparent;
   color: var(--textMutedColor);
@@ -60,4 +63,4 @@ const DisabledButtonMixin = css`
     color: var(--textMutedColor);
     border-color: var(--boxBorderColor);
   }
-`;
+}

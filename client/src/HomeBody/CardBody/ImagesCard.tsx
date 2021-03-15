@@ -12,8 +12,6 @@ import useCollapse from '../../hooks/useCollapse';
 import { ProgressBar } from '../../Layout/ProgressBar';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
-import SliderImage from './SliderImage';
-import { useClickOutside } from '../../hooks/hooks';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
 
@@ -26,13 +24,11 @@ interface ImagesCardProps {
 const ImagesCard = React.memo<ImagesCardProps>(
   ({ index, visible, state }) => {
     const [renderChildren, setRenderChildren] = useState(false);
-    const [modal, setModal] = useState(false);
+    const [clicked, setClicked] = useState(false);
     const [showProgressBarUnRenderImages, setShowProgressBarUnRenderImages] = useState(false);
     const [renderImages, setRenderImages] = useState<string[]>([]);
     const showProgressBarUnRenderImagesRef = useRef<boolean>(true);
     const previousStringUnRenderImages = useRef<string[]>([]);
-    const sliderInner = useRef<HTMLDivElement | null>(null);
-    const sliderContainer = useRef<HTMLDivElement | null>(null);
 
     let timerToClearSomewhere: any;
     const { getToggleProps, getCollapseProps } = useCollapse({
@@ -75,32 +71,8 @@ const ImagesCard = React.memo<ImagesCardProps>(
       return () => {
         clearTimeout(timerToClearSomewhere);
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [(previousStringUnRenderImages.current.length / renderImages.slice(2).length) * 100]);
 
-    useEffect(() => {
-      if (sliderContainer.current && sliderInner.current) {
-        const slider = new SliderImage({
-          slider: sliderContainer.current,
-          sliderInner: sliderInner.current,
-          slide: sliderInner.current.querySelectorAll('.slide'),
-        });
-        slider.init();
-        return () => {
-          sliderContainer.current = null;
-          sliderInner.current = null;
-          sliderInner.current = null;
-          slider.destroy();
-        };
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [sliderContainer.current, sliderInner.current]);
-
-    const handleClick = useCallback((e: React.MouseEvent) => {
-      e.preventDefault();
-      setModal(true);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
     const handleClickUnrenderImages = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
@@ -109,10 +81,8 @@ const ImagesCard = React.memo<ImagesCardProps>(
           showProgressBarUnRenderImagesRef.current = false;
         }
       },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       [showProgressBarUnRenderImagesRef.current]
     );
-    useClickOutside(sliderContainer, () => setModal(false));
     // useRef() is basically useState({current: initialValue })[0] so no need to re-render the component
     // TODO: animated card for showing users suggested gits: https://codyhouse.co/ds/components/app/animated-cards
     const imagesCount = useRef(0);
@@ -128,6 +98,10 @@ const ImagesCard = React.memo<ImagesCardProps>(
         prevState.push(src);
         return prevState;
       });
+    }, []);
+    const handleClick = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      setClicked((prev) => !prev);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // const checkNode = (addedNode: any) => {
@@ -237,12 +211,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
             </ListItem>
           </Then>
         </If>
-        <ImagesModalLayout
-          handleClick={handleClick}
-          handleProgressPromiseUnrender={handleProgressPromiseUnrender}
-          modal={modal}
-          renderImages={renderImages}
-        />
+        <ImagesModalLayout clicked={clicked} renderImages={renderImages} handleClick={handleClick} />
       </React.Fragment>
     );
   },

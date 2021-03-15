@@ -15,7 +15,7 @@ export function useClickOutside(ref, handler, exception = []) {
       ) {
         return;
       }
-      handler();
+      handler(event);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [ref, exception]

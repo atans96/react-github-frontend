@@ -2,7 +2,6 @@ import React from 'react';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import UpdateIcon from '@material-ui/icons/Update';
 import { ForkIcon } from '../util/icons';
-import './LanguageStarsInfoStyle.scss';
 import { isEqualObjects } from '../util';
 import Contributors from './RepoInfoBody/Contributors';
 

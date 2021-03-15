@@ -12,7 +12,6 @@ import useCollapse from '../../hooks/useCollapse';
 import { ProgressBar } from '../../Layout/ProgressBar';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
-import { useClickOutside } from '../../hooks/hooks';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
 
@@ -25,7 +24,7 @@ interface ImagesCardProps {
 const ImagesCardDiscover = React.memo<ImagesCardProps>(
   ({ index, visible, state }) => {
     const [renderChildren, setRenderChildren] = useState(false);
-    const [modal, setModal] = useState(false);
+    const [clicked, setClicked] = useState(false);
     const [showProgressBarUnRenderImages, setShowProgressBarUnRenderImages] = useState(false);
     const [renderImages, setRenderImages] = useState<string[]>([]);
     const showProgressBarUnRenderImagesRef = useRef<boolean>(true);
@@ -75,10 +74,11 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [(previousStringUnRenderImages.current.length / renderImages.slice(2).length) * 100]);
 
-    const handleClick = (e: React.MouseEvent) => {
+    const handleClick = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
-      setModal(true);
-    };
+      setClicked((prev) => !prev);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const handleClickUnrenderImages = (e: React.MouseEvent) => {
       e.preventDefault();
       if (showProgressBarUnRenderImagesRef.current) {
@@ -169,19 +169,12 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
               <ListItemIcon>
                 <SupervisorAccountIcon />
               </ListItemIcon>
-              <ListItemText
-                primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.slice(2).length} More Images`}
-              />
+              <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
               {renderChildren ? <ExpandLess /> : <ExpandMore />}
             </ListItem>
           </Then>
         </If>
-        <ImagesModalLayout
-          handleClick={handleClick}
-          handleProgressPromiseUnrender={handleProgressPromiseUnrender}
-          modal={modal}
-          renderImages={renderImages}
-        />
+        <ImagesModalLayout clicked={clicked} renderImages={renderImages} handleClick={handleClick} />
       </React.Fragment>
     );
   },
