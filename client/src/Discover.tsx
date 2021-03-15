@@ -90,15 +90,15 @@ const Discover = React.memo<DiscoverProps>(
     const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
     const { suggestedData, suggestedDataLoading, suggestedDataError } = useApolloFactory(
       displayName!
-    ).query.getSuggestedRepo;
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen;
+    ).query.getSuggestedRepo();
+    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
     const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory(
       displayName!
-    ).query.getStarRanking;
-    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
+    ).query.getStarRanking();
+    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
     const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
       displayName!
-    ).query.getUserInfoStarred;
+    ).query.getUserInfoStarred();
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(true);
     const paginationRef = useRef(state.perPage);

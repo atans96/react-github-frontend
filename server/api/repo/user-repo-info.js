@@ -54,8 +54,7 @@ module.exports = async (req, res, ctx, ...args) => {
           return acc;
         }, []);
         const paginationInfoData =
-          Number(responseOne.paginationInfo.last) +
-          Number(responseTwo.paginationInfo.last);
+          +responseOne.paginationInfo.last + +responseTwo.paginationInfo.last;
         let promises = [];
         let renderImages = [];
         if (!req.query.noImageQuery && token.length > 0) {

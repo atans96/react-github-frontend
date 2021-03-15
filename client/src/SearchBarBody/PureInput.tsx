@@ -39,7 +39,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     ref
   ) => {
     const displayName: string | undefined = (PureInput as React.ComponentType<any>).displayName;
-    const { userData } = useApolloFactory(displayName!).query.getUserData;
+    const { userData } = useApolloFactory(displayName!).query.getUserData();
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
     const handler = useCallback(

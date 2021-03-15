@@ -22,8 +22,6 @@ import {
   GET_USER_STARRED,
   GET_WATCH_USERS,
 } from '../queries';
-import { useDeepMemo } from './useDeepMemo';
-import { useState } from 'react';
 
 const consumers: Record<string, Array<string>> = {};
 function pushConsumers(property: string, path: string) {
@@ -173,7 +171,6 @@ export function useApolloFactory(path: string) {
   const { data: searchesData, loading: loadingSearchesData, error: errorSearchesData } = useQuery(GET_SEARCHES, {
     context: { clientName: 'mongo' },
   });
-
   return {
     mutation: {
       seenAdded,
@@ -188,42 +185,42 @@ export function useApolloFactory(path: string) {
       searchesAdded,
       signUpAdded,
     },
-    consumers: useDeepMemo(() => {
+    consumers: () => {
       return { consumers };
-    }, [consumers]),
+    },
     query: {
-      getUserData: useDeepMemo(() => {
+      getUserData: () => {
         pushConsumers('getUserData', path);
         return { userData, userDataLoading, userDataError };
-      }, [userData, userDataLoading, userDataError]),
-      getUserInfoData: useDeepMemo(() => {
+      },
+      getUserInfoData: () => {
         pushConsumers('getUserInfoData', path);
         return { userInfoData, userInfoDataLoading, userInfoDataError };
-      }, [userInfoData, userInfoDataLoading, userInfoDataError]),
-      getUserInfoStarred: useDeepMemo(() => {
+      },
+      getUserInfoStarred: () => {
         pushConsumers('getUserInfoStarred', path);
         return { userStarred, loadingUserStarred, errorUserStarred };
-      }, [userStarred, loadingUserStarred, errorUserStarred]),
-      getSeen: useDeepMemo(() => {
+      },
+      getSeen: () => {
         pushConsumers('getSeen', path);
         return { seenData, seenDataLoading, seenDataError };
-      }, [seenData, seenDataLoading, seenDataError]),
-      getStarRanking: useDeepMemo(() => {
+      },
+      getStarRanking: () => {
         pushConsumers('getStarRanking', path);
         return { starRankingData, starRankingDataLoading, starRankingDataError };
-      }, [starRankingData, starRankingDataLoading, starRankingDataError]),
-      getSuggestedRepo: useDeepMemo(() => {
+      },
+      getSuggestedRepo: () => {
         pushConsumers('getSuggestedRepo', path);
         return { suggestedData, suggestedDataLoading, suggestedDataError };
-      }, [suggestedData, suggestedDataLoading, suggestedDataError]),
-      getWatchUsers: useDeepMemo(() => {
+      },
+      getWatchUsers: () => {
         pushConsumers('getWatchUsers', path);
         return { watchUsersData, loadingWatchUsersData, errorWatchUsersData };
-      }, [watchUsersData, loadingWatchUsersData, errorWatchUsersData]),
-      getSearchesData: useDeepMemo(() => {
+      },
+      getSearchesData: () => {
         pushConsumers('getSearchesData', path);
         return { searchesData, loadingSearchesData, errorSearchesData };
-      }, [searchesData, loadingSearchesData, errorSearchesData]),
+      },
     },
   };
 }

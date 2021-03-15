@@ -124,7 +124,7 @@ class SliderImage {
       numbers.push(fromCenter);
     });
 
-    let closest = number(0, numbers);
+    let closest = +(0, numbers);
     closest = numbers[closest];
 
     return {

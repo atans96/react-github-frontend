@@ -103,7 +103,7 @@ const config: webpack.Configuration = {
     contentBase: path.join(__dirname, 'build'),
     historyApiFallback: true,
     host: 'localhost', // Defaults to `localhost`
-    port: Number(`${process.env.CLIENT_PORT}`),
+    port: +`${process.env.CLIENT_PORT}`,
     open: true,
     hot: true,
     proxy: {
