@@ -97,10 +97,10 @@ interface HomeProps {
 const Home = React.memo<HomeProps>(
   ({ state, dispatch, dispatchStargazers, stateStargazers }) => {
     const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen;
+    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
 
-    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
-    const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred;
+    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
+    const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
     const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
     // useState is used when the HTML depends on it directly to render something
     const [shouldRenderSkeleton, setRenderSkeleton] = useState(false);

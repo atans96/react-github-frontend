@@ -88,8 +88,10 @@ interface ManageProfileProps {
 
 const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
   const displayName: string | undefined = (ManageProfile as React.ComponentType<any>).displayName;
-  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
-  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactory(displayName!).query.getUserInfoData;
+  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
+  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactory(
+    displayName!
+  ).query.getUserInfoData();
   const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
   const [openLanguages, setOpenLanguages] = useState(false);
   const classes = useStyles({ drawerWidth: '250px' });
@@ -157,7 +159,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
     }
   }, [userInfoData, userInfoDataLoading, userInfoDataError]);
 
-  const consumers = useApolloFactory(displayName!).consumers.consumers;
+  const consumers = useApolloFactory(displayName!).consumers().consumers;
   const alreadyFetch = useRef(false);
   useDeepCompareEffect(() => {
     if (
@@ -172,7 +174,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
         const promises: Promise<any>[] = [];
         await getUser(
           userData?.getUserData?.userName,
-          Number(readEnvironmentVariable('QUERY_GITHUB_API')),
+          +readEnvironmentVariable('QUERY_GITHUB_API')!,
           1,
           userData && userData.getUserData ? userData.getUserData.token : '',
           true
@@ -205,37 +207,37 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
               },
               { languages: [], data: [] }
             );
-            // temp.data.forEach((obj: any) => {
-            //   promises.push(
-            //     new Promise<any>((resolve, reject) => {
-            //       (async () => {
-            //         let timeout = 0;
-            //         let breakout = false;
-            //         let i = 0;
-            //         while (
-            //           // @ts-ignore
-            //           (await new Promise((resolve) => setTimeout(() => resolve(i++), timeout * 1000))) < 1000 &&
-            //           !breakout
-            //         ) {
-            //           if (timeout > 0) {
-            //             timeout = 0; //clear the timeout
-            //           }
-            //           await getTopContributors(obj.fullName, userData.getUserData.token)
-            //             .then((res) => {
-            //               if (res.error_403) {
-            //                 timeout = epochToJsDate(res.rateLimit.reset);
-            //               } else {
-            //                 breakout = true;
-            //                 resolve(res);
-            //               }
-            //             })
-            //             .catch((err) => reject(err));
-            //         }
-            //       })();
-            //     })
-            //   );
-            //   return obj;
-            // });
+            temp.data.forEach((obj: any) => {
+              promises.push(
+                new Promise<any>((resolve, reject) => {
+                  (async () => {
+                    let timeout = 0;
+                    let breakout = false;
+                    let i = 0;
+                    while (
+                      // @ts-ignore
+                      (await new Promise((resolve) => setTimeout(() => resolve(i++), timeout * 1000))) < 1000 &&
+                      !breakout
+                    ) {
+                      if (timeout > 0) {
+                        timeout = 0; //clear the timeout
+                      }
+                      await getTopContributors(obj.fullName, userData.getUserData.token)
+                        .then((res) => {
+                          if (res.error_403) {
+                            timeout = epochToJsDate(res.rateLimit.reset);
+                          } else {
+                            breakout = true;
+                            resolve(res);
+                          }
+                        })
+                        .catch((err) => reject(err));
+                    }
+                  })();
+                })
+              );
+              return obj;
+            });
             dispatch({
               type: 'NO_DATA_FETCH',
               payload: { path: '' },

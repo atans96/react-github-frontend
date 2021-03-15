@@ -42,7 +42,7 @@ module.exports = async (req, res, ctx, ...args) => {
           acc.push(temp);
           return acc;
         }, []);
-        const paginationInfoData = Number(responseOne.paginationInfo.last);
+        const paginationInfoData = +responseOne.paginationInfo.last;
         let promises = [];
         let renderImages = [];
         promises = await args[0].github.doQuery(

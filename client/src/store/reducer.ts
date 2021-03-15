@@ -1,8 +1,7 @@
 import { IAction, IState, IStateStargazers } from '../typing/interface';
 import { HasNextPage } from '../typing/type';
 import { fastFilter, readEnvironmentVariable } from '../util';
-
-const _ = require('lodash');
+import _ from 'lodash';
 type Action =
   | 'LOGIN'
   | 'LOGOUT'

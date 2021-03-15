@@ -21,7 +21,7 @@ export const filterActionResolvedPromiseData = (input: any, filter1: any, filter
 export function millisToMinutesAndSeconds(millis: any) {
   const minutes = Math.floor(millis / 60000);
   const seconds = ((millis % 60000) / 1000).toFixed(0);
-  return Number((minutes * 60 + Number(seconds)).toFixed(0));
+  return +(minutes * 60 + Number(seconds)).toFixed(0);
 }
 
 export function epochToJsDate(ts: any) {

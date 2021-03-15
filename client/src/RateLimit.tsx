@@ -13,7 +13,7 @@ interface RateLimitProps {
 const RateLimit: React.FC<{ componentProps: RateLimitProps }> = (props) => {
   const [refetch, setRefetch] = useState(true);
   const displayName: string | undefined = (RateLimit as React.ComponentType<any>).displayName;
-  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
+  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   useEffect(
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and

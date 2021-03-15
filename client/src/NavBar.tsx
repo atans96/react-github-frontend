@@ -33,7 +33,7 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
   const [isHoveredHome, bindHome] = useHover();
   const Active = url.split('/');
   const displayName: string | undefined = (NavBar as React.ComponentType<any>).displayName;
-  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
+  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   useEffect(() => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home');
     // eslint-disable-next-line react-hooks/exhaustive-deps
