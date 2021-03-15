@@ -23,6 +23,7 @@ import {
   GET_WATCH_USERS,
 } from '../queries';
 import { useDeepMemo } from './useDeepMemo';
+import { useState } from 'react';
 
 const consumers: Record<string, Array<string>> = {};
 function pushConsumers(property: string, path: string) {
