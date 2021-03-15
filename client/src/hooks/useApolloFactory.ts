@@ -24,7 +24,15 @@ import {
 } from '../queries';
 import { useDeepMemo } from './useDeepMemo';
 
-export function useApolloFactory() {
+const consumers: Record<string, Array<string>> = {};
+function pushConsumers(property: string, path: string) {
+  if (consumers[path] && !consumers[path].includes(property)) {
+    consumers[path].push(property);
+  } else if (consumers[path] == undefined) {
+    consumers[path] = [property];
+  }
+}
+export function useApolloFactory(path: string) {
   const [seenAdded] = useMutation(SEEN_ADDED, {
     context: { clientName: 'mongo' },
     update: (cache, data: any) => {
@@ -179,29 +187,40 @@ export function useApolloFactory() {
       searchesAdded,
       signUpAdded,
     },
+    consumers: useDeepMemo(() => {
+      return { consumers };
+    }, [consumers]),
     query: {
       getUserData: useDeepMemo(() => {
+        pushConsumers('getUserData', path);
         return { userData, userDataLoading, userDataError };
       }, [userData, userDataLoading, userDataError]),
       getUserInfoData: useDeepMemo(() => {
+        pushConsumers('getUserInfoData', path);
         return { userInfoData, userInfoDataLoading, userInfoDataError };
       }, [userInfoData, userInfoDataLoading, userInfoDataError]),
       getUserInfoStarred: useDeepMemo(() => {
+        pushConsumers('getUserInfoStarred', path);
         return { userStarred, loadingUserStarred, errorUserStarred };
       }, [userStarred, loadingUserStarred, errorUserStarred]),
       getSeen: useDeepMemo(() => {
+        pushConsumers('getSeen', path);
         return { seenData, seenDataLoading, seenDataError };
       }, [seenData, seenDataLoading, seenDataError]),
       getStarRanking: useDeepMemo(() => {
+        pushConsumers('getStarRanking', path);
         return { starRankingData, starRankingDataLoading, starRankingDataError };
       }, [starRankingData, starRankingDataLoading, starRankingDataError]),
       getSuggestedRepo: useDeepMemo(() => {
+        pushConsumers('getSuggestedRepo', path);
         return { suggestedData, suggestedDataLoading, suggestedDataError };
       }, [suggestedData, suggestedDataLoading, suggestedDataError]),
       getWatchUsers: useDeepMemo(() => {
+        pushConsumers('getWatchUsers', path);
         return { watchUsersData, loadingWatchUsersData, errorWatchUsersData };
       }, [watchUsersData, loadingWatchUsersData, errorWatchUsersData]),
       getSearchesData: useDeepMemo(() => {
+        pushConsumers('getSearchesData', path);
         return { searchesData, loadingSearchesData, errorSearchesData };
       }, [searchesData, loadingSearchesData, errorSearchesData]),
     },

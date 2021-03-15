@@ -14,7 +14,8 @@ interface Result {
 
 const Result: React.FC<Result> = ({ state, children, userName, getRootProps, dispatch, dispatchStargazer }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const searchesAdded = useApolloFactory().mutation.searchesAdded;
+  const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
+  const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
   const onMouseOver = () => {
     setIsHovered(true);
   };

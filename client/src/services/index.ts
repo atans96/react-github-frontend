@@ -79,7 +79,7 @@ export const getUser = async (
   perPage: number,
   page: number,
   token: string | null,
-  noImageQuery: boolean = false
+  noImageQuery = false
 ) => {
   if (username !== '') {
     const response = await fetch(
@@ -103,6 +103,12 @@ export const getOrg = async (org: string, perPage: number, page: number, token: 
     );
     return await response.json();
   }
+};
+export const getValidGQLProperties = async () => {
+  const response = await fetch(`/api/getValidGQLProperties`, {
+    method: 'GET',
+  });
+  return await response.json();
 };
 export const markdownParsing = async (full_name: string, branch: string) => {
   const response = await fetch(`/api/markdown?full_name=${full_name}&branch=${branch}`);

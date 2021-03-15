@@ -16,12 +16,12 @@ const Image = React.forwardRef(function (props, ref) {
       className={classNameImage}
       src={imageArr[imageIdx]}
       alt={alt}
-      onLoad={(e) => {
+      onLoad={() => {
         if (imageErrorRef.current) {
           onLoadRefresh();
         }
       }}
-      onError={(e) => {
+      onError={() => {
         if (imageIdx < imageArr.length) {
           imageErrorRef.current = true;
           setImageIdx((idx) => idx + 1);
@@ -35,5 +35,5 @@ const Image = React.forwardRef(function (props, ref) {
 Image.defaultProps = {
   onLoadRefresh: utils.noop,
 };
-
+Image.displayName = 'Image';
 export default Image;

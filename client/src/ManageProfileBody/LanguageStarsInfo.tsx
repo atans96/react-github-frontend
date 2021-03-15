@@ -28,4 +28,5 @@ const LanguageStarsInfo = React.memo<LanguageStarsInfoProps>(
     return isEqualObjects(prevProps.languageStar, nextProps.languageStar);
   }
 );
+LanguageStarsInfo.displayName = 'LanguageStarsInfo';
 export default LanguageStarsInfo;

@@ -38,7 +38,8 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     },
     ref
   ) => {
-    const { userData } = useApolloFactory().query.getUserData;
+    const displayName: string | undefined = (PureInput as React.ComponentType<any>).displayName;
+    const { userData } = useApolloFactory(displayName!).query.getUserData;
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
     const handler = useCallback(
@@ -158,10 +159,11 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       <div className={'input-bar-container-control-searchbar'} style={style}>
         <If condition={stateStargazers.stargazersQueueData.length > 0}>
           <Then>
-            {stateStargazers.stargazersQueueData.map((obj) => {
+            {stateStargazers.stargazersQueueData.map((obj, idx) => {
               return (
                 <Result
                   stateStargazers={stateStargazers}
+                  key={idx}
                   dispatchStargazersUser={dispatchStargazersUser}
                   stargazer={obj}
                 />

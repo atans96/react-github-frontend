@@ -69,6 +69,7 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
     // it needs to get re-render to get new data.
   }
 );
+MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
 interface mergedData {
   append: string;
   nonAppend: string;
@@ -95,10 +96,11 @@ interface HomeProps {
 
 const Home = React.memo<HomeProps>(
   ({ state, dispatch, dispatchStargazers, stateStargazers }) => {
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactory().query.getSeen;
-    const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
-    const { userStarred } = useApolloFactory().query.getUserInfoStarred;
-    const seenAdded = useApolloFactory().mutation.seenAdded;
+    const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
+    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen;
+    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
+    const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred;
+    const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
     // useState is used when the HTML depends on it directly to render something
     const [shouldRenderSkeleton, setRenderSkeleton] = useState(false);
     const [isLoading, setLoading] = useState(false);

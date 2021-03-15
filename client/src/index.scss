@@ -218,7 +218,7 @@ i.special {
 }
 .sticky-column-table {
   position: sticky;
-  top: 0px;
+  top: 0;
   z-index: 9999;
   background: white;
 }
@@ -560,10 +560,7 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
   }
 
   ul.results > li {
-    padding-top: 0.5em;
-    padding-right: 0;
-    padding-bottom: 0.5em;
-    padding-left: 1em;
+    padding: 0.5em 0 0.5em 1em;
     z-index: 10;
     position: relative;
     cursor: pointer;
@@ -617,7 +614,7 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
       border-radius: 2px;
       display: flex;
       margin: 2px;
-      min-width: 0px;
+      min-width: 0;
       box-sizing: border-box;
       .multivalue {
         border-radius: 2px;
@@ -710,7 +707,75 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
     font-weight: bold;
   }
 }
+.background-readme-details {
+  width: 100%;
+  cursor: zoom-out;
+}
+.background-container {
+  max-width: var(--containerWidth);
+  margin: 0 auto;
+  .readme {
+    &:hover {
+      cursor: default;
+    }
+  }
+  @media (max-width: 1324px) {
+    padding-left: var(--gutter);
+    padding-right: var(--gutter);
+  }
+}
 
+.background-readme {
+  margin-bottom: 2rem;
+  padding: 0;
+  background-color: #fff;
+  vertical-align: top;
+  border: 1px solid var(--boxBorderColor);
+  .inner {
+    padding: 1rem;
+  }
+  .card-row + .card-row {
+    border-top: 1px solid var(--boxBorderColor);
+  }
+  .link {
+    display: block;
+    color: var(--textPrimaryColor);
+  }
+  .link:hover {
+    text-decoration: none;
+    color: red;
+    background-color: #fff7eb;
+    color: #000;
+  }
+  .header {
+    padding: 1rem;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--boxBorderColor);
+    .counter,
+    .comment {
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .big {
+      font-size: 1.5rem;
+    }
+    display: flex;
+    align-items: center;
+    .icon {
+      margin-right: 0.5rem;
+    }
+  }
+  .footer {
+    padding: 1rem;
+    text-align: center;
+    border-top: 1px solid var(--boxBorderColor);
+  }
+  .section {
+    padding: 1em;
+    &:not(:first-child) {
+      border-top: 1px dashed var(--boxBorderColor);
+    }
+  }
+}
 .loading-spinner {
   border: 2px solid #f3f3f3;
   border-top: 2px solid #000000;
@@ -782,49 +847,6 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
   transform: translateZ(0);
 }
 @-webkit-keyframes load5 {
-  0%,
-  100% {
-    box-shadow: 0em -2.6em 0em 0em #000000, 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2), 2.5em 0em 0 0em rgba(0, 0, 0, 0.2),
-      1.75em 1.75em 0 0em rgba(0, 0, 0, 0.2), 0em 2.5em 0 0em rgba(0, 0, 0, 0.2), -1.8em 1.8em 0 0em rgba(0, 0, 0, 0.2),
-      -2.6em 0em 0 0em rgba(0, 0, 0, 0.5), -1.8em -1.8em 0 0em rgba(0, 0, 0, 0.7);
-  }
-  12.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(0, 0, 0, 0.7), 1.8em -1.8em 0 0em #000000, 2.5em 0em 0 0em rgba(0, 0, 0, 0.2),
-      1.75em 1.75em 0 0em rgba(0, 0, 0, 0.2), 0em 2.5em 0 0em rgba(0, 0, 0, 0.2), -1.8em 1.8em 0 0em rgba(0, 0, 0, 0.2),
-      -2.6em 0em 0 0em rgba(0, 0, 0, 0.2), -1.8em -1.8em 0 0em rgba(0, 0, 0, 0.5);
-  }
-  25% {
-    box-shadow: 0em -2.6em 0em 0em rgba(0, 0, 0, 0.5), 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.7), 2.5em 0em 0 0em #000000,
-      1.75em 1.75em 0 0em rgba(0, 0, 0, 0.2), 0em 2.5em 0 0em rgba(0, 0, 0, 0.2), -1.8em 1.8em 0 0em rgba(0, 0, 0, 0.2),
-      -2.6em 0em 0 0em rgba(0, 0, 0, 0.2), -1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2);
-  }
-  37.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(0, 0, 0, 0.2), 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.5),
-      2.5em 0em 0 0em rgba(0, 0, 0, 0.7), 1.75em 1.75em 0 0em #000000, 0em 2.5em 0 0em rgba(0, 0, 0, 0.2),
-      -1.8em 1.8em 0 0em rgba(0, 0, 0, 0.2), -2.6em 0em 0 0em rgba(0, 0, 0, 0.2), -1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2);
-  }
-  50% {
-    box-shadow: 0em -2.6em 0em 0em rgba(0, 0, 0, 0.2), 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2),
-      2.5em 0em 0 0em rgba(0, 0, 0, 0.5), 1.75em 1.75em 0 0em rgba(0, 0, 0, 0.7), 0em 2.5em 0 0em #000000,
-      -1.8em 1.8em 0 0em rgba(0, 0, 0, 0.2), -2.6em 0em 0 0em rgba(0, 0, 0, 0.2), -1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2);
-  }
-  62.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(0, 0, 0, 0.2), 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2),
-      2.5em 0em 0 0em rgba(0, 0, 0, 0.2), 1.75em 1.75em 0 0em rgba(0, 0, 0, 0.5), 0em 2.5em 0 0em rgba(0, 0, 0, 0.7),
-      -1.8em 1.8em 0 0em #000000, -2.6em 0em 0 0em rgba(0, 0, 0, 0.2), -1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2);
-  }
-  75% {
-    box-shadow: 0em -2.6em 0em 0em rgba(0, 0, 0, 0.2), 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2),
-      2.5em 0em 0 0em rgba(0, 0, 0, 0.2), 1.75em 1.75em 0 0em rgba(0, 0, 0, 0.2), 0em 2.5em 0 0em rgba(0, 0, 0, 0.5),
-      -1.8em 1.8em 0 0em rgba(0, 0, 0, 0.7), -2.6em 0em 0 0em #000000, -1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2);
-  }
-  87.5% {
-    box-shadow: 0em -2.6em 0em 0em rgba(0, 0, 0, 0.2), 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2),
-      2.5em 0em 0 0em rgba(0, 0, 0, 0.2), 1.75em 1.75em 0 0em rgba(0, 0, 0, 0.2), 0em 2.5em 0 0em rgba(0, 0, 0, 0.2),
-      -1.8em 1.8em 0 0em rgba(0, 0, 0, 0.5), -2.6em 0em 0 0em rgba(0, 0, 0, 0.7), -1.8em -1.8em 0 0em #000000;
-  }
-}
-@keyframes load5 {
   0%,
   100% {
     box-shadow: 0em -2.6em 0em 0em #000000, 1.8em -1.8em 0 0em rgba(0, 0, 0, 0.2), 2.5em 0em 0 0em rgba(0, 0, 0, 0.2),

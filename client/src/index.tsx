@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo, useReducer } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
 import { initialState, initialStateStargazers, reducer, reducerStargazers } from './store/reducer';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import NavBar from './NavBar';
-import RateLimit from './RateLimit';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
 import Global from './Global';
 import AuthedHandler from './AuthedHandler';
@@ -14,7 +13,8 @@ import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from './util';
 import { logoutAction } from './util/util';
-import {useHistory} from "react-router";
+import { useHistory } from 'react-router';
+import { getValidGQLProperties } from './services';
 
 const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
   const ApolloContext = getApolloContext();
@@ -28,6 +28,7 @@ const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
 export const Main = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const history = useHistory();
   const [stateStargazers, dispatchStargazers] = useReducer(reducerStargazers, initialStateStargazers);
   // Create First Link for querying data to external Github GQL API
   const githubGateway = new HttpLink({
@@ -76,13 +77,36 @@ export const Main = () => {
       },
     },
   });
-  const history = useHistory();
+  const isLoggedInRef = useRef(state.isLoggedIn);
+  useEffect(() => {
+    isLoggedInRef.current = state.isLoggedIn;
+  });
   const link = ApolloLink.from([
     onError(({ graphQLErrors, networkError }) => {
       if (graphQLErrors) {
-        graphQLErrors.map(({ message, locations, path }) => {
+        graphQLErrors.map(async ({ message, locations, path }) => {
+          let property: any = '';
+          const messaages = message.split(' ');
+          while (messaages) {
+            const str = messaages.shift();
+            if (str === 'property') {
+              property = messaages.shift()!.match(/'(.*?)'/)![1];
+              break;
+            }
+          }
           console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`);
-          if (message === 'Unauthorized') {
+          const validGQLProperties = await getValidGQLProperties();
+          if (property && property.length > 0 && validGQLProperties.data.includes(property) && isLoggedInRef.current) {
+            // if no data exist when the user logged-in
+            if (path) {
+              dispatch({
+                type: 'NO_DATA_FETCH',
+                payload: {
+                  path: path[0],
+                },
+              });
+            }
+          } else if (message.includes('Unauthorized')) {
             logoutAction(history, dispatch, dispatchStargazers);
           }
         });
@@ -130,12 +154,12 @@ export const Main = () => {
   return (
     <CustomApolloProvider client={client} tokenGQL={tokenGQLMemo()} session={session()}>
       <Router>
-        <AuthedHandler
-          component={RateLimit}
-          path="/profile"
-          authenticator={state.width > 830}
-          componentProps={{ state, dispatch }}
-        />
+        {/*<AuthedHandler*/}
+        {/*  component={RateLimit}*/}
+        {/*  path="/profile"*/}
+        {/*  authenticator={state.width > 830}*/}
+        {/*  componentProps={{ state, dispatch }}*/}
+        {/*/>*/}
         <AuthedHandler
           component={NavBar}
           authenticator={true}

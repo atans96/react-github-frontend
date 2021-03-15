@@ -47,12 +47,13 @@ interface RSSFeedProps {
 const RSSFeed: React.FC<RSSFeedProps> = React.memo(
   ({ state, dispatch }) => {
     const classes = useStyles();
-    const tokenRSSAdded = useApolloFactory().mutation.tokenRSSAdded;
-    const rssFeedAdded = useApolloFactory().mutation.rssFeedAdded;
+    const displayName: string | undefined = (RSSFeed as React.ComponentType<any>).displayName;
+    const tokenRSSAdded = useApolloFactory(displayName!).mutation.tokenRSSAdded;
+    const rssFeedAdded = useApolloFactory(displayName!).mutation.rssFeedAdded;
     const [openRSS, setOpenRSS] = useState(false);
     const [showMoreRSS, setShowMoreRSS] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [RSSFeed, setRSSFeed] = useState<string[]>([]);
+    const [rssFeed, setRSSFeed] = useState<string[]>([]);
     const [token, setToken] = useState('');
     const [notification, setNotification] = useState('');
     const timerRef = useRef<number | undefined>(undefined);
@@ -320,7 +321,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
           </If>
           <If condition={state.tokenRSS !== ''}>
             <Then>
-              <If condition={RSSFeed.length === 0 && openRSS}>
+              <If condition={rssFeed.length === 0 && openRSS}>
                 <Then>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />
@@ -328,7 +329,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                 </Then>
               </If>
               <React.Fragment>
-                {RSSFeed.slice(0, 5).map((feed, idx) => {
+                {rssFeed.slice(0, 5).map((feed, idx) => {
                   if (unseenFeeds.current.includes(feed)) {
                     return (
                       <Paper className={classes.paperUnseen} key={idx}>
@@ -344,11 +345,11 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                   }
                 })}
               </React.Fragment>
-              <If condition={RSSFeed.length > 5}>
+              <If condition={rssFeed.length > 5}>
                 <Then>
                   <React.Fragment>
                     <Collapse in={showMoreRSS} timeout={0.1} unmountOnExit>
-                      {RSSFeed.slice(5).map((feed, idx) => {
+                      {rssFeed.slice(5).map((feed, idx) => {
                         if (unseenFeeds.current.includes(feed)) {
                           return (
                             <Paper className={classes.paperUnseen} key={idx}>
@@ -366,7 +367,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                     </Collapse>
                     <ListItem button key={'1'} onClick={handleOpenRSSShowMore}>
                       <ListItemText
-                        primary={`${showMoreRSS ? 'Hide' : 'Show'} ${RSSFeed.length - 5} ${!showMoreRSS ? 'More' : ''}`}
+                        primary={`${showMoreRSS ? 'Hide' : 'Show'} ${rssFeed.length - 5} ${!showMoreRSS ? 'More' : ''}`}
                       />
                       {showMoreRSS ? <ExpandLess /> : <ExpandMore />}
                     </ListItem>

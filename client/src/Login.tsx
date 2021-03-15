@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { getRateLimitInfo, requestGithubLogin } from './services';
 import { dispatchRateLimit, dispatchRateLimitAnimation } from './store/dispatcher';
 import LoginLayout from './Layout/LoginLayout';
-import GithubIcon from 'mdi-react/GithubIcon';
+import GitHubIcon from '@material-ui/icons/GitHub';
 import './Login.scss';
 import CryptoJS from 'crypto-js';
 import { languageList, readEnvironmentVariable } from './util';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { IState } from './typing/interface';
-import {useHistory} from "react-router";
+import { useHistory } from 'react-router';
 
 interface LoginProps {
   state: IState;
@@ -18,7 +18,8 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
-  const signUpAdded = useApolloFactory().mutation.signUpAdded;
+  const displayName: string | undefined = (Login as React.ComponentType<any>).displayName;
+  const signUpAdded = useApolloFactory(displayName!).mutation.signUpAdded;
   const history = useHistory();
   useEffect(() => {
     // After requesting Github access by logging using user account's Github
@@ -109,7 +110,7 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
               setData({ ...data, errorMessage: '' });
             }}
           >
-            <GithubIcon />
+            <GitHubIcon />
             <span>Login with GitHub</span>
           </a>
         )}

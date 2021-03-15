@@ -6,7 +6,7 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import Result from './SubscribFeedSettingBody/Result';
-import SendIcon from 'mdi-react/SendIcon';
+import SendIcon from '@material-ui/icons/Send';
 import { dispatchUsername } from '../../store/dispatcher';
 import { NavLink } from 'react-router-dom';
 import { IState } from '../../typing/interface';
@@ -50,7 +50,10 @@ interface SubscribeFeedSettingProps {
 
 const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
   ({ state, dispatch, dispatchStargazersUser }) => {
-    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory().query.getWatchUsers;
+    const displayName: string | undefined = (SubscribeFeedSetting as React.ComponentType<any>).displayName;
+    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory(
+      displayName!
+    ).query.getWatchUsers;
     const classes = useStyles();
     const [openSubscriptionSetting, setSubscriptionSetting] = useState(false);
     const [showMoreSubscribedUsers, setShowMoreSubscribedUsers] = useState(false);

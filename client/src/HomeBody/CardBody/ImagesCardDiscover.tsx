@@ -12,7 +12,6 @@ import useCollapse from '../../hooks/useCollapse';
 import { ProgressBar } from '../../Layout/ProgressBar';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
-import SliderImage from './SliderImage';
 import { useClickOutside } from '../../hooks/hooks';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
@@ -31,8 +30,6 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     const [renderImages, setRenderImages] = useState<string[]>([]);
     const showProgressBarUnRenderImagesRef = useRef<boolean>(true);
     const previousStringUnRenderImages = useRef<string[]>([]);
-    const sliderInner = useRef<HTMLDivElement | null>(null);
-    const sliderContainer = useRef<HTMLDivElement | null>(null);
 
     let timerToClearSomewhere: any;
     const { getToggleProps, getCollapseProps } = useCollapse({
@@ -48,6 +45,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     const handleProgressPromiseUnrender = useCallback((src) => {
       previousStringUnRenderImages.current.push(src); // because ImageComponent will re-render, don't ever set state
       // when rendering. Instead, use useRef
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -74,24 +72,8 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
       return () => {
         clearTimeout(timerToClearSomewhere);
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [(previousStringUnRenderImages.current.length / renderImages.slice(2).length) * 100]);
-
-    useEffect(() => {
-      if (sliderContainer.current && sliderInner.current) {
-        const slider = new SliderImage({
-          slider: sliderContainer.current,
-          sliderInner: sliderInner.current,
-          slide: sliderInner.current.querySelectorAll('.slide'),
-        });
-        slider.init();
-        return () => {
-          sliderContainer.current = null;
-          sliderInner.current = null;
-          sliderInner.current = null;
-          slider.destroy();
-        };
-      }
-    }, [sliderContainer.current, sliderInner.current]);
 
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -104,7 +86,6 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
         showProgressBarUnRenderImagesRef.current = false;
       }
     };
-    useClickOutside(sliderContainer, () => setModal(false));
     const imagesCount = useRef(0);
     const loadingCount = useRef(0);
     const [unrenderImages, setUnrenderImages] = useState<string[]>([]);
@@ -117,6 +98,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
         prevState.push(src);
         return prevState;
       });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
       <React.Fragment>

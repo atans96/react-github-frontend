@@ -58,7 +58,7 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
     // it needs to get re-render to get new data.
   }
 );
-
+MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
 interface mergedData {
   append: string;
   nonAppend: string;
@@ -81,17 +81,24 @@ interface DiscoverProps {
   stateStargazers: IStateStargazers;
   dispatch: any;
   dispatchStargazers: any;
-  routerProps: RouteComponentProps<{}, {}, {}>;
+  routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
 }
 
 const Discover = React.memo<DiscoverProps>(
   ({ state, stateStargazers, dispatch, dispatchStargazers, routerProps }) => {
-    const seenAdded = useApolloFactory().mutation.seenAdded;
-    const { suggestedData, suggestedDataLoading, suggestedDataError } = useApolloFactory().query.getSuggestedRepo;
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactory().query.getSeen;
-    const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory().query.getStarRanking;
-    const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
-    const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory().query.getUserInfoStarred;
+    const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
+    const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
+    const { suggestedData, suggestedDataLoading, suggestedDataError } = useApolloFactory(
+      displayName!
+    ).query.getSuggestedRepo;
+    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen;
+    const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory(
+      displayName!
+    ).query.getStarRanking;
+    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
+    const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
+      displayName!
+    ).query.getUserInfoStarred;
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(true);
     const paginationRef = useRef(state.perPage);
@@ -216,12 +223,16 @@ const Discover = React.memo<DiscoverProps>(
         setLoading(true); // spawn loading spinner at bottom page
         paginationRef.current += state.perPage;
         if (sortedDataRef.current.slice(paginationRef.current, paginationRef.current + state.perPage).length === 0) {
-          actionResolvedPromise(Action.mergedData.noData).then(() => {});
+          actionResolvedPromise(Action.mergedData.noData).then((e) => {
+            console.debug(e);
+          });
         } else {
           actionResolvedPromise(
             Action.mergedData.append,
             sortedDataRef.current.slice(paginationRef.current, paginationRef.current + state.perPage)
-          ).then(() => {});
+          ).then((e) => {
+            console.debug(e);
+          });
         }
       }
     };
@@ -238,9 +249,13 @@ const Discover = React.memo<DiscoverProps>(
         starRankingFiltered
       )(suggestedData?.getSuggestedRepo?.repoInfo) as [];
       if (sortedDataRef.current.slice(0, state.perPage).length === 0) {
-        actionResolvedPromise(Action.mergedData.noData).then(() => {});
+        actionResolvedPromise(Action.mergedData.noData).then((e) => {
+          console.debug(e);
+        });
       } else {
-        actionResolvedPromise(Action.mergedData.append, sortedDataRef.current.slice(0, state.perPage)).then(() => {});
+        actionResolvedPromise(Action.mergedData.append, sortedDataRef.current.slice(0, state.perPage)).then((e) => {
+          console.debug(e);
+        });
       }
     };
 
@@ -260,58 +275,64 @@ const Discover = React.memo<DiscoverProps>(
     useEffect(() => {
       notificationRef.current = notification;
     });
-    const handleBottomHit = useCallback(() => {
-      if (
-        !isFetchFinish.current &&
-        mergedDataRef.current.length > 0 &&
-        !isLoadingRef.current &&
-        window.location.pathname === '/discover' &&
-        notificationRef.current === ''
-      ) {
-        dispatchPageDiscover(dispatch);
-        const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
-          const temp = Object.assign(
-            {},
-            {
-              stargazers_count: obj.stargazers_count,
-              full_name: obj.full_name,
-              default_branch: obj.default_branch,
-              owner: {
-                login: obj.owner.login,
-                avatar_url: obj.owner.avatar_url,
-                html_url: obj.owner.html_url,
+    const handleBottomHit = useCallback(
+      () => {
+        if (
+          !isFetchFinish.current &&
+          mergedDataRef.current.length > 0 &&
+          !isLoadingRef.current &&
+          window.location.pathname === '/discover' &&
+          notificationRef.current === ''
+        ) {
+          dispatchPageDiscover(dispatch);
+          const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
+            const temp = Object.assign(
+              {},
+              {
+                stargazers_count: obj.stargazers_count,
+                full_name: obj.full_name,
+                default_branch: obj.default_branch,
+                owner: {
+                  login: obj.owner.login,
+                  avatar_url: obj.owner.avatar_url,
+                  html_url: obj.owner.html_url,
+                },
+                description: obj.description,
+                language: obj.language,
+                topics: obj.topics,
+                html_url: obj.html_url,
+                id: obj.id,
+                imagesData:
+                  imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+                name: obj.name,
+                is_queried: false,
+              }
+            );
+            acc.push(temp);
+            return acc;
+          }, [] as SeenProps[]);
+          if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
+            //don't add to database yet when imagesData still loading.
+            seenAdded({
+              variables: {
+                seenCards: result,
               },
-              description: obj.description,
-              language: obj.language,
-              topics: obj.topics,
-              html_url: obj.html_url,
-              id: obj.id,
-              imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
-              name: obj.name,
-              is_queried: false,
-            }
-          );
-          acc.push(temp);
-          return acc;
-        }, [] as SeenProps[]);
-        if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
-          //don't add to database yet when imagesData still loading.
-          seenAdded({
-            variables: {
-              seenCards: result,
-            },
-          }).then(() => {});
+            }).then((e) => {
+              console.debug(e);
+            });
+          }
         }
-      }
-    }, [
-      isFetchFinish.current,
-      mergedDataRef.current,
-      isLoadingRef.current,
-      imagesDataRef.current,
-      notificationRef.current,
-      window.location.pathname,
-      state.isLoggedIn,
-    ]);
+      }, // eslint-disable-next-line react-hooks/exhaustive-deps
+      [
+        isFetchFinish.current,
+        mergedDataRef.current,
+        isLoadingRef.current,
+        imagesDataRef.current,
+        notificationRef.current,
+        window.location.pathname,
+        state.isLoggedIn,
+      ]
+    );
 
     useBottomHit(
       windowScreenRef,

@@ -1,27 +1,12 @@
 import React from 'react';
 import { OnlyYesterday } from './TrendSummaryBody/OnlyYesterday';
-import { Section } from '../../../Layout/DetailsLayout';
-import styled from 'styled-components';
 import { MonthlyTrendsItem } from './TrendSummaryBody/MonthlyTrendsItem';
 import { fastFilter } from '../../../util';
+import './TrendSummaryStyle.scss';
 
 interface TrendSummaryProps {
   project: any;
 }
-const Div = styled.div`
-  width: 100%;
-  display: flex;
-  > div {
-    flex: 1;
-    text-align: center;
-  }
-  @media (max-width: 600px) {
-    flex-direction: column;
-    > div:not(:first-child) {
-      margin-top: 0.5rem;
-    }
-  }
-`;
 
 export const TrendSummary = React.memo<TrendSummaryProps>(({ project }) => {
   const { trends } = project;
@@ -38,20 +23,20 @@ export const TrendSummary = React.memo<TrendSummaryProps>(({ project }) => {
     ]
   );
   return (
-    <Section>
+    <div className={'section'}>
       {trends.weekly || trends.weekly === 0 ? (
         <div>
           <p>Stars added on GitHub, per day, on average</p>
-          <Div>
+          <div className={'monthly-trends-container'}>
             {items.map((item, idx) => (
               <MonthlyTrendsItem item={item} key={idx} trends={trends} />
             ))}
-          </Div>
+          </div>
         </div>
       ) : (
         <OnlyYesterday trends={trends} />
       )}
-    </Section>
+    </div>
   );
 });
 TrendSummary.displayName = 'TrendSummary';

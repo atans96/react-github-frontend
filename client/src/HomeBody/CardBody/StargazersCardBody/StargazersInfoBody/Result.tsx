@@ -12,7 +12,7 @@ import { useMutation } from '@apollo/client';
 import { WATCH_USER_REMOVED } from '../../../../mutations';
 import { GET_WATCH_USERS } from '../../../../queries';
 import { fastFilter } from '../../../../util';
-import {useApolloFactory} from "../../../../hooks/useApolloFactory";
+import { useApolloFactory } from '../../../../hooks/useApolloFactory';
 
 export interface Result {
   getRootPropsCard: any;
@@ -26,7 +26,10 @@ export interface Result {
 const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatch, stargazer, getRootPropsCard }) => {
   const [hovered, setHovered] = useState('');
   const classes = useUserCardStyles();
-  const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory().query.getWatchUsers;
+  const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
+  const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory(
+    displayName!
+  ).query.getWatchUsers;
   const [removed] = useMutation(WATCH_USER_REMOVED, {
     context: { clientName: 'mongo' },
     update: (cache) => {
@@ -60,7 +63,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
     }
     return style;
   };
-  const watchUsersAdded = useApolloFactory().mutation.watchUsersAdded;
+  const watchUsersAdded = useApolloFactory(displayName!).mutation.watchUsersAdded;
   const onClickSubscribe = (e: React.MouseEvent) => {
     e.preventDefault();
     let subscribeStatus: boolean;
@@ -79,13 +82,17 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
             { id: stargazer.id, login: stargazer.login, createdAt: Date.now(), avatarUrl: stargazer.avatarUrl }
           ),
         },
-      }).then(() => {});
+      }).then((e) => {
+        console.debug(e);
+      });
     } else {
       removed({
         variables: {
           login: stargazer.login,
         },
-      }).then(() => {});
+      }).then((e) => {
+        console.debug(e);
+      });
     }
   };
   const onClickQueue = (e: React.MouseEvent) => {

@@ -73,6 +73,7 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = React.memo(
     };
     useEffect(() => {
       setJSXRender(whichToRender());
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoading]);
 
     return <>{JSXRender}</>;

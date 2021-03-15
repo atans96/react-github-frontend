@@ -45,20 +45,25 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
 
     const userCardMemoizedData = useCallback(() => {
       return githubData;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [githubData.owner]);
 
     const routerPropsMemoizedData = useCallback(() => {
       return routerProps;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [routerProps]);
 
     const stargazersMemoizedData = useCallback(() => {
       return state;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.isLoggedIn, state.isLoading, state.tokenGQL]);
 
     const stargazersMemoizedGithubData = useCallback(() => {
       return githubData;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [githubData.name, githubData.owner.login]);
-    const clickedAdded = useApolloFactory().mutation.clickedAdded;
+    const displayName: string | undefined = (CardDiscover as React.ComponentType<any>).displayName;
+    const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
     const handleDetailsClicked = (e: React.MouseEvent) => {
       e.preventDefault();
       if (state.isLoggedIn) {
@@ -77,7 +82,9 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               ),
             ],
           },
-        }).then(() => {});
+        }).then((e) => {
+          console.log(e);
+        });
       }
     };
     const isVisibleRef = useRef(false);

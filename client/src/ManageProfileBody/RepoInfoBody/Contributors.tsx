@@ -89,4 +89,5 @@ const Contributors = React.memo<ContributorsProps>(
     );
   }
 );
+Contributors.displayName = 'Contributors';
 export default Contributors;

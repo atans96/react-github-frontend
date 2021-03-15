@@ -1,11 +1,9 @@
 import React, { RefObject, useCallback, useDebugValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import warning from 'tiny-warning';
 import { AssignableRef } from '../typing/interface';
-import { MergedDataProps } from '../typing/type';
 import { RSSSource } from './RSSSource';
 import { getRateLimitInfo, removeTokenGQL } from '../services';
 import { dispatchRateLimit, dispatchRateLimitAnimation } from '../store/dispatcher';
-import {useHistory} from "react-router";
 
 type AnyFunction = (...args: any[]) => unknown;
 
@@ -19,6 +17,7 @@ export const filterActionResolvedPromiseData = (input: any, filter1: any, filter
     return input;
   }
 };
+
 export function millisToMinutesAndSeconds(millis: any) {
   const minutes = Math.floor(millis / 60000);
   const seconds = ((millis % 60000) / 1000).toFixed(0);
@@ -36,6 +35,7 @@ export function epochToJsDate(ts: any) {
   }
   return 0;
 }
+
 export function getElementHeight(el: RefObject<HTMLElement> | { current?: { scrollHeight: number } }): string | number {
   if (!el?.current) {
     warning(
@@ -149,6 +149,7 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useEffect : us
 let serverHandoffComplete = false;
 let id = 0;
 const genId = () => ++id;
+
 export function useUniqueId(idFromProps?: string | null) {
   /*
    * If this instance isn't part of the initial render, we don't have to do the
@@ -191,40 +192,14 @@ export function usePaddingWarning(element: RefObject<HTMLElement>): void {
     warn(element);
   }, [element]);
 }
-export function gqlFormatToAPI(node: any) {
-  const temp = {} as MergedDataProps;
-  Object.assign(temp, {
-    id: node.node.id,
-    full_name: node.node.nameWithOwner,
-    default_branch: node.node.defaultBranchRef !== null ? node.node.defaultBranchRef.name : '',
-    owner: {
-      login: node.node.owner.login,
-      avatar_url: node.node.owner.avatarUrl,
-      html_url: node.node.owner.url,
-    },
-    name: node.node.name,
-    description: node.node.description !== null ? node.node.description : '',
-    language: node.node.primaryLanguage !== null ? node.node.primaryLanguage.name : '',
-    topics:
-      node.node.repositoryTopics.edges.length > 0
-        ? node.node.repositoryTopics.edges.reduce((x: any[], node: any) => {
-            x.push(node.node.topic.name);
-            return x;
-          }, [] as any[])
-        : [],
-    stargazers_count: node.node.stargazerCount,
-    html_url: node.node.url,
-    viewerHasStarred: node.node.viewerHasStarred,
-    isQueue: false,
-  });
-  return temp;
-}
+
 export function useStateWithLabel(initialValue: any, name: string) {
   //so that when you debug, it will show the name of the states
   const [value, setValue] = useState(initialValue);
   useDebugValue(`${name}: ${value}`);
   return [value, setValue];
 }
+
 export async function addRSSFeed(url: string) {
   const source = new RSSSource(url);
   try {
@@ -235,9 +210,12 @@ export async function addRSSFeed(url: string) {
     throw e;
   }
 }
+
 export function logoutAction(history: any, dispatch: any, dispatchStargazers: any) {
-  history.push('/')
-  removeTokenGQL().then(() => {});
+  history.push('/');
+  removeTokenGQL().then((e) => {
+    console.debug(e);
+  });
   dispatch({ type: 'LOGOUT' });
   dispatchStargazers({ type: 'LOGOUT' });
   dispatchRateLimitAnimation(false, dispatch);

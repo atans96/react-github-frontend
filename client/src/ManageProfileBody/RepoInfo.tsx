@@ -69,4 +69,5 @@ const RepoInfo = React.memo<RepoInfoProps>(
     );
   }
 );
+RepoInfo.displayName = 'RepoInfo';
 export default RepoInfo;

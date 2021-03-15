@@ -77,7 +77,7 @@ const Mutation = {
       }
       const user = await User.findOne({ userName: currentUser?.username });
       if (user !== null && languagePreference.length > 0) {
-        const updated = User.findOneAndUpdate(
+        return User.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $set: {
@@ -85,7 +85,6 @@ const Mutation = {
             },
           }
         );
-        return updated;
       }
     },
     watchUsersFeedsAdded: async (
@@ -113,7 +112,7 @@ const Mutation = {
             },
           }
         );
-        const watchUsers = await WatchUsers.findOneAndUpdate(
+        return await WatchUsers.findOneAndUpdate(
           { userName: currentUser?.username, "login.login": login },
           {
             $push: {
@@ -131,7 +130,6 @@ const Mutation = {
           },
           { new: true } //return new document
         );
-        return watchUsers;
       }
     },
     watchUsersAdded: async (
@@ -142,7 +140,7 @@ const Mutation = {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const watchUsers = await WatchUsers.findOneAndUpdate(
+      return await WatchUsers.findOneAndUpdate(
         { userName: currentUser?.username }, //no limit at how many subscribe user you can
         {
           $push: {
@@ -151,7 +149,6 @@ const Mutation = {
         },
         { upsert: true }
       );
-      return watchUsers;
     },
     starredMeAdded: async (
       root,
@@ -161,11 +158,10 @@ const Mutation = {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const starredMeAdded = await UserStarred.findOneAndUpdate(
+      return await UserStarred.findOneAndUpdate(
         { userName: currentUser?.username },
         { $addToSet: { starred: starred } }
       );
-      return starredMeAdded;
     },
     starredMeRemoved: async (
       root,
@@ -175,11 +171,10 @@ const Mutation = {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const starredMeRemoved = await UserStarred.findOneAndUpdate(
+      return await UserStarred.findOneAndUpdate(
         { userName: currentUser?.username },
         { $pull: { starred: removeStarred } }
       );
-      return starredMeRemoved;
     },
     tokenRSSAdded: async (
       root,
@@ -218,7 +213,7 @@ const Mutation = {
             },
           }
         );
-        const RSS = await RSSFeed.findOneAndUpdate(
+        return await RSSFeed.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $push: {
@@ -236,7 +231,6 @@ const Mutation = {
           },
           { new: true } //return new document
         );
-        return RSS;
       } else {
         await new RSSFeed({
           userName: currentUser?.username,
@@ -255,7 +249,7 @@ const Mutation = {
       }
       const user = await User.findOne({ userName: currentUser?.username });
       if (user !== null) {
-        const seens = await Seen.findOneAndUpdate(
+        return await Seen.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $addToSet: {
@@ -264,7 +258,6 @@ const Mutation = {
           },
           { upsert: true }
         );
-        return seens;
       }
     },
     searchHistoryAdded: async (
@@ -281,7 +274,7 @@ const Mutation = {
           "searches.search": search[0].search,
         });
         if (searchDB !== null && searchDB.length > 0) {
-          const searchHistory = await Search.findOneAndUpdate(
+          return await Search.findOneAndUpdate(
             {
               userName: currentUser?.username,
               "searches.search": search[0].search,
@@ -295,9 +288,8 @@ const Mutation = {
               },
             }
           );
-          return searchHistory;
         } else {
-          const searchHistory = await Search.findOneAndUpdate(
+          return await Search.findOneAndUpdate(
             { userName: currentUser?.username },
             {
               $addToSet: {
@@ -306,7 +298,6 @@ const Mutation = {
             },
             { upsert: true }
           );
-          return searchHistory;
         }
       }
     },
@@ -323,7 +314,7 @@ const Mutation = {
         userName: currentUser?.username,
       });
       if (user !== null && clicked === null) {
-        const clicked = await Clicked.findOneAndUpdate(
+        return await Clicked.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $addToSet: {
@@ -332,7 +323,6 @@ const Mutation = {
           },
           { upsert: true }
         );
-        return clicked;
       }
       const hasSeen = await Seen.aggregate([
         {
@@ -355,7 +345,7 @@ const Mutation = {
       ]);
       //if seenCards has been queried by the github-api-static, don't append the Clicked database to prevent being queried again
       if (user !== null && clicked !== null && hasSeen.length === 0) {
-        const clicked = await Clicked.findOneAndUpdate(
+        return await Clicked.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $addToSet: {
@@ -364,7 +354,6 @@ const Mutation = {
           },
           { upsert: true }
         );
-        return clicked;
       }
     },
   },

@@ -8,8 +8,7 @@ export class RSSSource {
   }
 
   static async fetchMetaData(source: RSSSource) {
-    const feed = await parseRSS(source.url);
-    return feed;
+    return await parseRSS(source.url);
   }
 }
 export const domParser = new DOMParser();

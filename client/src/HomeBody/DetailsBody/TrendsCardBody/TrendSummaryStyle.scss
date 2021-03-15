@@ -1,0 +1,21 @@
+.section {
+  padding: 1em;
+
+  &:not(:first-child) {
+    border-top: 1px dashed var(--boxBorderColor);
+  }
+}
+.monthly-trends-container {
+  width: 100%;
+  display: flex;
+  > div {
+    flex: 1;
+    text-align: center;
+  }
+  @media (max-width: 600px) {
+    flex-direction: column;
+    > div:not(:first-child) {
+      margin-top: 0.5rem;
+    }
+  }
+}

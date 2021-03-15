@@ -11,7 +11,7 @@ interface UserCard {
   data: any;
   dispatch: any;
   dispatchStargazers: any;
-  routerProps?: RouteComponentProps<{}, {}, {}>;
+  routerProps?: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
 }
 
 const UserCard = React.memo<UserCard>(

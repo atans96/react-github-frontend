@@ -1,28 +1,20 @@
 import React from 'react';
-import styled from 'styled-components';
-import { Button, TopicText } from './TopicStyle';
+import './TopicStyle.scss';
 
 interface Topic {
   topic: string;
   idx: number;
   getRootProps: any;
 }
-const Tag = styled(Button)`
-  display: inline-block;
-  font-size: 13px;
-  border-radius: 12px;
-  padding: 4px 8px;
-  margin-right: 10px;
-  margin-bottom: 5px;
-  text-align: center;
-`;
+
 const Topic: React.FC<Topic> = ({ idx, topic, getRootProps }) => {
   const handleClickTopic = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
   };
   return (
-    <Tag>
-      <TopicText
+    <button className={'tag'}>
+      <h6
+        className={'topic-text'}
         {...getRootProps({
           onClick: handleClickTopic,
           params: {
@@ -34,8 +26,8 @@ const Topic: React.FC<Topic> = ({ idx, topic, getRootProps }) => {
         key={idx}
       >
         {topic.trim()}
-      </TopicText>
-    </Tag>
+      </h6>
+    </button>
   );
 };
 export default Topic;
