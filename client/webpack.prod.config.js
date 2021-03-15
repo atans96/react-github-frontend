@@ -2,17 +2,38 @@
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const autoprefixer = require('autoprefixer');
+const cssnano = require('cssnano');
 
 const config: webpack.Configuration = {
-  mode: 'development',
-  output: {
-    publicPath: '/',
-  },
+  mode: 'production',
   entry: './src/index.tsx',
+  output: {
+    path: path.resolve(__dirname, 'build'),
+    filename: '[name].[contenthash].js',
+    publicPath: '',
+  },
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new OptimizeCSSAssetsPlugin({
+        cssProcessorOptions: {
+          safe: true,
+          discardComments: {
+            removeAll: true,
+          },
+        },
+        cssProcessor: require('cssnano'),
+      }),
+      new CssMinimizerPlugin(),
+    ],
+  },
   module: {
     rules: [
       {
@@ -49,6 +70,7 @@ const config: webpack.Configuration = {
             loader: require.resolve('css-loader'),
             options: {
               importLoaders: 1,
+              url: false,
               modules: true, // Add this option
               localIdentName: '[name]__[local]__[hash:base64:5]', // Add this option
             },
@@ -68,6 +90,7 @@ const config: webpack.Configuration = {
               ident: 'postcss',
               plugins: () => [
                 require('postcss-flexbugs-fixes'),
+                cssnano(),
                 autoprefixer({
                   browsers: [
                     '>1%',
@@ -84,35 +107,29 @@ const config: webpack.Configuration = {
       },
     ],
   },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js', '.scss'],
+    alias: {
+      // Provides ability to include node_modules with ~
+      '~': path.resolve(process.cwd(), 'src'),
+    },
+  },
   plugins: [
-    new HtmlWebpackPlugin({
-      template: './public/index.html',
-    }),
-    new webpack.HotModuleReplacementPlugin(),
-    new NodePolyfillPlugin(),
     new CompressionPlugin({
       test: /\.(js|css)/,
     }),
     new MiniCssExtractPlugin({
-      filename: '[name].css',
-      chunkFilename: '[id].css',
+      filename: '[name].[contenthash].css',
+      chunkFilename: '[id].[contenthash].css',
     }),
+    new HtmlWebpackPlugin({
+      template: './public/index.html',
+    }),
+    new ForkTsCheckerWebpackPlugin({
+      async: false,
+    }),
+    new CleanWebpackPlugin(),
   ],
-  devtool: 'inline-source-map',
-  devServer: {
-    contentBase: path.join(__dirname, 'build'),
-    historyApiFallback: true,
-    host: 'localhost', // Defaults to `localhost`
-    port: Number(`${process.env.CLIENT_PORT}`),
-    open: true,
-    hot: true,
-    proxy: {
-      '^/api/*': {
-        target: `http://localhost:${process.env.SERVER_PORT}/api/`,
-        secure: false,
-      },
-    },
-  },
 };
 
 export default config;
