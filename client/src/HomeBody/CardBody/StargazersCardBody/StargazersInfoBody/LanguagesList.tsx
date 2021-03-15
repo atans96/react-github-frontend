@@ -46,7 +46,7 @@ const LanguagesList: React.FC<LanguagesList> = ({ stateStargazers, dispatchStarg
         return a.languages - b.languages;
       });
     }
-    let result: any[] = [];
+    const result: any[] = [];
     temp.forEach((key: any) => {
       stateStargazers.stargazersData.forEach((stargazer: StargazerProps) => {
         if (stargazer.id === key.id) {

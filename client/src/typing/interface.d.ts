@@ -33,6 +33,7 @@ export interface IStateStargazers {
   stargazersUsersStarredRepositories: number;
 }
 export interface IState {
+  fetchDataPath: string;
   repoInfo: RepoInfoProps[];
   contributors: ContributorsProps[];
   isLoggedIn: boolean;
@@ -127,8 +128,8 @@ export interface UseCollapseInput {
   isExpanded?: boolean;
   defaultExpanded?: boolean;
   collapsedHeight?: number;
-  expandStyles?: {};
-  collapseStyles?: {};
+  expandStyles?: Record<string, any>;
+  collapseStyles?: Record<string, any>;
   easing?: string;
   duration?: number;
   onCollapseStart?: () => void;

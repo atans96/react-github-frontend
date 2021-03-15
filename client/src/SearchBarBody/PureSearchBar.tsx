@@ -44,8 +44,9 @@ interface SearchBarProps {
 
 const SearchBar = React.memo<SearchBarProps>(
   ({ portalExpandable, dispatch, dispatchStargazersUser, state, stateStargazers }) => {
-    const { searchesData } = useApolloFactory().query.getSearchesData;
-    const searchesAdded = useApolloFactory().mutation.searchesAdded;
+    const displayName: string | undefined = (SearchBar as React.ComponentType<any>).displayName;
+    const { searchesData } = useApolloFactory(displayName!).query.getSearchesData;
+    const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
     const username = useRef<any>();
     const classes = useUserCardStyles({ avatarSize: 20 });
     const size = {

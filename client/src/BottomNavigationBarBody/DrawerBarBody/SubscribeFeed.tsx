@@ -60,8 +60,11 @@ interface SubscribeFeedProps {
 }
 const SubscribeFeed = React.memo<SubscribeFeedProps>(
   ({ state }) => {
-    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory().query.getWatchUsers;
-    const watchUsersFeedsAdded = useApolloFactory().mutation.watchUsersFeedsAdded;
+    const displayName: string | undefined = (SubscribeFeed as React.ComponentType<any>).displayName;
+    const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory(
+      displayName!
+    ).query.getWatchUsers;
+    const watchUsersFeedsAdded = useApolloFactory(displayName!).mutation.watchUsersFeedsAdded;
     const classes = useStyles();
     const [openSubscription, setSubscription] = useState(false);
     const [xmlFileListAppend, setXmlFileListAppend] = useState<string[]>([]);

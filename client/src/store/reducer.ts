@@ -33,6 +33,7 @@ type Action =
   | 'REPO_INFO_ADDED'
   | 'RATE_LIMIT'
   | 'SET_WIDTH'
+  | 'NO_DATA_FETCH'
   | 'RATE_LIMIT_ADDED'
   | 'TOKEN_ADDED'
   | 'SET_TOPICS'
@@ -173,6 +174,7 @@ export const initialState: IState = {
   visible: false,
   isLoading: false,
   page: 1,
+  fetchDataPath: '',
   pageDiscover: 1,
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   username: [], //multiple username or queue
@@ -185,6 +187,12 @@ export const initialState: IState = {
 };
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
+    case 'NO_DATA_FETCH': {
+      return {
+        ...state,
+        fetchDataPath: action.payload.path,
+      };
+    }
     case 'REPO_INFO_ADDED': {
       return {
         ...state,

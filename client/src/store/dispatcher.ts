@@ -1,7 +1,6 @@
 import React from 'react';
 import { HasNextPage, MergedDataProps, Nullable, RateLimit, SeenProps } from '../typing/type';
 
-export const dispatcherFactory = () => {};
 export const dispatchRateLimit = (core: RateLimit, graphql: RateLimit, dispatch: React.Dispatch<any>) => {
   dispatch({
     type: 'RATE_LIMIT',

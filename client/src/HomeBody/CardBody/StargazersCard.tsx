@@ -52,8 +52,9 @@ const StargazersCard = React.memo<StargazersCard>(
     stargazerCount,
     GQL_VARIABLES,
   }) => {
-    const addedStarredMe = useApolloFactory().mutation.addedStarredMe;
-    const removeStarred = useApolloFactory().mutation.removeStarred;
+    const displayName: string | undefined = (StargazersCard as React.ComponentType<any>).displayName;
+    const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
+    const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
     const modalWidth = useRef('400px');
     const [starClicked, setStarClicked] = useState(
       dataMongoMemoize?.getUserInfoStarred?.starred?.includes(githubDataId) || false

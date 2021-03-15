@@ -5,7 +5,6 @@ import { CircularProgress } from '@material-ui/core';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import { markdownParsing } from '../services';
-import { Header, DetailsStyle, Body, Footer, Section } from '../style/DetailsStyle';
 
 interface DetailsProps {
   branch: string;
@@ -20,19 +19,19 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
   useEffect(
-      () => {
-        _isMounted.current = true;
-        markdownParsing(fullName, branch).then((data) => {
-          if (_isMounted.current) {
-            setReadme(data.readme);
-          }
-        });
-        return () => {
-          _isMounted.current = false;
-        };
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [fullName, branch]
+    () => {
+      _isMounted.current = true;
+      markdownParsing(fullName, branch).then((data) => {
+        if (_isMounted.current) {
+          setReadme(data.readme);
+        }
+      });
+      return () => {
+        _isMounted.current = false;
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fullName, branch]
   );
   useEffect(() => {
     if (readmeRef?.current && readme !== '') {
@@ -43,36 +42,37 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
         }
       }, 1500);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readmeRef.current, readme]);
 
   return (
-      <div ref={readmeRef} style={width < 1100 ? { width: `${width - 650}px` } : {}}>
-        <DetailsStyle className="readme">
-          <Header>
-            <GoBook className="icon" size={20} />
-            README
-          </Header>
-          <Body>
-            <If condition={readme !== ''}>
-              <Then>
-                <Section>
-                  <div dangerouslySetInnerHTML={{ __html: readme }} />
-                </Section>
-              </Then>
-            </If>
-            <If condition={readme === ''}>
-              <Then>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <CircularProgress />
-                </div>
-              </Then>
-            </If>
-          </Body>
-          <Footer>
-            <a href={html_url}>View on GitHub</a>
-          </Footer>
-        </DetailsStyle>
+    <div ref={readmeRef} style={width < 1100 ? { width: `${width - 650}px` } : {}}>
+      <div className={'readme background-readme'}>
+        <div className={'header'}>
+          <GoBook className="icon" size={20} />
+          README
+        </div>
+        <div>
+          <If condition={readme !== ''}>
+            <Then>
+              <div className={'section'}>
+                <div dangerouslySetInnerHTML={{ __html: readme }} />
+              </div>
+            </Then>
+          </If>
+          <If condition={readme === ''}>
+            <Then>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <CircularProgress />
+              </div>
+            </Then>
+          </If>
+        </div>
+        <div className={'footer'}>
+          <a href={html_url}>View on GitHub</a>
+        </div>
       </div>
+    </div>
   );
 };
 

@@ -47,7 +47,7 @@ export default function useCollapse({
     overflow: 'hidden',
   };
   const [styles, setStyles] = useState<CSSProperties>(isExpanded ? {} : collapsedStyles);
-  const mergeStyles = useCallback((newStyles: {}): void => {
+  const mergeStyles = useCallback((newStyles: Record<string, any>): void => {
     setStyles((oldStyles) => ({ ...oldStyles, ...newStyles }));
   }, []);
 

@@ -19,7 +19,7 @@ const ImageMagnify = React.forwardRef(function (props, ref) {
           onLoadRefresh();
         }
       }}
-      onError={(e) => {
+      onError={() => {
         if (imageIdx < imageArr.length) {
           imageErrorRef.current = true;
           setImageIdx((idx) => idx + 1);
@@ -34,5 +34,5 @@ ImageMagnify.defaultProps = {
   onImageLoad: utils.noop,
   onLoadRefresh: utils.noop,
 };
-
+ImageMagnify.displayName = 'ImageMagnify';
 export default ImageMagnify;

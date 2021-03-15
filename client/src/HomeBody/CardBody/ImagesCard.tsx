@@ -75,6 +75,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
       return () => {
         clearTimeout(timerToClearSomewhere);
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [(previousStringUnRenderImages.current.length / renderImages.slice(2).length) * 100]);
 
     useEffect(() => {
@@ -92,11 +93,13 @@ const ImagesCard = React.memo<ImagesCardProps>(
           slider.destroy();
         };
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sliderContainer.current, sliderInner.current]);
 
     const handleClick = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
       setModal(true);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleClickUnrenderImages = useCallback(
       (e: React.MouseEvent) => {
@@ -106,6 +109,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
           showProgressBarUnRenderImagesRef.current = false;
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [showProgressBarUnRenderImagesRef.current]
     );
     useClickOutside(sliderContainer, () => setModal(false));
@@ -124,6 +128,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
         prevState.push(src);
         return prevState;
       });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     // const checkNode = (addedNode: any) => {
     //   if (addedNode.getElementsByTagName === 'function' && addedNode.nodeType === 1 && addedNode.tagName === 'img') {

@@ -1,5 +1,4 @@
 import React from 'react';
-import styled from 'styled-components';
 import numeral from 'numeral';
 
 import { MdStarBorder } from 'react-icons/md';
@@ -22,19 +21,13 @@ const getSign = (value: number) => {
   return value > 0 ? '+' : '-';
 };
 
-const StarDeltaContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
 export const StarDelta: React.FC<StarDeltaProps> = ({ average, value, ...props }) =>
   average ? <StarDeltaAverage {...props} value={value} /> : <StarDeltaNormal {...props} value={value} />;
 
 const StarDeltaNormal: React.FC<StarProps> = ({ value, ...props }) => {
   const sign = getSign(value);
   return (
-    <StarDeltaContainer>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       {value === 0 ? (
         '='
       ) : (
@@ -44,13 +37,9 @@ const StarDeltaNormal: React.FC<StarProps> = ({ value, ...props }) => {
           <MdStarBorder {...props} />
         </>
       )}
-    </StarDeltaContainer>
+    </div>
   );
 };
-
-const StarDeltaAverageContainer = styled.div`
-  text-align: center;
-`;
 export const StarDeltaAverage: React.FC<StarProps> = ({ value }) => {
   const integerPart = Math.abs(Math.trunc(value));
   const decimalPart = (Math.abs(value - integerPart) * 10).toFixed().slice(0, 1);
@@ -59,28 +48,24 @@ export const StarDeltaAverage: React.FC<StarProps> = ({ value }) => {
   if (value === undefined) return <div className="star-delta text-secondary text-small">N/A</div>;
 
   return (
-    <StarDeltaAverageContainer>
-      <StarDeltaContainer>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <span style={{ marginRight: 2 }}>{sign}</span>
         <span>{integerPart}</span>
         <span className="text-small">.{decimalPart}</span>
         <MdStarBorder />
         <span> /day</span>
-      </StarDeltaContainer>
-    </StarDeltaAverageContainer>
+      </div>
+    </div>
   );
 };
 
 export const StarTotal: React.FC<StarTotalProps> = ({ value, size = 14 }) => {
   const digits = value > 1000 && value < 10000 ? '0.0' : '0';
   return (
-    <Span>
+    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
       <span>{numeral(value).format(digits + ' a')}</span>
       <MdStarBorder size={size} />
-    </Span>
+    </span>
   );
 };
-const Span = styled.span`
-  display: inline-flex;
-  align-items: center;
-`;

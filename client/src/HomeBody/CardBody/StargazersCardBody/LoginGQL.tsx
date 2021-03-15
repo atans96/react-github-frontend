@@ -1,6 +1,6 @@
 import React, { CSSProperties, useState } from 'react';
 import LoginLayout from '../../../Layout/LoginLayout';
-import GithubIcon from 'mdi-react/GithubIcon';
+import GitHubIcon from '@material-ui/icons/GitHub';
 import '../../../Login.scss';
 import { createPortal } from 'react-dom';
 import { requestGithubGraphQLLogin, setTokenGQL } from '../../../services';
@@ -20,7 +20,9 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, dispat
   const verifyTokenGQL = () => {
     requestGithubGraphQLLogin(token).then((res) => {
       if (res.success) {
-        setTokenGQL(token).then(() => {});
+        setTokenGQL(token).then((e) => {
+          console.debug(e);
+        });
         dispatch({
           type: 'TOKEN_ADDED',
           payload: {
@@ -90,7 +92,7 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, dispat
             rel="noopener noreferrer"
             href={'https://developer.github.com/v4/guides/forming-calls/#authenticating-with-graphql'}
           >
-            <GithubIcon />
+            <GitHubIcon />
             <span>Click for tutorial</span>
           </a>
           {portalRef && spawnForm(portalRef, loginLayoutRef)}

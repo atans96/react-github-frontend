@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { composeEventHandlers, composeParamsHandler } from '../util';
 import ResizeObserver from 'resize-observer-polyfill';
+
 export function useClickOutside(ref, handler, exception = []) {
   const handleClickOutside = useCallback(
     (event) => {
@@ -101,13 +102,11 @@ export function useResizeHandler(windowScreenRef, callback) {
 export function useCheckStateExists(state, callback = (state) => state.length > 0) {
   const [exist, setExist] = useState(false);
   function isStateExist(state, callback) {
-    const statePromise = new Promise(function checkState(resolve, reject) {
+    return new Promise(function checkState(resolve, reject) {
       if (callback(state)) {
         resolve(state);
       }
     });
-
-    return statePromise;
   }
   useEffect(() => {
     isStateExist(state, callback).then((status) => {

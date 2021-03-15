@@ -1,7 +1,7 @@
 import React from 'react';
 import { isEqualObjects } from '../../../util';
 import { ContributorsProps } from '../../../typing/type';
-import {useHistory} from "react-router";
+import { useHistory } from 'react-router';
 
 interface ContributorProps {
   obj: ContributorsProps;
@@ -10,7 +10,7 @@ interface ContributorProps {
 
 const Contributor = React.memo<ContributorProps>(
   ({ obj, dispatch }) => {
-      const history = useHistory();
+    const history = useHistory();
     const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
       e.preventDefault();
       dispatch({
@@ -19,7 +19,7 @@ const Contributor = React.memo<ContributorProps>(
           username: contributor,
         },
       });
-        history.push('/');
+      history.push('/');
     };
     return (
       <div title={obj.login} className={'contributor'} onClick={(e) => handleContributorsClicked(e)(obj.login)}>
@@ -34,4 +34,5 @@ const Contributor = React.memo<ContributorProps>(
     return isEqualObjects(prevProps.obj, nextProps.obj);
   }
 );
+Contributor.displayName = 'Contributor';
 export default Contributor;

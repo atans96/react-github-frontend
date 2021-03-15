@@ -6,7 +6,7 @@ interface TrendingProps {
   stateStargazers: IStateStargazers;
   dispatch: any;
   dispatchStargazers: any;
-  routerProps: RouteComponentProps<{}, {}, {}>;
+  routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
 }
 
 const Trending = React.memo<TrendingProps>(({ state, dispatch, dispatchStargazers, stateStargazers, routerProps }) => {

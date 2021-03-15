@@ -1,6 +1,5 @@
 import React from 'react';
 import { GoGraph } from 'react-icons/go';
-import { Body, DetailsLayout, Header, Section } from '../../Layout/DetailsLayout';
 import { TrendSummary } from './TrendsCardBody/TrendSummary';
 import MonthlyTrends from './TrendsCardBody/MonthlyTrends';
 import { HeatMapContainer } from './TrendsCardBody/HeatMapContainer';
@@ -19,25 +18,25 @@ export const TrendsCard = React.memo<TrendsCardProps>(({ project }) => {
   const showMonthlyChart = monthlyDeltas && monthlyDeltas.length > 1;
 
   return (
-    <DetailsLayout style={{ marginTop: '2rem' }}>
-      <Header>
+    <div className={'background-readme'} style={{ marginTop: '2rem' }}>
+      <div className={'header'}>
         <GoGraph className="icon" size={20} />
         TRENDS
-      </Header>
-      <Body>
+      </div>
+      <div>
         {showMonthlyChart && (
-          <Section>
+          <div className={'section'}>
             <MonthlyTrends deltas={monthlyDeltas} />
-          </Section>
+          </div>
         )}
         {showHeatMap && (
-          <Section>
+          <div className={'section'}>
             <HeatMapContainer deltas={dailyDeltas} />
-          </Section>
+          </div>
         )}
         <TrendSummary project={project} />
-      </Body>
-    </DetailsLayout>
+      </div>
+    </div>
   );
 });
 TrendsCard.displayName = 'TrendsCard';

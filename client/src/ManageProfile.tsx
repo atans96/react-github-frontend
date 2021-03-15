@@ -87,9 +87,10 @@ interface ManageProfileProps {
 }
 
 const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
-  const { userData, userDataLoading, userDataError } = useApolloFactory().query.getUserData;
-  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactory().query.getUserInfoData;
-  const languagesPreferenceAdded = useApolloFactory().mutation.languagesPreferenceAdded;
+  const displayName: string | undefined = (ManageProfile as React.ComponentType<any>).displayName;
+  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData;
+  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactory(displayName!).query.getUserInfoData;
+  const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
   const [openLanguages, setOpenLanguages] = useState(false);
   const classes = useStyles({ drawerWidth: '250px' });
   const handleOpenLanguages = (e: React.MouseEvent) => {
@@ -111,6 +112,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
     if (!userDataLoading && !userDataError && userData?.getUserData?.languagePreference?.length > 0) {
       setLanguagePreferences(userData.getUserData.languagePreference);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDataLoading, userDataError, userData]);
 
   useDeepCompareEffect(() => {
@@ -119,21 +121,52 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
         variables: {
           languagePreference: languagePreferences,
         },
-      }).then(() => {});
+      }).then((e) => {
+        console.debug(e);
+      });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languagePreferences]);
+
   useEffect(() => {
     if (
       !userInfoDataLoading &&
       !userInfoDataError &&
       userInfoData &&
       userInfoData.getUserInfoData &&
-      userInfoData.getUserInfoData.repoContributions.length === 0 &&
-      !userDataLoading &&
-      !userDataError &&
-      userData?.getUserData &&
-      userData?.getUserData.userName !== ''
+      userInfoData.getUserInfoData.repoContributions.length > 0
     ) {
+      dispatch({
+        type: 'REPO_INFO_ADDED',
+        payload: {
+          repoInfo: userInfoData.getUserInfoData.repoInfo,
+        },
+      });
+      dispatch({
+        type: 'CONTRIBUTORS_ADDED',
+        payload: {
+          contributors: userInfoData.getUserInfoData.repoContributions,
+        },
+      });
+      setIsLoading(false);
+      const languages = Object.entries(Counter(userInfoData.getUserInfoData.languages));
+      const sortedLanguages = languages.sort((a, b) => {
+        return b[1] - a[1];
+      });
+      setLanguageStarsInfo(sortedLanguages);
+    }
+  }, [userInfoData, userInfoDataLoading, userInfoDataError]);
+
+  const consumers = useApolloFactory(displayName!).consumers.consumers;
+  const alreadyFetch = useRef(false);
+  useDeepCompareEffect(() => {
+    if (
+      state.fetchDataPath !== '' &&
+      consumers[displayName!] &&
+      consumers[displayName!].includes(state.fetchDataPath) &&
+      !alreadyFetch.current
+    ) {
+      alreadyFetch.current = true;
       (async () => {
         let isApiExceeded = false;
         const promises: Promise<any>[] = [];
@@ -172,36 +205,40 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
               },
               { languages: [], data: [] }
             );
-            temp.data.forEach((obj: any) => {
-              promises.push(
-                new Promise<any>((resolve, reject) => {
-                  (async (data) => {
-                    let timeout = 0;
-                    let breakout = false;
-                    let i = 0;
-                    while (
-                      // @ts-ignore
-                      (await new Promise((resolve) => setTimeout(() => resolve(i++), timeout * 1000))) < 1000 &&
-                      !breakout
-                    ) {
-                      if (timeout > 0) {
-                        timeout = 0; //clear the timeout
-                      }
-                      await getTopContributors(data.fullName, userData.getUserData.token)
-                        .then((res) => {
-                          if (res.error_403) {
-                            timeout = epochToJsDate(res.rateLimit.reset);
-                          } else {
-                            breakout = true;
-                            resolve(res);
-                          }
-                        })
-                        .catch((err) => reject(err));
-                    }
-                  })(obj);
-                })
-              );
-              return obj;
+            // temp.data.forEach((obj: any) => {
+            //   promises.push(
+            //     new Promise<any>((resolve, reject) => {
+            //       (async () => {
+            //         let timeout = 0;
+            //         let breakout = false;
+            //         let i = 0;
+            //         while (
+            //           // @ts-ignore
+            //           (await new Promise((resolve) => setTimeout(() => resolve(i++), timeout * 1000))) < 1000 &&
+            //           !breakout
+            //         ) {
+            //           if (timeout > 0) {
+            //             timeout = 0; //clear the timeout
+            //           }
+            //           await getTopContributors(obj.fullName, userData.getUserData.token)
+            //             .then((res) => {
+            //               if (res.error_403) {
+            //                 timeout = epochToJsDate(res.rateLimit.reset);
+            //               } else {
+            //                 breakout = true;
+            //                 resolve(res);
+            //               }
+            //             })
+            //             .catch((err) => reject(err));
+            //         }
+            //       })();
+            //     })
+            //   );
+            //   return obj;
+            // });
+            dispatch({
+              type: 'NO_DATA_FETCH',
+              payload: { path: '' },
             });
             dispatch({
               type: 'REPO_INFO_ADDED',
@@ -236,36 +273,12 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
               console.log(err);
             });
         }
-      })().catch((err) => {
+      })().catch((err: any) => {
         console.log(err);
       });
-    } else if (
-      !userInfoDataLoading &&
-      !userInfoDataError &&
-      userInfoData &&
-      userInfoData.getUserInfoData &&
-      userInfoData.getUserInfoData.repoContributions.length > 0
-    ) {
-      dispatch({
-        type: 'REPO_INFO_ADDED',
-        payload: {
-          repoInfo: userInfoData.getUserInfoData.repoInfo,
-        },
-      });
-      dispatch({
-        type: 'CONTRIBUTORS_ADDED',
-        payload: {
-          contributors: userInfoData.getUserInfoData.repoContributions,
-        },
-      });
-      setIsLoading(false);
-      const languages = Object.entries(Counter(userInfoData.getUserInfoData.languages));
-      const sortedLanguages = languages.sort((a, b) => {
-        return b[1] - a[1];
-      });
-      setLanguageStarsInfo(sortedLanguages);
     }
-  }, [userData, userDataLoading, userDataError, userInfoData, userInfoDataLoading, userInfoDataError]);
+  }, [state.fetchDataPath, consumers, alreadyFetch.current]);
+
   const languagePreferencesRef = useRef<any[]>([]);
 
   useEffect(() => {
@@ -289,6 +302,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
         })
       );
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [languagePreferencesRef.current]
   );
 
@@ -303,19 +317,18 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
       setHtmlUrl(html);
       setActive(fullName);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
   const onClickLanguageStarInfo = (e: React.MouseEvent) => (language: string, clicked: boolean) => {
     e.preventDefault();
     if (clicked) {
       setLanguageFilter((prevState) => {
-        const updated = [...prevState, language];
-        return updated;
+        return [...prevState, language];
       });
     } else {
       setLanguageFilter((prevState) => {
-        const updated = fastFilter((obj: any) => obj !== language, prevState);
-        return updated;
+        return fastFilter((obj: any) => obj !== language, prevState);
       });
     }
   };
@@ -366,8 +379,7 @@ const ManageProfile = React.memo<ManageProfileProps>(({ state, dispatch }) => {
         return obj;
       }
     }, filter1);
-    const filter3 = fastFilter((obj: any) => !!obj, filter2);
-    return filter3;
+    return fastFilter((obj: any) => !!obj, filter2);
   };
   useResizeHandler(manageProfileRef, handleResize);
   return (

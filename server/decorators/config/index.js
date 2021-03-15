@@ -14,19 +14,17 @@ class Config {
     return this.env.SERVER_PORT;
   }
   getLambdaStoreRedis() {
-    const result = {
+    return {
       port: this.env.REDIS_LAMBDA_STORE_PORT,
       host: this.env.REDIS_LAMBDA_STORE_ENDPOINT,
       password: this.env.REDIS_LAMBDA_STORE_PASSWORD,
     };
-    return result;
   }
   getRedisLocalPC() {
-    const result = {
+    return {
       port: this.env.REDIS_LOCAL_PORT,
       host: this.env.REDIS_LOCAL_ENDPOINT,
     };
-    return result;
   }
 }
 

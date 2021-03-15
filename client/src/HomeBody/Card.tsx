@@ -45,7 +45,8 @@ const Card: React.FC<CardRef> = React.forwardRef(
   ) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
     // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
-    const clickedAdded = useApolloFactory().mutation.clickedAdded;
+    const displayName: string | undefined = (Card as React.ComponentType<any>).displayName;
+    const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
     const userCardMemoizedData = useCallback(() => {
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,9 +86,12 @@ const Card: React.FC<CardRef> = React.forwardRef(
                 ),
               ],
             },
-          }).then(() => {});
+          }).then((e) => {
+            console.log(e);
+          });
         }
       },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       [state.isLoggedIn, githubData.full_name, githubData.owner.login]
     );
     // TODO: show network data graph visualization
