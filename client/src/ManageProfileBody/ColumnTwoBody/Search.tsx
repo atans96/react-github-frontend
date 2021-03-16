@@ -15,7 +15,7 @@ const Search: React.FC<SearchProps> = ({ handleInputChange, width }) => {
       placeholder={'Search...'}
       onChange={handleInputChange}
       style={{
-        width: `${width > 600 ? '350px' : `${width - 300}px`}`,
+        width: `${width}px`,
         backgroundColor: 'var(--background-theme-color)',
         appearance: 'none',
         borderWidth: '2px',

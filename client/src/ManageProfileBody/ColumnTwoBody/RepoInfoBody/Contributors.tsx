@@ -3,10 +3,10 @@ import { Collapse, ListItem, ListItemIcon, ListItemText, Theme } from '@material
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { isEqualObjects } from '../../util';
-import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
-import { If } from '../../util/react-if/If';
-import { Then } from '../../util/react-if/Then';
+import { isEqualObjects } from '../../../util';
+import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
+import { If } from '../../../util/react-if/If';
+import { Then } from '../../../util/react-if/Then';
 import Contributor from './ContributorsBody/Contributor';
 
 interface ContributorsProps {

@@ -1,20 +1,21 @@
 import React from 'react';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import UpdateIcon from '@material-ui/icons/Update';
-import { ForkIcon } from '../util/icons';
-import { isEqualObjects } from '../util';
+import { ForkIcon } from '../../util/icons';
+import { isEqualObjects } from '../../util';
 import Contributors from './RepoInfoBody/Contributors';
+import { IState } from '../../typing/interface';
 
 interface RepoInfoProps {
   obj: any;
   onClickRepoInfo: any;
-  contributions: any;
   dispatch: any;
   active: string;
+  state: IState;
 }
 
 const RepoInfo = React.memo<RepoInfoProps>(
-  ({ obj, onClickRepoInfo, contributions, dispatch, active }) => {
+  ({ obj, onClickRepoInfo, dispatch, active, state }) => {
     return (
       <div style={{ borderBottom: 'solid' }}>
         <div style={active === obj.fullName ? { borderLeft: '5px solid', backgroundColor: '#f8fafc' } : {}}>
@@ -31,7 +32,7 @@ const RepoInfo = React.memo<RepoInfoProps>(
               <div style={{ marginBottom: '5px' }}>
                 <p>{obj.description}</p>
               </div>
-              <div style={{ marginBottom: '5px' }}>
+              <div style={{ marginBottom: '5px' }} className={'language-github-background-color'}>
                 <ul
                   style={{ width: 'fit-content', padding: '2px 1em', borderRadius: '5px' }}
                   className={`language ${obj?.language?.replace(/\+\+|#|\s/, '-')}`}
@@ -55,7 +56,7 @@ const RepoInfo = React.memo<RepoInfoProps>(
               </div>
             </div>
           </div>
-          <Contributors contributions={contributions} fullName={obj.fullName} dispatch={dispatch} />
+          <Contributors contributions={state.contributors} fullName={obj.fullName} dispatch={dispatch} />
         </div>
       </div>
     );
@@ -64,7 +65,8 @@ const RepoInfo = React.memo<RepoInfoProps>(
     return (
       isEqualObjects(prevProps.obj, nextProps.obj) &&
       isEqualObjects(prevProps.contributions, nextProps.contributions) &&
-      isEqualObjects(prevProps.active, nextProps.active)
+      isEqualObjects(prevProps.active, nextProps.active) &&
+      isEqualObjects(prevProps.state.contributors, nextProps.state.contributors)
     );
   }
 );

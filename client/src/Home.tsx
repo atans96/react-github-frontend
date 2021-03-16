@@ -568,6 +568,7 @@ const Home = React.memo<HomeProps>(
             })
             .catch((err) => {
               console.log(err);
+              throw new Error(`Something wrong at ${displayName}`);
             });
         }
       },
@@ -619,6 +620,7 @@ const Home = React.memo<HomeProps>(
             })
             .catch((err) => {
               console.log(err);
+              throw new Error(`Something wrong at ${displayName}`);
             });
         }
       },

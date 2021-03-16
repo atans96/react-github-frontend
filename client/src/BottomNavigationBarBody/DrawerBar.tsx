@@ -9,8 +9,7 @@ import RSSFeed from './DrawerBarBody/RSSFeed';
 import SubscribeFeed from './DrawerBarBody/SubscribeFeed';
 import SubscribeFeedSetting from './DrawerBarBody/SubscribeFeedSetting';
 import { DraggableCore } from 'react-draggable';
-import $ from 'cash-dom';
-import _ from 'lodash';
+import { useDraggable } from '../hooks/useDraggable';
 
 interface StyleProps {
   drawerWidth: string;
@@ -53,21 +52,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     // necessary for content to be below app bar
     ...theme.mixins.toolbar,
   },
-  dragger: {
-    height: '100vh',
-    cursor: 'ew-resize',
-    width: '10px',
-    bottom: 0,
-    top: 0,
-    position: 'absolute',
-    margin: '0px -5px',
-    borderRadius: '2px',
-    textAlign: 'center',
-    zIndex: 99999,
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-  },
 }));
 
 interface DrawerBarProps {
@@ -78,10 +62,9 @@ interface DrawerBarProps {
 
 const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargazersUser }) => {
   const [open, setOpen] = useState(false);
-  const [drawerWidth, setDrawerWidth] = useState(200);
-  const direction = 'e';
   const drawerRef = useRef<HTMLDivElement>(null);
-  const classes = useStyles({ drawerWidth: open ? `${Math.min(drawerWidth, 600)}px` : '0px' });
+  const { dragHandlers, drawerWidth: drawerwidth } = useDraggable(drawerRef);
+  const classes = useStyles({ drawerWidth: open ? `${Math.min(drawerwidth, 600)}px` : '0px' });
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setOpen(!open);
@@ -103,40 +86,6 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const handleDrag = (e: any, ui: any) => {
-    const factor = direction === 'e' || direction === 's' ? -1 : 1;
-
-    // modify the size based on the drag delta
-    const delta = direction === 'e' || direction === 'w' ? ui.deltaX : ui.deltaY;
-    setDrawerWidth(Math.max(200, drawerWidth - delta * factor));
-  };
-
-  const handleDragEnd = () => {
-    validateSize();
-  };
-  const dragHandlers = {
-    onDrag: handleDrag,
-    onStop: _.debounce(handleDragEnd, 100),
-  };
-  const validateSize = () => {
-    // Or if our size doesn't equal the actual content size, then we
-    // must have pushed past the min size of the content, so resize back
-    //let minSize = isHorizontal ? $(actualContent).outerWidth(true) : $(actualContent).outerHeight(true);
-    if (drawerRef.current) {
-      let minSize =
-        direction === 'e' || direction === 'w' ? drawerRef.current.scrollWidth : drawerRef.current.scrollHeight;
-
-      const margins =
-        direction === 'e' || direction === 'w'
-          ? $(drawerRef.current).outerWidth(true) - $(drawerRef.current).outerWidth()
-          : $(drawerRef.current).outerHeight(true) - $(drawerRef.current).outerHeight();
-      minSize += margins;
-
-      if (drawerWidth !== minSize) {
-        setDrawerWidth(minSize);
-      }
-    }
-  };
   return (
     <React.Fragment>
       <div style={{ bottom: '-5px', left: '-10px', zIndex: 9999, position: 'fixed' }}>
@@ -174,7 +123,7 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
         <SubscribeFeedSetting state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazersUser} />
       </Drawer>
       <DraggableCore key="handle" {...dragHandlers}>
-        <div className={classes.dragger} style={{ left: `${drawerWidth}px` }} />
+        <div className={'dragger'} style={{ left: `${drawerwidth}px` }} />
       </DraggableCore>
     </React.Fragment>
   );

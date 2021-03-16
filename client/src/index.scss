@@ -222,6 +222,21 @@ i.special {
   z-index: 9999;
   background: white;
 }
+.dragger {
+  height: 100vh;
+  cursor: ew-resize;
+  width: 10px;
+  bottom: 0;
+  top: 0;
+  position: absolute;
+  margin: 0px -5px;
+  border-radius: 2px;
+  text-align: center;
+  z-index: 99999;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
 .drag-indicator {
   margin-left: 5px;
   cursor: move;
