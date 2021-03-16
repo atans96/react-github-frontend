@@ -196,7 +196,10 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                           setNotificationBadge(notificationLength); //show badge to the user when not openSubscription
                         }
                       })
-                      .catch(() => {});
+                      .catch((e) => {
+                        console.log(e);
+                        throw new Error(`Something wrong at ${displayName}`);
+                      });
                   } else {
                     const unseenFeedss =
                       fastFilter((x: any) => x.login === obj.login, unseenFeeds.current).reduce((acc, obj) => {
@@ -230,7 +233,10 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                         );
                         uniqqRef.current = fastFilter((x: any) => logins.includes(x.login), uniqqRef.current); //handle for the user unsubscribe
                       })
-                      .catch(() => {});
+                      .catch((e) => {
+                        console.log(e);
+                        throw new Error(`Something wrong at ${displayName}`);
+                      });
                   }
                 } catch {}
               }
@@ -238,6 +244,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
             .catch((e) => {
               //if abort() is executed, bypass .then from promise and go directly to .catch
               console.log(e.message);
+              throw new Error(`Something wrong at ${displayName}`);
             });
         }
         if (temp !== null) {

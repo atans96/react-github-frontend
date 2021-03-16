@@ -1,6 +1,6 @@
 import React from 'react';
-import { isEqualObjects } from '../../../util';
-import { ContributorsProps } from '../../../typing/type';
+import { isEqualObjects } from '../../../../util';
+import { ContributorsProps } from '../../../../typing/type';
 import { useHistory } from 'react-router';
 
 interface ContributorProps {

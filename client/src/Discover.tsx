@@ -122,7 +122,7 @@ const Discover = React.memo<DiscoverProps>(
         );
         temp = fastFilter((obj: any) => !!obj, filter1);
         if (temp.length > 0) {
-          temp = fastFilter((obj: any) => userStarred.getUserInfoStarred.starred.includes(obj.id) === false, temp);
+          temp = fastFilter((obj: any) => userStarred.getUserInfoStarred?.starred.includes(obj.id) === false, temp);
         }
         let inputForImagesData = [];
         if (temp.length > 0) {

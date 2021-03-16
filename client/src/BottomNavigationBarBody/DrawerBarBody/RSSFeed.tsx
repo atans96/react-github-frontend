@@ -191,6 +191,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
           })
           .catch((e) => {
             console.log(e.message);
+            throw new Error(`Something wrong at ${displayName}`);
           });
       });
     };

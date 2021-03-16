@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GoBook } from 'react-icons/go';
-import '../markdown-body.css';
+import '../../markdown-body.css';
 import { CircularProgress } from '@material-ui/core';
-import { If } from '../util/react-if/If';
-import { Then } from '../util/react-if/Then';
-import { markdownParsing } from '../services';
+import { markdownParsing } from '../../services';
+import { If } from '../../util/react-if/If';
+import { Then } from '../../util/react-if/Then';
 
 interface DetailsProps {
   branch: string;

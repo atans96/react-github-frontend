@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { isEqualObjects } from '../util';
+import { isEqualObjects } from '../../../util';
 interface LanguageStarsInfoProps {
   languageStar: any;
   onClickLanguageStarInfo: any;
@@ -15,13 +15,11 @@ const LanguageStarsInfo = React.memo<LanguageStarsInfoProps>(
           onClickLanguageStarInfo(event)(languageStar[0], !clicked);
           setClicked(!clicked);
         }}
-        className={'language-stars-info'}
+        className={'language-stars-info language-github-background-color'}
         style={{ backgroundColor: clicked ? 'grey' : '' }}
       >
         <th style={{ width: '80%' }}>{languageStar[0]}</th>
-        <th className={`badge language-github-background-color language ${languageStar[0]?.replace(/\+\+|#|\s/, '-')}`}>
-          {languageStar[1]}
-        </th>
+        <th className={`badge language ${languageStar[0]?.replace(/\+\+|#|\s/, '-')}`}>{languageStar[1]}</th>
       </tr>
     );
   },

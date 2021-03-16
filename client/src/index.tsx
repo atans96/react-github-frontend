@@ -113,7 +113,10 @@ export const Main = () => {
       }
       if (networkError) {
         console.log('Network Error: ', networkError);
-        // localStorage.removeItem('sess');
+        if ('result' in networkError && networkError.result.message === 'TokenExpiredError') {
+          localStorage.removeItem('sess');
+          logoutAction(history, dispatch, dispatchStargazers); //TODO: show notification telling user that Token is expired
+        }
       }
     }),
     setContext((_, { headers, query, ...context }) => {
