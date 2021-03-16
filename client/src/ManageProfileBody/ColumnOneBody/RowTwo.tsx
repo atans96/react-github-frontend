@@ -161,25 +161,25 @@ const RowTwo = React.memo<RowTwoProps>(
               setLanguageStarsInfo(sortedLanguages);
             }
           });
-          // if (!isApiExceeded) {
-          //   Promise.allSettled(promises)
-          //     .then((result) => {
-          //       const temp = result.map((obj: any) => {
-          //         if (obj.status === 'fulfilled') {
-          //           return obj.value.data;
-          //         }
-          //       });
-          //       dispatch({
-          //         type: 'CONTRIBUTORS_ADDED',
-          //         payload: {
-          //           contributors: [...fastFilter((x: any) => !!x, temp)],
-          //         },
-          //       });
-          //     })
-          //     .catch((err) => {
-          //       console.log(err);
-          //     });
-          // }
+          if (!isApiExceeded) {
+            Promise.allSettled(promises)
+              .then((result) => {
+                const temp = result.map((obj: any) => {
+                  if (obj.status === 'fulfilled') {
+                    return obj.value.data;
+                  }
+                });
+                dispatch({
+                  type: 'CONTRIBUTORS_ADDED',
+                  payload: {
+                    contributors: [...fastFilter((x: any) => !!x, temp)],
+                  },
+                });
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          }
         })().catch((err: any) => {
           console.log(err);
           throw new Error(`Something wrong at ${displayName}`);

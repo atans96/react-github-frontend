@@ -111,12 +111,12 @@ const Global: React.FC<{
         </Then>
       </If>
 
-      <PrefetchKeepMountedLayout
-        mountedCondition={props.routerProps.location.pathname === '/profile'}
-        render={() => {
-          return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;
-        }}
-      />
+      {/*<PrefetchKeepMountedLayout*/}
+      {/*  mountedCondition={props.routerProps.location.pathname === '/profile'}*/}
+      {/*  render={() => {*/}
+      {/*    return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;*/}
+      {/*  }}*/}
+      {/*/>*/}
       <If condition={props.routerProps.location.pathname.includes('/detail')}>
         <Then>
           <Details />
