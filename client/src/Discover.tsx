@@ -1,30 +1,23 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { getRepoImages } from './services';
 import MasonryLayout from './Layout/MasonryLayout';
-import {
-  dispatchAppendMergedDataDiscover,
-  dispatchImagesDataDiscover,
-  dispatchLastPageDiscover,
-  dispatchPageDiscover,
-} from './store/dispatcher';
+import { dispatchLastPageDiscover, dispatchPageDiscover } from './store/dispatcher';
 import { useResizeHandler } from './hooks/hooks';
-import { IDataOne, IState, IStateStargazers } from './typing/interface';
-import { Nullable, SeenProps, MergedDataProps } from './typing/type';
+import { IDataOne, IState, IStateStargazers, StaticState } from './typing/interface';
+import { Action, MergedDataProps, Nullable, SeenProps } from './typing/type';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { fastFilter, isEqualObjects } from './util';
+import { isEqualObjects } from './util';
 import { RouteComponentProps } from 'react-router-dom';
-import { filterActionResolvedPromiseData } from './util/util';
 import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
 import {
-  alreadySeenCardSelector,
   getIdsSelector,
   sortedRepoInfoSelector,
   starRankingFilteredSelector,
+  useSelector,
 } from './selectors/stateSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 
@@ -59,22 +52,10 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   }
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
-interface mergedData {
-  append: string;
-  nonAppend: string;
-  noData: string;
-}
 
-interface ActionProps {
-  mergedData: mergedData;
+interface Output {
+  isFetchFinish: boolean;
 }
-
-const Action = {
-  mergedData: {
-    append: 'append',
-    noData: 'noData',
-  },
-} as ActionProps;
 
 interface DiscoverProps {
   state: IState;
@@ -82,180 +63,88 @@ interface DiscoverProps {
   dispatch: any;
   dispatchStargazers: any;
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
+  actionResolvedPromise: (
+    action: Action,
+    setLoading: any,
+    setNotification: any,
+    isFetchFinish: boolean,
+    displayName: string,
+    data?: Nullable<IDataOne | any>,
+    error?: string
+  ) => Output;
 }
 
 const Discover = React.memo<DiscoverProps>(
-  ({ state, stateStargazers, dispatch, dispatchStargazers, routerProps }) => {
+  ({ state, stateStargazers, dispatch, dispatchStargazers, routerProps, actionResolvedPromise }) => {
     const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
     const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
-    const { suggestedData, suggestedDataLoading, suggestedDataError } = useApolloFactory(
-      displayName!
-    ).query.getSuggestedRepo();
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
-    const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory(
-      displayName!
-    ).query.getStarRanking();
-    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
-    const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
-      displayName!
-    ).query.getUserInfoStarred();
+    const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
+      (state: StaticState) => state.SuggestedRepo
+    );
+    const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
+      (state: StaticState) => state.StarRanking
+    );
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(true);
     const paginationRef = useRef(state.perPage);
-    const multiplier = useRef(state.perPage);
     const sortedDataRef = useRef([]);
     const [notification, setNotification] = useState('');
     const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
     const windowScreenRef = useRef<HTMLDivElement>(null);
-    const actionResolvedPromise = async (action: string, data?: Nullable<IDataOne | any>) => {
-      if (data && action === 'append') {
-        const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.getSeen?.seenCards);
-        let temp: any[];
-        const filter1 = fastFilter(
-          (obj: any) =>
-            filterActionResolvedPromiseData(
-              obj,
-              !alreadySeenCards.includes(obj.id),
-              userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked)
-            ),
-          data
-        );
-        temp = fastFilter((obj: any) => !!obj, filter1);
-        if (temp.length > 0) {
-          temp = fastFilter((obj: any) => userStarred.getUserInfoStarred?.starred.includes(obj.id) === false, temp);
-        }
-        let inputForImagesData = [];
-        if (temp.length > 0) {
-          dispatchAppendMergedDataDiscover(temp, dispatch);
-          setLoading(false);
-          const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          inputForImagesData = data.reduce((acc: any[], object: any) => {
-            acc.push(
-              Object.assign(
-                {},
-                {
-                  id: object.id,
-                  value: {
-                    full_name: object.full_name,
-                    branch: object.default_branch,
-                  },
-                }
-              )
-            );
-            return acc;
-          }, []);
-          getRepoImages(inputForImagesData, 'wa1618i', state.pageDiscover + 1, token).then((repoImage) => {
-            if (repoImage.renderImages.length > 0) {
-              dispatchImagesDataDiscover(repoImage.renderImages, dispatch);
-            } else {
-              dispatchImagesDataDiscover('no data', dispatch);
-            }
-          });
-          // do the prefetching images of 5 pages
-          // let jar = 5;
-          // while (jar < state.pageDiscover && state.pageDiscover > 1) {
-          //   jar += 5;
-          // }
-          // if (
-          //   (state.pageDiscover === 1 && alreadySeenCards.length === 0) ||
-          //   (state.pageDiscover === 1 && alreadySeenCards.length > 0) ||
-          //   Math.abs(state.pageDiscover - jar) <= 2
-          // ) {
-          //   let count = 0;
-          //   while (count < 5) {
-          //     if (state.pageDiscover === 1 && count === 0) {
-          //       inputForImagesData = sortedDataRef.current.slice(0, state.perPage).reduce((acc: any[], object: any) => {
-          //         acc.push(
-          //           Object.assign(
-          //             {},
-          //             {
-          //               id: object.id,
-          //               value: {
-          //                 full_name: object.full_name,
-          //                 branch: object.default_branch,
-          //               },
-          //             }
-          //           )
-          //         );
-          //         return acc;
-          //       }, []);
-          //     } else {
-          //       multiplier.current += state.perPage;
-          //       inputForImagesData = sortedDataRef.current
-          //         .slice(multiplier.current - state.perPage, multiplier.current)
-          //         .reduce((acc: any[], object: any) => {
-          //           acc.push(
-          //             Object.assign(
-          //               {},
-          //               {
-          //                 id: object.id,
-          //                 value: {
-          //                   full_name: object.full_name,
-          //                   branch: object.default_branch,
-          //                 },
-          //               }
-          //             )
-          //           );
-          //           return acc;
-          //         }, []);
-          //     }
-          //     const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          //     getRepoImages(inputForImagesData, 'wa1618i', state.pageDiscover + count, token).then((repoImage) => {
-          //       if (repoImage.renderImages.length > 0) {
-          //         dispatchImagesDataDiscover(repoImage.renderImages, dispatch);
-          //       }
-          //     });
-          //     count += 1;
-          //   }
-          // }
-        } else if (temp.length === 0) {
-          dispatchPageDiscover(dispatch);
-        }
-      }
-      if (action === 'noData') {
-        isFetchFinish.current = true;
-        setLoading(false);
-        setNotification(`Sorry, no more data found`);
-      }
-    };
     const fetchUserMore = () => {
       if (!isFetchFinish.current && state.pageDiscover > 1) {
         setLoading(true); // spawn loading spinner at bottom page
         paginationRef.current += state.perPage;
         if (sortedDataRef.current.slice(paginationRef.current, paginationRef.current + state.perPage).length === 0) {
-          actionResolvedPromise(Action.mergedData.noData).then((e) => {
-            console.debug(e);
-          });
+          isFetchFinish.current = actionResolvedPromise(
+            Action.noData,
+            setLoading,
+            setNotification,
+            isFetchFinish.current,
+            displayName!
+          ).isFetchFinish;
         } else {
           actionResolvedPromise(
-            Action.mergedData.append,
+            Action.append,
+            setLoading,
+            setNotification,
+            isFetchFinish.current,
+            displayName!,
             sortedDataRef.current.slice(paginationRef.current, paginationRef.current + state.perPage)
-          ).then((e) => {
-            console.debug(e);
-          });
+          );
         }
       }
     };
+    const starRankingFiltered: any[] = useSelector(
+      starRankingFilteredSelector(getIdsSelector(suggestedData?.getSuggestedRepo?.repoInfo))(
+        starRankingData?.getStarRanking?.starRanking
+      )
+    );
+    //TODO: make 'daily' to be sortable by the user in the monitor
+    const sortedIds: any[] = useSelector(getIdsSelector(starRankingFiltered));
+    sortedDataRef.current = useSelector(
+      sortedRepoInfoSelector(sortedIds, starRankingFiltered)(suggestedData?.getSuggestedRepo?.repoInfo) as []
+    );
     const fetchUser = () => {
       isFetchFinish.current = false;
       dispatchLastPageDiscover(Math.ceil(suggestedData?.getSuggestedRepo?.repoInfo?.length / state.perPage), dispatch);
-      const starRankingFiltered: any[] = starRankingFilteredSelector(
-        getIdsSelector(suggestedData?.getSuggestedRepo?.repoInfo)
-      )(starRankingData?.getStarRanking?.starRanking);
-      //TODO: make 'daily' to be sortable by the user in the monitor
-      const sortedIds: any[] = getIdsSelector(starRankingFiltered);
-      sortedDataRef.current = sortedRepoInfoSelector(
-        sortedIds,
-        starRankingFiltered
-      )(suggestedData?.getSuggestedRepo?.repoInfo) as [];
       if (sortedDataRef.current.slice(0, state.perPage).length === 0) {
-        actionResolvedPromise(Action.mergedData.noData).then((e) => {
-          console.debug(e);
-        });
+        isFetchFinish.current = actionResolvedPromise(
+          Action.noData,
+          setLoading,
+          setNotification,
+          isFetchFinish.current,
+          displayName!
+        ).isFetchFinish;
       } else {
-        actionResolvedPromise(Action.mergedData.append, sortedDataRef.current.slice(0, state.perPage)).then((e) => {
-          console.debug(e);
-        });
+        actionResolvedPromise(
+          Action.append,
+          setLoading,
+          setNotification,
+          isFetchFinish.current,
+          displayName!,
+          sortedDataRef.current.slice(0, state.perPage)
+        );
       }
     };
 
@@ -353,35 +242,16 @@ const Discover = React.memo<DiscoverProps>(
     useEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
       if (
-        !userDataLoading &&
-        !userDataError &&
-        !!userData?.getUserData &&
-        !seenDataLoading &&
-        !seenDataError &&
         !starRankingDataLoading &&
         !starRankingDataError &&
         !suggestedDataLoading &&
         !!suggestedData?.getSuggestedRepo &&
-        !suggestedDataError &&
-        !errorUserStarred &&
-        !loadingUserStarred
+        !suggestedDataError
       ) {
         fetchUser();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-      userDataLoading,
-      userDataError,
-      userData,
-      seenDataLoading,
-      seenDataError,
-      starRankingDataLoading,
-      starRankingDataError,
-      suggestedDataLoading,
-      suggestedDataError,
-      errorUserStarred,
-      loadingUserStarred,
-    ]);
+    }, [starRankingDataLoading, starRankingDataError, suggestedDataLoading, suggestedDataError]);
 
     useEffect(() => {
       if (state.pageDiscover > 1 && notification === '') {
@@ -410,15 +280,19 @@ const Discover = React.memo<DiscoverProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.pageDiscover, state.lastPageDiscover, state.tokenRSS, state.isLoggedIn]);
 
-    const dataMongoMemoize = useCallback(() => {
-      return userStarred;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userStarred?.getUserInfoStarred?.starred]);
-
     const stateStargazersMemoize = useCallback(() => {
       return stateStargazers;
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stateStargazers]);
+
+    useEffect(() => {
+      if (state.isLoadingDiscover) {
+        setLoading(state.isLoadingDiscover);
+      }
+      if (state.notificationDiscover.length > 0) {
+        setNotification(state.notificationDiscover);
+      }
+    }, [state.isLoadingDiscover, state.notificationDiscover]);
 
     return (
       <React.Fragment>
@@ -441,7 +315,6 @@ const Discover = React.memo<DiscoverProps>(
                       key={idx}
                       columnCount={columnCount}
                       routerProps={routerProps}
-                      dataMongoMemoize={dataMongoMemoize()}
                       index={state.mergedDataDiscover[idx].id}
                       githubData={state.mergedDataDiscover[idx]}
                       state={stateMemoize()}

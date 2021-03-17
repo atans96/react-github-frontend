@@ -326,7 +326,7 @@ const SearchBar = React.memo<SearchBarProps>(
       return result;
     };
     return (
-      <SearchBarLayout style={{ width: `${state.width} px` }} onSubmit={handleSubmit}>
+      <SearchBarLayout style={{ width: `${state.width}px` }} onSubmit={handleSubmit}>
         {(portal) => (
           <React.Fragment>
             {renderSlider && spawnSlider(portal)}

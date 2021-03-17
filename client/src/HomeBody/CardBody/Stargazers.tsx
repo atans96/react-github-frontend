@@ -13,22 +13,12 @@ interface StargazersProps {
   stateStargazers: IStateStargazers;
   dispatch: any;
   dispatchStargazersUser: any;
-  dataMongoMemoize: any;
   githubDataId: number;
   githubDataFullName: string;
 }
 
 const Stargazers = React.memo<StargazersProps>(
-  ({
-    githubDataFullName,
-    githubDataId,
-    dataMongoMemoize,
-    dispatch,
-    dispatchStargazersUser,
-    state,
-    data,
-    stateStargazers,
-  }) => {
+  ({ githubDataFullName, githubDataId, dispatch, dispatchStargazersUser, state, data, stateStargazers }) => {
     const stargazerCountMemoized = useCallback(() => {
       return data.stargazers_count;
     }, [data.stargazers_count]);
@@ -80,7 +70,6 @@ const Stargazers = React.memo<StargazersProps>(
         state={state}
         githubDataFullName={githubDataFullName}
         githubDataId={githubDataId}
-        dataMongoMemoize={dataMongoMemoize}
         dispatch={dispatch}
         getRootProps={getRootProps}
         dispatchStargazers={dispatchStargazersUser}

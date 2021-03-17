@@ -1,7 +1,44 @@
 import { createSelector } from 'reselect';
 import { fastFilter } from '../util';
-//only use when you have a static database (not change everytime the user takes action)
+import { createContainer } from 'unstated-next';
+import { useQuery } from '@apollo/client';
+import { GET_STAR_RANKING, GET_SUGGESTED_REPO } from '../queries';
+import { StaticState } from '../typing/interface';
+//only use when you have a static database (doesn't depend on mutation action by the user)
 
+const useStarRanking = () => {
+  const { data: starRankingData, loading: starRankingDataLoading, error: starRankingDataError } = useQuery(
+    GET_STAR_RANKING,
+    {
+      context: { clientName: 'mongo' },
+    }
+  );
+  return { starRankingData, starRankingDataLoading, starRankingDataError };
+};
+const StarRankingContainer = createContainer(useStarRanking);
+const useSuggestedRepo = () => {
+  const { data: suggestedData, loading: suggestedDataLoading, error: suggestedDataError } = useQuery(
+    GET_SUGGESTED_REPO,
+    {
+      context: { clientName: 'mongo' },
+    }
+  );
+  return { suggestedData, suggestedDataError, suggestedDataLoading };
+};
+const SuggestedRepoContainer = createContainer(useSuggestedRepo);
+function useApolloData(): StaticState {
+  return Object.assign(
+    {},
+    {
+      StarRanking: StarRankingContainer.useContainer(),
+      SuggestedRepo: SuggestedRepoContainer.useContainer(),
+    }
+  );
+}
+export function useSelector(selector: any) {
+  return selector(useApolloData());
+}
+//don't import createSelector to React component as it will re-create selector (not memoize) when the component gets rerender
 export const alreadySeenCardSelector = createSelector<any, any, []>(
   [(seenCards: any) => seenCards],
   (seenCard: any) => {

@@ -1,14 +1,11 @@
 import React, { useRef } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
-import { IState } from '../typing/interface';
 import { PureInputDiscover } from './PureInputDiscover';
 import { getElasticSearchBert } from '../services';
+import { SearchBarProps } from '../SearchBarDiscover';
+import { Action } from '../typing/type';
 
-interface SearchBarDiscoverProps {
-  state: IState;
-}
-
-const SearchBarDiscover = React.memo<SearchBarDiscoverProps>(({ state }) => {
+const SearchBarDiscover = React.memo<SearchBarProps>(({ state, dispatch, actionResolvedPromise }) => {
   const size = {
     width: '500px',
     minWidth: '100px',
@@ -25,19 +22,47 @@ const SearchBarDiscover = React.memo<SearchBarDiscoverProps>(({ state }) => {
       minWidth: size.minWidth,
     };
   }
+  const displayName: string | undefined = (SearchBarDiscover as React.ComponentType<any>).displayName;
   const handleSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     event.stopPropagation();
+    dispatch({
+      type: 'MERGED_DATA_ADDED_DISCOVER',
+      payload: {
+        data: [],
+        notificationDiscover: '',
+        isLoadingDiscover: true,
+      },
+    });
     getElasticSearchBert(query?.current?.getState()).then((res) => {
-      console.log(res);
-      //TODO: display the filtered cards
       //TODO: when waiting
-      // query?.current?.clearState();
+      //TODO: after search, disable handleBottomHit functionality so that it won't fetchMore
+      dispatch({
+        type: 'MERGED_DATA_ADDED_DISCOVER',
+        payload: {
+          data: res,
+          notificationDiscover: res.length === 0 ? `No data found for query ${query.current.getState()}` : '',
+          isLoadingDiscover: false,
+        },
+      });
+      query.current.clearState();
+      actionResolvedPromise(
+        res.length > 0 ? Action.nonAppend : Action.noData,
+        (e: any) => {
+          console.debug('');
+        },
+        (e: any) => {
+          console.debug('');
+        },
+        false,
+        displayName!,
+        res
+      );
     });
   };
 
   return (
-    <SearchBarLayout style={{ width: `${state.width} px` }} onSubmit={handleSubmit}>
+    <SearchBarLayout style={{ width: `${state.width}px` }} onSubmit={handleSubmit}>
       {() => (
         <React.Fragment>
           <PureInputDiscover style={style} ref={query} />

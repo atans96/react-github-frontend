@@ -4,7 +4,6 @@ import { getOrg, getRepoImages, getSearchTopics, getUser } from './services';
 import MasonryLayout from './Layout/MasonryLayout';
 import _ from 'lodash';
 import {
-  dispatchAppendMergedData,
   dispatchImagesData,
   dispatchLastPage,
   dispatchMergedData,
@@ -14,7 +13,7 @@ import {
 } from './store/dispatcher';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
 import { IDataOne, IState, IStateStargazers } from './typing/interface';
-import { MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { Action, MergedDataProps, Nullable, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
@@ -25,8 +24,6 @@ import { fastFilter, isEqualObjects } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
-import { alreadySeenCardSelector } from './selectors/stateSelector';
-import { filterActionResolvedPromiseData } from './util/util';
 import { useApolloFactory } from './hooks/useApolloFactory';
 
 // only re-render Card component when mergedData and idx changes
@@ -70,37 +67,32 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   }
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
-interface mergedData {
-  append: string;
-  nonAppend: string;
-  noData: string;
-}
 
-interface ActionProps {
-  mergedData: mergedData;
+interface Output {
+  isFetchFinish: boolean;
 }
-
-const Action = {
-  mergedData: {
-    append: 'append',
-    noData: 'noData',
-  },
-} as ActionProps;
 
 interface HomeProps {
   state: IState;
   stateStargazers: IStateStargazers;
   dispatch: any;
   dispatchStargazers: any;
+  actionResolvedPromise: (
+    action: Action,
+    setLoading: any,
+    setNotification: any,
+    isFetchFinish: boolean,
+    displayName: string,
+    data?: Nullable<IDataOne | any>,
+    error?: string
+  ) => Output;
 }
 
 const Home = React.memo<HomeProps>(
-  ({ state, dispatch, dispatchStargazers, stateStargazers }) => {
+  ({ state, dispatch, dispatchStargazers, stateStargazers, actionResolvedPromise }) => {
     const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
     const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
-
     const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
-    const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
     const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
     // useState is used when the HTML depends on it directly to render something
     const [shouldRenderSkeleton, setRenderSkeleton] = useState(false);
@@ -128,62 +120,39 @@ const Home = React.memo<HomeProps>(
       data.dataOne.map((obj: MergedDataProps) => {
         return newID.push(obj.id);
       });
-      return [oldID, newID];
-    };
-    const actionResolvedPromise = (action: string, data?: IDataOne, error?: string) => {
-      if (data && action === 'append') {
-        if (state.filterBySeen) {
-          const alreadySeenCards: any[] = alreadySeenCardSelector(seenData?.getSeen?.seenCards);
-          const filter1 = fastFilter(
-            (obj: any) =>
-              filterActionResolvedPromiseData(
-                obj,
-                !alreadySeenCards.includes(obj.id),
-                userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked)
-              ),
-            data.dataOne
-          );
-          const temp = fastFilter((obj: any) => !!obj, filter1).map((obj) => {
-            obj['isQueue'] = false;
-            return obj;
-          });
 
-          const tempImages = fastFilter((obj: any) => !alreadySeenCards.includes(obj.id), data.renderImages);
-          if (tempImages.length === 0) {
-            dispatchImagesData('no data', dispatch);
-          } else {
-            dispatchImagesData(tempImages, dispatch);
-          }
-          dispatchAppendMergedData(temp, dispatch);
-          if (temp.length === 0) {
-            dispatchPage(dispatch);
-          }
-        } else {
-          if (data.renderImages.length === 0) {
-            dispatchImagesData('no data', dispatch);
-          } else {
-            dispatchImagesData(data.renderImages, dispatch);
-          }
-          data.dataOne.map((obj) => {
-            obj['isQueue'] = false;
-            return obj;
-          });
-          dispatchAppendMergedData(data.dataOne, dispatch);
-        }
-      }
-      if (action === 'noData') {
-        isFetchFinish.current = true;
-        setLoading(false);
-        setNotification(`Sorry, no more data found`);
-      }
-      if (data && data.error_404) {
-        setNotification(`Sorry, no data found`);
-      } else if (data && data.error_403) {
-        setNotification('Sorry, API rate limit exceeded.');
-      } else if (error) {
-        setNotification(error);
+      return newID.length > 0 && _isMounted.current && !(_.uniq([...oldID, ...newID]).length === oldID.length);
+    };
+    const isFunction = (value: () => void) =>
+      value && (Object.prototype.toString.call(value) === '[object Function]' || 'function' === typeof value || true)
+        ? value()
+        : new Error('Not valid function!');
+
+    const actionController = (res: IDataOne, callback?: Promise<any> | any) => {
+      // compare new with old data, if they differ, that means it still has data to fetch
+      const promiseOrNot = typeof callback.then === 'function' ? callback.then() : isFunction(callback);
+      if (isDataExists(res)) {
+        callback
+          ? promiseOrNot()
+          : actionResolvedPromise(Action.append, setLoading, setNotification, isFetchFinish.current, displayName!, res);
+      } else if (res !== undefined && (res.error_404 || res.error_403)) {
+        callback
+          ? promiseOrNot()
+          : actionResolvedPromise(Action.error, setLoading, setNotification, isFetchFinish.current, displayName!, res);
+      } else {
+        callback
+          ? promiseOrNot()
+          : (isFetchFinish.current = actionResolvedPromise(
+              Action.noData,
+              setLoading,
+              setNotification,
+              isFetchFinish.current,
+              displayName!,
+              res
+            ).isFetchFinish);
       }
     };
+
     const fetchUserMore = () => {
       // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
       // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
@@ -198,21 +167,10 @@ const Home = React.memo<HomeProps>(
         if (clickedGQLTopic.queryTopic !== undefined) {
           getSearchTopics(clickedGQLTopic.queryTopic, userDataRef.current!)
             .then((res: IDataOne) => {
-              const [oldID, newID] = isDataExists(res);
-              // compare new with old data, if they differ, that means it still has data to fetch
-              if (newID.length > 0 && _isMounted.current && !(_.uniq([...oldID, ...newID]).length === oldID.length)) {
-                setLoading(false);
-                actionResolvedPromise(Action.mergedData.append, res);
-              } else if (res !== undefined && (res.error_404 || res.error_403)) {
-                setLoading(false);
-                actionResolvedPromise('', res);
-              } else {
-                actionResolvedPromise(Action.mergedData.noData, res);
-              }
+              actionController(res);
             })
             .catch((error) => {
-              setLoading(false);
-              actionResolvedPromise('', undefined, error);
+              actionResolvedPromise(Action.error, setLoading, setNotification, isFetchFinish.current, error);
             });
         } else {
           let userNameTransformed: string[];
@@ -231,51 +189,36 @@ const Home = React.memo<HomeProps>(
                 userData && userData.getUserData ? userData.getUserData.token : ''
               )
                 .then((data) => {
-                  const [oldID, newID] = isDataExists(data);
-                  // compare new with old data, if they differ, that means it still has data to fetch
-                  if (
-                    newID.length > 0 &&
-                    _isMounted.current &&
-                    !(_.uniq([...oldID, ...newID]).length === oldID.length)
-                  ) {
-                    setLoading(false);
-                    actionResolvedPromise(Action.mergedData.append, data);
-                  } else if (data !== undefined && (data.error_403 || data.error_404)) {
-                    getOrg(
-                      name,
-                      state.perPage,
-                      state.page,
-                      userData && userData.getUserData ? userData.getUserData.token : ''
-                    )
-                      .then((data: IDataOne) => {
-                        const [oldID, newID] = isDataExists(data);
-                        // compare new with old data, if they differ, that means it still has data to fetch
-                        if (
-                          newID.length > 0 &&
-                          _isMounted.current &&
-                          !(_.uniq([...oldID, ...newID]).length === oldID.length)
-                        ) {
-                          setLoading(false);
-                          actionResolvedPromise(Action.mergedData.append, data);
-                        } else if (data !== undefined && (data.error_404 || data.error_403)) {
-                          setLoading(false);
-                          actionResolvedPromise('', data);
-                        } else {
-                          actionResolvedPromise(Action.mergedData.noData, data);
-                        }
-                      })
-                      .catch(() => {
-                        setLoading(false);
-                        actionResolvedPromise('', data);
-                      });
-                  } else {
-                    setLoading(false);
-                    actionResolvedPromise(Action.mergedData.noData, data);
-                  }
+                  const callback = getOrg(
+                    name,
+                    state.perPage,
+                    1,
+                    userData && userData.getUserData ? userData.getUserData.token : ''
+                  )
+                    .then((data: IDataOne) => {
+                      actionController(data);
+                    })
+                    .catch((err) => {
+                      actionResolvedPromise(
+                        Action.error,
+                        setLoading,
+                        setNotification,
+                        isFetchFinish.current,
+                        displayName!,
+                        err
+                      );
+                    });
+                  actionController(data, callback);
                 })
                 .catch((error) => {
-                  setLoading(false);
-                  actionResolvedPromise('', undefined, error);
+                  actionResolvedPromise(
+                    Action.error,
+                    setLoading,
+                    setNotification,
+                    isFetchFinish.current,
+                    displayName!,
+                    error
+                  );
                 })
             );
           });
@@ -301,50 +244,47 @@ const Home = React.memo<HomeProps>(
         promises.push(
           getUser(name, state.perPage, 1, userData ? userData.getUserData.token : '')
             .then((data: IDataOne) => {
-              if (_isMounted && data?.dataOne?.length > 0) {
-                setLoading(false);
-                paginationInfo += data.paginationInfoData;
-                dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
-                actionResolvedPromise(Action.mergedData.append, data);
-                setTimeout(() => {
-                  // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-                  // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-                  // changing state to false
-                  setRenderSkeleton(false);
-                }, 1000);
-                setRenderSkeleton(true);
-              } else if (data?.error_403) {
-                setNotification('Sorry, API rate limit exceeded.');
-                setLoading(false);
-              } else if (data?.dataOne?.length === 0 || data?.error_404) {
-                getOrg(name, state.perPage, 1, data && userData ? userData.getUserData.token : '')
-                  .then((data: IDataOne) => {
-                    if (_isMounted && data.dataOne?.length > 0) {
-                      setLoading(false);
-                      paginationInfo += data.paginationInfoData;
-                      dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
-                      actionResolvedPromise(Action.mergedData.append, data);
-                      setTimeout(() => {
-                        // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-                        // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-                        // changing state to false
-                        setRenderSkeleton(false);
-                      }, 1000);
-                      setRenderSkeleton(true);
-                    } else if (data.dataOne?.length === 0 || data.error_403 || data.error_404) {
-                      setLoading(false);
-                      actionResolvedPromise('', data);
-                    }
-                  })
-                  .catch(() => {
-                    setLoading(false);
-                    actionResolvedPromise('', data);
-                  });
-              }
+              const callback = getOrg(
+                name,
+                state.perPage,
+                1,
+                userData && userData.getUserData ? userData.getUserData.token : ''
+              )
+                .then((data: IDataOne) => {
+                  paginationInfo += data.paginationInfoData;
+                  dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+                  setTimeout(() => {
+                    // setTimeout is not sync function so it will execute setRenderSkeleton(true);
+                    // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
+                    // changing state to false
+                    setRenderSkeleton(false);
+                  }, 1000);
+                  setRenderSkeleton(true);
+                  actionController(data);
+                })
+                .catch((err) => {
+                  actionResolvedPromise(
+                    Action.error,
+                    setLoading,
+                    setNotification,
+                    isFetchFinish.current,
+                    displayName!,
+                    err
+                  );
+                });
+              paginationInfo += data.paginationInfoData;
+              dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+              actionController(data, callback);
             })
             .catch((err) => {
-              setLoading(false);
-              actionResolvedPromise('', undefined, err);
+              actionResolvedPromise(
+                Action.error,
+                setLoading,
+                setNotification,
+                isFetchFinish.current,
+                displayName!,
+                err
+              );
             })
         );
       });
@@ -567,8 +507,14 @@ const Home = React.memo<HomeProps>(
               }
             })
             .catch((err) => {
-              console.log(err);
-              throw new Error(`Something wrong at ${displayName}`);
+              actionResolvedPromise(
+                Action.error,
+                setLoading,
+                setNotification,
+                isFetchFinish.current,
+                displayName!,
+                err
+              );
             });
         }
       },
@@ -597,30 +543,24 @@ const Home = React.memo<HomeProps>(
           });
           let paginationInfo = 0;
           return await getSearchTopics(variables.queryTopic, userDataRef.current!)
-            .then((result) => {
-              if (_isMounted && result?.dataOne?.length > 0) {
-                setLoading(false);
-                paginationInfo += result.paginationInfoData;
-                dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
-                actionResolvedPromise(Action.mergedData.append, result);
-                setTimeout(() => {
-                  // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-                  // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-                  // changing state to false
-                  setRenderSkeleton(false);
-                }, 1000);
-                setRenderSkeleton(true);
-              } else if (result?.error_403) {
-                setNotification('Sorry, API rate limit exceeded.');
-                setLoading(false);
-              } else if (result?.dataOne?.length === 0 || result?.error_404) {
-                setLoading(false);
-                actionResolvedPromise('', result);
-              }
+            .then((result: IDataOne) => {
+              paginationInfo += result.paginationInfoData;
+              dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+              actionController(result);
+              setTimeout(() => {
+                setRenderSkeleton(false);
+              }, 1000);
+              setRenderSkeleton(true);
             })
             .catch((err) => {
-              console.log(err);
-              throw new Error(`Something wrong at ${displayName}`);
+              actionResolvedPromise(
+                Action.error,
+                setLoading,
+                setNotification,
+                isFetchFinish.current,
+                displayName!,
+                err
+              );
             });
         }
       },
@@ -653,11 +593,6 @@ const Home = React.memo<HomeProps>(
       return state;
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.page, state.lastPage, state.tokenRSS, state.isLoggedIn]);
-
-    const dataMongoMemoize = useCallback(() => {
-      return userStarred;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userStarred?.getUserInfoStarred?.starred]);
 
     const whichToUse = useCallback(() => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
@@ -725,7 +660,6 @@ const Home = React.memo<HomeProps>(
                       key={idx}
                       columnCount={columnCount}
                       stateStargazersMemoize={stateStargazersMemoize()}
-                      dataMongoMemoize={dataMongoMemoize()}
                       getRootProps={getRootProps}
                       index={whichToUse()[idx].id}
                       githubData={whichToUse()[idx]}

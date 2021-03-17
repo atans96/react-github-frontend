@@ -10,6 +10,8 @@ import {
   RepoInfoProps,
   SeenProps,
   StargazerProps,
+  StarRankingData,
+  SuggestedData,
   TopicsProps,
 } from './type';
 
@@ -33,6 +35,8 @@ export interface IStateStargazers {
   stargazersUsersStarredRepositories: number;
 }
 export interface IState {
+  isLoadingDiscover: boolean;
+  notificationDiscover: string;
   fetchDataPath: string;
   repoInfo: RepoInfoProps[];
   contributors: ContributorsProps[];
@@ -67,6 +71,10 @@ export interface IState {
   tokenRSS: string;
   lastPage: number;
   lastPageDiscover: number;
+}
+export interface StaticState {
+  StarRanking: StarRankingData;
+  SuggestedRepo: SuggestedData;
 }
 export interface IContext {
   state: IState;

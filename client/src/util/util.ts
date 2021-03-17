@@ -9,11 +9,11 @@ type AnyFunction = (...args: any[]) => unknown;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
-export const filterActionResolvedPromiseData = (input: any, filter1: any, filter2: any) => {
+export const filterActionResolvedPromiseData = (input: any, filter1: any, ...args: any) => {
   if (!!input.language && filter1) {
     //sometimes the language can be null but we've already seen it
     return input;
-  } else if (filter1 && filter2) {
+  } else if (filter1 && args) {
     return input;
   }
 };

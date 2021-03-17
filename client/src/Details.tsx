@@ -10,6 +10,8 @@ import { TrendsCard } from './HomeBody/DetailsBody/TrendsCard';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { useHistory } from 'react-router';
+import { useSelector } from './selectors/stateSelector';
+import { StaticState } from './typing/interface';
 
 interface StateProps {
   data: {
@@ -29,10 +31,9 @@ const Details: React.FC = () => {
   const [readme, setReadme] = useState('');
   const [data, setData] = useState(undefined);
   const location = useLocation<StateProps>();
-  const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
-  const { starRankingData, starRankingDataLoading, starRankingDataError } = useApolloFactory(
-    displayName!
-  ).query.getStarRanking();
+  const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
+    (state: StaticState) => state.StarRanking
+  );
   useEffect(() => {
     if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
       const temp = starRankingData.getStarRanking.starRanking.find((obj: any) => obj.id === location.state.data.id);

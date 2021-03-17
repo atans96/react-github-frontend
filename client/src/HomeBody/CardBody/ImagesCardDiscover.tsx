@@ -50,7 +50,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     useEffect(() => {
       let isCancelled = false;
       if (!isCancelled && Array.isArray(state.imagesDataDiscover) && state.imagesDataDiscover.length > 0) {
-        const temp = state.imagesDataDiscover.find((obj) => obj.id === index)?.value || [];
+        const temp = state.imagesDataDiscover.find((obj) => obj.id === index)?.value || []; //TODO: memoize .find function using useMemo()
         setRenderImages(temp);
       }
       return () => {

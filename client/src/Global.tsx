@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import Login from './Login';
 import ManageProfile from './ManageProfile';
@@ -7,14 +7,27 @@ import KeepMountedLayout from './Layout/KeepMountedLayout';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import Details from './Details';
-import { IState, IStateStargazers } from './typing/interface';
+import { IDataOne, IState, IStateStargazers } from './typing/interface';
 import SearchBar from './SearchBar';
-import { getTokenGQL } from './services';
+import { getRepoImages, getTokenGQL } from './services';
 import Discover from './Discover';
 import Trending from './Trending';
 import PrefetchKeepMountedLayout from './Layout/PrefetchKeepMountedLayout';
 import SearchBarDiscover from './SearchBarDiscover';
 import useUserVerification from './hooks/useUserVerification';
+import { alreadySeenCardSelector, useSelector } from './selectors/stateSelector';
+import { fastFilter, Loading } from './util';
+import { filterActionResolvedPromiseData } from './util/util';
+import {
+  dispatchAppendMergedData,
+  dispatchAppendMergedDataDiscover,
+  dispatchImagesData,
+  dispatchImagesDataDiscover,
+  dispatchPage,
+  dispatchPageDiscover,
+} from './store/dispatcher';
+import { useApolloFactory } from './hooks/useApolloFactory';
+import { Action, MergedDataProps, Nullable } from './typing/type';
 
 interface GlobalProps {
   state: IState;
@@ -23,6 +36,7 @@ interface GlobalProps {
   dispatchStargazers: any;
 }
 //TODO: create code snippet like: https://snipit.io/ or https://github.com/hackjutsu/Lepton
+//TODO: refactor dispatcher.ts
 const Global: React.FC<{
   routerProps: RouteComponentProps<any, any, any>;
   componentProps: GlobalProps;
@@ -51,75 +65,247 @@ const Global: React.FC<{
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verifiedLoading, username, props.componentProps.state.isLoggedIn, props.componentProps.state.tokenGQL]);
+  const displayName: string | undefined = (Global as React.ComponentType<any>).displayName;
+  const { userData, userDataLoading } = useApolloFactory(displayName!).query.getUserData();
+  const { userStarred, loadingUserStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
+  const { seenData, seenDataLoading } = useApolloFactory(displayName!).query.getSeen();
+  const seenCardsSelector = React.useMemo(() => {
+    //Every time Global re-renders and nothing is memoized because each render re creates the selector.
+    // To solve this we can use React.useMemo. Here is the correct way to use createSelectItemById.
+    return alreadySeenCardSelector(seenData?.getSeen?.seenCards);
+  }, [seenData?.getSeen?.seenCards]);
+
+  const alreadySeenCards = useSelector(seenCardsSelector);
+
+  const actionAppend = (data: IDataOne | any, displayName: string) => {
+    if (props.componentProps.state.filterBySeen) {
+      switch (displayName) {
+        case displayName!.match(/^discover/gi)![0] !== null && displayName!.match(/^discover/gi)![0].length > 0
+          ? displayName
+          : undefined: {
+          let filter1 = fastFilter(
+            (obj: MergedDataProps) =>
+              filterActionResolvedPromiseData(
+                obj,
+                !alreadySeenCards.includes(obj.id),
+                userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked),
+                userStarred?.getUserInfoStarred?.starred.includes(obj.id) === false
+              ),
+            data
+          );
+          //Matched a string that starts with 'discover'
+          filter1 = fastFilter((obj: MergedDataProps) => !!obj, filter1).map((obj: MergedDataProps) => {
+            obj['isQueue'] = false;
+            return obj;
+          });
+
+          let inputForImagesData = [];
+          if (filter1.length > 0) {
+            dispatchAppendMergedDataDiscover(filter1, props.componentProps.dispatch);
+            const token = userData && userData.getUserData ? userData.getUserData.token : '';
+            inputForImagesData = filter1.reduce((acc: any[], object: MergedDataProps) => {
+              acc.push(
+                Object.assign(
+                  {},
+                  {
+                    id: object.id,
+                    value: {
+                      full_name: object.full_name,
+                      branch: object.default_branch,
+                    },
+                  }
+                )
+              );
+              return acc;
+            }, []);
+            getRepoImages(inputForImagesData, 'wa1618i', props.componentProps.state.pageDiscover + 1, token).then(
+              (repoImage) => {
+                if (repoImage.renderImages.length > 0) {
+                  dispatchImagesDataDiscover(repoImage.renderImages, props.componentProps.dispatch);
+                } else {
+                  dispatchImagesDataDiscover('no data', props.componentProps.dispatch);
+                }
+              }
+            );
+          } else if (filter1.length === 0) {
+            dispatchPageDiscover(props.componentProps.dispatch);
+          }
+          break;
+        }
+        case 'Home': {
+          const filter1 = fastFilter(
+            (obj: any) =>
+              filterActionResolvedPromiseData(
+                obj,
+                !alreadySeenCards.includes(obj.id),
+                userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked)
+              ),
+            data.dataOne
+          );
+          const tempImages = fastFilter(
+            (obj: MergedDataProps) => !alreadySeenCards.includes(obj.id),
+            data.renderImages
+          );
+          if (tempImages.length === 0) {
+            dispatchImagesData('no data', props.componentProps.dispatch);
+          } else {
+            dispatchImagesData(tempImages, props.componentProps.dispatch);
+          }
+          dispatchAppendMergedData(filter1, props.componentProps.dispatch);
+          if (filter1.length === 0) {
+            dispatchPage(props.componentProps.dispatch);
+          } else {
+            if (data.renderImages.length === 0) {
+              dispatchImagesData('no data', props.componentProps.dispatch);
+            } else {
+              dispatchImagesData(data.renderImages, props.componentProps.dispatch);
+            }
+            const temp = data.dataOne || data;
+            temp.map((obj: MergedDataProps) => {
+              obj['isQueue'] = false;
+              return obj;
+            });
+            dispatchAppendMergedData(temp, props.componentProps.dispatch);
+          }
+          break;
+        }
+        default: {
+          console.log(displayName.match(/^discover/gi) || {});
+          throw new Error('No valid component found!');
+        }
+      }
+    }
+  };
+  const actionNonAppend = (data: IDataOne | any, displayName: string) => {
+    switch (displayName) {
+      case (displayName.match(/^discover/gi) || {}).input: {
+      }
+    }
+  };
+  const actionResolvedPromise = useCallback(
+    (
+      action: Action,
+      setLoading: any,
+      setNotification: any,
+      isFetchFinish: boolean,
+      displayName: string,
+      data?: Nullable<IDataOne | any>,
+      error?: string
+    ) => {
+      setLoading(false);
+      if (data && action === 'nonAppend') {
+        actionNonAppend(data, displayName);
+      }
+      if (data && action === 'append') {
+        actionAppend(data, displayName);
+      }
+      if (action === 'noData') {
+        isFetchFinish = true;
+        setNotification(`Sorry, no more data found for ${props.componentProps.state.username}`);
+      }
+      if (action === 'error' && error) {
+        setNotification(error);
+        throw new Error(`Something wrong at ${displayName} ${error}`);
+      }
+      if (data && data.error_404) {
+        setNotification(`Sorry, no data found for ${props.componentProps.state.username}`);
+      } else if (data && data.error_403) {
+        setNotification('Sorry, API rate limit exceeded.'); //TODO: display show RateLimit.tsx
+      }
+      return { isFetchFinish };
+    },
+    [alreadySeenCards]
+  );
+
   return (
     <React.Fragment>
-      <KeepMountedLayout
-        mountedCondition={props.routerProps.location.pathname === '/'}
-        render={() => {
-          return (
-            <React.Fragment>
-              <SearchBar
-                state={props.componentProps.state}
-                stateStargazers={props.componentProps.stateStargazers}
-                dispatch={props.componentProps.dispatch}
-                dispatchStargazers={props.componentProps.dispatchStargazers}
-              />
-              <Home
-                stateStargazers={props.componentProps.stateStargazers}
-                dispatchStargazers={props.componentProps.dispatchStargazers}
-                dispatch={props.componentProps.dispatch}
-                state={props.componentProps.state}
-              />
-            </React.Fragment>
-          );
-        }}
-      />
-      <PrefetchKeepMountedLayout
-        mountedCondition={props.routerProps.location.pathname === '/discover'}
-        render={() => {
-          return (
-            <React.Fragment>
-              <SearchBarDiscover state={props.componentProps.state} />
-              <Discover
-                stateStargazers={props.componentProps.stateStargazers}
-                dispatchStargazers={props.componentProps.dispatchStargazers}
-                dispatch={props.componentProps.dispatch}
-                state={props.componentProps.state}
-                routerProps={props.routerProps}
-              />
-            </React.Fragment>
-          );
-        }}
-      />
-      <PrefetchKeepMountedLayout
-        mountedCondition={props.routerProps.location.pathname === '/trending'}
-        render={() => {
-          return (
-            <Trending
-              stateStargazers={props.componentProps.stateStargazers}
-              dispatchStargazers={props.componentProps.dispatchStargazers}
-              dispatch={props.componentProps.dispatch}
-              state={props.componentProps.state}
-              routerProps={props.routerProps}
-            />
-          );
-        }}
-      />
-      <If condition={props.routerProps.location.pathname === '/login'}>
+      <If condition={seenDataLoading && userDataLoading && loadingUserStarred}>
         <Then>
-          <Login dispatch={props.componentProps.dispatch} state={props.componentProps.state} />
+          <div style={{ textAlign: 'center' }}>
+            <div className="loader-xx">Loading...</div>
+            <div style={{ textAlign: 'center' }}>
+              <h3>Please wait while fetching your data</h3>
+            </div>
+          </div>
         </Then>
       </If>
-
-      {/*<PrefetchKeepMountedLayout*/}
-      {/*  mountedCondition={props.routerProps.location.pathname === '/profile'}*/}
-      {/*  render={() => {*/}
-      {/*    return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;*/}
-      {/*  }}*/}
-      {/*/>*/}
-      <If condition={props.routerProps.location.pathname.includes('/detail')}>
+      <If condition={!seenDataLoading && !userDataLoading && !loadingUserStarred}>
         <Then>
-          <Details />
+          <KeepMountedLayout
+            mountedCondition={props.routerProps.location.pathname === '/'}
+            render={() => {
+              return (
+                <React.Fragment>
+                  <SearchBar
+                    state={props.componentProps.state}
+                    stateStargazers={props.componentProps.stateStargazers}
+                    dispatch={props.componentProps.dispatch}
+                    dispatchStargazers={props.componentProps.dispatchStargazers}
+                  />
+                  <Home
+                    stateStargazers={props.componentProps.stateStargazers}
+                    dispatchStargazers={props.componentProps.dispatchStargazers}
+                    dispatch={props.componentProps.dispatch}
+                    state={props.componentProps.state}
+                    actionResolvedPromise={actionResolvedPromise}
+                  />
+                </React.Fragment>
+              );
+            }}
+          />
+          <PrefetchKeepMountedLayout
+            mountedCondition={props.routerProps.location.pathname === '/discover'}
+            render={() => {
+              return (
+                <React.Fragment>
+                  <SearchBarDiscover
+                    state={props.componentProps.state}
+                    dispatch={props.componentProps.dispatch}
+                    actionResolvedPromise={actionResolvedPromise}
+                  />
+                  <Discover
+                    stateStargazers={props.componentProps.stateStargazers}
+                    dispatchStargazers={props.componentProps.dispatchStargazers}
+                    dispatch={props.componentProps.dispatch}
+                    state={props.componentProps.state}
+                    routerProps={props.routerProps}
+                    actionResolvedPromise={actionResolvedPromise}
+                  />
+                </React.Fragment>
+              );
+            }}
+          />
+          <PrefetchKeepMountedLayout
+            mountedCondition={props.routerProps.location.pathname === '/trending'}
+            render={() => {
+              return (
+                <Trending
+                  stateStargazers={props.componentProps.stateStargazers}
+                  dispatchStargazers={props.componentProps.dispatchStargazers}
+                  dispatch={props.componentProps.dispatch}
+                  state={props.componentProps.state}
+                  routerProps={props.routerProps}
+                />
+              );
+            }}
+          />
+          <If condition={props.routerProps.location.pathname === '/login'}>
+            <Then>
+              <Login dispatch={props.componentProps.dispatch} state={props.componentProps.state} />
+            </Then>
+          </If>
+
+          {/*<PrefetchKeepMountedLayout*/}
+          {/*  mountedCondition={props.routerProps.location.pathname === '/profile'}*/}
+          {/*  render={() => {*/}
+          {/*    return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;*/}
+          {/*  }}*/}
+          {/*/>*/}
+          <If condition={props.routerProps.location.pathname.includes('/detail')}>
+            <Then>
+              <Details />
+            </Then>
+          </If>
         </Then>
       </If>
     </React.Fragment>
