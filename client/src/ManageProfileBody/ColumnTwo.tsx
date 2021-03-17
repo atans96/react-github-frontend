@@ -15,13 +15,12 @@ import { DraggableCore } from 'react-draggable';
 interface ColumnTwoProps {
   languageFilter: string[];
   state: IState;
-  innerWidth: number;
   dispatch: any;
   columnOneWidth: number;
 }
 
 const ColumnTwo = React.memo<ColumnTwoProps>(
-  ({ state, languageFilter, dispatch, innerWidth, columnOneWidth }) => {
+  ({ state, languageFilter, dispatch, columnOneWidth }) => {
     const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
     const [typedFilter, setTypedFilter] = useState('');
     const [active, setActive] = useState('');
@@ -84,7 +83,7 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
       return fastFilter((obj: any) => !!obj, filter2);
     };
     const drawerRef = useRef<HTMLDivElement>(null);
-    const defaultWidth = useRef(innerWidth > 600 ? 350 : innerWidth - 300);
+    const defaultWidth = useRef(state.width > 600 ? 350 : state.width - 300);
     const { dragHandlers, drawerWidth } = useDraggable(drawerRef, defaultWidth.current);
     return (
       <div style={{ display: 'inline-flex', marginLeft: '2px' }} ref={drawerRef}>
@@ -130,11 +129,11 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
                 </div>
               </td>
               <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
-                <If condition={fullName !== '' && innerWidth > 850}>
+                <If condition={fullName !== '' && state.width > 850}>
                   <Then>
                     <Details
                       fullName={fullName}
-                      width={innerWidth}
+                      width={state.width}
                       branch={branch}
                       html_url={htmlUrl}
                       handleHeightChange={handleHeightChange}
@@ -166,7 +165,6 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.state, nextProps.state) &&
-      isEqualObjects(prevProps.innerWidth, nextProps.innerWidth) &&
       isEqualObjects(prevProps.languageFilter, nextProps.languageFilter) &&
       isEqualObjects(prevProps.state, nextProps.state) &&
       isEqualObjects(prevProps.columnOneWidth, nextProps.columnOneWidth)

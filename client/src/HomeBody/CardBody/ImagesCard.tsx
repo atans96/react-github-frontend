@@ -14,7 +14,6 @@ import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
-
 interface ImagesCardProps {
   index: number;
   visible: boolean;
@@ -50,7 +49,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
     useEffect(() => {
       let isCancelled = false;
       if (!isCancelled && Array.isArray(state.imagesData) && state.imagesData.length > 0) {
-        const temp = state.imagesData.find((obj) => obj.id === index)?.value || [];
+        const temp = state.imagesData.find((obj) => obj.id === index)?.value || [];//TODO: memoize .find function using useMemo()
         setRenderImages(temp);
       }
       return () => {

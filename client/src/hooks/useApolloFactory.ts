@@ -15,8 +15,6 @@ import {
 import {
   GET_SEARCHES,
   GET_SEEN,
-  GET_STAR_RANKING,
-  GET_SUGGESTED_REPO,
   GET_USER_DATA,
   GET_USER_INFO_DATA,
   GET_USER_STARRED,
@@ -24,6 +22,7 @@ import {
 } from '../queries';
 
 const consumers: Record<string, Array<string>> = {};
+
 function pushConsumers(property: string, path: string) {
   if (consumers[path] && !consumers[path].includes(property)) {
     consumers[path].push(property);
@@ -31,6 +30,7 @@ function pushConsumers(property: string, path: string) {
     consumers[path] = [property];
   }
 }
+
 export function useApolloFactory(path: string) {
   const [seenAdded] = useMutation(SEEN_ADDED, {
     context: { clientName: 'mongo' },
@@ -147,20 +147,6 @@ export function useApolloFactory(path: string) {
     context: { clientName: 'mongo' },
   });
 
-  const { data: starRankingData, loading: starRankingDataLoading, error: starRankingDataError } = useQuery(
-    GET_STAR_RANKING,
-    {
-      context: { clientName: 'mongo' },
-    }
-  );
-
-  const { data: suggestedData, loading: suggestedDataLoading, error: suggestedDataError } = useQuery(
-    GET_SUGGESTED_REPO,
-    {
-      context: { clientName: 'mongo' },
-    }
-  );
-
   const { data: watchUsersData, loading: loadingWatchUsersData, error: errorWatchUsersData } = useQuery(
     GET_WATCH_USERS,
     {
@@ -204,14 +190,6 @@ export function useApolloFactory(path: string) {
       getSeen: () => {
         pushConsumers('getSeen', path);
         return { seenData, seenDataLoading, seenDataError };
-      },
-      getStarRanking: () => {
-        pushConsumers('getStarRanking', path);
-        return { starRankingData, starRankingDataLoading, starRankingDataError };
-      },
-      getSuggestedRepo: () => {
-        pushConsumers('getSuggestedRepo', path);
-        return { suggestedData, suggestedDataLoading, suggestedDataError };
       },
       getWatchUsers: () => {
         pushConsumers('getWatchUsers', path);

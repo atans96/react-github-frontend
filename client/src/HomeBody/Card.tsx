@@ -23,23 +23,12 @@ interface CardRef extends Card {
   stateStargazersMemoize: IStateStargazers;
   dispatch: any;
   dispatchStargazersUser: any;
-  dataMongoMemoize: any;
   columnCount: number;
 }
 
 const Card: React.FC<CardRef> = React.forwardRef(
   (
-    {
-      columnCount,
-      dataMongoMemoize,
-      state,
-      dispatch,
-      githubData,
-      index,
-      stateStargazersMemoize,
-      getRootProps,
-      dispatchStargazersUser,
-    },
+    { columnCount, state, dispatch, githubData, index, stateStargazersMemoize, getRootProps, dispatchStargazersUser },
     ref
   ) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
@@ -126,7 +115,6 @@ const Card: React.FC<CardRef> = React.forwardRef(
                 <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
               </div>
               <Stargazers
-                dataMongoMemoize={dataMongoMemoize}
                 data={stargazersMemoizedGithubData()}
                 state={stargazersMemoizedData()}
                 stateStargazers={stateStargazersMemoize}

@@ -11,6 +11,22 @@ export type RepoInfoProps = {
   html_url: string;
   readme: string;
 };
+export type SuggestedData = {
+  suggestedData: any;
+  suggestedDataLoading: any;
+  suggestedDataError: any;
+};
+export type StarRankingData = {
+  starRankingData: any;
+  starRankingDataLoading: any;
+  starRankingDataError: any;
+};
+export enum Action {
+  append = 'append',
+  noData = 'noData',
+  error = 'error',
+  nonAppend = 'nonAppend',
+}
 export type ContributorsProps = {
   login: string;
   avatar_url: string;
@@ -104,6 +120,6 @@ export type BooleanLike = boolean | string | number | null | undefined;
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ComponentWithConditionProps
-    extends PropsWithChildren<{
-      condition: (() => BooleanLike) | BooleanLike;
-    }> {}
+  extends PropsWithChildren<{
+    condition: (() => BooleanLike) | BooleanLike;
+  }> {}

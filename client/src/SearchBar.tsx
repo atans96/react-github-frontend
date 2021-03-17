@@ -40,7 +40,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ state, stateStargazers, dispatchS
         display: 'grid',
       }}
     >
-      <div className="title-horizontal-center" style={{ width: `${state.width} px` }}>
+      <div className="title-horizontal-center" style={{ width: `${state.width}px` }}>
         <h1>Github Fetcher Dashboard</h1>
       </div>
       <PureSearchBar
@@ -53,7 +53,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ state, stateStargazers, dispatchS
       <div
         className="portal-expandable"
         ref={portalExpandable}
-        style={{ width: `${state.width} px`, marginLeft: `${state.drawerWidth + 5}px` }}
+        style={{ width: `${state.width}px`, marginLeft: `${state.drawerWidth + 5}px` }}
       />
     </div>
   );

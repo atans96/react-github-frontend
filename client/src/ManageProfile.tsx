@@ -34,12 +34,15 @@ const ManageProfile: React.FC<ManageProfileProps> = ({ state, dispatch }) => {
   }, [state.repoInfo, state.contributors]);
 
   const manageProfileRef = useRef<HTMLDivElement>(null);
-  const [innerWidth, setInnerWidth] = useState(window.innerWidth);
-  const handleResize = () => {
-    if (document.location.pathname === '/profile') {
-      setInnerWidth(window.innerWidth);
-    }
-  };
+  function handleResize() {
+    dispatch({
+      type: 'SET_WIDTH',
+      payload: {
+        width: window.innerWidth,
+      },
+    });
+  }
+
   useResizeHandler(manageProfileRef, handleResize);
   const drawerRef = useRef<HTMLDivElement>(null);
   const defaultWidth = useRef(250);
@@ -59,7 +62,6 @@ const ManageProfile: React.FC<ManageProfileProps> = ({ state, dispatch }) => {
         languageFilter={languageFilter}
         dispatch={dispatch}
         state={columnTwoDataMemoize()}
-        innerWidth={innerWidth}
         columnOneWidth={drawerWidth}
       />
     </div>

@@ -13,6 +13,7 @@ type Action =
   | 'USERNAME_ADDED'
   | 'MERGED_DATA_APPEND'
   | 'MERGED_DATA_APPEND_DISCOVER'
+  | 'MERGED_DATA_ADDED_DISCOVER'
   | 'MERGED_DATA_ADDED'
   | 'IMAGES_DATA_ADDED'
   | 'IMAGES_DATA_ADDED_DISCOVER'
@@ -169,6 +170,8 @@ export const initialState: IState = {
   topics: [],
   imagesData: [],
   imagesDataDiscover: [],
+  isLoadingDiscover: false,
+  notificationDiscover: '',
   searchUsers: [], // for autocomplete function
   visible: false,
   isLoading: false,
@@ -366,6 +369,14 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
       return {
         ...state,
         mergedDataDiscover: _.uniqBy([...state.mergedDataDiscover, ...action.payload.data], 'id'),
+      };
+    }
+    case 'MERGED_DATA_ADDED_DISCOVER': {
+      return {
+        ...state,
+        mergedDataDiscover: action.payload.data,
+        isLoadingDiscover: action.payload.isLoadingDiscover,
+        notificationDiscover: action.payload.notificationDiscover,
       };
     }
     case 'MERGED_DATA_ADDED': {

@@ -34,14 +34,12 @@ interface StargazersCard {
   dispatch: any;
   dispatchStargazers: any;
   stateStargazers: IStateStargazers;
-  dataMongoMemoize: any;
   githubDataId: number;
   githubDataFullName: string;
 }
 
 const StargazersCard = React.memo<StargazersCard>(
   ({
-    dataMongoMemoize,
     getRootProps,
     stateStargazers,
     githubDataId,
@@ -55,9 +53,10 @@ const StargazersCard = React.memo<StargazersCard>(
     const displayName: string | undefined = (StargazersCard as React.ComponentType<any>).displayName;
     const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
     const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
+    const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
     const modalWidth = useRef('400px');
     const [starClicked, setStarClicked] = useState(
-      dataMongoMemoize?.getUserInfoStarred?.starred?.includes(githubDataId) || false
+      userStarred?.getUserInfoStarred?.starred?.includes(githubDataId) || false
     );
     const [visible, setVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);

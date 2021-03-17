@@ -19,24 +19,13 @@ interface CardRef extends Card {
   stateStargazersMemoize: IStateStargazers;
   dispatch: any;
   dispatchStargazersUser: any;
-  dataMongoMemoize: any;
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   columnCount: number;
 }
 
 const CardDiscover: React.FC<CardRef> = React.forwardRef(
   (
-    {
-      dataMongoMemoize,
-      routerProps,
-      state,
-      dispatch,
-      githubData,
-      index,
-      dispatchStargazersUser,
-      columnCount,
-      stateStargazersMemoize,
-    },
+    { routerProps, state, dispatch, githubData, index, dispatchStargazersUser, columnCount, stateStargazersMemoize },
     ref
   ) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
@@ -115,7 +104,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
                 <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
               </div>
               <Stargazers
-                dataMongoMemoize={dataMongoMemoize}
                 data={stargazersMemoizedGithubData()}
                 state={stargazersMemoizedData()}
                 stateStargazers={stateStargazersMemoize}
@@ -124,7 +112,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
                 githubDataFullName={githubData.full_name}
                 githubDataId={githubData.id}
               />
-              <div className={'language-github-background-color'}>
+              <div className={'language-github-color'}>
                 <ul
                   className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
                   style={{ backgroundColor: 'transparent' }}

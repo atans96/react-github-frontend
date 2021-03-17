@@ -114,7 +114,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       const stargazer = stateStargazers.stargazersQueueData.slice(-1)[0];
       const updatedStargazersData = stateStargazers.stargazersData.find(
         (obj: StargazerProps) => obj.id === stargazer.id
-      );
+      );//TODO: memoize .find function using useMemo()
       if (updatedStargazersData !== undefined) {
         try {
           updatedStargazersData.isQueue = !updatedStargazersData.isQueue;

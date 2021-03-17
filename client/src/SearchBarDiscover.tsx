@@ -1,12 +1,25 @@
 import React, { useCallback } from 'react';
-import { IState } from './typing/interface';
+import { IDataOne, IState } from './typing/interface';
 import PureSearchBarDiscover from './SearchBarBody/PureSearchBarDiscover';
-
-interface SearchBarProps {
+import { Action, Nullable } from './typing/type';
+interface Output {
+  isFetchFinish: boolean;
+}
+export interface SearchBarProps {
   state: IState;
+  dispatch: any;
+  actionResolvedPromise: (
+    action: Action,
+    setLoading: any,
+    setNotification: any,
+    isFetchFinish: boolean,
+    displayName: string,
+    data?: Nullable<IDataOne | any>,
+    error?: string
+  ) => Output;
 }
 
-const SearchBarDiscover: React.FC<SearchBarProps> = ({ state }) => {
+const SearchBarDiscover: React.FC<SearchBarProps> = ({ state, dispatch, actionResolvedPromise }) => {
   const PureSearchBarDataMemoized = useCallback(() => {
     return state;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -20,7 +33,11 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ state }) => {
         display: 'grid',
       }}
     >
-      <PureSearchBarDiscover state={PureSearchBarDataMemoized()} />
+      <PureSearchBarDiscover
+        state={PureSearchBarDataMemoized()}
+        dispatch={dispatch}
+        actionResolvedPromise={actionResolvedPromise}
+      />
     </div>
   );
 };
