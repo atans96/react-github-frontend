@@ -170,6 +170,8 @@ export const initialState: IState = {
   topics: [],
   imagesData: [],
   imagesDataDiscover: [],
+  imagesMapData: new Map<number, any>(),
+  imagesMapDataDiscover: new Map<number, any>(),
   isLoadingDiscover: false,
   notificationDiscover: '',
   searchUsers: [], // for autocomplete function
@@ -244,7 +246,9 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         rateLimitAnimationAdded: false,
         mergedData: [],
         imagesData: [],
+        imagesMapData: new Map<number, any>(),
         imagesDataDiscover: [],
+        imagesMapDataDiscover: new Map<number, any>(),
         searchUsers: [], // for autocomplete function
         visible: false,
         isLoading: false,
@@ -313,6 +317,7 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         ...state,
         topics: [],
         imagesData: [],
+        imagesMapData: new Map<number, any>(),
         mergedData: [],
         searchUsers: [],
         filteredMergedData: [],
@@ -389,18 +394,25 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
       return {
         ...state,
         imagesData: _.uniqBy([...state.imagesData, ...action.payload.images], 'id'),
+        imagesMapData: new Map(
+          _.uniqBy([...state.imagesData, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
+        ),
       };
     }
     case 'IMAGES_DATA_ADDED_DISCOVER': {
       return {
         ...state,
         imagesDataDiscover: _.uniqBy([...state.imagesDataDiscover, ...action.payload.images], 'id'),
+        imagesMapDataDiscover: new Map(
+          _.uniqBy([...state.imagesDataDiscover, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
+        ),
       };
     }
     case 'IMAGES_DATA_REPLACE': {
       return {
         ...state,
         imagesData: action.payload.imagesData,
+        imagesMapData: new Map(action.payload.imagesData.map((obj: any) => [obj.id, obj])),
       };
     }
     case 'PER_PAGE': {

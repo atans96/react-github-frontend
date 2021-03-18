@@ -35,7 +35,7 @@ const SearchBarDiscover = React.memo<SearchBarProps>(({ state, dispatch, actionR
       },
     });
     getElasticSearchBert(query?.current?.getState()).then((res) => {
-      //TODO: when waiting
+      //TODO: use ElasticSearch autocomplete with highlight text
       //TODO: after search, disable handleBottomHit functionality so that it won't fetchMore
       dispatch({
         type: 'MERGED_DATA_ADDED_DISCOVER',

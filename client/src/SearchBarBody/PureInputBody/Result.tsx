@@ -16,7 +16,7 @@ export const Result: React.FC<SearchBarProps> = React.forwardRef(
       e.preventDefault();
       const updatedStargazersData = stateStargazers.stargazersData.find(
         (obj: StargazerProps) => obj.id === stargazer.id
-      );//TODO: memoize .find function using useMemo()
+      );
       if (updatedStargazersData !== undefined) {
         try {
           updatedStargazersData.isQueue = !updatedStargazersData.isQueue;

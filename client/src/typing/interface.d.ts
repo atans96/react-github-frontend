@@ -8,11 +8,16 @@ import {
   RateLimit,
   RenderImagesProps,
   RepoInfoProps,
+  SearchesData,
+  SeenData,
   SeenProps,
   StargazerProps,
   StarRankingData,
   SuggestedData,
   TopicsProps,
+  UserData,
+  UserInfoData,
+  WatchUsersData,
 } from './type';
 
 export interface IAction<T> {
@@ -40,6 +45,8 @@ export interface IState {
   fetchDataPath: string;
   repoInfo: RepoInfoProps[];
   contributors: ContributorsProps[];
+  imagesMapData: Map<number, any>;
+  imagesMapDataDiscover: Map<number, any>;
   isLoggedIn: boolean;
   tokenGQL: string;
   filterBySeen: boolean;
@@ -72,10 +79,29 @@ export interface IState {
   lastPage: number;
   lastPageDiscover: number;
 }
+export interface GraphQLUserData {
+  getUserData: UserData;
+}
+export interface GraphQLUserStarred {
+  getUserInfoStarred: { starred: number[] };
+}
+export interface GraphQLUserInfoData {
+  getUserInfoData: UserInfoData;
+}
+export interface GraphQLSeenData {
+  getSeen: SeenData;
+}
+export interface GraphQLWatchUsersData {
+  getWatchUsers: WatchUsersData;
+}
+export interface GraphQLSearchesData {
+  getSearches: SearchesData[];
+}
 export interface StaticState {
   StarRanking: StarRankingData;
   SuggestedRepo: SuggestedData;
 }
+
 export interface IContext {
   state: IState;
   dispatch: Dispatch<IAction<any>>;

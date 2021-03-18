@@ -223,14 +223,13 @@ i.special {
   background: white;
 }
 .dragger {
-  height: 100vh;
+  height: 100px;
   cursor: ew-resize;
   width: 10px;
-  bottom: 0;
-  top: 0;
   position: absolute;
   margin: 0px -5px;
-  border-radius: 2px;
+  background: lightblue;
+  border: 2px solid gray;
   text-align: center;
   z-index: 99999;
   overflow: hidden;

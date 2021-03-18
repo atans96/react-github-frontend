@@ -20,6 +20,14 @@ import {
   GET_USER_STARRED,
   GET_WATCH_USERS,
 } from '../queries';
+import {
+  GraphQLSearchesData,
+  GraphQLSeenData,
+  GraphQLUserData,
+  GraphQLUserInfoData,
+  GraphQLUserStarred,
+  GraphQLWatchUsersData,
+} from '../typing/interface';
 
 const consumers: Record<string, Array<string>> = {};
 
@@ -134,7 +142,6 @@ export function useApolloFactory(path: string) {
   const { data: userData, loading: userDataLoading, error: userDataError } = useQuery(GET_USER_DATA, {
     context: { clientName: 'mongo' },
   });
-
   const { data: userInfoData, loading: userInfoDataLoading, error: userInfoDataError } = useQuery(GET_USER_INFO_DATA, {
     context: { clientName: 'mongo' },
   });
@@ -177,27 +184,33 @@ export function useApolloFactory(path: string) {
     query: {
       getUserData: () => {
         pushConsumers('getUserData', path);
-        return { userData, userDataLoading, userDataError };
+        const temp: GraphQLUserData = userData;
+        return { userData: temp, userDataLoading, userDataError };
       },
       getUserInfoData: () => {
+        const temp: GraphQLUserInfoData = userInfoData;
         pushConsumers('getUserInfoData', path);
-        return { userInfoData, userInfoDataLoading, userInfoDataError };
+        return { userInfoData: temp, userInfoDataLoading, userInfoDataError };
       },
       getUserInfoStarred: () => {
+        const temp: GraphQLUserStarred = userStarred;
         pushConsumers('getUserInfoStarred', path);
-        return { userStarred, loadingUserStarred, errorUserStarred };
+        return { userStarred: temp, loadingUserStarred, errorUserStarred };
       },
       getSeen: () => {
+        const temp: GraphQLSeenData = seenData;
         pushConsumers('getSeen', path);
-        return { seenData, seenDataLoading, seenDataError };
+        return { seenData: temp, seenDataLoading, seenDataError };
       },
       getWatchUsers: () => {
+        const temp: GraphQLWatchUsersData = watchUsersData;
         pushConsumers('getWatchUsers', path);
-        return { watchUsersData, loadingWatchUsersData, errorWatchUsersData };
+        return { watchUsersData: temp, loadingWatchUsersData, errorWatchUsersData };
       },
       getSearchesData: () => {
+        const temp: GraphQLSearchesData = searchesData;
         pushConsumers('getSearchesData', path);
-        return { searchesData, loadingSearchesData, errorSearchesData };
+        return { searchesData: temp, loadingSearchesData, errorSearchesData };
       },
     },
   };

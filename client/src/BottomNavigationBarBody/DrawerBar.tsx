@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
@@ -8,22 +8,29 @@ import { IState } from '../typing/interface';
 import RSSFeed from './DrawerBarBody/RSSFeed';
 import SubscribeFeed from './DrawerBarBody/SubscribeFeed';
 import SubscribeFeedSetting from './DrawerBarBody/SubscribeFeedSetting';
-import { DraggableCore } from 'react-draggable';
 import { useDraggable } from '../hooks/useDraggable';
+import { DraggableCore } from 'react-draggable';
 
 interface StyleProps {
   drawerWidth: string;
 }
+
 const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
+  root: {
+    display: 'flex',
+  },
   drawer: {
     '& .MuiDrawer-paper': {
-      zIndex: 1,
+      zIndex: -1,
       width: (props) => props.drawerWidth,
+      height: '100vh',
+      overflowX: 'hidden',
       boxShadow: '3px 0 5px -2px #888',
       background: 'var(--background-theme-color)',
     },
     width: (props) => props.drawerWidth,
     flexShrink: 0,
+    zIndex: 1,
   },
   drawerOpen: {
     width: (props) => props.drawerWidth,
@@ -62,9 +69,8 @@ interface DrawerBarProps {
 
 const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargazersUser }) => {
   const [open, setOpen] = useState(false);
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const { dragHandlers, drawerWidth: drawerwidth } = useDraggable(drawerRef);
-  const classes = useStyles({ drawerWidth: open ? `${Math.min(drawerwidth, 600)}px` : '0px' });
+  const [drawerWidth, dragHandlers] = useDraggable({});
+  const classes = useStyles({ drawerWidth: open ? `${drawerWidth}px` : '0px' });
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setOpen(!open);
@@ -101,30 +107,49 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
           </span>
         </button>
       </div>
-      <Drawer
-        variant="permanent"
-        ref={drawerRef}
-        className={clsx(classes.drawer, {
-          [classes.drawerOpen]: open,
-          [classes.drawerClose]: !open,
-        })}
-        classes={{
-          paper: clsx({
-            [classes.drawerOpen]: open,
-            [classes.drawerClose]: !open,
-          }),
-        }}
-      >
-        <div className={classes.toolbar}>
-          <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
-        </div>
-        <RSSFeed state={state} dispatch={dispatch} />
-        <SubscribeFeed state={state} />
-        <SubscribeFeedSetting state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazersUser} />
-      </Drawer>
-      <DraggableCore key="handle" {...dragHandlers}>
-        <div className={'dragger'} style={{ left: `${drawerwidth}px` }} />
-      </DraggableCore>
+      <table>
+        <thead>
+          <tr>
+            <th>
+              <Drawer
+                variant="permanent"
+                className={clsx(classes.drawer, {
+                  [classes.drawerOpen]: open,
+                  [classes.drawerClose]: !open,
+                })}
+                classes={{
+                  paper: clsx({
+                    [classes.drawerOpen]: open,
+                    [classes.drawerClose]: !open,
+                  }),
+                }}
+              >
+                <div className={classes.toolbar}>
+                  <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
+                </div>
+                <RSSFeed state={state} dispatch={dispatch} />
+                <SubscribeFeed state={state} />
+                <SubscribeFeedSetting
+                  state={state}
+                  dispatch={dispatch}
+                  dispatchStargazersUser={dispatchStargazersUser}
+                />
+              </Drawer>
+            </th>
+            <th>
+              {open && (
+                <DraggableCore key="drawerBar" {...dragHandlers}>
+                  <div style={{ height: '100vh', width: '0px' }}>
+                    <div className={'dragger'} style={{ top: '40%' }}>
+                      <span />
+                    </div>
+                  </div>
+                </DraggableCore>
+              )}
+            </th>
+          </tr>
+        </thead>
+      </table>
     </React.Fragment>
   );
 };
