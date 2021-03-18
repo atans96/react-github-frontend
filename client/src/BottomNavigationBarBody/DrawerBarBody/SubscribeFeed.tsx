@@ -22,6 +22,7 @@ import _ from 'lodash';
 import { NavLink } from 'react-router-dom';
 import { IState } from '../../typing/interface';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
+import { Login } from '../../typing/type';
 
 const useStyles = makeStyles<Theme>(() => ({
   list: {
@@ -337,7 +338,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
         watchUsersData &&
         watchUsersData.getWatchUsers?.login?.length > 0
       ) {
-        sortingData.current = watchUsersData.getWatchUsers.login.map((obj: any) => obj.login).reverse();
+        sortingData.current = watchUsersData.getWatchUsers.login.map((obj: Login) => obj.login).reverse();
         if (openSubscription && notificationBadge > 0) {
           //don't setState outside of Promise.all.then unless it match the condition
           //otherwise Promise.all will re-rerender and causing weird effect
@@ -354,7 +355,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
           notification.current = [];
           setNotificationBadge(0);
         }
-        const logins = watchUsersData.getWatchUsers.login.reduce((acc: any, obj: any) => {
+        const logins = watchUsersData.getWatchUsers.login.reduce((acc: any, obj: Login) => {
           acc.push(obj.login);
           return acc;
         }, []);
@@ -371,9 +372,9 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
         watchUsersData.getWatchUsers?.login?.length > 0
       ) {
         previousDataLength.current = watchUsersData.getWatchUsers.login.length;
-        sortingData.current = watchUsersData.getWatchUsers.login.map((obj: any) => obj.login).reverse(); //element at the bottom is the latest one so we reverse the array
+        sortingData.current = watchUsersData.getWatchUsers.login.map((obj: Login) => obj.login).reverse(); //element at the bottom is the latest one so we reverse the array
         setLoading(true);
-        const logins = watchUsersData.getWatchUsers.login.reduce((acc: any, obj: any) => {
+        const logins = watchUsersData.getWatchUsers.login.reduce((acc: any, obj: Login) => {
           acc.push(obj.login);
           return acc;
         }, []);
@@ -391,7 +392,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
         setNotificationBadge(0);
         setXmlFileListAppend([]);
         setSeeMoreLength(0);
-        const logins = watchUsersData.getWatchUsers.login.reduce((acc: any, obj: any) => {
+        const logins = watchUsersData.getWatchUsers.login.reduce((acc: any, obj: Login) => {
           acc.push(obj.login);
           return acc;
         }, []);

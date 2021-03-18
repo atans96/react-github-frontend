@@ -10,7 +10,7 @@ import InputSlider from '../Layout/SliderLayout';
 import { PureInput } from './PureInput';
 import { Tags } from './PureSearchBarBody/Tags';
 import _ from 'lodash';
-import { MergedDataProps, StargazerProps } from '../typing/type';
+import { MergedDataProps, SearchesData, StargazerProps } from '../typing/type';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import useCollapse from '../hooks/useCollapse';
@@ -314,7 +314,7 @@ const SearchBar = React.memo<SearchBarProps>(
       setVisibleSearchesHistory(false);
       dispatchVisible(false, dispatch);
     });
-    const filter = (searchesHistory: any[] | undefined, valueRef: string) => {
+    const filter = (searchesHistory: SearchesData[] | undefined, valueRef: string) => {
       const result: any[] = [];
       if (searchesHistory && searchesHistory.length > 0) {
         for (const searchHistory of searchesHistory) {
@@ -362,7 +362,7 @@ const SearchBar = React.memo<SearchBarProps>(
                   <ul className={'results'}>
                     {filter(searchesData?.getSearches, valueRef)
                       .sort((a, b) => b.count - a.count) //the most frequent searches at the top
-                      .map((search: any, idx) => {
+                      .map((search: SearchesData, idx) => {
                         const newBody = search.search.replace(
                           new RegExp(valueRef.toLowerCase(), 'gi'),
                           (match: any) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
@@ -396,7 +396,7 @@ const SearchBar = React.memo<SearchBarProps>(
                     </If>
                     <If condition={!state.isLoading}>
                       <Then>
-                        {fastFilter((search: any) => {
+                        {fastFilter((search: SearchesData) => {
                           const temp =
                             searchesData?.getSearches?.reduce((acc: any, obj: any) => {
                               acc.push(obj.search);

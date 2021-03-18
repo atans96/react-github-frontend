@@ -1,8 +1,84 @@
 /* eslint-disable */
-import React from 'react';
+import React, { useRef, useState } from 'react';
 // import deepKeys from 'deep-keys';
 // import imagesLoaded from 'imagesloaded';
+export function binarySearch(arr, n) {
+  let min = 0;
+  let max = arr.length - 1;
+  let mid;
+  while (min <= max) {
+    mid = (min + max) >>> 1;
+    if (arr[mid] === n) {
+      return arr[mid];
+    } else if (arr[mid] < n) {
+      min = mid + 1;
+    } else {
+      max = mid - 1;
+    }
+  }
+  return -1;
+}
+export function useDraggable() {
+  const [isDragging, setIsDragging] = useState(false);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const ref = useRef(null);
 
+  function onMouseMove(e) {
+    if (!isDragging) return;
+    setPos({
+      x: e.x - ref.current.offsetWidth / 2,
+      y: e.y - ref.current.offsetHeight / 2,
+    });
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  function onMouseUp(e) {
+    setIsDragging(false);
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  function onMouseDown(e) {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+
+    setPos({
+      x: e.x - ref.current.offsetWidth / 2,
+      y: e.y - ref.current.offsetHeight / 2,
+    });
+
+    e.stopPropagation();
+    e.preventDefault();
+  }
+
+  // When the element mounts, attach an mousedown listener
+  useEffect(() => {
+    ref.current.addEventListener('mousedown', onMouseDown);
+
+    return () => {
+      ref.current.removeEventListener('mousedown', onMouseDown);
+    };
+  }, [ref.current]);
+
+  // Everytime the isDragging state changes, assign or remove
+  // the corresponding mousemove and mouseup handlers
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
+    } else {
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+    }
+    return () => {
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+    };
+  }, [isDragging]);
+
+  return [ref, pos.x, pos.y, isDragging];
+}
 export function readEnvironmentVariable(key) {
   // See https://create-react-app.dev/docs/adding-custom-environment-variables/#docsNav
   return process.env[`REACT_APP_${key}`];

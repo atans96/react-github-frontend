@@ -6,7 +6,7 @@ import './ResultStyle.scss';
 import '../StargazersInfoStyle.scss';
 import clsx from 'clsx';
 import { IStateStargazers } from '../../../../typing/interface';
-import { StargazerProps } from '../../../../typing/type';
+import { StargazerProps, Login } from '../../../../typing/type';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import { useMutation } from '@apollo/client';
 import { WATCH_USER_REMOVED } from '../../../../mutations';
@@ -49,7 +49,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
   });
   useEffect(() => {
     if (!loadingWatchUsersData && !errorWatchUsersData && watchUsersData && watchUsersData.getWatchUsers?.login) {
-      setSubscribe(watchUsersData.getWatchUsers?.login?.find((obj: any) => obj.login === stargazer.login));
+      setSubscribe(watchUsersData.getWatchUsers?.login?.find((obj: Login) => obj.login === stargazer.login) !== null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchUsersData, loadingWatchUsersData, errorWatchUsersData]);

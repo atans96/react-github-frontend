@@ -4,7 +4,6 @@ import ColumnOne from './ManageProfileBody/ColumnOne';
 import { IState } from './typing/interface';
 import { useResizeHandler } from './hooks/hooks';
 import ColumnTwo from './ManageProfileBody/ColumnTwo';
-import { useDraggable } from './hooks/useDraggable';
 
 interface ManageProfileProps {
   state: IState;
@@ -44,26 +43,11 @@ const ManageProfile: React.FC<ManageProfileProps> = ({ state, dispatch }) => {
   }
 
   useResizeHandler(manageProfileRef, handleResize);
-  const drawerRef = useRef<HTMLDivElement>(null);
-  const defaultWidth = useRef(250);
-  const { dragHandlers, drawerWidth } = useDraggable(drawerRef, defaultWidth.current);
 
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
-      <ColumnOne
-        handleLanguageFilter={handleLanguageFilter}
-        state={columnOneDataMemoize()}
-        dispatch={dispatch}
-        ref={drawerRef}
-        dragHandlers={dragHandlers}
-        drawerWidth={drawerWidth}
-      />
-      <ColumnTwo
-        languageFilter={languageFilter}
-        dispatch={dispatch}
-        state={columnTwoDataMemoize()}
-        columnOneWidth={drawerWidth}
-      />
+      <ColumnOne handleLanguageFilter={handleLanguageFilter} state={columnOneDataMemoize()} dispatch={dispatch} />
+      {/*<ColumnTwo languageFilter={languageFilter} dispatch={dispatch} state={columnTwoDataMemoize()} />*/}
     </div>
   );
 };

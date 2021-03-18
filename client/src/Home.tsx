@@ -455,7 +455,7 @@ const Home = React.memo<HomeProps>(
             return acc;
           }, [] as number[]);
           const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
-          const images = fastFilter((obj: Record<string, any>) => !ids.includes(obj.id), state.imagesData);
+          const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), state.imagesData);
           dispatch({
             type: 'IMAGES_DATA_REPLACE',
             payload: {
@@ -468,7 +468,7 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.filterBySeen]);
     useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData.getSeen !== null && seenData.getSeen.seenCards.length > 0) {
+      if (!seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0) {
         dispatch({
           type: 'UNDISPLAY_MERGED_DATA',
           payload: {
@@ -521,9 +521,9 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [state.mergedData, state.shouldFetchImages]
     );
-    const userDataRef = useRef();
+    const userDataRef = useRef<string>();
     useEffect(() => {
-      userDataRef.current = userData?.getUserData?.token || '';
+      userDataRef.current = userData.getUserData.token || '';
     });
     const onClickTopic = useCallback(
       async ({ variables }) => {
@@ -594,15 +594,14 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.page, state.lastPage, state.tokenRSS, state.isLoggedIn]);
 
-    const whichToUse = useCallback(() => {
+    const whichToUse = () => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
       // is not part of the dependencies for the callback.
       if (state.filteredMergedData.length > 0) {
         return state.filteredMergedData;
       }
       return state.mergedData; // return this if filteredTopics.length === 0
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.mergedData, state.filteredMergedData]);
+    };
 
     // TODO: change the styling like: https://gatsby.pizza/ or maybe styling like nested menu (NOT SURE YET)
 
@@ -642,11 +641,17 @@ const Home = React.memo<HomeProps>(
             // so no need to use state.imagesData condition on top of state.mergedData?.length > 0 && !shouldRenderSkeleton
             // below, otherwise it's going to slow to wait for ImagesCard as the Card won't get re-render instantly consequently
           }
-          <If condition={!state.filterBySeen && seenData?.getSeen}>
+          <If
+            condition={!state.filterBySeen && seenData?.getSeen?.seenCards && seenData?.getSeen?.seenCards?.length > 0}
+          >
             <Then>
               <div style={{ textAlign: 'center' }}>
                 <h3>
-                  Your {seenData?.getSeen?.seenCards?.length > 0 ? seenData.getSeen.seenCards.length : ''} Card History:
+                  Your{' '}
+                  {seenData?.getSeen?.seenCards && seenData?.getSeen?.seenCards?.length > 0
+                    ? seenData.getSeen.seenCards.length
+                    : ''}{' '}
+                  Card History:
                 </h3>
               </div>
             </Then>

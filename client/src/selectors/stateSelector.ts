@@ -15,7 +15,7 @@ const useStarRanking = () => {
   );
   return { starRankingData, starRankingDataLoading, starRankingDataError };
 };
-const StarRankingContainer = createContainer(useStarRanking);
+export const StarRankingContainer = createContainer(useStarRanking);
 const useSuggestedRepo = () => {
   const { data: suggestedData, loading: suggestedDataLoading, error: suggestedDataError } = useQuery(
     GET_SUGGESTED_REPO,
@@ -25,7 +25,7 @@ const useSuggestedRepo = () => {
   );
   return { suggestedData, suggestedDataError, suggestedDataLoading };
 };
-const SuggestedRepoContainer = createContainer(useSuggestedRepo);
+export const SuggestedRepoContainer = createContainer(useSuggestedRepo);
 function useApolloData(): StaticState {
   return Object.assign(
     {},
@@ -50,15 +50,14 @@ export const alreadySeenCardSelector = createSelector<any, any, []>(
     );
   }
 );
-export const getIdsSelector = createSelector<any, any, any[]>([(dataList: any) => dataList], (data: any) => {
-  return data.map((obj: any) => obj.id);
-});
-export const sortedRepoInfoSelector = (sortedIds: any[], starRankingFiltered: any[]) =>
-  createSelector<any, any, any[]>([(repoInfos: any) => repoInfos], (repoInfo: any) => {
-    return repoInfo
+
+export const sortedRepoInfoSelector = (starRankingFiltered: any[]) =>
+  createSelector<any, any, any[]>([(data: StaticState) => data.SuggestedRepo], (suggestedRepo: any) => {
+    const ids = starRankingFiltered?.map((obj: any) => obj.id);
+    return suggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfo
       ?.slice()
       .sort((a: any, b: any) => {
-        return sortedIds.indexOf(a.id) - sortedIds.indexOf(b.id);
+        return ids.indexOf(a.id) - ids.indexOf(b.id);
       })
       .map((obj: any) => {
         const copyObj = Object.assign({}, obj);
@@ -68,10 +67,12 @@ export const sortedRepoInfoSelector = (sortedIds: any[], starRankingFiltered: an
         return copyObj;
       });
   });
-export const starRankingFilteredSelector = (ids: number[]) =>
-  createSelector<any, any, any[]>([(starRankings: any) => starRankings, (ids: any) => ids], (starRanking: any) => {
+export const starRankingFilteredSelector = createSelector<any, any, any[]>(
+  [(data: StaticState) => data.StarRanking, (data: StaticState) => data.SuggestedRepo],
+  (starRanking: any, suggestedRepo: any) => {
+    const ids = suggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfo.map((obj: any) => obj.id) || [];
     return (
-      fastFilter((xx: any) => ids.includes(xx.id), starRanking)
+      fastFilter((xx: any) => ids.includes(xx.id), starRanking?.starRankingData?.getStarRanking?.starRanking || [])
         .reduce((acc: any[], obj: any) => {
           const temp = Object.assign({}, { trends: obj.trends, id: obj.id });
           acc.push(temp);
@@ -79,4 +80,5 @@ export const starRankingFilteredSelector = (ids: number[]) =>
         }, [])
         .sort((a: any, b: any) => b['trends']['daily'] - a['trends']['daily']) || []
     );
-  });
+  }
+);

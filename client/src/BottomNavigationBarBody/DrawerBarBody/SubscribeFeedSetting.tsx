@@ -12,6 +12,7 @@ import { NavLink } from 'react-router-dom';
 import { IState } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
+import { Login } from '../../typing/type';
 
 const useStyles = makeStyles<Theme>(() => ({
   typographyQuery: {
@@ -58,7 +59,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
     const [openSubscriptionSetting, setSubscriptionSetting] = useState(false);
     const [showMoreSubscribedUsers, setShowMoreSubscribedUsers] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [subscribedUsers, setSubscribedUsers] = useState([]);
+    const [subscribedUsers, setSubscribedUsers] = useState<Login[]>([]);
     const handleOpenSubscriptionSetting = (e: React.MouseEvent) => {
       e.preventDefault();
       setSubscriptionSetting(!openSubscriptionSetting);
@@ -86,7 +87,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
         watchUsersData &&
         watchUsersData.getWatchUsers?.login?.length > 0
       ) {
-        const temp = watchUsersData.getWatchUsers.login.reduce((acc: any[], obj: any) => {
+        const temp = watchUsersData.getWatchUsers.login.reduce((acc: any[], obj: Login) => {
           acc.push(Object.assign({}, { login: obj.login, avatarUrl: obj.avatarUrl }));
           return acc;
         }, []);

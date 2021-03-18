@@ -13,12 +13,7 @@ import { isEqualObjects } from './util';
 import { RouteComponentProps } from 'react-router-dom';
 import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
-import {
-  getIdsSelector,
-  sortedRepoInfoSelector,
-  starRankingFilteredSelector,
-  useSelector,
-} from './selectors/stateSelector';
+import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface MasonryLayoutMemo {
@@ -81,9 +76,6 @@ const Discover = React.memo<DiscoverProps>(
     const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
       (state: StaticState) => state.SuggestedRepo
     );
-    const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
-      (state: StaticState) => state.StarRanking
-    );
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(true);
     const paginationRef = useRef(state.perPage);
@@ -115,16 +107,9 @@ const Discover = React.memo<DiscoverProps>(
         }
       }
     };
-    const starRankingFiltered: any[] = useSelector(
-      starRankingFilteredSelector(getIdsSelector(suggestedData?.getSuggestedRepo?.repoInfo))(
-        starRankingData?.getStarRanking?.starRanking
-      )
-    );
     //TODO: make 'daily' to be sortable by the user in the monitor
-    const sortedIds: any[] = useSelector(getIdsSelector(starRankingFiltered));
-    sortedDataRef.current = useSelector(
-      sortedRepoInfoSelector(sortedIds, starRankingFiltered)(suggestedData?.getSuggestedRepo?.repoInfo) as []
-    );
+    const starRankingFiltered: any[] = useSelector(starRankingFilteredSelector);
+    sortedDataRef.current = useSelector(sortedRepoInfoSelector(starRankingFiltered));
     const fetchUser = () => {
       isFetchFinish.current = false;
       dispatchLastPageDiscover(Math.ceil(suggestedData?.getSuggestedRepo?.repoInfo?.length / state.perPage), dispatch);
@@ -241,17 +226,11 @@ const Discover = React.memo<DiscoverProps>(
     useResizeHandler(windowScreenRef, handleResize);
     useEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
-      if (
-        !starRankingDataLoading &&
-        !starRankingDataError &&
-        !suggestedDataLoading &&
-        !!suggestedData?.getSuggestedRepo &&
-        !suggestedDataError
-      ) {
+      if (!suggestedDataLoading && !!suggestedData?.getSuggestedRepo && !suggestedDataError) {
         fetchUser();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [starRankingDataLoading, starRankingDataError, suggestedDataLoading, suggestedDataError]);
+    }, [suggestedDataLoading, suggestedDataError]);
 
     useEffect(() => {
       if (state.pageDiscover > 1 && notification === '') {

@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react';
+import { types } from 'node-sass';
 export type RepoInfoProps = {
   fullName: string;
   description: string;
@@ -35,10 +36,6 @@ export type ContributorsProps = {
 export type RenderImagesProps = {
   id: string;
   filteredImages: string[];
-};
-export type SubscribeUsersProps = {
-  login: string;
-  avatarUrl: string;
 };
 export type StargazerProps = {
   id: string;
@@ -97,6 +94,80 @@ export type MergedDataProps = {
   viewerHasStarred?: boolean;
   trends?: number;
   [key: string]: any;
+};
+export type LanguagePreference = {
+  language: string;
+  checked: boolean;
+};
+export type UserData = {
+  tokenRSS: string;
+  languagePreference: LanguagePreference[];
+  code: string;
+  userName: string;
+  avatar: string;
+  token: string;
+  joinDate: Date;
+};
+export type RepoInfo = {
+  fullName: string;
+  description: string;
+  stars: number;
+  forks: number;
+  updatedAt: string;
+  language: string;
+  topics: Nullable<string[] | []>;
+  defaultBranch: string;
+  html_url: string;
+  readme: string;
+};
+export type Contributors = {
+  login: string;
+  avatar_url: string;
+  contributions: number;
+};
+export type RepoContributions = {
+  fullName: string;
+  contributors: Nullable<Contributors[] | []>;
+};
+export type UserInfoData = {
+  userName: string;
+  repoInfo: RepoInfo[] | [];
+  repoContributions: RepoContributions[];
+  languages: string[];
+};
+export type Seen = {
+  stargazers_count: number;
+  full_name: string;
+  owner: OwnerProps;
+  description: string;
+  language: string;
+  topics: string[];
+  html_url: string;
+  name: string;
+  id: number;
+  default_branch: string;
+  imagesData: Nullable<string[] | []>;
+  is_queried: boolean;
+};
+export type SeenData = {
+  seenCards: Nullable<Seen[] | []>;
+};
+export type Login = {
+  id: number;
+  login: string;
+  feeds: string;
+  lastSeenFeeds: string;
+  createdAt: Date;
+  avatarUrl: string;
+};
+export type WatchUsersData = {
+  login: Login[];
+  userName: string;
+};
+export type SearchesData = {
+  search: string;
+  count: number;
+  updatedAt: Date;
 };
 export type RouterProps = {
   location: string; // This one is coming from the router

@@ -1,18 +1,16 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { IState } from '../typing/interface';
 import RowOne from './ColumnOneBody/RowOne';
 import RowTwo from './ColumnOneBody/RowTwo';
+import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
   state: IState;
   dispatch: any;
-  ref: React.Ref<HTMLDivElement>;
-  drawerWidth: number;
-  dragHandlers: any;
 }
 
 interface StyleProps {
@@ -48,23 +46,27 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     padding: '0 8px',
   },
 }));
-const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
-  ({ handleLanguageFilter, state, dispatch, drawerWidth, dragHandlers }, ref) => {
-    const classes = useStyles({ drawerWidth: `${Math.min(drawerWidth, 600)}px` });
-    return (
-      <React.Fragment>
-        <Drawer variant="permanent" className={classes.drawer} open={true} ref={ref}>
-          <div className={classes.toolbar} />
-          <RowOne state={state} />
-          <Divider />
-          <RowTwo handleLanguageFilter={handleLanguageFilter} state={state} dispatch={dispatch} />
-        </Drawer>
-        <DraggableCore key="handle" {...dragHandlers}>
-          <div className={'dragger'} style={{ left: `${drawerWidth}px` }} />
-        </DraggableCore>
-      </React.Fragment>
-    );
-  }
-);
+const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(({ handleLanguageFilter, state, dispatch }, ref) => {
+  const defaultWidth = useRef(250);
+  const [drawerWidth, dragHandlers] = useDraggable({ drawerWidthClient: defaultWidth.current });
+  const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
+  return (
+    <React.Fragment>
+      <Drawer variant="permanent" className={classes.drawer} open={true}>
+        <div className={classes.toolbar} />
+        <RowOne state={state} />
+        <Divider />
+        <RowTwo handleLanguageFilter={handleLanguageFilter} state={state} dispatch={dispatch} />
+      </Drawer>
+      <DraggableCore key="columnOne" {...dragHandlers}>
+        <div style={{ height: '100vh', width: '0px' }}>
+          <div className={'dragger'} style={{ left: `${drawerWidth}px`, top: '40%' }}>
+            <span />
+          </div>
+        </div>
+      </DraggableCore>
+    </React.Fragment>
+  );
+});
 ColumnOne.displayName = 'ColumnOne';
 export default ColumnOne;

@@ -50,14 +50,14 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     useEffect(() => {
       let isCancelled = false;
       if (!isCancelled && Array.isArray(state.imagesDataDiscover) && state.imagesDataDiscover.length > 0) {
-        const temp = state.imagesDataDiscover.find((obj) => obj.id === index)?.value || []; //TODO: memoize .find function using useMemo()
+        const temp = state.imagesMapDataDiscover.get(index)?.value || [];
         setRenderImages(temp);
       }
       return () => {
         isCancelled = true;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.imagesDataDiscover]);
+    }, [state.imagesDataDiscover, state.imagesMapDataDiscover]);
 
     useEffect(() => {
       if (
@@ -181,7 +181,8 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.visible, nextProps.visible) &&
-      isEqualObjects(prevProps.state.imagesDataDiscover, nextProps.state.imagesDataDiscover) &&
+      isEqualObjects(prevProps.state.imagesMapDataDiscover, nextProps.state.imagesMapDataDiscover) &&
+      isEqualObjects(prevProps.state.filterBySeen, nextProps.state.filterBySeen) &&
       isEqualObjects(prevProps.index, nextProps.index)
     );
   }

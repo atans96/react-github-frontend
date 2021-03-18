@@ -7,7 +7,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import { IState } from '../../typing/interface';
-import { isEqualObjects, Loading } from '../../util';
+import { binarySearch, isEqualObjects, Loading } from '../../util';
 import useCollapse from '../../hooks/useCollapse';
 import { ProgressBar } from '../../Layout/ProgressBar';
 import { Then } from '../../util/react-if/Then';
@@ -49,14 +49,14 @@ const ImagesCard = React.memo<ImagesCardProps>(
     useEffect(() => {
       let isCancelled = false;
       if (!isCancelled && Array.isArray(state.imagesData) && state.imagesData.length > 0) {
-        const temp = state.imagesData.find((obj) => obj.id === index)?.value || [];//TODO: memoize .find function using useMemo()
+        const temp = state.imagesMapData.get(index)?.value || [];
         setRenderImages(temp);
       }
       return () => {
         isCancelled = true;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.imagesData]);
+    }, [state.imagesData, state.imagesMapData]);
 
     useEffect(() => {
       if (
@@ -217,7 +217,8 @@ const ImagesCard = React.memo<ImagesCardProps>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.visible, nextProps.visible) &&
-      isEqualObjects(prevProps.state.imagesData, nextProps.state.imagesData) &&
+      isEqualObjects(prevProps.state.imagesMapData, nextProps.state.imagesMapData) &&
+      isEqualObjects(prevProps.state.filterBySeen, nextProps.state.filterBySeen) &&
       isEqualObjects(prevProps.index, nextProps.index)
     );
   }

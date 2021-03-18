@@ -3,7 +3,7 @@ import { Typography } from '@material-ui/core';
 import { useUserCardStyles } from '../../../HomeBody/CardBody/UserCardStyle';
 import { If } from '../../../util/react-if/If';
 import { Then } from '../../../util/react-if/Then';
-import { SubscribeUsersProps } from '../../../typing/type';
+import { Login } from '../../../typing/type';
 import { useMutation } from '@apollo/client';
 import { WATCH_USER_REMOVED } from '../../../mutations';
 import { GET_WATCH_USERS } from '../../../queries';
@@ -12,7 +12,7 @@ import { dispatchUsername } from '../../../store/dispatcher';
 import { fastFilter } from '../../../util';
 
 interface ResultProps {
-  subscribedUsers: SubscribeUsersProps;
+  subscribedUsers: Login;
   dispatch: any;
   dispatchStargazersUser: any;
 }

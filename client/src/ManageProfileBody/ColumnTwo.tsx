@@ -16,11 +16,10 @@ interface ColumnTwoProps {
   languageFilter: string[];
   state: IState;
   dispatch: any;
-  columnOneWidth: number;
 }
 
 const ColumnTwo = React.memo<ColumnTwoProps>(
-  ({ state, languageFilter, dispatch, columnOneWidth }) => {
+  ({ state, languageFilter, dispatch }) => {
     const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
     const [typedFilter, setTypedFilter] = useState('');
     const [active, setActive] = useState('');
@@ -82,18 +81,17 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
       }, filter1);
       return fastFilter((obj: any) => !!obj, filter2);
     };
-    const drawerRef = useRef<HTMLDivElement>(null);
-    const defaultWidth = useRef(state.width > 600 ? 350 : state.width - 300);
-    const { dragHandlers, drawerWidth } = useDraggable(drawerRef, defaultWidth.current);
+    const defaultWidth = useRef(350);
+    const [drawerWidth, dragHandlers] = useDraggable({ drawerWidthClient: defaultWidth.current });
     return (
-      <div style={{ display: 'inline-flex', marginLeft: '2px' }} ref={drawerRef}>
+      <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
         <table>
           <thead>
             <tr>
               <th>
                 <Search
                   handleInputChange={handleInputChange}
-                  width={drawerWidth < defaultWidth.current ? defaultWidth.current : Math.min(drawerWidth, 600)}
+                  width={drawerWidth < defaultWidth.current ? defaultWidth.current : drawerWidth}
                 />
                 <p>Search in:</p>
                 <Checkboxes checkedItems={checkedItems} handleCheckboxClick={handleCheckboxClick} />
@@ -105,9 +103,7 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
               <td style={{ position: 'absolute' }}>
                 <div
                   style={{
-                    width: `${
-                      drawerWidth < defaultWidth.current ? defaultWidth.current : Math.min(drawerWidth, 600)
-                    }px`,
+                    width: `${drawerWidth < defaultWidth.current ? defaultWidth.current : drawerWidth}px`,
                     background: 'var(--background-theme-color)',
                     overflowY: 'auto',
                     height: height,
@@ -128,6 +124,18 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
                   })}
                 </div>
               </td>
+              <td>
+                <DraggableCore key="columnTwo" {...dragHandlers}>
+                  <div style={{ height: '100vh', width: '0px' }}>
+                    <div
+                      className={'dragger'}
+                      style={{
+                        top: '40%',
+                      }}
+                    />
+                  </div>
+                </DraggableCore>
+              </td>
               <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
                 <If condition={fullName !== '' && state.width > 850}>
                   <Then>
@@ -144,30 +152,14 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
             </tr>
           </tbody>
         </table>
-        <If condition={drawerRef.current && drawerRef.current.getBoundingClientRect().left !== undefined}>
-          <Then>
-            <DraggableCore key="handle" {...dragHandlers}>
-              <div
-                className={'dragger'}
-                style={{
-                  left: `${
-                    (drawerWidth < defaultWidth.current ? defaultWidth.current : Math.min(drawerWidth, 600)) +
-                    columnOneWidth
-                  }px`,
-                }}
-              />
-            </DraggableCore>
-          </Then>
-        </If>
       </div>
     );
   },
   (prevProps: any, nextProps: any) => {
     return (
-      isEqualObjects(prevProps.state, nextProps.state) &&
+      isEqualObjects(prevProps.state.contributors, nextProps.state.contributors) &&
       isEqualObjects(prevProps.languageFilter, nextProps.languageFilter) &&
-      isEqualObjects(prevProps.state, nextProps.state) &&
-      isEqualObjects(prevProps.columnOneWidth, nextProps.columnOneWidth)
+      isEqualObjects(prevProps.state.width, nextProps.state.width)
     );
   }
 );

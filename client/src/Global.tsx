@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import Login from './Login';
 import ManageProfile from './ManageProfile';
@@ -15,8 +15,8 @@ import Trending from './Trending';
 import PrefetchKeepMountedLayout from './Layout/PrefetchKeepMountedLayout';
 import SearchBarDiscover from './SearchBarDiscover';
 import useUserVerification from './hooks/useUserVerification';
-import { alreadySeenCardSelector, useSelector } from './selectors/stateSelector';
-import { fastFilter, Loading } from './util';
+import { alreadySeenCardSelector } from './selectors/stateSelector';
+import { fastFilter } from './util';
 import { filterActionResolvedPromiseData } from './util/util';
 import {
   dispatchAppendMergedData,
@@ -27,7 +27,7 @@ import {
   dispatchPageDiscover,
 } from './store/dispatcher';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { Action, MergedDataProps, Nullable } from './typing/type';
+import { Action, LanguagePreference, MergedDataProps, Nullable } from './typing/type';
 
 interface GlobalProps {
   state: IState;
@@ -35,6 +35,7 @@ interface GlobalProps {
   dispatch: any;
   dispatchStargazers: any;
 }
+
 //TODO: create code snippet like: https://snipit.io/ or https://github.com/hackjutsu/Lepton
 //TODO: refactor dispatcher.ts
 const Global: React.FC<{
@@ -69,13 +70,15 @@ const Global: React.FC<{
   const { userData, userDataLoading } = useApolloFactory(displayName!).query.getUserData();
   const { userStarred, loadingUserStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
   const { seenData, seenDataLoading } = useApolloFactory(displayName!).query.getSeen();
-  const seenCardsSelector = React.useMemo(() => {
+  const alreadySeenCards: number[] = React.useMemo(() => {
     //Every time Global re-renders and nothing is memoized because each render re creates the selector.
     // To solve this we can use React.useMemo. Here is the correct way to use createSelectItemById.
     return alreadySeenCardSelector(seenData?.getSeen?.seenCards);
   }, [seenData?.getSeen?.seenCards]);
 
-  const alreadySeenCards = useSelector(seenCardsSelector);
+  const languagePreference = React.useMemo(() => {
+    return new Map(userData?.getUserData?.languagePreference?.map((obj: LanguagePreference) => [obj.language, obj]));
+  }, [userData?.getUserData?.languagePreference]);
 
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (props.componentProps.state.filterBySeen) {
@@ -88,8 +91,8 @@ const Global: React.FC<{
               filterActionResolvedPromiseData(
                 obj,
                 !alreadySeenCards.includes(obj.id),
-                userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked),
-                userStarred?.getUserInfoStarred?.starred.includes(obj.id) === false
+                languagePreference.get(obj.language),
+                userStarred?.getUserInfoStarred?.starred?.includes(obj.id) === false
               ),
             data
           );
@@ -134,11 +137,11 @@ const Global: React.FC<{
         }
         case 'Home': {
           const filter1 = fastFilter(
-            (obj: any) =>
+            (obj: MergedDataProps) =>
               filterActionResolvedPromiseData(
                 obj,
                 !alreadySeenCards.includes(obj.id),
-                userData.getUserData.languagePreference.find((xx: any) => xx.language === obj.language && xx.checked)
+                languagePreference.get(obj.language)
               ),
             data.dataOne
           );
@@ -295,12 +298,12 @@ const Global: React.FC<{
             </Then>
           </If>
 
-          {/*<PrefetchKeepMountedLayout*/}
-          {/*  mountedCondition={props.routerProps.location.pathname === '/profile'}*/}
-          {/*  render={() => {*/}
-          {/*    return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;*/}
-          {/*  }}*/}
-          {/*/>*/}
+          <PrefetchKeepMountedLayout
+            mountedCondition={props.routerProps.location.pathname === '/profile'}
+            render={() => {
+              return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;
+            }}
+          />
           <If condition={props.routerProps.location.pathname.includes('/detail')}>
             <Then>
               <Details />
