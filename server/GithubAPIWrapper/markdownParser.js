@@ -1,5 +1,6 @@
 const axios = require("axios");
 const urlExist = require("url-exist");
+const util = require("../api/util");
 var base64 = require("js-base64").Base64;
 
 axios.defaults.withCredentials = true;
@@ -167,7 +168,7 @@ const markdownImagesExtractor = (result, object, images) => {
 //     })();
 //   });
 // }
-const doQuery = async (data, promises, images, token) => {
+const doQuery = async (data, promises, images, token, ...args) => {
   for (const [index, object] of data.entries()) {
     try {
       promises.push(
@@ -204,14 +205,14 @@ const doQuery = async (data, promises, images, token) => {
               if (err.message.includes("API")) {
                 reject(err.message);
               } else {
-                resolve([]);
+                util.sendErrorMessageToClient(err, args.res);
               }
               console.log(`ERROR ${url}, message: ${err.message}`);
             });
         })
       );
     } catch (err) {
-      console.log(err);
+      throw new Error(err);
     }
   }
   return promises;

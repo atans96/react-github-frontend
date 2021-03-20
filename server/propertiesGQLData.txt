@@ -58,3 +58,5 @@ firstDay
 lastDay
 delta
 starRanking
+value
+renderImages

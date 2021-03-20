@@ -16,7 +16,6 @@ type Action =
   | 'MERGED_DATA_ADDED_DISCOVER'
   | 'MERGED_DATA_ADDED'
   | 'IMAGES_DATA_ADDED'
-  | 'IMAGES_DATA_ADDED_DISCOVER'
   | 'IMAGES_DATA_REPLACE'
   | 'PER_PAGE'
   | 'ADVANCE_PAGE'
@@ -162,6 +161,7 @@ export const initialState: IState = {
   rateLimitAnimationAdded: false,
   width: 0,
   mergedDataDiscover: [],
+  filterMergedDataDiscover: [],
   undisplayMergedData: [],
   mergedData: [],
   filteredMergedData: [],
@@ -169,9 +169,7 @@ export const initialState: IState = {
   filteredTopics: [],
   topics: [],
   imagesData: [],
-  imagesDataDiscover: [],
   imagesMapData: new Map<number, any>(),
-  imagesMapDataDiscover: new Map<number, any>(),
   isLoadingDiscover: false,
   notificationDiscover: '',
   searchUsers: [], // for autocomplete function
@@ -241,14 +239,13 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         filteredMergedData: [],
         filteredTopics: [],
         mergedDataDiscover: [],
+        filterMergedDataDiscover: [],
         rateLimit: {},
         rateLimitGQL: {},
         rateLimitAnimationAdded: false,
         mergedData: [],
         imagesData: [],
         imagesMapData: new Map<number, any>(),
-        imagesDataDiscover: [],
-        imagesMapDataDiscover: new Map<number, any>(),
         searchUsers: [], // for autocomplete function
         visible: false,
         isLoading: false,
@@ -379,7 +376,7 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
     case 'MERGED_DATA_ADDED_DISCOVER': {
       return {
         ...state,
-        mergedDataDiscover: action.payload.data,
+        filterMergedDataDiscover: action.payload.data,
         isLoadingDiscover: action.payload.isLoadingDiscover,
         notificationDiscover: action.payload.notificationDiscover,
       };
@@ -396,15 +393,6 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         imagesData: _.uniqBy([...state.imagesData, ...action.payload.images], 'id'),
         imagesMapData: new Map(
           _.uniqBy([...state.imagesData, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
-        ),
-      };
-    }
-    case 'IMAGES_DATA_ADDED_DISCOVER': {
-      return {
-        ...state,
-        imagesDataDiscover: _.uniqBy([...state.imagesDataDiscover, ...action.payload.images], 'id'),
-        imagesMapDataDiscover: new Map(
-          _.uniqBy([...state.imagesDataDiscover, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
         ),
       };
     }

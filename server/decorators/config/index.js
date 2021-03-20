@@ -13,6 +13,9 @@ class Config {
   getServerPort() {
     return this.env.SERVER_PORT;
   }
+  getBestOfJS() {
+    return this.env.README_BEST_OF_JS;
+  }
   getLambdaStoreRedis() {
     return {
       port: this.env.REDIS_LAMBDA_STORE_PORT,

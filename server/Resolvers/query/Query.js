@@ -14,6 +14,18 @@ const Query = {
         userName: currentUser?.username,
       });
     },
+    getSuggestedRepoImages: async (
+      root,
+      {},
+      { models: { SuggestedRepoImages }, currentUser }
+    ) => {
+      if (currentUser?.username === undefined) {
+        return null;
+      }
+      return await SuggestedRepoImages.findOne({
+        userName: currentUser?.username,
+      });
+    },
     getSuggestedRepo: async (
       root,
       {},

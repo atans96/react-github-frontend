@@ -19,10 +19,11 @@ interface ImagesCardProps {
   index: number;
   visible: boolean;
   state: IState;
+  imagesMapDataDiscover: Map<number, any>;
 }
 
 const ImagesCardDiscover = React.memo<ImagesCardProps>(
-  ({ index, visible, state }) => {
+  ({ index, visible, state, imagesMapDataDiscover }) => {
     const [renderChildren, setRenderChildren] = useState(false);
     const [clicked, setClicked] = useState(false);
     const [showProgressBarUnRenderImages, setShowProgressBarUnRenderImages] = useState(false);
@@ -49,15 +50,15 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
 
     useEffect(() => {
       let isCancelled = false;
-      if (!isCancelled && Array.isArray(state.imagesDataDiscover) && state.imagesDataDiscover.length > 0) {
-        const temp = state.imagesMapDataDiscover.get(index)?.value || [];
+      if (!isCancelled && imagesMapDataDiscover.size > 0) {
+        const temp = imagesMapDataDiscover.get(index)?.value || [];
         setRenderImages(temp);
       }
       return () => {
         isCancelled = true;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.imagesDataDiscover, state.imagesMapDataDiscover]);
+    }, [imagesMapDataDiscover]);
 
     useEffect(() => {
       if (
@@ -102,21 +103,14 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     }, []);
     return (
       <React.Fragment>
-        <If
-          condition={
-            state.filterBySeen &&
-            Array.isArray(state.imagesDataDiscover) &&
-            state.imagesDataDiscover.length === 0 &&
-            renderImages.length === 0
-          }
-        >
+        <If condition={state.filterBySeen && imagesMapDataDiscover.size === 0 && renderImages.length === 0}>
           <Then>
             <div style={{ textAlign: 'center' }}>
               <Loading />
             </div>
           </Then>
         </If>
-        <If condition={Array.isArray(state.imagesDataDiscover) && state.imagesDataDiscover.length > 0}>
+        <If condition={imagesMapDataDiscover.size > 0}>
           <Then>
             <If condition={showProgressBarUnRenderImages && renderImages.slice(2).length > 0}>
               <Then>
@@ -181,7 +175,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.visible, nextProps.visible) &&
-      isEqualObjects(prevProps.state.imagesMapDataDiscover, nextProps.state.imagesMapDataDiscover) &&
+      isEqualObjects(prevProps.imagesMapDataDiscover, nextProps.imagesMapDataDiscover) &&
       isEqualObjects(prevProps.state.filterBySeen, nextProps.state.filterBySeen) &&
       isEqualObjects(prevProps.index, nextProps.index)
     );

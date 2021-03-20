@@ -9,7 +9,7 @@ import { If } from './util/react-if/If';
 import Details from './Details';
 import { IDataOne, IState, IStateStargazers } from './typing/interface';
 import SearchBar from './SearchBar';
-import { getRepoImages, getTokenGQL } from './services';
+import { getTokenGQL } from './services';
 import Discover from './Discover';
 import Trending from './Trending';
 import PrefetchKeepMountedLayout from './Layout/PrefetchKeepMountedLayout';
@@ -22,7 +22,6 @@ import {
   dispatchAppendMergedData,
   dispatchAppendMergedDataDiscover,
   dispatchImagesData,
-  dispatchImagesDataDiscover,
   dispatchPage,
   dispatchPageDiscover,
 } from './store/dispatcher';
@@ -73,7 +72,7 @@ const Global: React.FC<{
   const alreadySeenCards: number[] = React.useMemo(() => {
     //Every time Global re-renders and nothing is memoized because each render re creates the selector.
     // To solve this we can use React.useMemo. Here is the correct way to use createSelectItemById.
-    return alreadySeenCardSelector(seenData?.getSeen?.seenCards);
+    return alreadySeenCardSelector(seenData?.getSeen?.seenCards || []);
   }, [seenData?.getSeen?.seenCards]);
 
   const languagePreference = React.useMemo(() => {
@@ -105,7 +104,6 @@ const Global: React.FC<{
           let inputForImagesData = [];
           if (filter1.length > 0) {
             dispatchAppendMergedDataDiscover(filter1, props.componentProps.dispatch);
-            const token = userData && userData.getUserData ? userData.getUserData.token : '';
             inputForImagesData = filter1.reduce((acc: any[], object: MergedDataProps) => {
               acc.push(
                 Object.assign(
@@ -121,15 +119,6 @@ const Global: React.FC<{
               );
               return acc;
             }, []);
-            getRepoImages(inputForImagesData, 'wa1618i', props.componentProps.state.pageDiscover + 1, token).then(
-              (repoImage) => {
-                if (repoImage.renderImages.length > 0) {
-                  dispatchImagesDataDiscover(repoImage.renderImages, props.componentProps.dispatch);
-                } else {
-                  dispatchImagesDataDiscover('no data', props.componentProps.dispatch);
-                }
-              }
-            );
           } else if (filter1.length === 0) {
             dispatchPageDiscover(props.componentProps.dispatch);
           }
@@ -150,7 +139,7 @@ const Global: React.FC<{
             data.renderImages
           );
           if (tempImages.length === 0) {
-            dispatchImagesData('no data', props.componentProps.dispatch);
+            dispatchImagesData([], props.componentProps.dispatch);
           } else {
             dispatchImagesData(tempImages, props.componentProps.dispatch);
           }
@@ -159,7 +148,7 @@ const Global: React.FC<{
             dispatchPage(props.componentProps.dispatch);
           } else {
             if (data.renderImages.length === 0) {
-              dispatchImagesData('no data', props.componentProps.dispatch);
+              dispatchImagesData([], props.componentProps.dispatch);
             } else {
               dispatchImagesData(data.renderImages, props.componentProps.dispatch);
             }
@@ -207,13 +196,14 @@ const Global: React.FC<{
         setNotification(`Sorry, no more data found for ${props.componentProps.state.username}`);
       }
       if (action === 'error' && error) {
-        setNotification(error);
         throw new Error(`Something wrong at ${displayName} ${error}`);
       }
       if (data && data.error_404) {
         setNotification(`Sorry, no data found for ${props.componentProps.state.username}`);
       } else if (data && data.error_403) {
         setNotification('Sorry, API rate limit exceeded.'); //TODO: display show RateLimit.tsx
+      } else if (data && data.error_message) {
+        throw new Error(`Something wrong at ${displayName} ${data.error_message}`);
       }
       return { isFetchFinish };
     },
@@ -261,11 +251,7 @@ const Global: React.FC<{
             render={() => {
               return (
                 <React.Fragment>
-                  <SearchBarDiscover
-                    state={props.componentProps.state}
-                    dispatch={props.componentProps.dispatch}
-                    actionResolvedPromise={actionResolvedPromise}
-                  />
+                  <SearchBarDiscover state={props.componentProps.state} dispatch={props.componentProps.dispatch} />
                   <Discover
                     stateStargazers={props.componentProps.stateStargazers}
                     dispatchStargazers={props.componentProps.dispatchStargazers}

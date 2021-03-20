@@ -33,6 +33,17 @@ export const GET_STAR_RANKING = gql`
     }
   }
 `;
+export const GET_SUGGESTED_REPO_IMAGES = gql`
+  query {
+    getSuggestedRepoImages {
+      userName
+      renderImages {
+        value
+        id
+      }
+    }
+  }
+`;
 export const GET_SUGGESTED_REPO = gql`
   query {
     getSuggestedRepo {

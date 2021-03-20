@@ -192,6 +192,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             className="input-multi"
             name="query"
             placeholder={'Search...'}
+            required
           />
         </div>
       </div>

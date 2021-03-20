@@ -5,7 +5,7 @@ import { DraggableCore } from 'react-draggable';
 import * as constants from 'constants';
 
 export const useDraggable = ({ maxWidth = 600, drawerWidthClient = 200, direction = 'e' }) => {
-  const [drawerWidth, setDrawerWidth] = useState(drawerWidthClient);
+  const [drawerWidth, setDrawerWidth] = useState(Math.min(drawerWidthClient, maxWidth));
   const drawerRef = useRef<HTMLDivElement>(null);
   const handleDrag = (e: any, ui: any) => {
     const factor = direction === 'e' || direction === 's' ? -1 : 1;

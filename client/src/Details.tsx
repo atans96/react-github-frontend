@@ -12,6 +12,7 @@ import { useApolloFactory } from './hooks/useApolloFactory';
 import { useHistory } from 'react-router';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
+import { starRanking } from './typing/type';
 
 interface StateProps {
   data: {
@@ -29,14 +30,16 @@ interface StateProps {
 const Details: React.FC = () => {
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
-  const [data, setData] = useState(undefined);
+  const [data, setData] = useState<any>();
   const location = useLocation<StateProps>();
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
     (state: StaticState) => state.StarRanking
   );
   useEffect(() => {
     if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
-      const temp = starRankingData.getStarRanking.starRanking.find((obj: any) => obj.id === location.state.data.id);
+      const temp = starRankingData.getStarRanking.starRanking.find(
+        (obj: starRanking) => obj.id === location.state.data.id
+      );
       if (!!temp) {
         setData(temp);
       }

@@ -6,7 +6,6 @@ const imagesRepoInfo = require("../api/repo/images-repo-info");
 const readmeRepoInfo = require("../api/repo/readme-repo-info");
 const usersSearchInfo = require("../api/search/users-search-info");
 const topicSearchInfo = require("../api/search/topics-search-info");
-const discoverElasticSearchInfo = require("../api/search/discover-elastic-search-info");
 const setStarredMe = require("../api/me/set-starred-me");
 const removeStarredMe = require("../api/me/delete-starred-me");
 const getRateLimit = require("../api/rateLimit/get-rate-limit-info");
@@ -32,10 +31,20 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
-      userRepoInfo(req, res, fastify, {
-        url,
-        axios: opts.axios,
-        github: opts.githubAPIWrapper,
+      const { redis } = fastify;
+      redis.get(url, (err, val) => {
+        if (Object.keys(JSON.parse(val).dataOne).length > 0) {
+          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          res.send(val);
+        } else if (!err && Object.keys(JSON.parse(val).dataOne).length === 0) {
+          userRepoInfo(req, res, fastify, {
+            url,
+            axios: opts.axios,
+            github: opts.githubAPIWrapper,
+          });
+        } else {
+          throw new Error(`Something Wrong with ${url} ${err}`);
+        }
       });
     }
   );
@@ -67,15 +76,17 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (val) {
+        if (Object.keys(JSON.parse(val).dataOne).length > 0) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && !val) {
+        } else if (!err && Object.keys(JSON.parse(val).dataOne).length === 0) {
           orgRepoInfo(req, res, fastify, {
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
+        } else {
+          throw new Error(`Something Wrong with ${url} ${err}`);
         }
       });
     }
@@ -100,34 +111,58 @@ async function routes(fastify, opts, done) {
     "/api/images_from_markdown",
     {
       logLevel: "error",
+      schema: Schema.repo.ImagesReadmeRepoInfo,
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      imagesRepoInfo(req, res, fastify, {
-        axios: opts.axios,
-        github: opts.githubAPIWrapper,
+      const url = crypto.createHash("md5").update(req.url).digest("hex");
+      const { redis } = fastify;
+      redis.get(url, (err, val) => {
+        if (Object.keys(JSON.parse(val).renderImages).length > 0) {
+          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          res.send(val);
+        } else if (
+          !err &&
+          Object.keys(JSON.parse(val).renderImages).length === 0
+        ) {
+          imagesRepoInfo(req, res, fastify, {
+            url,
+            axios: opts.axios,
+            github: opts.githubAPIWrapper,
+          });
+        } else {
+          throw new Error(`Something Wrong with ${url} ${err}`);
+        }
       });
     }
   );
 
   fastify.get(
     "/api/markdown",
-    { logLevel: "error", preValidation: fastify.csrfProtection },
+    {
+      logLevel: "error",
+      schema: Schema.repo.ReadmeRepoInfo,
+      preValidation: fastify.csrfProtection,
+    },
     (req, res) => {
-      const urlReadMe = `https://bestofjs-serverless.now.sh/api/project-readme?fullName=${req.query.full_name}&branch=${req.query.branch}`;
+      const urlReadMe = `${opts.config.getBestOfJS()}?fullName=${
+        req.query.full_name
+      }&branch=${req.query.branch}`;
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (val) {
+        if (Object.keys(JSON.parse(val).readme).length > 0) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && !val) {
+        } else if (!err && Object.keys(JSON.parse(val).readme).length === 0) {
           readmeRepoInfo(req, res, fastify, {
             urlReadMe,
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
+        } else {
+          throw new Error(`Something Wrong with ${url} ${err}`);
         }
       });
     }
@@ -144,32 +179,18 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (val) {
+        if (Object.keys(JSON.parse(val).dataOne).length > 0) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && !val) {
+        } else if (!err && Object.keys(JSON.parse(val).dataOne).length === 0) {
           topicSearchInfo(req, res, fastify, {
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
+        } else {
+          throw new Error(`Something Wrong with ${url} ${err}`);
         }
-      });
-    }
-  );
-
-  fastify.get(
-    "/api/search_elastic_discover",
-    {
-      logLevel: "error",
-      schema: Schema.search.DiscoverElasticSearchInfo,
-      preValidation: fastify.csrfProtection,
-    },
-    (req, res) => {
-      discoverElasticSearchInfo(req, res, fastify, {
-        axios: opts.axios,
-        github: opts.githubAPIWrapper,
-        elastic: opts.elastic,
       });
     }
   );
@@ -182,9 +203,21 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      usersSearchInfo(req, res, fastify, {
-        axios: opts.axios,
-        github: opts.githubAPIWrapper,
+      const url = crypto.createHash("md5").update(req.url).digest("hex");
+      const { redis } = fastify;
+      redis.get(url, (err, val) => {
+        if (Object.keys(JSON.parse(val).users).length > 0) {
+          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          res.send(val);
+        } else if (!err && Object.keys(JSON.parse(val).users).length === 0) {
+          usersSearchInfo(req, res, fastify, {
+            url,
+            axios: opts.axios,
+            github: opts.githubAPIWrapper,
+          });
+        } else {
+          throw new Error(`Something Wrong with ${url} ${err}`);
+        }
       });
     }
   );

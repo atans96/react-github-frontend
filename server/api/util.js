@@ -1,5 +1,4 @@
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
 const tokenTransporter = {
   token: "",
   set tokenSetter(token) {

@@ -10,6 +10,7 @@ const Search = require("./Search");
 const Clicked = require("./Clicked");
 const Suggested = require("./Suggested");
 const SuggestedRepo = require("./SuggestedRepo");
+const SuggestedRepoImages = require("./SuggestedRepoImages");
 const StarRanking = require("./StarRanking");
 module.exports = {
   Seen,
@@ -25,4 +26,5 @@ module.exports = {
   SuggestedRepo,
   Suggested,
   StarRanking,
+  SuggestedRepoImages,
 };

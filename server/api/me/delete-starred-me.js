@@ -14,6 +14,7 @@ module.exports = async (req, res, ctx, ...args) => {
       }
     })
     .catch((err) => {
+      util.sendErrorMessageToClient(err, res);
       ctx.log.error(err);
     });
 };

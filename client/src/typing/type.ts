@@ -1,5 +1,4 @@
 import { PropsWithChildren } from 'react';
-import { types } from 'node-sass';
 export type RepoInfoProps = {
   fullName: string;
   description: string;
@@ -12,15 +11,68 @@ export type RepoInfoProps = {
   html_url: string;
   readme: string;
 };
+export type RepoInfoSuggested = {
+  from: string;
+  is_seen: boolean;
+  stargazers_count: number;
+  full_name: string;
+  default_branch: string;
+  owner: OwnerProps;
+  description: string;
+  language: string;
+  topics: [string];
+  html_url: string;
+  id: number;
+  name: string;
+};
+export type suggestedData = {
+  getSuggestedRepo: { userName: string; repoInfo: [RepoInfoSuggested] };
+};
 export type SuggestedData = {
-  suggestedData: any;
+  suggestedData: suggestedData;
   suggestedDataLoading: any;
   suggestedDataError: any;
 };
+export type Trends = {
+  daily: number;
+  weekly: number;
+  monthly: number;
+  quarterly: number;
+  yearly: number;
+};
+export type Monthly = {
+  year: number;
+  months: number;
+  firstDay: number;
+  lastDay: number;
+  delta: number;
+};
+export type TimeSeries = {
+  daily: [number];
+  monthly: [Monthly];
+};
+export type starRanking = {
+  id: number;
+  trends: Trends;
+  timeSeries: TimeSeries;
+};
+export type StarRanking = {
+  getStarRanking: { userName: string; starRanking: Nullable<[starRanking]> };
+};
 export type StarRankingData = {
-  starRankingData: any;
+  starRankingData: StarRanking;
   starRankingDataLoading: any;
   starRankingDataError: any;
+};
+export type RenderImages = {
+  id: number;
+  value: [string];
+};
+export type suggestedDataImages = { userName: string; getSuggestedRepoImages: [RenderImages] };
+export type SuggestedDataImages = {
+  suggestedDataImages: suggestedDataImages;
+  suggestedDataImagesLoading: any;
+  suggestedDataImagesError: any;
 };
 export enum Action {
   append = 'append',

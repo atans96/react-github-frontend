@@ -3,11 +3,11 @@ module.exports = {
     UserRepoInfo: require("./api/repo/user-repo-info"),
     OrgRepoInfo: require("./api/repo/org-repo-info"),
     ContributorsRepoInfo: require("./api/repo/contributors-repo-info"),
-    ImagesRepoInfo: require("./api/repo/images-repo-info"),
+    ImagesReadmeRepoInfo: require("./api/repo/images-repo-info"),
+    ReadmeRepoInfo: require("./api/repo/readme-repo-info"),
   },
   search: {
     UsersSearchInfo: require("./api/search/users-search-info"),
-    DiscoverElasticSearchInfo: require("./api/search/discover-elastic-search-info"),
     TopicsSearchInfo: require("./api/search/topics-search-info"),
   },
   rateLimit: {
