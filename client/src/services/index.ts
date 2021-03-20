@@ -1,4 +1,5 @@
 import { readEnvironmentVariable } from '../util';
+import { RepoRenderImages, SearchUser } from '../typing/interface';
 function rateLimitInfo(token: string) {
   return new Promise(function (resolve, reject) {
     (async () => {
@@ -11,12 +12,14 @@ function rateLimitInfo(token: string) {
   });
 }
 async function rotateTokens() {
+  //TODO: in production, user only get 1 token, that is provided by him/her
   const tokens = readEnvironmentVariable('TOKENS')!.split(',');
-  let validToken = '';
-  for (const token of tokens) {
-    const rateLimit: any = await rateLimitInfo(token);
-    if (rateLimit.rateLimit.used > 10 || rateLimit.rateLimitGQL.used > 10 || rateLimit.rateLimitSearch.used > 5) {
-      validToken = token;
+  let validToken = tokens.slice()[0];
+  while (tokens.length) {
+    const token = tokens.shift();
+    const rateLimit: any = await rateLimitInfo(token!);
+    if (rateLimit.rateLimit.limit > 10 || rateLimit.rateLimitGQL.limit > 10 || rateLimit.rateLimitSearch.limit > 5) {
+      validToken = token!;
       break;
     }
   }
@@ -82,9 +85,11 @@ export const getUser = async (
   noImageQuery = false
 ) => {
   if (username !== '') {
+    const toke = await rotateTokens();
+    const validToken = toke.length === 0 ? token : toke;
     const response = await fetch(
       `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${
-        token === null ? '' : token
+        token === null ? '' : validToken
       }&noImageQuery=${noImageQuery}`,
       {
         method: 'GET',
@@ -95,8 +100,10 @@ export const getUser = async (
 };
 export const getOrg = async (org: string, perPage: number, page: number, token: string | null) => {
   if (org !== '') {
+    const toke = await rotateTokens();
+    const validToken = toke.length === 0 ? token : toke;
     const response = await fetch(
-      `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${token === null ? '' : token}`,
+      `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${token === null ? '' : validToken}`,
       {
         method: 'GET',
       }
@@ -141,7 +148,7 @@ export const getSearchUsers = async (query: string, token: string | null) => {
   const response = await fetch(`/api/search_users?user=${query}&token=${validToken === null ? '' : validToken}`, {
     method: 'GET',
   });
-  return await response.json();
+  return (await response.json()) as SearchUser;
 };
 export const getSearchTopics = async (topic: string, token: string | null) => {
   const toke = await rotateTokens();
@@ -168,15 +175,16 @@ export const requestGithubGraphQLLogin = async (token: string) => {
   });
   return await response.json();
 };
-export const getRepoImages = async (data: any, topic: string, page: number, token: string) => {
+export const getRepoImages = async (data: any[], topic: string, page: number, token: string) => {
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
-  const validToken = await rotateTokens();
+  const toke = await rotateTokens();
+  const validToken = toke.length === 0 ? token : toke;
   const response = await fetch(`/api/images_from_markdown?query_topic=${topic}&page=${page}`, {
     method: 'POST',
     body: JSON.stringify({
       data: data,
-      token: validToken.length === 0 ? token : validToken,
+      token: validToken,
     }),
     //Fastify not only supports async functions for use as controller code,
     // but it also automatically parses incoming requests into JSON if the Content-Type header suggests
@@ -184,5 +192,5 @@ export const getRepoImages = async (data: any, topic: string, page: number, toke
     // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
     headers: new Headers({ 'content-type': 'application/json' }),
   });
-  return await response.json();
+  return (await response.json()) as RepoRenderImages;
 };

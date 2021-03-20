@@ -4,9 +4,10 @@ import { TrendSummary } from './TrendsCardBody/TrendSummary';
 import MonthlyTrends from './TrendsCardBody/MonthlyTrends';
 import { HeatMapContainer } from './TrendsCardBody/HeatMapContainer';
 import { fastFilter } from '../../util';
+import { starRanking } from '../../typing/type';
 
 interface TrendsCardProps {
-  project: any;
+  project: starRanking;
 }
 
 export const TrendsCard = React.memo<TrendsCardProps>(({ project }) => {

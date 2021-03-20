@@ -14,6 +14,7 @@ import {
   StargazerProps,
   StarRankingData,
   SuggestedData,
+  SuggestedDataImages,
   TopicsProps,
   UserData,
   UserInfoData,
@@ -46,7 +47,6 @@ export interface IState {
   repoInfo: RepoInfoProps[];
   contributors: ContributorsProps[];
   imagesMapData: Map<number, any>;
-  imagesMapDataDiscover: Map<number, any>;
   isLoggedIn: boolean;
   tokenGQL: string;
   filterBySeen: boolean;
@@ -64,10 +64,10 @@ export interface IState {
   rateLimitAnimationAdded: boolean;
   mergedDataDiscover: MergedDataProps[]; // assign object of MergedData to your array
   mergedData: MergedDataProps[];
+  filterMergedDataDiscover: MergedDataProps[];
   undisplayMergedData: SeenProps[];
   filteredMergedData: MergedDataProps[];
   imagesData: any[];
-  imagesDataDiscover: any[];
   searchUsers: [];
   visible: boolean;
   isLoading: boolean;
@@ -100,8 +100,18 @@ export interface GraphQLSearchesData {
 export interface StaticState {
   StarRanking: StarRankingData;
   SuggestedRepo: SuggestedData;
+  SuggestedRepoImages: SuggestedDataImages;
 }
-
+export interface RenderImages {
+  id: number;
+  value: string[];
+}
+export interface RepoRenderImages {
+  renderImages: RenderImages[];
+}
+export interface SearchUser {
+  users: { [x: string]: any };
+}
 export interface IContext {
   state: IState;
   dispatch: Dispatch<IAction<any>>;

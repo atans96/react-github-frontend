@@ -89,11 +89,13 @@ module.exports = async (req, res, ctx, ...args) => {
                 );
                 //since axios.get return promise, we can execute them in parallel using Promise.all
                 //so no need to create custom new Promise
-                res.send({
-                  renderImages: renderImages,
-                  dataOne: mergeData,
-                  paginationInfoData: paginationInfoData,
-                });
+                res.send(
+                  stringify({
+                    renderImages: renderImages,
+                    dataOne: mergeData,
+                    paginationInfoData: paginationInfoData,
+                  })
+                );
               }
             })
             .catch((err) => {
@@ -111,11 +113,13 @@ module.exports = async (req, res, ctx, ...args) => {
           );
           //since axios.get return promise, we can execute them in parallel using Promise.all
           //so no need to create custom new Promise
-          res.send({
-            renderImages: [],
-            dataOne: mergeData,
-            paginationInfoData: paginationInfoData,
-          });
+          res.send(
+            stringify({
+              renderImages: [],
+              dataOne: mergeData,
+              paginationInfoData: paginationInfoData,
+            })
+          );
         }
       })
     )

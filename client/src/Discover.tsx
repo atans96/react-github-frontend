@@ -3,7 +3,7 @@ import MasonryLayout from './Layout/MasonryLayout';
 import { dispatchLastPageDiscover, dispatchPageDiscover } from './store/dispatcher';
 import { useResizeHandler } from './hooks/hooks';
 import { IDataOne, IState, IStateStargazers, StaticState } from './typing/interface';
-import { Action, MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { Action, MergedDataProps, Nullable, RenderImages, SeenProps } from './typing/type';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
@@ -77,7 +77,7 @@ const Discover = React.memo<DiscoverProps>(
       (state: StaticState) => state.SuggestedRepo
     );
     // useState is used when the HTML depends on it directly to render something
-    const [isLoading, setLoading] = useState(true);
+    const [isLoading, setLoading] = useState(false);
     const paginationRef = useRef(state.perPage);
     const sortedDataRef = useRef([]);
     const [notification, setNotification] = useState('');
@@ -112,6 +112,7 @@ const Discover = React.memo<DiscoverProps>(
     sortedDataRef.current = useSelector(sortedRepoInfoSelector(starRankingFiltered));
     const fetchUser = () => {
       isFetchFinish.current = false;
+      setLoading(true);
       dispatchLastPageDiscover(Math.ceil(suggestedData?.getSuggestedRepo?.repoInfo?.length / state.perPage), dispatch);
       if (sortedDataRef.current.slice(0, state.perPage).length === 0) {
         isFetchFinish.current = actionResolvedPromise(
@@ -134,14 +135,33 @@ const Discover = React.memo<DiscoverProps>(
     };
 
     const mergedDataRef = useRef<any[]>([]);
-    const imagesDataRef = useRef<any[]>([]);
+    const suggestedDataImages = useSelector((state: StaticState) => state.SuggestedRepoImages);
+    const imagesDataDiscover:
+      | { mapData: Map<number, RenderImages>; arrayData: [RenderImages] | any[] }
+      | Map<any, any> = React.useMemo(() => {
+      //return it to hashMap
+      if (
+        state.isLoggedIn &&
+        !(suggestedDataImages.suggestedDataImagesError || suggestedDataImages.suggestedDataImagesLoading) &&
+        suggestedDataImages.suggestedDataImages.getSuggestedRepoImages
+      ) {
+        return {
+          mapData: new Map(
+            suggestedDataImages.suggestedDataImages.getSuggestedRepoImages.renderImages.map((obj: RenderImages) => [
+              obj.id,
+              obj,
+            ])
+          ),
+          arrayData: suggestedDataImages.suggestedDataImages.getSuggestedRepoImages.renderImages,
+        };
+      }
+      return { mapData: new Map(), arrayData: [] };
+    }, [state.isLoggedIn, suggestedDataImages]);
+
     const isLoadingRef = useRef<boolean>(true);
     const notificationRef = useRef<string>('');
     useEffect(() => {
       mergedDataRef.current = state.mergedDataDiscover;
-    });
-    useEffect(() => {
-      imagesDataRef.current = state.imagesDataDiscover;
     });
     useEffect(() => {
       isLoadingRef.current = isLoading;
@@ -177,7 +197,7 @@ const Discover = React.memo<DiscoverProps>(
                 html_url: obj.html_url,
                 id: obj.id,
                 imagesData:
-                  imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+                  imagesDataDiscover.arrayData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
                 name: obj.name,
                 is_queried: false,
               }
@@ -185,7 +205,7 @@ const Discover = React.memo<DiscoverProps>(
             acc.push(temp);
             return acc;
           }, [] as SeenProps[]);
-          if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
+          if (result.length > 0 && imagesDataDiscover.mapData.size > 0 && state.isLoggedIn) {
             //don't add to database yet when imagesData still loading.
             seenAdded({
               variables: {
@@ -201,7 +221,7 @@ const Discover = React.memo<DiscoverProps>(
         isFetchFinish.current,
         mergedDataRef.current,
         isLoadingRef.current,
-        imagesDataRef.current,
+        imagesDataDiscover,
         notificationRef.current,
         window.location.pathname,
         state.isLoggedIn,
@@ -265,13 +285,21 @@ const Discover = React.memo<DiscoverProps>(
     }, [stateStargazers]);
 
     useEffect(() => {
-      if (state.isLoadingDiscover) {
-        setLoading(state.isLoadingDiscover);
-      }
-      if (state.notificationDiscover.length > 0) {
-        setNotification(state.notificationDiscover);
-      }
+      setLoading(state.isLoadingDiscover);
+      setNotification(state.notificationDiscover);
     }, [state.isLoadingDiscover, state.notificationDiscover]);
+
+    const whichToUse = useCallback(() => {
+      // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
+      // is not part of the dependencies for the callback.
+      if (state.filterMergedDataDiscover.length > 0) {
+        isFetchFinish.current = true;
+        return state.filterMergedDataDiscover;
+      }
+      isFetchFinish.current = false;
+      return state.mergedDataDiscover; // return this if filteredTopics.length === 0
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.filterMergedDataDiscover, state.mergedDataDiscover]);
 
     return (
       <React.Fragment>
@@ -281,21 +309,22 @@ const Discover = React.memo<DiscoverProps>(
         <div
           ref={windowScreenRef}
           className={clsx('', {
-            header: state.mergedDataDiscover?.length > 0,
+            header: whichToUse()?.length > 0,
           })}
           style={{ marginLeft: `${state.drawerWidth + 5}px`, zIndex: state.visible ? -1 : 0 }}
         >
-          <If condition={notification === '' && state.mergedDataDiscover?.length > 0}>
+          <If condition={notification === '' && whichToUse()?.length > 0}>
             <Then>
-              <MasonryLayoutMemo data={state.mergedDataDiscover} state={state}>
+              <MasonryLayoutMemo data={whichToUse()} state={state}>
                 {(columnCount: number) => {
-                  return Object.keys(state.mergedDataDiscover).map((key, idx) => (
+                  return Object.keys(whichToUse()).map((key, idx) => (
                     <CardDiscover
                       key={idx}
+                      imagesMapDataDiscover={imagesDataDiscover.mapData}
                       columnCount={columnCount}
                       routerProps={routerProps}
-                      index={state.mergedDataDiscover[idx].id}
-                      githubData={state.mergedDataDiscover[idx]}
+                      index={whichToUse()[idx].id}
+                      githubData={whichToUse()[idx]}
                       state={stateMemoize()}
                       dispatchStargazersUser={dispatchStargazersUserMemoize()}
                       stateStargazersMemoize={stateStargazersMemoize()}

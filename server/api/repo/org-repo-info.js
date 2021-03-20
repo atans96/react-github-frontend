@@ -1,5 +1,4 @@
 const util = require("../util");
-const api = require("../../GithubAPIWrapper/index");
 const fastJson = require("fast-json-stringify");
 module.exports = async (req, res, ctx, ...args) => {
   console.log(ctx, args);

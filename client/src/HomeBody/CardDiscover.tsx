@@ -21,11 +21,22 @@ interface CardRef extends Card {
   dispatchStargazersUser: any;
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   columnCount: number;
+  imagesMapDataDiscover: Map<number, any>;
 }
 
 const CardDiscover: React.FC<CardRef> = React.forwardRef(
   (
-    { routerProps, state, dispatch, githubData, index, dispatchStargazersUser, columnCount, stateStargazersMemoize },
+    {
+      routerProps,
+      state,
+      dispatch,
+      githubData,
+      index,
+      dispatchStargazersUser,
+      columnCount,
+      stateStargazersMemoize,
+      imagesMapDataDiscover,
+    },
     ref
   ) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
@@ -99,7 +110,12 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               <h3 style={{ textAlign: 'center' }}>
                 <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
               </h3>
-              <ImagesCardDiscover index={index} visible={isVisibleRef.current} state={state} />
+              <ImagesCardDiscover
+                index={index}
+                visible={isVisibleRef.current}
+                state={state}
+                imagesMapDataDiscover={imagesMapDataDiscover}
+              />
               <div className="trunctuatedTexts">
                 <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
               </div>

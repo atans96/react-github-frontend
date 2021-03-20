@@ -25,6 +25,7 @@ module.exports = async (req, res, ctx, ...args) => {
       res.send({ readme: response.data });
     })
     .catch((errors) => {
+      util.sendErrorMessageToClient(errors, res);
       ctx.log.error(errors);
     });
 };

@@ -1,30 +1,24 @@
-import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import _ from 'lodash';
+import { getElasticSearchBert } from '../services';
+import { Action, Nullable } from '../typing/type';
+import { IDataOne } from '../typing/interface';
 
 interface SearchBarProps {
   style: React.CSSProperties;
+  dispatch: any;
   ref: any;
 }
 
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
-export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style }, ref) => {
+export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatch }, ref) => {
   const [query, setQuery] = useState('');
   const isInputFocused = useRef<HTMLInputElement>(null);
-  const handler = useCallback(
-    _.debounce(function (query) {
-      if (query.toString().trim().length > 0) {
-        console.log(query);
-      }
-    }, 1500),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
   useImperativeHandle(
     ref,
     () => ({
       clearState() {
         setQuery('');
-        handler('');
       },
       getState() {
         return query.trim();
@@ -38,7 +32,6 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
     e.stopPropagation();
     e.persist();
     setQuery(e.currentTarget.value);
-    handler(e.currentTarget.value);
   };
   return (
     <div className={'input-bar-container-control-searchbar'} style={style}>
@@ -48,10 +41,9 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
           autoCapitalize="off"
           autoComplete="off"
           value={query}
-          onChange={onInputChange}
           ref={isInputFocused}
+          onChange={onInputChange}
           onBlur={() => {
-            handler('');
             setQuery('');
           }}
           style={query.length > 0 ? { width: `${65 + query.length * 2}px` } : { width: style.width }}
@@ -59,6 +51,7 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
           className="input-multi"
           name="query"
           placeholder={'Search anything...'}
+          required
         />
       </div>
     </div>

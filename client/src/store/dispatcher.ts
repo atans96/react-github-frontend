@@ -52,14 +52,6 @@ export const dispatchImagesData = (images: any, dispatch: React.Dispatch<any>) =
     },
   });
 };
-export const dispatchImagesDataDiscover = (images: any, dispatch: React.Dispatch<any>) => {
-  dispatch({
-    type: 'IMAGES_DATA_ADDED_DISCOVER',
-    payload: {
-      images: images,
-    },
-  });
-};
 export const dispatchAppendMergedDataDiscover = (data: MergedDataProps[], dispatch: React.Dispatch<any>) => {
   dispatch({
     type: 'MERGED_DATA_APPEND_DISCOVER',

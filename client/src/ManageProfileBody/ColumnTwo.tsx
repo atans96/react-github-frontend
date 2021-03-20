@@ -47,7 +47,8 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      debounceInputChange(event.target.value);
+      event.persist();
+      debounceInputChange(event.currentTarget.value);
     };
     const debounceInputChange = useCallback(
       _.debounce(function (typed) {

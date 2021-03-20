@@ -1,29 +1,29 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { IDataOne, IState } from './typing/interface';
 import PureSearchBarDiscover from './SearchBarBody/PureSearchBarDiscover';
 import { Action, Nullable } from './typing/type';
-interface Output {
-  isFetchFinish: boolean;
-}
 export interface SearchBarProps {
   state: IState;
   dispatch: any;
-  actionResolvedPromise: (
-    action: Action,
-    setLoading: any,
-    setNotification: any,
-    isFetchFinish: boolean,
-    displayName: string,
-    data?: Nullable<IDataOne | any>,
-    error?: string
-  ) => Output;
 }
 
-const SearchBarDiscover: React.FC<SearchBarProps> = ({ state, dispatch, actionResolvedPromise }) => {
+const SearchBarDiscover: React.FC<SearchBarProps> = ({ state, dispatch }) => {
   const PureSearchBarDataMemoized = useCallback(() => {
     return state;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.width]);
+  useEffect(() => {
+    if (document.location.pathname !== '/discover' && state.filterMergedDataDiscover.length > 0) {
+      //TODO: fix performance issue when navigating away from discover page
+      dispatch({
+        type: 'MERGED_DATA_ADDED_DISCOVER',
+        payload: {
+          data: [],
+          notificationDiscover: '',
+        },
+      });
+    }
+  }, [document.location.pathname]);
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
@@ -33,11 +33,7 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ state, dispatch, actionRe
         display: 'grid',
       }}
     >
-      <PureSearchBarDiscover
-        state={PureSearchBarDataMemoized()}
-        dispatch={dispatch}
-        actionResolvedPromise={actionResolvedPromise}
-      />
+      <PureSearchBarDiscover state={PureSearchBarDataMemoized()} dispatch={dispatch} />
     </div>
   );
 };

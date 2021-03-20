@@ -499,7 +499,7 @@ const Home = React.memo<HomeProps>(
             return acc;
           }, [] as any[]);
           const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          getRepoImages(data, clickedGQLTopic.variables.queryTopic, state.page, token)
+          getRepoImages(data, Array.isArray(state.username) ? state.username[0] : state.username, state.page, token)
             .then((repoImage) => {
               if (repoImage.renderImages.length > 0) {
                 dispatchShouldFetchImagesData(false, dispatch);
@@ -523,7 +523,7 @@ const Home = React.memo<HomeProps>(
     );
     const userDataRef = useRef<string>();
     useEffect(() => {
-      userDataRef.current = userData.getUserData.token || '';
+      userDataRef.current = userData?.getUserData?.token || '';
     });
     const onClickTopic = useCallback(
       async ({ variables }) => {
@@ -594,14 +594,15 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.page, state.lastPage, state.tokenRSS, state.isLoggedIn]);
 
-    const whichToUse = () => {
+    const whichToUse = useCallback(() => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
       // is not part of the dependencies for the callback.
       if (state.filteredMergedData.length > 0) {
         return state.filteredMergedData;
       }
       return state.mergedData; // return this if filteredTopics.length === 0
-    };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.mergedData, state.filteredMergedData]);
 
     // TODO: change the styling like: https://gatsby.pizza/ or maybe styling like nested menu (NOT SURE YET)
 

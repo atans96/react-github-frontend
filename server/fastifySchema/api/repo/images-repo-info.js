@@ -1,5 +1,9 @@
-const { ArrayObject } = require("../../types/User");
+const {
+  ImagesReadmeRepoInfo,
+  ImagesReadmeRepoInfoBody,
+} = require("../../types/User");
 
 module.exports = {
-  body: ArrayObject,
+  query: ImagesReadmeRepoInfo,
+  body: ImagesReadmeRepoInfoBody,
 };

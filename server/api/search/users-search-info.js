@@ -1,7 +1,17 @@
 const util = require("../util");
+const fastJson = require("fast-json-stringify");
 module.exports = async (req, res, ctx, ...args) => {
   const token = util.convertJWTToken(req.query.token);
   const gh = new args[0].github.Github({ token });
+  const stringify = fastJson({
+    title: "User Search Schema",
+    type: "object",
+    properties: {
+      users: {
+        type: "array",
+      },
+    },
+  });
   const queryUser = gh
     .search({
       q: req.query.user,
@@ -17,10 +27,18 @@ module.exports = async (req, res, ctx, ...args) => {
           acc.push(result);
           return acc;
         }, []);
+        ctx.redis.setex(
+          args[0].url,
+          300 * 1000,
+          stringify({
+            users: getUsers,
+          })
+        );
         res.send({ users: getUsers });
       })
     )
     .catch((errors) => {
+      util.sendErrorMessageToClient(errors, res);
       ctx.log.error(errors);
     });
 };
