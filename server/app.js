@@ -54,6 +54,7 @@ module.exports = async function buildFastify(deps) {
     });
   }
   fastify.setValidatorCompiler(({ schema, method, url, httpPart }) => {
+    console.log(`Compiling AJV Schema for: ${url}`);
     return AJV.compile(schema);
   });
   fastify.setSerializerCompiler(function (schemaDefinition) {
@@ -73,7 +74,13 @@ module.exports = async function buildFastify(deps) {
     credentials: true,
   });
   fastify.register(dbPlugin(db));
-  fastify.register(routes, { axios, githubAPIWrapper, elastic, jwtService });
+  fastify.register(routes, {
+    axios,
+    githubAPIWrapper,
+    elastic,
+    jwtService,
+    config,
+  });
   fastify.register(csrf);
   fastify.register(configPlugin(config));
   fastify.register(apolloServerPlugin);
