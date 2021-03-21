@@ -7,7 +7,7 @@ import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import { IState } from '../../typing/interface';
-import { binarySearch, isEqualObjects, Loading } from '../../util';
+import { isEqualObjects, Loading } from '../../util';
 import useCollapse from '../../hooks/useCollapse';
 import { ProgressBar } from '../../Layout/ProgressBar';
 import { Then } from '../../util/react-if/Then';
@@ -32,12 +32,6 @@ const ImagesCard = React.memo<ImagesCardProps>(
     let timerToClearSomewhere: any;
     const { getToggleProps, getCollapseProps } = useCollapse({
       defaultExpanded: false, // is the images already expanded in the first place?
-      onExpandStart() {
-        setRenderChildren(true);
-      },
-      onCollapseEnd() {
-        setRenderChildren(false);
-      },
     });
 
     const handleProgressPromiseUnrender = useCallback((src) => {
@@ -75,6 +69,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
     const handleClickUnrenderImages = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
+        setRenderChildren((prevState) => !prevState);
         if (showProgressBarUnRenderImagesRef.current) {
           setShowProgressBarUnRenderImages(true);
           showProgressBarUnRenderImagesRef.current = false;

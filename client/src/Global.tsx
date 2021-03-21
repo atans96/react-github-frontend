@@ -246,24 +246,24 @@ const Global: React.FC<{
               );
             }}
           />
-          <PrefetchKeepMountedLayout
-            mountedCondition={props.routerProps.location.pathname === '/discover'}
-            render={() => {
-              return (
-                <React.Fragment>
-                  <SearchBarDiscover state={props.componentProps.state} dispatch={props.componentProps.dispatch} />
-                  <Discover
-                    stateStargazers={props.componentProps.stateStargazers}
-                    dispatchStargazers={props.componentProps.dispatchStargazers}
-                    dispatch={props.componentProps.dispatch}
-                    state={props.componentProps.state}
-                    routerProps={props.routerProps}
-                    actionResolvedPromise={actionResolvedPromise}
-                  />
-                </React.Fragment>
-              );
-            }}
-          />
+          {/*<PrefetchKeepMountedLayout*/}
+          {/*  mountedCondition={props.routerProps.location.pathname === '/discover'}*/}
+          {/*  render={() => {*/}
+          {/*    return (*/}
+          {/*      <React.Fragment>*/}
+          {/*        <SearchBarDiscover state={props.componentProps.state} dispatch={props.componentProps.dispatch} />*/}
+          {/*        <Discover*/}
+          {/*          stateStargazers={props.componentProps.stateStargazers}*/}
+          {/*          dispatchStargazers={props.componentProps.dispatchStargazers}*/}
+          {/*          dispatch={props.componentProps.dispatch}*/}
+          {/*          state={props.componentProps.state}*/}
+          {/*          routerProps={props.routerProps}*/}
+          {/*          actionResolvedPromise={actionResolvedPromise}*/}
+          {/*        />*/}
+          {/*      </React.Fragment>*/}
+          {/*    );*/}
+          {/*  }}*/}
+          {/*/>*/}
           <PrefetchKeepMountedLayout
             mountedCondition={props.routerProps.location.pathname === '/trending'}
             render={() => {

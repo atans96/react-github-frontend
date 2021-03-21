@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom';
 import { requestGithubGraphQLLogin, setTokenGQL } from '../../../services';
 import { Nullable } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
+import { noop } from '../../../util/util';
 
 interface LoginGQLProps {
   dispatch: any;
@@ -20,9 +21,7 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, dispat
   const verifyTokenGQL = () => {
     requestGithubGraphQLLogin(token).then((res) => {
       if (res.success) {
-        setTokenGQL(token).then((e) => {
-          console.debug(e);
-        });
+        setTokenGQL(token).then(noop);
         dispatch({
           type: 'TOKEN_ADDED',
           payload: {

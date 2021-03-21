@@ -1,22 +1,21 @@
 import _ from 'lodash';
 import $ from 'cash-dom';
 import React, { useRef, useState } from 'react';
-import { DraggableCore } from 'react-draggable';
-import * as constants from 'constants';
 
 export const useDraggable = ({ maxWidth = 600, drawerWidthClient = 200, direction = 'e' }) => {
-  const [drawerWidth, setDrawerWidth] = useState(Math.min(drawerWidthClient, maxWidth));
   const drawerRef = useRef<HTMLDivElement>(null);
+  const [drawerWidth, setDrawerWidth] = useState(Math.min(drawerWidthClient, maxWidth));
   const handleDrag = (e: any, ui: any) => {
     const factor = direction === 'e' || direction === 's' ? -1 : 1;
 
     // modify the size based on the drag delta
     const delta = direction === 'e' || direction === 'w' ? ui.deltaX : ui.deltaY;
-    if (drawerWidth <= maxWidth) {
-      setDrawerWidth(Math.max(drawerWidthClient, drawerWidth - delta * factor));
-    } else {
-      drawerWidth > maxWidth && setDrawerWidth(maxWidth);
-    }
+    setDrawerWidth((size) => Math.max(drawerWidthClient, size - delta * factor));
+    // if (drawerWidth <= maxWidth) {
+    //   setDrawerWidth(Math.max(drawerWidthClient, drawerWidth - delta * factor));
+    // } else {
+    //   drawerWidth > maxWidth && setDrawerWidth(maxWidth);
+    // }
   };
 
   const handleDragEnd = () => {
@@ -45,5 +44,5 @@ export const useDraggable = ({ maxWidth = 600, drawerWidthClient = 200, directio
       }
     }
   };
-  return [drawerWidth, dragHandlers] as const;
+  return [drawerWidth, dragHandlers, drawerRef] as const;
 };

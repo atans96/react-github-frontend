@@ -17,6 +17,7 @@ import { useApolloFactory } from '../../hooks/useApolloFactory';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { IState } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
+import { noop } from '../../util/util';
 interface StyleProps {
   drawerWidth: string;
 }
@@ -71,9 +72,7 @@ const RowOne = React.memo<RowOneProps>(
           variables: {
             languagePreference: languagePreferences,
           },
-        }).then((e) => {
-          console.debug(e);
-        });
+        }).then(noop);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [languagePreferences]);

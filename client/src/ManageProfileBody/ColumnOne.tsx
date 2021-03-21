@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { IState } from '../typing/interface';
@@ -32,7 +32,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     '& .MuiDrawer-paper': {
       width: (props) => props.drawerWidth,
       overflowX: 'hidden',
-      zIndex: -1,
       boxShadow: '3px 0 5px -2px #888',
       background: 'var(--background-theme-color)',
     },
@@ -48,11 +47,12 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 }));
 const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(({ handleLanguageFilter, state, dispatch }, ref) => {
   const defaultWidth = useRef(250);
-  const [drawerWidth, dragHandlers] = useDraggable({ drawerWidthClient: defaultWidth.current });
+  const [drawerWidth, dragHandlers, drawerRef] = useDraggable({ drawerWidthClient: defaultWidth.current });
   const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
+
   return (
     <React.Fragment>
-      <Drawer variant="permanent" className={classes.drawer} open={true}>
+      <Drawer variant="permanent" className={classes.drawer} open={true} ref={drawerRef}>
         <div className={classes.toolbar} />
         <RowOne state={state} />
         <Divider />
