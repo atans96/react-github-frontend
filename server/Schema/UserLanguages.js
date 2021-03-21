@@ -10,7 +10,6 @@ const UserLanguages = gql`
     topics: [String]
     defaultBranch: String!
     html_url: String!
-    readme: String
   }
   type ContributorsRepo {
     login: String
