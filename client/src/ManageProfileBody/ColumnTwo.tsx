@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Search from './ColumnTwoBody/Search';
 import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../typing/type';
@@ -11,15 +11,19 @@ import Details from './ColumnTwoBody/Details';
 import RepoInfo from './ColumnTwoBody/RepoInfo';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
+import { SinglyLinkedList } from '../util/util';
+import { ColumnWidthProps } from '../ManageProfile';
 
 interface ColumnTwoProps {
   languageFilter: string[];
   state: IState;
   dispatch: any;
+  stateReducer: SinglyLinkedList<ColumnWidthProps>;
+  dispatchReducer: any;
 }
 
 const ColumnTwo = React.memo<ColumnTwoProps>(
-  ({ state, languageFilter, dispatch }) => {
+  ({ state, languageFilter, dispatch, stateReducer, dispatchReducer }) => {
     const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
     const [typedFilter, setTypedFilter] = useState('');
     const [active, setActive] = useState('');
@@ -82,8 +86,25 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
       }, filter1);
       return fastFilter((obj: any) => !!obj, filter2);
     };
-    const defaultWidth = useRef(350);
-    const [drawerWidth, dragHandlers] = useDraggable({ drawerWidthClient: defaultWidth.current });
+
+    const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
+      drawerWidthClient: stateReducer.getAt(stateReducer, 2)?.data.width,
+    });
+    const [width, setWidth] = useState({ siblingsWidth: 250, defaultWidth: 250 });
+    useEffect(() => {
+      if (stateReducer.getAt(stateReducer, 2)) {
+        let total = 0;
+        while (stateReducer.getAt(stateReducer, 2)?.next !== null) {
+          total += stateReducer!.getAt(stateReducer, 2)!.next!.data.width;
+        }
+        setWidth({ siblingsWidth: total, defaultWidth: stateReducer!.getAt(stateReducer, 2)!.data.width });
+      }
+    }, [stateReducer]);
+
+    useEffect(() => {
+      dispatchReducer({ type: 2, width: drawerWidth });
+    }, [drawerWidth]);
+
     return (
       <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
         <table>
@@ -92,7 +113,7 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
               <th>
                 <Search
                   handleInputChange={handleInputChange}
-                  width={drawerWidth < defaultWidth.current ? defaultWidth.current : drawerWidth}
+                  width={drawerWidth < width.defaultWidth ? width.defaultWidth : drawerWidth}
                 />
                 <p>Search in:</p>
                 <Checkboxes checkedItems={checkedItems} handleCheckboxClick={handleCheckboxClick} />
@@ -104,12 +125,13 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
               <td style={{ position: 'absolute' }}>
                 <div
                   style={{
-                    width: `${drawerWidth < defaultWidth.current ? defaultWidth.current : drawerWidth}px`,
+                    width: `${drawerWidth < width.defaultWidth ? width.defaultWidth : drawerWidth}px`,
                     background: 'var(--background-theme-color)',
                     overflowY: 'auto',
                     height: height,
                     display: 'inline-block',
                   }}
+                  ref={drawerRef}
                 >
                   {render().map((obj: RepoInfoProps, idx) => {
                     return (
@@ -124,18 +146,6 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
                     );
                   })}
                 </div>
-              </td>
-              <td>
-                <DraggableCore key="columnTwo" {...dragHandlers}>
-                  <div style={{ height: '100vh', width: '0px' }}>
-                    <div
-                      className={'dragger'}
-                      style={{
-                        top: '40%',
-                      }}
-                    />
-                  </div>
-                </DraggableCore>
               </td>
               <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
                 <If condition={fullName !== '' && state.width > 850}>
@@ -153,6 +163,17 @@ const ColumnTwo = React.memo<ColumnTwoProps>(
             </tr>
           </tbody>
         </table>
+        <DraggableCore key="columnTwo" {...dragHandlers}>
+          <div style={{ height: '100vh', width: '0px' }}>
+            <div
+              className={'dragger'}
+              style={{
+                top: '40%',
+                left: `${drawerWidth + width.siblingsWidth}px`,
+              }}
+            />
+          </div>
+        </DraggableCore>
       </div>
     );
   },

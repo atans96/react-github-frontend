@@ -112,6 +112,7 @@ export interface RepoRenderImages {
 export interface SearchUser {
   users: { [x: string]: any };
 }
+
 export interface IContext {
   state: IState;
   dispatch: Dispatch<IAction<any>>;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
@@ -116,12 +116,6 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
           [classes.drawerOpen]: open,
           [classes.drawerClose]: !open,
         })}
-        classes={{
-          paper: clsx({
-            [classes.drawerOpen]: open,
-            [classes.drawerClose]: !open,
-          }),
-        }}
       >
         <div className={classes.toolbar}>
           <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
@@ -131,12 +125,9 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
         <SubscribeFeedSetting state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazersUser} />
       </Drawer>
       {open && (
-        <DraggableCore key="columnOne" {...dragHandlers}>
+        <DraggableCore key="drawerBar" {...dragHandlers}>
           <div style={{ height: '100vh', width: '0px' }}>
-            <div
-              className={'dragger'}
-              style={{ top: '40%', left: `${drawerRef!.current!.getBoundingClientRect().width}px` }}
-            >
+            <div className={'dragger'} style={{ top: '40%', left: `${drawerWidth}px` }}>
               <span />
             </div>
           </div>

@@ -7,6 +7,89 @@ import { dispatchRateLimit, dispatchRateLimitAnimation } from '../store/dispatch
 
 type AnyFunction = (...args: any[]) => unknown;
 
+class SinglyLinkedListNode<T> {
+  data: T;
+  next: SinglyLinkedListNode<T> | null;
+
+  constructor(args: SinglyLinkedListNode<T>) {
+    this.data = args.data;
+    this.next = args.next;
+  }
+}
+
+export class SinglyLinkedList<T> {
+  public fromArrayLeftToRight<T>(items: T[]) {
+    const list = new SinglyLinkedList();
+
+    list.head = items.reduce((acc: any, item) => {
+      const node = new SinglyLinkedListNode<T>({ data: item, next: null });
+
+      node.data = item;
+      node.next = acc;
+
+      return node;
+    }, null);
+
+    return list;
+  }
+  public getAt(list: SinglyLinkedList<T>, index: number) {
+    let counter = 0;
+    let node = list.head;
+    while (node) {
+      if (counter === index) {
+        return node;
+      }
+      counter++;
+      node = node.next;
+    }
+    return null;
+  }
+  public fromArrayRightToLeft<T>(items: T[]) {
+    const list = new SinglyLinkedList();
+
+    list.head = items.reduceRight((acc: any, item) => {
+      const node = new SinglyLinkedListNode<T>({ data: item, next: null });
+
+      node.data = item;
+      node.next = acc;
+
+      return node;
+    }, null);
+
+    return list;
+  }
+  public reverse<T>(list: SinglyLinkedList<T>) {
+    const newList = new SinglyLinkedList();
+    let last: SinglyLinkedListNode<T> | null = null;
+    let curr: SinglyLinkedListNode<T> | null = list.head;
+
+    while (curr !== null) {
+      const newNode: SinglyLinkedListNode<T> = new SinglyLinkedListNode<T>({ data: curr.data, next: last });
+
+      last = newNode;
+      curr = curr.next;
+    }
+
+    newList.head = last;
+
+    return newList;
+  }
+
+  public head: SinglyLinkedListNode<T> | null = null;
+
+  public toString(): string {
+    let curr = this.head;
+    let str = '';
+
+    while (curr !== null) {
+      str += curr.data;
+
+      curr = curr.next;
+    }
+
+    return str;
+  }
+}
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
 export const filterActionResolvedPromiseData = (input: any, filter1: any, ...args: any) => {

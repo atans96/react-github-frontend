@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { IState } from '../typing/interface';
@@ -6,11 +6,15 @@ import RowOne from './ColumnOneBody/RowOne';
 import RowTwo from './ColumnOneBody/RowTwo';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
+import { SinglyLinkedList } from '../util/util';
+import { ColumnWidthProps } from '../ManageProfile';
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
   state: IState;
   dispatch: any;
+  stateReducer: SinglyLinkedList<ColumnWidthProps>;
+  dispatchReducer: any;
 }
 
 interface StyleProps {
@@ -45,28 +49,33 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     padding: '0 8px',
   },
 }));
-const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(({ handleLanguageFilter, state, dispatch }, ref) => {
-  const defaultWidth = useRef(250);
-  const [drawerWidth, dragHandlers, drawerRef] = useDraggable({ drawerWidthClient: defaultWidth.current });
-  const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
-
-  return (
-    <React.Fragment>
-      <Drawer variant="permanent" className={classes.drawer} open={true} ref={drawerRef}>
-        <div className={classes.toolbar} />
-        <RowOne state={state} />
-        <Divider />
-        <RowTwo handleLanguageFilter={handleLanguageFilter} state={state} dispatch={dispatch} />
-      </Drawer>
-      <DraggableCore key="columnOne" {...dragHandlers}>
-        <div style={{ height: '100vh', width: '0px' }}>
-          <div className={'dragger'} style={{ left: `${drawerWidth}px`, top: '40%' }}>
-            <span />
+const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
+  ({ handleLanguageFilter, state, dispatch, stateReducer, dispatchReducer }, ref) => {
+    const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
+      drawerWidthClient: stateReducer.getAt(stateReducer, 1)?.data.width,
+    });
+    const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
+    useEffect(() => {
+      dispatchReducer({ type: 1, width: drawerWidth });
+    }, [drawerWidth]);
+    return (
+      <React.Fragment>
+        <Drawer variant="permanent" className={classes.drawer} open={true} ref={drawerRef}>
+          <div className={classes.toolbar} />
+          <RowOne state={state} />
+          <Divider />
+          <RowTwo handleLanguageFilter={handleLanguageFilter} state={state} dispatch={dispatch} />
+        </Drawer>
+        <DraggableCore key="columnOne" {...dragHandlers}>
+          <div style={{ height: '100vh', width: '0px' }}>
+            <div className={'dragger'} style={{ left: `${drawerWidth}px`, top: '40%' }}>
+              <span />
+            </div>
           </div>
-        </div>
-      </DraggableCore>
-    </React.Fragment>
-  );
-});
+        </DraggableCore>
+      </React.Fragment>
+    );
+  }
+);
 ColumnOne.displayName = 'ColumnOne';
 export default ColumnOne;
