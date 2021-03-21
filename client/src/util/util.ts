@@ -6,31 +6,88 @@ import { getRateLimitInfo, removeTokenGQL } from '../services';
 import { dispatchRateLimit, dispatchRateLimitAnimation } from '../store/dispatcher';
 
 type AnyFunction = (...args: any[]) => unknown;
+type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 
 class SinglyLinkedListNode<T> {
-  data: T;
+  data: T | any;
   next: SinglyLinkedListNode<T> | null;
+  prev: SinglyLinkedListNode<T> | null;
 
   constructor(args: SinglyLinkedListNode<T>) {
     this.data = args.data;
     this.next = args.next;
+    this.prev = args.prev;
   }
 }
 
 export class SinglyLinkedList<T> {
+  public head: SinglyLinkedListNode<T> | null;
+  public tail: SinglyLinkedListNode<T> | null;
+  constructor() {
+    this.head = null;
+    this.tail = null;
+  }
   public fromArrayLeftToRight<T>(items: T[]) {
-    const list = new SinglyLinkedList();
-
-    list.head = items.reduce((acc: any, item) => {
-      const node = new SinglyLinkedListNode<T>({ data: item, next: null });
-
-      node.data = item;
-      node.next = acc;
+    items.reduce((acc: any, item) => {
+      const node = new SinglyLinkedListNode<T>({ data: item, prev: this.tail, next: null });
+      if (this.head === null) {
+        this.head = node;
+      }
+      if (this.tail !== null) {
+        this.tail.next = node;
+      }
+      this.tail = node;
 
       return node;
     }, null);
 
-    return list;
+    return this;
+  }
+  /**
+   * Return the first node and its index in the list that
+   * satisfies the testing function
+   * ```ts
+   * new LinkedList(1, 2, 3).findNodeIndex(data => data === 1);
+   * // { node: LinkedListNode, index: 0 }
+   * ```
+   * @param f A function to be applied to the data of each node
+   */
+  public findNodeIndex(
+    f: TTestFunction<T>
+  ):
+    | {
+        node: SinglyLinkedListNode<T>;
+        index: number;
+      }
+    | undefined {
+    let currentIndex = 0;
+    let currentNode = this.head;
+    while (currentNode) {
+      if (f(currentNode.data, currentIndex, this)) {
+        return {
+          index: currentIndex,
+          node: currentNode,
+        };
+      }
+      currentNode = currentNode.next;
+      currentIndex += 1;
+    }
+    return undefined;
+  }
+  /**
+   * The iterator implementation
+   * ```ts
+   * const list = new LinkedList(1, 2, 3);
+   * for (const data of list) { log(data); } // 1 2 3
+   * ```
+   */
+  public *[Symbol.iterator](): IterableIterator<T> {
+    let element = this.head;
+
+    while (element !== null) {
+      yield element.data;
+      element = element.next;
+    }
   }
   public getAt(list: SinglyLinkedList<T>, index: number) {
     let counter = 0;
@@ -45,37 +102,20 @@ export class SinglyLinkedList<T> {
     return null;
   }
   public fromArrayRightToLeft<T>(items: T[]) {
-    const list = new SinglyLinkedList();
-
-    list.head = items.reduceRight((acc: any, item) => {
-      const node = new SinglyLinkedListNode<T>({ data: item, next: null });
-
-      node.data = item;
-      node.next = acc;
-
+    items.reduceRight((acc: any, item) => {
+      const node = new SinglyLinkedListNode<T>({ data: item, prev: null, next: this.head });
+      if (this.tail === null) {
+        this.tail = node;
+      }
+      if (this.head !== null) {
+        this.head.prev = node;
+      }
+      this.head = node;
       return node;
     }, null);
 
-    return list;
+    return this;
   }
-  public reverse<T>(list: SinglyLinkedList<T>) {
-    const newList = new SinglyLinkedList();
-    let last: SinglyLinkedListNode<T> | null = null;
-    let curr: SinglyLinkedListNode<T> | null = list.head;
-
-    while (curr !== null) {
-      const newNode: SinglyLinkedListNode<T> = new SinglyLinkedListNode<T>({ data: curr.data, next: last });
-
-      last = newNode;
-      curr = curr.next;
-    }
-
-    newList.head = last;
-
-    return newList;
-  }
-
-  public head: SinglyLinkedListNode<T> | null = null;
 
   public toString(): string {
     let curr = this.head;

@@ -52,7 +52,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
   ({ handleLanguageFilter, state, dispatch, stateReducer, dispatchReducer }, ref) => {
     const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
-      drawerWidthClient: stateReducer.getAt(stateReducer, 1)?.data.width,
+      drawerWidthClient: stateReducer.findNodeIndex((data: ColumnWidthProps) => data.name === 1)?.node?.data.width,
     });
     const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
     useEffect(() => {
