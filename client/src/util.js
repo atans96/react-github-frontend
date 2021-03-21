@@ -2,6 +2,44 @@
 import React, { useRef, useState } from 'react';
 // import deepKeys from 'deep-keys';
 // import imagesLoaded from 'imagesloaded';
+export class ListNode {
+  constructor(data) {
+    this.data = data;
+    this.next = null;
+  }
+}
+export class LinkedList {
+  constructor(head = null) {
+    this.head = head;
+  }
+}
+LinkedList.prototype.insertAtEnd = function (data) {
+  // A newNode object is created with property data and next=null
+
+  let newNode = new ListNode(data); // When head = null i.e. the list is empty, then head itself will point to the newNode.
+  if (!this.head) {
+    this.head = newNode;
+    return this.head;
+  }
+  // Else, traverse the list to find the tail (the tail node will initially be pointing at null), and update the tail's next pointer.
+  let tail = this.head;
+  while (tail.next !== null) {
+    tail = tail.next;
+  }
+  tail.next = newNode;
+  return this.head;
+};
+export const reverseLinkedList = (head) => {
+  let previous = null;
+  while (head !== null) {
+    let next = head.next;
+    head.next = previous;
+    previous = head;
+    head = next;
+  }
+  return previous;
+};
+
 export function binarySearch(arr, n) {
   let min = 0;
   let max = arr.length - 1;

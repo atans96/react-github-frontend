@@ -131,7 +131,9 @@ const Home = React.memo<HomeProps>(
 
     const actionController = (res: IDataOne, callback?: Promise<any> | any) => {
       // compare new with old data, if they differ, that means it still has data to fetch
-      const promiseOrNot = typeof callback.then === 'function' ? callback.then() : isFunction(callback);
+      const promiseOrNot = () => {
+        callback instanceof Promise ? callback.then() : isFunction(callback);
+      };
       if (isDataExists(res)) {
         callback
           ? promiseOrNot()

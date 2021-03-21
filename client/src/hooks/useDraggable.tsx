@@ -10,12 +10,7 @@ export const useDraggable = ({ maxWidth = 600, drawerWidthClient = 200, directio
 
     // modify the size based on the drag delta
     const delta = direction === 'e' || direction === 'w' ? ui.deltaX : ui.deltaY;
-    setDrawerWidth((size) => Math.max(drawerWidthClient, size - delta * factor));
-    // if (drawerWidth <= maxWidth) {
-    //   setDrawerWidth(Math.max(drawerWidthClient, drawerWidth - delta * factor));
-    // } else {
-    //   drawerWidth > maxWidth && setDrawerWidth(maxWidth);
-    // }
+    setDrawerWidth((size) => Math.min(maxWidth, Math.max(drawerWidthClient, size - delta * factor)));
   };
 
   const handleDragEnd = () => {
