@@ -99,6 +99,7 @@ export default function useCollapse({
   }, [isExpanded]);
 
   const handleTransitionEnd = (e: TransitionEvent): void => {
+    //no transition to be called when the height not change
     // Sometimes onTransitionEnd is triggered by another transition,
     // such as a nested collapse panel transitioning. But we only
     // want to handle this if this component's element is transitioning
@@ -149,7 +150,13 @@ export default function useCollapse({
       tabIndex: 0,
       disabled,
       ...rest,
-      onClick: disabled ? noop : callAll(onClick, () => setExpanded((n) => !n)),
+      onClick: disabled
+        ? noop
+        : callAll(onClick, () =>
+            setExpanded((n) => {
+              return !n;
+            })
+          ), //n will be the previous state of setStateExpanded
     };
   }
 

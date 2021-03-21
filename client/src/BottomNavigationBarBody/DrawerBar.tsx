@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
@@ -16,12 +16,8 @@ interface StyleProps {
 }
 
 const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
-  root: {
-    display: 'flex',
-  },
   drawer: {
     '& .MuiDrawer-paper': {
-      zIndex: -1,
       width: (props) => props.drawerWidth,
       height: '100vh',
       overflowX: 'hidden',
@@ -69,18 +65,23 @@ interface DrawerBarProps {
 
 const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargazersUser }) => {
   const [open, setOpen] = useState(false);
-  const [drawerWidth, dragHandlers] = useDraggable({});
+  const [drawerWidth, dragHandlers, drawerRef] = useDraggable({});
   const classes = useStyles({ drawerWidth: open ? `${drawerWidth}px` : '0px' });
-  const handleClick = (e: React.MouseEvent) => {
+
+  const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setOpen(!open);
+    setOpen((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
     dispatch({
       type: 'SET_DRAWER_WIDTH',
       payload: {
-        drawerWidth: !open ? 200 : 0,
+        drawerWidth: open ? 200 : 0,
       },
     });
-  };
+  }, [open]);
+
   useEffect(() => {
     return () => {
       dispatch({
@@ -92,6 +93,7 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   return (
     <React.Fragment>
       <div style={{ bottom: '-5px', left: '-10px', zIndex: 9999, position: 'fixed' }}>
@@ -107,49 +109,39 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
           </span>
         </button>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>
-              <Drawer
-                variant="permanent"
-                className={clsx(classes.drawer, {
-                  [classes.drawerOpen]: open,
-                  [classes.drawerClose]: !open,
-                })}
-                classes={{
-                  paper: clsx({
-                    [classes.drawerOpen]: open,
-                    [classes.drawerClose]: !open,
-                  }),
-                }}
-              >
-                <div className={classes.toolbar}>
-                  <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
-                </div>
-                <RSSFeed state={state} dispatch={dispatch} />
-                <SubscribeFeed state={state} />
-                <SubscribeFeedSetting
-                  state={state}
-                  dispatch={dispatch}
-                  dispatchStargazersUser={dispatchStargazersUser}
-                />
-              </Drawer>
-            </th>
-            <th>
-              {open && (
-                <DraggableCore key="drawerBar" {...dragHandlers}>
-                  <div style={{ height: '100vh', width: '0px' }}>
-                    <div className={'dragger'} style={{ top: '40%' }}>
-                      <span />
-                    </div>
-                  </div>
-                </DraggableCore>
-              )}
-            </th>
-          </tr>
-        </thead>
-      </table>
+      <Drawer
+        ref={drawerRef}
+        variant="permanent"
+        className={clsx(classes.drawer, {
+          [classes.drawerOpen]: open,
+          [classes.drawerClose]: !open,
+        })}
+        classes={{
+          paper: clsx({
+            [classes.drawerOpen]: open,
+            [classes.drawerClose]: !open,
+          }),
+        }}
+      >
+        <div className={classes.toolbar}>
+          <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
+        </div>
+        <RSSFeed state={state} dispatch={dispatch} />
+        <SubscribeFeed state={state} />
+        <SubscribeFeedSetting state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazersUser} />
+      </Drawer>
+      {open && (
+        <DraggableCore key="columnOne" {...dragHandlers}>
+          <div style={{ height: '100vh', width: '0px' }}>
+            <div
+              className={'dragger'}
+              style={{ top: '40%', left: `${drawerRef!.current!.getBoundingClientRect().width}px` }}
+            >
+              <span />
+            </div>
+          </div>
+        </DraggableCore>
+      )}
     </React.Fragment>
   );
 };

@@ -15,6 +15,7 @@ import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
 import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
+import { noop } from './util/util';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -211,9 +212,7 @@ const Discover = React.memo<DiscoverProps>(
               variables: {
                 seenCards: result,
               },
-            }).then((e) => {
-              console.debug(e);
-            });
+            }).then(noop);
           }
         }
       }, // eslint-disable-next-line react-hooks/exhaustive-deps

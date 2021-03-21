@@ -25,6 +25,7 @@ import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
+import { noop } from './util/util';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -222,9 +223,7 @@ const Home = React.memo<HomeProps>(
                 })
             );
           });
-          Promise.all(promises).then((e) => {
-            console.debug(e);
-          });
+          Promise.all(promises).then(noop);
         }
       }
     };
@@ -288,9 +287,7 @@ const Home = React.memo<HomeProps>(
             })
         );
       });
-      Promise.all(promises).then((e) => {
-        console.debug(e);
-      });
+      Promise.all(promises).then(noop);
     };
     const mergedDataRef = useRef<MergedDataProps[]>([]);
     const isLoadingRef = useRef<boolean>(false);
@@ -352,9 +349,7 @@ const Home = React.memo<HomeProps>(
             variables: {
               seenCards: result,
             },
-          }).then((e) => {
-            console.debug(e);
-          });
+          }).then(noop);
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps

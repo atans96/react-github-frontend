@@ -34,12 +34,6 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     let timerToClearSomewhere: any;
     const { getToggleProps, getCollapseProps } = useCollapse({
       defaultExpanded: false, // is the images already expanded in the first place?
-      onExpandStart() {
-        setRenderChildren(true);
-      },
-      onCollapseEnd() {
-        setRenderChildren(false);
-      },
     });
 
     const handleProgressPromiseUnrender = useCallback((src) => {
@@ -82,6 +76,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
     }, []);
     const handleClickUnrenderImages = (e: React.MouseEvent) => {
       e.preventDefault();
+      setRenderChildren((prevState) => !prevState);
       if (showProgressBarUnRenderImagesRef.current) {
         setShowProgressBarUnRenderImages(true);
         showProgressBarUnRenderImagesRef.current = false;
@@ -177,6 +172,7 @@ const ImagesCardDiscover = React.memo<ImagesCardProps>(
       isEqualObjects(prevProps.visible, nextProps.visible) &&
       isEqualObjects(prevProps.imagesMapDataDiscover, nextProps.imagesMapDataDiscover) &&
       isEqualObjects(prevProps.state.filterBySeen, nextProps.state.filterBySeen) &&
+      isEqualObjects(prevProps.state.filterMergedDataDiscover, nextProps.state.filterMergedDataDiscover) &&
       isEqualObjects(prevProps.index, nextProps.index)
     );
   }

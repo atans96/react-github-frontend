@@ -47,7 +47,7 @@ const ManageProfile: React.FC<ManageProfileProps> = ({ state, dispatch }) => {
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <ColumnOne handleLanguageFilter={handleLanguageFilter} state={columnOneDataMemoize()} dispatch={dispatch} />
-      {/*<ColumnTwo languageFilter={languageFilter} dispatch={dispatch} state={columnTwoDataMemoize()} />*/}
+      <ColumnTwo languageFilter={languageFilter} dispatch={dispatch} state={columnTwoDataMemoize()} />
     </div>
   );
 };

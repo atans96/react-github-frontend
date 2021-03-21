@@ -100,9 +100,9 @@ export function useControlledState(
   const [stateExpanded, setStateExpanded] = useState(defaultExpanded || false);
   const initiallyControlled = useRef(isExpanded != null);
   const expanded = initiallyControlled.current ? (isExpanded as boolean) : stateExpanded;
-  const setExpanded = useCallback((n) => {
+  const setExpanded = useCallback((fn) => {
     if (!initiallyControlled.current) {
-      setStateExpanded(n);
+      setStateExpanded(fn);
     }
   }, []);
 
@@ -212,9 +212,7 @@ export async function addRSSFeed(url: string) {
 
 export function logoutAction(history: any, dispatch: any, dispatchStargazers: any) {
   history.push('/');
-  removeTokenGQL().then((e) => {
-    console.debug(e);
-  });
+  removeTokenGQL().then(noop);
   dispatch({ type: 'LOGOUT' });
   dispatchStargazers({ type: 'LOGOUT' });
   dispatchRateLimitAnimation(false, dispatch);

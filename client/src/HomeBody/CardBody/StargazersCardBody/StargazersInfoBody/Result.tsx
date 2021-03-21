@@ -13,6 +13,7 @@ import { WATCH_USER_REMOVED } from '../../../../mutations';
 import { GET_WATCH_USERS } from '../../../../queries';
 import { fastFilter } from '../../../../util';
 import { useApolloFactory } from '../../../../hooks/useApolloFactory';
+import { noop } from '../../../../util/util';
 
 export interface Result {
   getRootPropsCard: any;
@@ -82,17 +83,13 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
             { id: stargazer.id, login: stargazer.login, createdAt: Date.now(), avatarUrl: stargazer.avatarUrl }
           ),
         },
-      }).then((e) => {
-        console.debug(e);
-      });
+      }).then(noop);
     } else {
       removed({
         variables: {
           login: stargazer.login,
         },
-      }).then((e) => {
-        console.debug(e);
-      });
+      }).then(noop);
     }
   };
   const onClickQueue = (e: React.MouseEvent) => {
