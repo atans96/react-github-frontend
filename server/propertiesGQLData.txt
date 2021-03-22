@@ -16,7 +16,6 @@ updatedAt
 topics
 defaultBranch
 html_url
-readme
 login
 avatar_url
 contributions
