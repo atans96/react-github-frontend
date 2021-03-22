@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { IState } from '../typing/interface';
@@ -6,14 +6,13 @@ import RowOne from './ColumnOneBody/RowOne';
 import RowTwo from './ColumnOneBody/RowTwo';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
-import { SinglyLinkedList } from '../util/util';
 import { ColumnWidthProps } from '../ManageProfile';
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
   state: IState;
   dispatch: any;
-  stateReducer: SinglyLinkedList<ColumnWidthProps>;
+  stateReducer: Map<string, ColumnWidthProps>;
   dispatchReducer: any;
 }
 
@@ -51,13 +50,22 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 }));
 const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
   ({ handleLanguageFilter, state, dispatch, stateReducer, dispatchReducer }, ref) => {
+    const displayName: string | undefined = (ColumnOne as React.ComponentType<any>).displayName;
+    const drawerWidthRef = useRef(stateReducer?.get(displayName!)?.width);
     const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
-      drawerWidthClient: stateReducer.findNodeIndex((data: ColumnWidthProps) => data.name === 1)?.node?.data.width,
+      drawerWidthClient: drawerWidthRef.current,
     });
     const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
     useEffect(() => {
-      dispatchReducer({ type: 1, width: drawerWidth });
+      if (stateReducer) {
+        const res = stateReducer.set(
+          displayName!,
+          Object.assign({}, { name: displayName!, width: drawerWidth, draggerPosition: drawerWidth })
+        );
+        dispatchReducer({ type: 'modify', payload: { columnWidth: res } });
+      }
     }, [drawerWidth]);
+
     return (
       <React.Fragment>
         <Drawer variant="permanent" className={classes.drawer} open={true} ref={drawerRef}>

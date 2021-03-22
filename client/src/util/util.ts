@@ -7,7 +7,7 @@ import { dispatchRateLimit, dispatchRateLimitAnimation } from '../store/dispatch
 
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
-
+type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
 class SinglyLinkedListNode<T> {
   data: T | any;
   next: SinglyLinkedListNode<T> | null;
@@ -42,6 +42,39 @@ export class SinglyLinkedList<T> {
     }, null);
 
     return this;
+  }
+  /**
+   * The map() method creates a new list with the results of
+   * calling a provided function on every node in the calling list.
+   * ```ts
+   * new LinkedList(1, 2, 3).map(data => data + 10); // 11 <=> 12 <=> 13
+   * ```
+   * @param f Function that produces an node of the new list, taking up to three arguments
+   * @param reverse Indicates if the list should be mapped in reverse order, default is false
+   */
+  public map(f: TMapFunction<T>, reverse = false) {
+    const list = new SinglyLinkedList();
+    this.forEach((data, index) => list.fromArrayLeftToRight(f(data, index, this)), reverse);
+    return list;
+  }
+  /**
+   * The forEach() method executes a provided function once for each list node.
+   * ```ts
+   * new LinkedList(1, 2, 3).forEach(data => log(data)); // 1 2 3
+   * ```
+   * @param f Function to execute for each element, taking up to three arguments.
+   * @param reverse Indicates if the list should be walked in reverse order, default is false
+   */
+  public forEach(f: TMapFunction<T>, reverse = false): void {
+    let currentIndex = 0;
+    let currentNode = this.head;
+    const modifier = reverse ? -1 : 1;
+    const nextNode = reverse ? 'prev' : 'next';
+    while (currentNode) {
+      f(currentNode.data, currentIndex, this);
+      currentNode = currentNode[nextNode];
+      currentIndex += modifier;
+    }
   }
   /**
    * Return the first node and its index in the list that
@@ -100,6 +133,29 @@ export class SinglyLinkedList<T> {
       node = node.next;
     }
     return null;
+  }
+  /**
+   * Merge the current list with another. Both lists will be
+   * equal after merging.
+   * ```ts
+   * const list = new LinkedList(1, 2);
+   * const otherList = new LinkedList(3);
+   * list.merge(otherList);
+   * (list === otherList); // true
+   * ```
+   * @param list The list to be merged
+   */
+  public merge(list: SinglyLinkedList<T>): void {
+    if (this.tail !== null) {
+      this.tail.next = list.head;
+    }
+    if (list.head !== null) {
+      list.head.prev = this.tail;
+    }
+    this.head = this.head || list.head;
+    this.tail = list.tail || this.tail;
+    list.head = this.head;
+    list.tail = this.tail;
   }
   public fromArrayRightToLeft<T>(items: T[]) {
     items.reduceRight((acc: any, item) => {
