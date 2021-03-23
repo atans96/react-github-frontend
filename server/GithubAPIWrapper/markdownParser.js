@@ -204,10 +204,12 @@ const doQuery = async (data, promises, images, token, ...args) => {
             .catch((err) => {
               if (err.message.includes("API")) {
                 reject(err.message);
+              } else if (err.response.status === 404) {
+                resolve([]);
+                console.log(`ERROR ${url}, message: ${err.message}`);
               } else {
                 util.sendErrorMessageToClient(err, args.res);
               }
-              console.log(`ERROR ${url}, message: ${err.message}`);
             });
         })
       );

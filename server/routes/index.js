@@ -33,17 +33,17 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (Object.keys(JSON.parse(val).dataOne).length > 0) {
+        if (val) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && Object.keys(JSON.parse(val).dataOne).length === 0) {
+        } else if (!err && !val) {
           userRepoInfo(req, res, fastify, {
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         } else {
-          throw new Error(`Something Wrong with ${url} ${err}`);
+          throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
       });
     }
@@ -76,17 +76,17 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (Object.keys(JSON.parse(val).dataOne).length > 0) {
+        if (val) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && Object.keys(JSON.parse(val).dataOne).length === 0) {
+        } else if (!err && !val) {
           orgRepoInfo(req, res, fastify, {
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         } else {
-          throw new Error(`Something Wrong with ${url} ${err}`);
+          throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
       });
     }
@@ -118,20 +118,17 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (Object.keys(JSON.parse(val).renderImages).length > 0) {
+        if (val) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (
-          !err &&
-          Object.keys(JSON.parse(val).renderImages).length === 0
-        ) {
+        } else if (!err && !val) {
           imagesRepoInfo(req, res, fastify, {
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         } else {
-          throw new Error(`Something Wrong with ${url} ${err}`);
+          throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
       });
     }
@@ -151,10 +148,10 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (Object.keys(JSON.parse(val).readme).length > 0) {
+        if (val) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && Object.keys(JSON.parse(val).readme).length === 0) {
+        } else if (!err && !val) {
           readmeRepoInfo(req, res, fastify, {
             urlReadMe,
             url,
@@ -162,7 +159,7 @@ async function routes(fastify, opts, done) {
             github: opts.githubAPIWrapper,
           });
         } else {
-          throw new Error(`Something Wrong with ${url} ${err}`);
+          throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
       });
     }
@@ -179,17 +176,17 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (Object.keys(JSON.parse(val).dataOne).length > 0) {
+        if (val) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && Object.keys(JSON.parse(val).dataOne).length === 0) {
+        } else if (!err && !val) {
           topicSearchInfo(req, res, fastify, {
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         } else {
-          throw new Error(`Something Wrong with ${url} ${err}`);
+          throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
       });
     }
@@ -206,17 +203,17 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (Object.keys(JSON.parse(val).users).length > 0) {
+        if (val) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
-        } else if (!err && Object.keys(JSON.parse(val).users).length === 0) {
+        } else if (!err && !val) {
           usersSearchInfo(req, res, fastify, {
             url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         } else {
-          throw new Error(`Something Wrong with ${url} ${err}`);
+          throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
       });
     }

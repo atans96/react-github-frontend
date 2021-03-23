@@ -258,16 +258,6 @@ const Discover = React.memo<DiscoverProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.pageDiscover]);
 
-    const dispatchStargazersUserMemoize = useCallback(() => {
-      return dispatchStargazers;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatchStargazers]);
-
-    const dispatchMemoize = useCallback(() => {
-      return dispatch;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch]);
-
     const stateMemoize = useCallback(() => {
       return state;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -325,9 +315,9 @@ const Discover = React.memo<DiscoverProps>(
                       index={whichToUse()[idx].id}
                       githubData={whichToUse()[idx]}
                       state={stateMemoize()}
-                      dispatchStargazersUser={dispatchStargazersUserMemoize()}
+                      dispatchStargazersUser={dispatchStargazers}
                       stateStargazersMemoize={stateStargazersMemoize()}
-                      dispatch={dispatchMemoize()}
+                      dispatch={dispatch}
                     />
                   ));
                 }}
@@ -344,7 +334,11 @@ const Discover = React.memo<DiscoverProps>(
           <If condition={notification}>
             <Then>
               <div style={{ textAlign: 'center' }}>
-                <h1>{notification}</h1>
+                <p>
+                  <a className={'underlining'} style={{ fontSize: '30px', color: 'black' }}>
+                    {notification}
+                  </a>
+                </p>
               </div>
             </Then>
           </If>
