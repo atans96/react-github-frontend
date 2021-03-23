@@ -12,7 +12,7 @@ interface BottomNavigationBarProps {
 const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({ dispatchStargazersUser, state, dispatch }) => {
   return (
     <React.Fragment>
-      <PaginationBar state={state} />
+      <PaginationBar state={state} dispatch={dispatch} />
       <DrawerBar dispatch={dispatch} state={state} dispatchStargazersUser={dispatchStargazersUser} />
     </React.Fragment>
   );

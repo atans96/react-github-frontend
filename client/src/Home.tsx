@@ -132,27 +132,25 @@ const Home = React.memo<HomeProps>(
     const actionController = (res: IDataOne, callback?: Promise<any> | any) => {
       // compare new with old data, if they differ, that means it still has data to fetch
       const promiseOrNot = () => {
-        callback instanceof Promise ? callback.then() : isFunction(callback);
+        callback() instanceof Promise && res !== undefined && (res.error_404 || res.error_403)
+          ? callback()
+          : isFunction(callback);
       };
       if (isDataExists(res)) {
-        callback
-          ? promiseOrNot()
-          : actionResolvedPromise(Action.append, setLoading, setNotification, isFetchFinish.current, displayName!, res);
+        actionResolvedPromise(Action.append, setLoading, setNotification, isFetchFinish.current, displayName!, res);
       } else if (res !== undefined && (res.error_404 || res.error_403)) {
         callback
           ? promiseOrNot()
           : actionResolvedPromise(Action.error, setLoading, setNotification, isFetchFinish.current, displayName!, res);
       } else {
-        callback
-          ? promiseOrNot()
-          : (isFetchFinish.current = actionResolvedPromise(
-              Action.noData,
-              setLoading,
-              setNotification,
-              isFetchFinish.current,
-              displayName!,
-              res
-            ).isFetchFinish);
+        isFetchFinish.current = actionResolvedPromise(
+          Action.noData,
+          setLoading,
+          setNotification,
+          isFetchFinish.current,
+          displayName!,
+          res
+        ).isFetchFinish;
       }
     };
 
@@ -192,25 +190,21 @@ const Home = React.memo<HomeProps>(
                 userData && userData.getUserData ? userData.getUserData.token : ''
               )
                 .then((data) => {
-                  const callback = getOrg(
-                    name,
-                    state.perPage,
-                    1,
-                    userData && userData.getUserData ? userData.getUserData.token : ''
-                  )
-                    .then((data: IDataOne) => {
-                      actionController(data);
-                    })
-                    .catch((err) => {
-                      actionResolvedPromise(
-                        Action.error,
-                        setLoading,
-                        setNotification,
-                        isFetchFinish.current,
-                        displayName!,
-                        err
-                      );
-                    });
+                  const callback = () =>
+                    getOrg(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
+                      .then((data: IDataOne) => {
+                        actionController(data);
+                      })
+                      .catch((err) => {
+                        actionResolvedPromise(
+                          Action.error,
+                          setLoading,
+                          setNotification,
+                          isFetchFinish.current,
+                          displayName!,
+                          err
+                        );
+                      });
                   actionController(data, callback);
                 })
                 .catch((error) => {
@@ -245,36 +239,39 @@ const Home = React.memo<HomeProps>(
         promises.push(
           getUser(name, state.perPage, 1, userData ? userData.getUserData.token : '')
             .then((data: IDataOne) => {
-              const callback = getOrg(
-                name,
-                state.perPage,
-                1,
-                userData && userData.getUserData ? userData.getUserData.token : ''
-              )
-                .then((data: IDataOne) => {
-                  paginationInfo += data.paginationInfoData;
-                  dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
-                  setTimeout(() => {
-                    // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-                    // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-                    // changing state to false
-                    setRenderSkeleton(false);
-                  }, 1000);
-                  setRenderSkeleton(true);
-                  actionController(data);
-                })
-                .catch((err) => {
-                  actionResolvedPromise(
-                    Action.error,
-                    setLoading,
-                    setNotification,
-                    isFetchFinish.current,
-                    displayName!,
-                    err
-                  );
-                });
+              const callback = () =>
+                getOrg(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
+                  .then((data: IDataOne) => {
+                    paginationInfo += data.paginationInfoData;
+                    dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+                    setTimeout(() => {
+                      // setTimeout is not sync function so it will execute setRenderSkeleton(true);
+                      // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
+                      // changing state to false
+                      setRenderSkeleton(false);
+                    }, 1000);
+                    setRenderSkeleton(true);
+                    actionController(data);
+                  })
+                  .catch((err) => {
+                    actionResolvedPromise(
+                      Action.error,
+                      setLoading,
+                      setNotification,
+                      isFetchFinish.current,
+                      displayName!,
+                      err
+                    );
+                  });
               paginationInfo += data.paginationInfoData;
               dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+              setTimeout(() => {
+                // setTimeout is not sync function so it will execute setRenderSkeleton(true);
+                // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
+                // changing state to false
+                setRenderSkeleton(false);
+              }, 1000);
+              setRenderSkeleton(true);
               actionController(data, callback);
             })
             .catch((err) => {
@@ -566,16 +563,6 @@ const Home = React.memo<HomeProps>(
     );
     const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
-    const dispatchStargazersUserMemoize = useCallback(() => {
-      return dispatchStargazers;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatchStargazers]);
-
-    const dispatchMemoize = useCallback(() => {
-      return dispatch;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dispatch]);
-
     const stateMemoize = useCallback(() => {
       return state;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -585,11 +572,6 @@ const Home = React.memo<HomeProps>(
       return stateStargazers;
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stateStargazers]);
-
-    const stateBottomNavigationBarMemoize = useCallback(() => {
-      return state;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.page, state.lastPage, state.tokenRSS, state.isLoggedIn]);
 
     const whichToUse = useCallback(() => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
@@ -667,8 +649,8 @@ const Home = React.memo<HomeProps>(
                       index={whichToUse()[idx].id}
                       githubData={whichToUse()[idx]}
                       state={stateMemoize()}
-                      dispatchStargazersUser={dispatchStargazersUserMemoize()}
-                      dispatch={dispatchMemoize()}
+                      dispatchStargazersUser={dispatchStargazers}
+                      dispatch={dispatch}
                     />
                   ));
                 }}
@@ -694,18 +676,16 @@ const Home = React.memo<HomeProps>(
           <If condition={notification}>
             <Then>
               <div style={{ textAlign: 'center' }}>
-                <h1>{notification}</h1>
+                <p>
+                  <a className={'underlining'} style={{fontSize: "30px", color: "black"}}>{notification}</a>
+                </p>
               </div>
             </Then>
           </If>
         </div>
         <If condition={state.width > 1100}>
           <Then>
-            <BottomNavigationBar
-              state={stateBottomNavigationBarMemoize()}
-              dispatch={dispatchMemoize()}
-              dispatchStargazersUser={dispatchStargazersUserMemoize()}
-            />
+            <BottomNavigationBar state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazers} />
           </Then>
         </If>
       </React.Fragment>

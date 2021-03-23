@@ -82,7 +82,7 @@ const Global: React.FC<{
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (props.componentProps.state.filterBySeen) {
       switch (displayName) {
-        case displayName!.match(/^discover/gi)![0] !== null && displayName!.match(/^discover/gi)![0].length > 0
+        case displayName.match(/^discover/gi) && displayName!.match(/^discover/gi)![0].length > 0
           ? displayName
           : undefined: {
           let filter1 = fastFilter(
@@ -201,13 +201,14 @@ const Global: React.FC<{
       if (data && data.error_404) {
         setNotification(`Sorry, no data found for ${props.componentProps.state.username}`);
       } else if (data && data.error_403) {
-        setNotification('Sorry, API rate limit exceeded.'); //TODO: display show RateLimit.tsx
+        isFetchFinish = true;
+        setNotification('Sorry, API rate limit exceeded.');
       } else if (data && data.error_message) {
         throw new Error(`Something wrong at ${displayName} ${data.error_message}`);
       }
       return { isFetchFinish };
     },
-    [alreadySeenCards]
+    [props.componentProps.state.username]
   );
 
   return (
@@ -284,12 +285,12 @@ const Global: React.FC<{
             </Then>
           </If>
 
-          <PrefetchKeepMountedLayout
-            mountedCondition={props.routerProps.location.pathname === '/profile'}
-            render={() => {
-              return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;
-            }}
-          />
+          {/*<PrefetchKeepMountedLayout*/}
+          {/*  mountedCondition={props.routerProps.location.pathname === '/profile'}*/}
+          {/*  render={() => {*/}
+          {/*    return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;*/}
+          {/*  }}*/}
+          {/*/>*/}
           <If condition={props.routerProps.location.pathname.includes('/detail')}>
             <Then>
               <Details />

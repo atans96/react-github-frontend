@@ -275,17 +275,19 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               <If condition={!loading && state.isLoggedIn}>
                 <Then>
                   <form action="#" method="get" className="input-group" style={{ padding: '1em' }}>
-                    <input
-                      autoCorrect="off"
-                      autoComplete="off"
-                      autoCapitalize="off"
-                      required
-                      value={token}
-                      onChange={(e) => setToken(e.target.value)}
-                      type="text"
-                      className="form-control"
-                      placeholder={'Copy your RSS URL...'}
-                    />
+                    <div style={{ display: 'flex' }}>
+                      <input
+                        autoCorrect="off"
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        required
+                        value={token}
+                        onChange={(e) => setToken(e.target.value)}
+                        type="text"
+                        className="form-control"
+                        placeholder={'Copy your RSS URL...'}
+                      />
+                    </div>
                   </form>
                   <div style={{ textAlign: 'center' }}>
                     <span>

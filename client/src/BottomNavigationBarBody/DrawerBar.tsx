@@ -23,6 +23,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
       overflowX: 'hidden',
       boxShadow: '3px 0 5px -2px #888',
       background: 'var(--background-theme-color)',
+      zIndex: 1,
     },
     width: (props) => props.drawerWidth,
     flexShrink: 0,

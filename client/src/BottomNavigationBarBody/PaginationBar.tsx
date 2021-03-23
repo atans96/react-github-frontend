@@ -1,13 +1,11 @@
 import React from 'react';
 import AppBar from '@material-ui/core/AppBar';
-import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
-import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
-import { If } from '../util/react-if/If';
-import { Then } from '../util/react-if/Then';
 import { isEqualObjects } from '../util';
 import { IState } from '../typing/interface';
+import RateLimit from '../RateLimit';
+import ToolBar from './PaginationBarBody/ToolBar';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -17,7 +15,7 @@ const useStyles = makeStyles<Theme>((theme) => ({
     },
   },
   appBar: {
-    zIndex: theme.zIndex.drawer + 1,
+    zIndex: 2,
     top: 'auto',
     bottom: 0,
     height: '50px',
@@ -37,35 +35,27 @@ const useStyles = makeStyles<Theme>((theme) => ({
 
 interface PaginationBarProps {
   state: IState;
+  dispatch: any;
 }
 
 const PaginationBar: React.FC<PaginationBarProps> = React.memo(
-  ({ state }) => {
+  ({ state, dispatch }) => {
     const classes = useStyles();
     return (
       <AppBar position="fixed" color="primary" className={classes.appBar}>
-        <Toolbar>
-          <If condition={state.lastPage > 0}>
-            <Then>
-              <div className={classes.paginationInfo}>
-                <Pagination
-                  className={classes.buttonPagination}
-                  page={state.page}
-                  count={state.lastPage}
-                  color="secondary"
-                />
-              </div>
-            </Then>
-          </If>
-          <div className={classes.grow} />
-        </Toolbar>
+        <ToolBar state={state} />
+        <RateLimit componentProps={{ state, dispatch }} />
       </AppBar>
     );
   },
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.state.page, nextProps.state.page) &&
-      isEqualObjects(prevProps.state.lastPage, nextProps.state.lastPage)
+      isEqualObjects(prevProps.state.lastPage, nextProps.state.lastPage) &&
+      isEqualObjects(prevProps.state.mergedData.length, nextProps.state.mergedData.length) &&
+      isEqualObjects(prevProps.state.searchUsers.length, nextProps.state.searchUsers.length) &&
+      isEqualObjects(prevProps.state.rateLimit, nextProps.state.rateLimit) &&
+      isEqualObjects(prevProps.state.rateLimitAnimationAdded, nextProps.state.rateLimitAnimationAdded)
     );
   }
 );

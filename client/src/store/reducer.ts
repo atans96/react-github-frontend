@@ -2,7 +2,7 @@ import { IAction, IState, IStateStargazers } from '../typing/interface';
 import { HasNextPage } from '../typing/type';
 import { fastFilter, readEnvironmentVariable } from '../util';
 import _ from 'lodash';
-type Action =
+export type Action =
   | 'LOGIN'
   | 'LOGOUT'
   | 'LAST_PAGE'

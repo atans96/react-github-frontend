@@ -4,20 +4,16 @@
     height: fit-content;
     border: 3px solid black;
     text-align: center;
-    display: inline;
+    display: inline-flex;
     background-color: white;
     z-index: 10;
-    box-shadow: 10px 10px 5px #ccc;
-    -moz-box-shadow: 10px 10px 5px #ccc;
-    -webkit-box-shadow: 10px 10px 5px #ccc;
-    -khtml-box-shadow: 10px 10px 5px #ccc;
+    color: black;
 }
 /*position fixed so that whenever you scroll, it will follow it
 An element with position:fixed is fixed with respect to the viewport.
  It stays where it is, even if the document is scrolled*/
 #container {
     position:fixed;
-    bottom:8px;
     right:5px;
     z-index: 10;
 }
