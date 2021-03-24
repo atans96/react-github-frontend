@@ -27,7 +27,6 @@ const SearchBarDiscover = React.memo<SearchBarProps>(
       event.preventDefault();
       event.stopPropagation();
       getElasticSearchBert(query?.current?.getState()).then((res) => {
-        //TODO: use ElasticSearch autocomplete with highlight text
         dispatch({
           type: 'MERGED_DATA_ADDED_DISCOVER',
           payload: {

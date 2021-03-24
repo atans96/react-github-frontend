@@ -14,7 +14,6 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ state, dispatch }) => {
   }, [state.width]);
   useEffect(() => {
     if (document.location.pathname !== '/discover' && state.filterMergedDataDiscover.length > 0) {
-      //TODO: fix performance issue when navigating away from discover page
       dispatch({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
