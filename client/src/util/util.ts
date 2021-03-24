@@ -214,7 +214,31 @@ export function epochToJsDate(ts: any) {
   }
   return 0;
 }
+export const useMergedCallbackRef = (...callbacks: Function[]) => {
+  // Storing callbacks in a ref, so that we don't need to memoise them in
+  // renders when using this hook.
+  const callbacksRegistry = useRef<Function[]>(callbacks);
 
+  useEffect(() => {
+    callbacksRegistry.current = callbacks;
+  }, [...callbacks]);
+
+  return useCallback((element) => {
+    callbacksRegistry.current.forEach((callback) => callback(element));
+  }, []);
+};
+export function useIsMounted(): () => boolean {
+  const ref = useRef(false);
+
+  useEffect(() => {
+    ref.current = true;
+    return () => {
+      ref.current = false;
+    };
+  }, []);
+
+  return () => ref.current;
+}
 export function getElementHeight(el: RefObject<HTMLElement> | { current?: { scrollHeight: number } }): string | number {
   if (!el?.current) {
     warning(

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { composeEventHandlers, composeParamsHandler } from '../util';
+import { composeEventHandlers, composeParamsHandler, debounce } from '../util';
 import ResizeObserver from 'resize-observer-polyfill';
+import useResizeObserver from './useResizeObserver';
 
 export function useClickOutside(ref, handler, exception = []) {
   const handleClickOutside = useCallback(
@@ -82,6 +83,16 @@ export function useMutationObserver(targetNode, config, callback) {
 
   return value;
 }
+export function useResizeObserverWithRAF(opts, ...args) {
+  const [size, setSize] = useState({ width: undefined, height: undefined });
+  const { ref } = useResizeObserver({
+    ...opts,
+    onResize: (size) => requestAnimationFrame(() => setSize(size)),
+  });
+
+  return { size, ref };
+}
+
 export function useResizeHandler(windowScreenRef, callback) {
   useEffect(() => {
     const el = windowScreenRef.current;

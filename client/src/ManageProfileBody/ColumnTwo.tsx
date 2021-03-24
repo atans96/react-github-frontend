@@ -100,7 +100,6 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ state, languageFilter, dispatch, 
       dispatchReducer({ type: 'modify', payload: { columnWidth: res } });
     }
   }, [stateReducer.get('ColumnOne'), drawerWidth]);
-  console.log(state.width, fullName);
   return (
     <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
       <table>

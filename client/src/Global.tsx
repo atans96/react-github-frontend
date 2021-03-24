@@ -27,6 +27,7 @@ import {
 } from './store/dispatcher';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { Action, LanguagePreference, MergedDataProps, Nullable } from './typing/type';
+import eye from './new_16-2.gif';
 
 interface GlobalProps {
   state: IState;
@@ -35,7 +36,6 @@ interface GlobalProps {
   dispatchStargazers: any;
 }
 
-//TODO: create code snippet like: https://snipit.io/ or https://github.com/hackjutsu/Lepton
 //TODO: refactor dispatcher.ts
 const Global: React.FC<{
   routerProps: RouteComponentProps<any, any, any>;
@@ -216,7 +216,7 @@ const Global: React.FC<{
       <If condition={seenDataLoading && userDataLoading && loadingUserStarred}>
         <Then>
           <div style={{ textAlign: 'center' }}>
-            <div className="loader-xx">Loading...</div>
+            <img src={eye} style={{ width: '100px' }} />
             <div style={{ textAlign: 'center' }}>
               <h3>Please wait while fetching your data</h3>
             </div>
@@ -247,24 +247,24 @@ const Global: React.FC<{
               );
             }}
           />
-          {/*<PrefetchKeepMountedLayout*/}
-          {/*  mountedCondition={props.routerProps.location.pathname === '/discover'}*/}
-          {/*  render={() => {*/}
-          {/*    return (*/}
-          {/*      <React.Fragment>*/}
-          {/*        <SearchBarDiscover state={props.componentProps.state} dispatch={props.componentProps.dispatch} />*/}
-          {/*        <Discover*/}
-          {/*          stateStargazers={props.componentProps.stateStargazers}*/}
-          {/*          dispatchStargazers={props.componentProps.dispatchStargazers}*/}
-          {/*          dispatch={props.componentProps.dispatch}*/}
-          {/*          state={props.componentProps.state}*/}
-          {/*          routerProps={props.routerProps}*/}
-          {/*          actionResolvedPromise={actionResolvedPromise}*/}
-          {/*        />*/}
-          {/*      </React.Fragment>*/}
-          {/*    );*/}
-          {/*  }}*/}
-          {/*/>*/}
+          <PrefetchKeepMountedLayout
+            mountedCondition={props.routerProps.location.pathname === '/discover'}
+            render={() => {
+              return (
+                <React.Fragment>
+                  <SearchBarDiscover state={props.componentProps.state} dispatch={props.componentProps.dispatch} />
+                  <Discover
+                    stateStargazers={props.componentProps.stateStargazers}
+                    dispatchStargazers={props.componentProps.dispatchStargazers}
+                    dispatch={props.componentProps.dispatch}
+                    state={props.componentProps.state}
+                    routerProps={props.routerProps}
+                    actionResolvedPromise={actionResolvedPromise}
+                  />
+                </React.Fragment>
+              );
+            }}
+          />
           <PrefetchKeepMountedLayout
             mountedCondition={props.routerProps.location.pathname === '/trending'}
             render={() => {
@@ -285,12 +285,12 @@ const Global: React.FC<{
             </Then>
           </If>
 
-          {/*<PrefetchKeepMountedLayout*/}
-          {/*  mountedCondition={props.routerProps.location.pathname === '/profile'}*/}
-          {/*  render={() => {*/}
-          {/*    return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;*/}
-          {/*  }}*/}
-          {/*/>*/}
+          <PrefetchKeepMountedLayout
+            mountedCondition={props.routerProps.location.pathname === '/profile'}
+            render={() => {
+              return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;
+            }}
+          />
           <If condition={props.routerProps.location.pathname.includes('/detail')}>
             <Then>
               <Details />

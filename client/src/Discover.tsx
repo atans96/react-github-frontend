@@ -9,13 +9,14 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { isEqualObjects } from './util';
+import { debounce, isEqualObjects } from './util';
 import { RouteComponentProps } from 'react-router-dom';
 import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
 import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
+import eye from './new_16-2.gif';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -242,7 +243,7 @@ const Discover = React.memo<DiscoverProps>(
       });
     }
 
-    useResizeHandler(windowScreenRef, handleResize);
+    useResizeHandler(windowScreenRef, debounce(handleResize));
     useEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
       if (!suggestedDataLoading && !!suggestedData?.getSuggestedRepo && !suggestedDataError) {
@@ -327,7 +328,12 @@ const Discover = React.memo<DiscoverProps>(
 
           <If condition={isLoading}>
             <Then>
-              <div className="loader-xx">Loading...</div>
+              <div style={{ textAlign: 'center' }}>
+                <img src={eye} style={{ width: '100px' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <h3>Please wait while fetching your data</h3>
+                </div>
+              </div>
             </Then>
           </If>
 
