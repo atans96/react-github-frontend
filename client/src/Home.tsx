@@ -26,6 +26,7 @@ import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
+import eye from './new_16-2.gif';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -377,8 +378,8 @@ const Home = React.memo<HomeProps>(
         },
       });
     }
-
     useResizeHandler(windowScreenRef, handleResize);
+
     useDeepCompareEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
       if (state.username.length > 0 && state.mergedData.length === 0) {
@@ -669,7 +670,12 @@ const Home = React.memo<HomeProps>(
 
           <If condition={isLoading}>
             <Then>
-              <div className="loader-xx">Loading...</div>
+              <div style={{ textAlign: 'center' }}>
+                <img src={eye} style={{ width: '100px' }} />
+                <div style={{ textAlign: 'center' }}>
+                  <h3>Please wait while fetching your data</h3>
+                </div>
+              </div>
             </Then>
           </If>
 
@@ -677,7 +683,9 @@ const Home = React.memo<HomeProps>(
             <Then>
               <div style={{ textAlign: 'center' }}>
                 <p>
-                  <a className={'underlining'} style={{fontSize: "30px", color: "black"}}>{notification}</a>
+                  <a className={'underlining'} style={{ fontSize: '30px', color: 'black' }}>
+                    {notification}
+                  </a>
                 </p>
               </div>
             </Then>

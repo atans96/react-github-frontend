@@ -2,44 +2,24 @@
 import React, { useRef, useState } from 'react';
 // import deepKeys from 'deep-keys';
 // import imagesLoaded from 'imagesloaded';
-export class ListNode {
-  constructor(data) {
-    this.data = data;
-    this.next = null;
-  }
-}
-export class LinkedList {
-  constructor(head = null) {
-    this.head = head;
-  }
-}
-LinkedList.prototype.insertAtEnd = function (data) {
-  // A newNode object is created with property data and next=null
+export const debounce = (fn) => {
+  // This holds the requestAnimationFrame reference, so we can cancel it if we wish
+  let frame;
 
-  let newNode = new ListNode(data); // When head = null i.e. the list is empty, then head itself will point to the newNode.
-  if (!this.head) {
-    this.head = newNode;
-    return this.head;
-  }
-  // Else, traverse the list to find the tail (the tail node will initially be pointing at null), and update the tail's next pointer.
-  let tail = this.head;
-  while (tail.next !== null) {
-    tail = tail.next;
-  }
-  tail.next = newNode;
-  return this.head;
-};
-export const reverseLinkedList = (head) => {
-  let previous = null;
-  while (head !== null) {
-    let next = head.next;
-    head.next = previous;
-    previous = head;
-    head = next;
-  }
-  return previous;
-};
+  // The debounce function returns a new function that can receive a variable number of arguments
+  return (...params) => {
+    // If the frame variable has been defined, clear it now, and queue for next frame
+    if (frame) {
+      cancelAnimationFrame(frame);
+    }
 
+    // Queue our function call for the next frame
+    frame = requestAnimationFrame(() => {
+      // Call our function and pass any params we received
+      fn(...params);
+    });
+  };
+};
 export function binarySearch(arr, n) {
   let min = 0;
   let max = arr.length - 1;
@@ -55,67 +35,6 @@ export function binarySearch(arr, n) {
     }
   }
   return -1;
-}
-export function useDraggable() {
-  const [isDragging, setIsDragging] = useState(false);
-  const [pos, setPos] = useState({ x: 0, y: 0 });
-  const ref = useRef(null);
-
-  function onMouseMove(e) {
-    if (!isDragging) return;
-    setPos({
-      x: e.x - ref.current.offsetWidth / 2,
-      y: e.y - ref.current.offsetHeight / 2,
-    });
-    e.stopPropagation();
-    e.preventDefault();
-  }
-
-  function onMouseUp(e) {
-    setIsDragging(false);
-    e.stopPropagation();
-    e.preventDefault();
-  }
-
-  function onMouseDown(e) {
-    if (e.button !== 0) return;
-    setIsDragging(true);
-
-    setPos({
-      x: e.x - ref.current.offsetWidth / 2,
-      y: e.y - ref.current.offsetHeight / 2,
-    });
-
-    e.stopPropagation();
-    e.preventDefault();
-  }
-
-  // When the element mounts, attach an mousedown listener
-  useEffect(() => {
-    ref.current.addEventListener('mousedown', onMouseDown);
-
-    return () => {
-      ref.current.removeEventListener('mousedown', onMouseDown);
-    };
-  }, [ref.current]);
-
-  // Everytime the isDragging state changes, assign or remove
-  // the corresponding mousemove and mouseup handlers
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mouseup', onMouseUp);
-      document.addEventListener('mousemove', onMouseMove);
-    } else {
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('mousemove', onMouseMove);
-    }
-    return () => {
-      document.removeEventListener('mouseup', onMouseUp);
-      document.removeEventListener('mousemove', onMouseMove);
-    };
-  }, [isDragging]);
-
-  return [ref, pos.x, pos.y, isDragging];
 }
 export function readEnvironmentVariable(key) {
   // See https://create-react-app.dev/docs/adding-custom-environment-variables/#docsNav
@@ -209,44 +128,6 @@ export function composeEventHandlers(...fns) {
       return isPropagationStopped(event);
     });
 }
-// export function Loading(props) {
-//   if (props.error) {
-//     return (
-//       <div>
-//         Error! <button onClick={props.retry}>Retry?</button>
-//       </div>
-//     );
-//   } else if (props.timedOut) {
-//     return (
-//       <div>
-//         Taking a long time... <button onClick={props.retry}>Retry?</button>
-//       </div>
-//     );
-//   } else if (props.pastDelay) {
-//     //if greater than 300ms not yet imported, then show Loading...
-//     return (
-//       <div
-//         style={{
-//           textAlign: 'center',
-//           margin: '0',
-//           position: 'absolute',
-//           top: '50%',
-//           left: '50%',
-//           msTransform: 'translateY(-50%)',
-//           transform: 'translateY(-50%)',
-//         }}
-//       >
-//         <p style={{ fontSize: '20px' }}>
-//           Please wait<span className="one">.</span>
-//           <span className="two">.</span>
-//           <span className="three">.</span>
-//         </p>
-//       </div>
-//     );
-//   } else {
-//     return null;
-//   }
-// }
 export function isImageExists(url) {
   // Define the promise
   const imgPromise = new Promise(function imgPromise(resolve, reject) {
