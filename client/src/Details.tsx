@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
-import { markdownParsing } from './services';
+import { getElasticSearchBertRecommendation, markdownParsing } from './services';
 import { GoBook } from 'react-icons/go';
 import './markdown-body.css';
 import { Then } from './util/react-if/Then';
@@ -18,6 +18,7 @@ interface StateProps {
     full_name: string;
     default_branch: string;
     html_url: string;
+    description: string;
     id: number;
     owner: {
       login: string;
@@ -34,6 +35,13 @@ const Details: React.FC = () => {
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
     (state: StaticState) => state.StarRanking
   );
+  useEffect(() => {
+    if (location.pathname.includes('/detail') && location.state.path === '/discover') {
+      getElasticSearchBertRecommendation(location.state.data.description).then((data) => {
+        console.log(data);
+      });
+    }
+  }, []);
   useEffect(() => {
     if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
       const temp = starRankingData.getStarRanking.starRanking.find(
@@ -78,10 +86,9 @@ const Details: React.FC = () => {
         }}
       >
         <div className={'background-container'} id="main-content">
-          <If condition={location.pathname.includes('/details')}>
+          <If condition={location.pathname.includes('/detail')}>
             <Then>
               <div>
-                {/*TODO: use More Like This query from Elastic Search*/}
                 <p>Similar Repo just like {location.state.data.full_name}:</p>
               </div>
             </Then>

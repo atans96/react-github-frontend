@@ -158,6 +158,13 @@ export const getSearchTopics = async (topic: string, token: string | null) => {
   });
   return await response.json();
 };
+export const getElasticSearchBertRecommendation = async (query: string) => {
+  const response = await fetch(`${readEnvironmentVariable('BERT_RECOMMENDATION')}?q=${query}&docName=github`, {
+    method: 'GET',
+    mode: 'cors',
+  });
+  return await response.json();
+};
 export const getElasticSearchBertAutocomplete = async (query: string) => {
   const response = await fetch(`${readEnvironmentVariable('BERT_AUTOCOMPLETE')}?q=${query}&docName=github`, {
     method: 'GET',

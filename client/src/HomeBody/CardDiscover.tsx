@@ -8,6 +8,7 @@ import { IState, IStateStargazers } from '../typing/interface';
 import clsx from 'clsx';
 import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
+import { noop } from '../util/util';
 
 export interface Card {
   index: number;
@@ -81,9 +82,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               ),
             ],
           },
-        }).then((e) => {
-          console.log(e);
-        });
+        }).then(noop);
       }
     };
     const isVisibleRef = useRef(false);
