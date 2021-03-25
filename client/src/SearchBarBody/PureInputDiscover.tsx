@@ -16,12 +16,15 @@ interface SearchBarProps {
   dispatch: any;
   ref: any;
 }
-
+type SearchesData = {
+  isSuggested: boolean;
+  result: Array<{ full_name: string }>;
+};
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
 export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatch }, ref) => {
   const [query, setQuery] = useState('');
   const [visible, setVisible] = useState(false);
-  const [searchesData, setSearches] = useState([]);
+  const [searchesData, setSearches] = useState<SearchesData>();
   const isInputFocused = useRef<HTMLInputElement>(null);
   const resultsRef = useRef(null);
   useImperativeHandle(
@@ -45,6 +48,11 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
     _.debounce(function (query) {
       if (query.trim().length > 0) {
         getElasticSearchBertAutocomplete(query.toString().trim()).then((data) => {
+          if (data.isSuggested.status) {
+            data.result.unshift(
+              Object.assign({}, { full_name: `No result found for ${query}. Did you mean ${data.isSuggested.text}?` })
+            );
+          }
           setSearches(data);
           setVisible(true);
           dispatchVisible(true, dispatch);
@@ -65,17 +73,19 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
   const handleClick = (event: React.FormEvent) => (query: string) => {
     event.preventDefault();
     event.stopPropagation();
-    const res = repoInfo.filter((obj: RepoInfoSuggested) => obj.full_name === query);
-    dispatch({
-      type: 'MERGED_DATA_ADDED_DISCOVER',
-      payload: {
-        data: res,
-        notificationDiscover: res.length === 0 ? `No data found for query: ${query}` : '',
-      },
-    });
-    setQuery('');
-    setVisible(false);
-    dispatchVisible(false, dispatch);
+    if (!query.includes('Did you mean')) {
+      const res = repoInfo.filter((obj: RepoInfoSuggested) => obj.full_name === query);
+      dispatch({
+        type: 'MERGED_DATA_ADDED_DISCOVER',
+        payload: {
+          data: res,
+          notificationDiscover: res.length === 0 ? `No data found for query: ${query}` : '',
+        },
+      });
+      setQuery('');
+      setVisible(false);
+      dispatchVisible(false, dispatch);
+    }
   };
   const classes = useUserCardStyles({ avatarSize: 20 });
   return (
@@ -101,25 +111,16 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
           />
         </div>
       </div>
-      <If condition={searchesData && searchesData.length > 0 && visible}>
+      <If condition={searchesData && searchesData?.result?.length > 0 && visible}>
         <Then>
           <div className="resultsContainer" style={style} ref={resultsRef}>
             <ul className={'results'}>
-              {searchesData.map((search: any, idx) => {
-                let newBody;
-                if (query.toString().trim().length > 0) {
-                  newBody = search.full_name.replace(
-                    new RegExp(query, 'gi'),
-                    (match: any) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
-                  );
-                } else {
-                  newBody = search.full_name;
-                }
+              {searchesData?.result?.map((search, idx) => {
                 return (
                   <li key={idx} onClick={(e) => handleClick(e)(search.full_name)}>
                     <div className={classes.nameWrapper} style={{ float: 'none' }}>
                       <Typography variant="subtitle2" className={classes.typography}>
-                        <div dangerouslySetInnerHTML={{ __html: newBody }} />
+                        {search.full_name}
                       </Typography>
                     </div>
                   </li>
