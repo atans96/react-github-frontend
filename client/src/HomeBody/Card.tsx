@@ -11,6 +11,7 @@ import { Then } from '../util/react-if/Then';
 import clsx from 'clsx';
 import ImagesCard from './CardBody/ImagesCard';
 import { useApolloFactory } from '../hooks/useApolloFactory';
+import { noop } from '../util/util';
 
 export interface Card {
   index: number;
@@ -74,9 +75,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
                 ),
               ],
             },
-          }).then((e) => {
-            console.log(e);
-          });
+          }).then(noop);
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
