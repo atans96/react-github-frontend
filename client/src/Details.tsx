@@ -8,7 +8,6 @@ import { If } from './util/react-if/If';
 import { CircularProgress } from '@material-ui/core';
 import { TrendsCard } from './HomeBody/DetailsBody/TrendsCard';
 import { Helmet } from 'react-helmet';
-import { useApolloFactory } from './hooks/useApolloFactory';
 import { useHistory } from 'react-router';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
@@ -79,10 +78,14 @@ const Details: React.FC = () => {
         }}
       >
         <div className={'background-container'} id="main-content">
-          <div>
-            {/*TODO: use More Like This query from Elastic Search*/}
-            <p>Similar Repo just like {location.state.data.full_name}:</p>
-          </div>
+          <If condition={location.pathname.includes('/details')}>
+            <Then>
+              <div>
+                {/*TODO: use More Like This query from Elastic Search*/}
+                <p>Similar Repo just like {location.state.data.full_name}:</p>
+              </div>
+            </Then>
+          </If>
           <If condition={!!data}>
             <Then>
               <div className="readme">
