@@ -20,7 +20,7 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { fastFilter, isEqualObjects } from './util';
+import { debounce, fastFilter, isEqualObjects } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
@@ -190,7 +190,7 @@ const Home = React.memo<HomeProps>(
                 state.page,
                 userData && userData.getUserData ? userData.getUserData.token : ''
               )
-                .then((data) => {
+                .then((data: IDataOne) => {
                   const callback = () =>
                     getOrg(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
                       .then((data: IDataOne) => {
@@ -595,8 +595,6 @@ const Home = React.memo<HomeProps>(
     // it should show effect: https://codyhouse.co/ds/components/app/looping-tabs
 
     //TODO: handle the case where the user revoke his token
-
-    //TODO: add "Trending" section to show the hottest git based on time-series stars
 
     return (
       <React.Fragment>

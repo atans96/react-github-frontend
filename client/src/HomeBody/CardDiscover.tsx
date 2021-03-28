@@ -23,6 +23,7 @@ interface CardRef extends Card {
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   columnCount: number;
   imagesMapDataDiscover: Map<number, any>;
+  sorted: string;
 }
 
 const CardDiscover: React.FC<CardRef> = React.forwardRef(
@@ -37,6 +38,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
       columnCount,
       stateStargazersMemoize,
       imagesMapDataDiscover,
+      sorted,
     },
     ref
   ) => {
@@ -103,6 +105,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               <UserCard
                 data={userCardMemoizedData()}
                 dispatch={dispatch}
+                sorted={sorted}
                 dispatchStargazers={dispatchStargazersUser}
                 routerProps={routerPropsMemoizedData()}
               />
@@ -112,7 +115,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               <ImagesCardDiscover
                 index={index}
                 visible={isVisibleRef.current}
-                state={state}
                 imagesMapDataDiscover={imagesMapDataDiscover}
               />
               <div className="trunctuatedTexts">

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import './ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -9,7 +9,6 @@ import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import { IState } from '../../typing/interface';
 import { isEqualObjects, Loading } from '../../util';
 import useCollapse from '../../hooks/useCollapse';
-import { ProgressBar } from '../../Layout/ProgressBar';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
@@ -24,21 +23,11 @@ const ImagesCard = React.memo<ImagesCardProps>(
   ({ index, visible, state }) => {
     const [renderChildren, setRenderChildren] = useState(false);
     const [clicked, setClicked] = useState(false);
-    const [showProgressBarUnRenderImages, setShowProgressBarUnRenderImages] = useState(false);
     const [renderImages, setRenderImages] = useState<string[]>([]);
-    const showProgressBarUnRenderImagesRef = useRef<boolean>(true);
-    const previousStringUnRenderImages = useRef<string[]>([]);
 
-    let timerToClearSomewhere: any;
     const { getToggleProps, getCollapseProps } = useCollapse({
       defaultExpanded: false, // is the images already expanded in the first place?
     });
-
-    const handleProgressPromiseUnrender = useCallback((src) => {
-      previousStringUnRenderImages.current.push(src); // because ImageComponent will re-render, don't ever set state
-      // when rendering. Instead, use useRef
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     useEffect(() => {
       let isCancelled = false;
@@ -52,47 +41,12 @@ const ImagesCard = React.memo<ImagesCardProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.imagesData, state.imagesMapData]);
 
-    useEffect(() => {
-      if (
-        (previousStringUnRenderImages.current.length / renderImages.slice(2).length) * 100 >= 100 &&
-        showProgressBarUnRenderImages
-      ) {
-        timerToClearSomewhere = setTimeout(() => {
-          setShowProgressBarUnRenderImages(false);
-        }, 400);
-      }
-      return () => {
-        clearTimeout(timerToClearSomewhere);
-      };
-    }, [(previousStringUnRenderImages.current.length / renderImages.slice(2).length) * 100]);
-
-    const handleClickUnrenderImages = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        setRenderChildren((prevState) => !prevState);
-        if (showProgressBarUnRenderImagesRef.current) {
-          setShowProgressBarUnRenderImages(true);
-          showProgressBarUnRenderImagesRef.current = false;
-        }
-      },
-      [showProgressBarUnRenderImagesRef.current]
-    );
-    // useRef() is basically useState({current: initialValue })[0] so no need to re-render the component
-    // TODO: animated card for showing users suggested gits: https://codyhouse.co/ds/components/app/animated-cards
-    const imagesCount = useRef(0);
-    const loadingCount = useRef(0);
-
-    const [unrenderImages, setUnrenderImages] = useState<string[]>([]);
-    const unrenderImagesRef = useRef<string[]>([]);
-    useEffect(() => {
-      unrenderImagesRef.current = [...unrenderImages]; //shallow copy works because no nested array
-    });
-    const getImageSrc = useCallback((src) => {
-      setUnrenderImages((prevState) => {
-        prevState.push(src);
-        return prevState;
-      });
+    const handleClickUnrenderImages = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      setRenderChildren((prevState) => !prevState);
     }, []);
+    // useRef() is basically useState({current: initialValue })[0] so no need to re-render the component
+
     const handleClick = useCallback((e: React.MouseEvent) => {
       e.preventDefault();
       setClicked((prev) => !prev);
@@ -148,52 +102,17 @@ const ImagesCard = React.memo<ImagesCardProps>(
         </If>
         <If condition={Array.isArray(state.imagesData) && state.imagesData.length > 0}>
           <Then>
-            <If condition={showProgressBarUnRenderImages && renderImages.slice(2).length > 0}>
-              <Then>
-                <ProgressBar
-                  progress={Math.min(
-                    100,
-                    (previousStringUnRenderImages.current.length / renderImages.slice(2).length) * 100
-                  )}
-                />
-              </Then>
-            </If>
             <div style={{ textAlign: 'center' }}>
               {renderImages.length > 0 &&
-                renderImages.map((image: string, idx: number) => {
-                  return (
-                    <ImageComponentLayout
-                      handleClick={handleClick}
-                      restOfTheImages={false}
-                      loadingCount={loadingCount}
-                      imagesCount={imagesCount}
-                      getImageSrc={getImageSrc}
-                      onProgress={handleProgressPromiseUnrender}
-                      visible={visible}
-                      key={idx}
-                      urlLink={image}
-                    />
-                  );
+                renderImages.slice(0, 2).map((image: string, idx: number) => {
+                  return <ImageComponentLayout handleClick={handleClick} visible={visible} key={idx} urlLink={image} />;
                 })}
             </div>
             <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
               {renderChildren &&
                 renderImages.length > 0 &&
-                renderImages.map((image: string, idx: number) => {
-                  if (!unrenderImagesRef.current.includes(image)) {
-                    return (
-                      <ImageComponentLayout
-                        handleClick={handleClick}
-                        restOfTheImages={true}
-                        loadingCount={loadingCount}
-                        imagesCount={imagesCount}
-                        onProgress={handleProgressPromiseUnrender}
-                        visible={visible}
-                        key={idx}
-                        urlLink={image}
-                      />
-                    );
-                  }
+                renderImages.slice(2).map((image: string, idx: number) => {
+                  return <ImageComponentLayout handleClick={handleClick} visible={visible} key={idx} urlLink={image} />;
                 })}
             </div>
             <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
@@ -213,8 +132,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
     return (
       isEqualObjects(prevProps.visible, nextProps.visible) &&
       isEqualObjects(prevProps.state.imagesMapData, nextProps.state.imagesMapData) &&
-      isEqualObjects(prevProps.state.filterBySeen, nextProps.state.filterBySeen) &&
-      isEqualObjects(prevProps.index, nextProps.index)
+      isEqualObjects(prevProps.state.filterBySeen, nextProps.state.filterBySeen)
     );
   }
 );

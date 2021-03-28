@@ -8,7 +8,6 @@ import Login from './NavBarBody/Login';
 import Home from './NavBarBody/Home';
 import { IState } from './typing/interface';
 import Discover from './NavBarBody/SearchSuggested';
-import Trending from './NavBarBody/Trending';
 import { logoutAction } from './util/util';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { useHistory } from 'react-router';
@@ -29,7 +28,6 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
   const [isHoveredLogout, bindLogout] = useHover();
   const [isHoveredProfile, bindProfile] = useHover();
   const [isHoveredDiscover, bindDiscover] = useHover();
-  const [isHoveredTrending, bindTrending] = useHover();
   const [isHoveredHome, bindHome] = useHover();
   const Active = url.split('/');
   const displayName: string | undefined = (NavBar as React.ComponentType<any>).displayName;
@@ -92,24 +90,6 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
             binder: bindDiscover,
             style:
               isHoveredDiscover && active !== 'discover'
-                ? {
-                    backgroundColor: '#f03e76',
-                    cursor: 'pointer',
-                  }
-                : {},
-          }}
-        />
-        <AuthedHandler
-          component={Trending}
-          authenticator={props.componentProps.state.isLoggedIn}
-          componentProps={{
-            id: 'trending',
-            className: active === 'trending' ? 'active' : '',
-            onClick: handleClick,
-            active: active,
-            binder: bindTrending,
-            style:
-              isHoveredTrending && active !== 'trending'
                 ? {
                     backgroundColor: '#f03e76',
                     cursor: 'pointer',

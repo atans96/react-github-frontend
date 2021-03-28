@@ -11,11 +11,12 @@ interface UserCard {
   data: any;
   dispatch: any;
   dispatchStargazers: any;
+  sorted?: string;
   routerProps?: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
 }
 
 const UserCard = React.memo<UserCard>(
-  ({ data, dispatch, dispatchStargazers, routerProps }) => {
+  ({ data, sorted, dispatch, dispatchStargazers, routerProps }) => {
     const classes = useUserCardStyles();
     const { login, avatar_url, html_url } = data.owner;
 
@@ -52,7 +53,7 @@ const UserCard = React.memo<UserCard>(
                   variant="body2"
                   className={classes.typographySmall}
                 >
-                  Star added daily: + <strong style={{ color: 'green' }}>{data.trends}</strong>
+                  Star added {sorted}: + <strong style={{ color: 'green' }}>{data.trends}</strong>
                 </Typography>
               </Then>
             </If>
@@ -63,7 +64,9 @@ const UserCard = React.memo<UserCard>(
   },
   (prevProps: any, nextProps: any) => {
     return (
-      isEqualObjects(prevProps.data, nextProps.data) && isEqualObjects(prevProps.routerProps, nextProps.routerProps)
+      isEqualObjects(prevProps.data, nextProps.data) &&
+      isEqualObjects(prevProps.routerProps, nextProps.routerProps) &&
+      isEqualObjects(prevProps.sorted, nextProps.sorted)
     );
   }
 );

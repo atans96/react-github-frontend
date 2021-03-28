@@ -14,6 +14,7 @@ import { Then } from '../../util/react-if/Then';
 import { removeStarredMe, setStarredMe } from '../../services';
 import clsx from 'clsx';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
+import { noop } from '../../util/util';
 
 interface GQL {
   GQL_variables: {
@@ -175,7 +176,7 @@ const StargazersCard = React.memo<StargazersCard>(
               variables: {
                 starred: [githubDataId],
               },
-            }).then(() => {});
+            }).then(noop);
           }
         });
       } else if (state.tokenGQL !== '' && starClicked) {
@@ -185,7 +186,7 @@ const StargazersCard = React.memo<StargazersCard>(
               variables: {
                 removeStarred: githubDataId,
               },
-            }).then(() => {});
+            }).then(noop);
           }
         });
       }
@@ -205,7 +206,7 @@ const StargazersCard = React.memo<StargazersCard>(
                 handleClickStargazers(e);
               } else {
                 setStarClicked(!starClicked);
-                handleClickStar().then(() => {});
+                handleClickStar().then(noop);
               }
             }}
           >
@@ -272,7 +273,7 @@ const StargazersCard = React.memo<StargazersCard>(
     return (
       isEqualObjects(prevProps.stateStargazers, nextProps.stateStargazers) &&
       isEqualObjects(prevProps.GQL_VARIABLES, nextProps.GQL_VARIABLES) &&
-      isEqualObjects(prevProps.state, nextProps.state) &&
+      isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn) &&
       isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL)
     );
   }
