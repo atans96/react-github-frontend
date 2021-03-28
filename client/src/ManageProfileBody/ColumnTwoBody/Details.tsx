@@ -20,21 +20,23 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
   const [readme, setReadme] = useState('');
   useEffect(
     () => {
-      _isMounted.current = true;
-      markdownParsing(fullName, branch).then((data) => {
-        if (_isMounted.current) {
-          setReadme(data.readme);
-        }
-      });
-      return () => {
-        _isMounted.current = false;
-      };
+      if (document.location.pathname === '/profile' || document.location.pathname === '/detail') {
+        _isMounted.current = true;
+        markdownParsing(fullName, branch).then((data) => {
+          if (_isMounted.current) {
+            setReadme(data.readme);
+          }
+        });
+        return () => {
+          _isMounted.current = false;
+        };
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [fullName, branch]
   );
   useEffect(() => {
-    if (readmeRef?.current && readme !== '') {
+    if (readmeRef?.current && readme !== '' && document.location.pathname === '/profile') {
       setTimeout(() => {
         //because it takes time to render, we need to setTimeout to wait a little bit to determine the full height
         if (readmeRef?.current) {

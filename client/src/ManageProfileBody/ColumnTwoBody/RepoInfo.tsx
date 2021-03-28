@@ -6,16 +6,17 @@ import { isEqualObjects } from '../../util';
 import Contributors from './RepoInfoBody/Contributors';
 import { IAction, IStateManageProfile } from '../../typing/interface';
 import { ActionShared } from '../../store/Shared/reducer';
+import { RepoInfoProps } from '../../typing/type';
 
-interface RepoInfoProps {
-  obj: any;
+interface Props {
+  obj: RepoInfoProps;
   onClickRepoInfo: any;
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
   active: string;
   state: IStateManageProfile;
 }
 
-const RepoInfo = React.memo<RepoInfoProps>(
+const RepoInfo = React.memo<Props>(
   ({ obj, onClickRepoInfo, dispatchShared, active, state }) => {
     return (
       <div style={{ borderBottom: 'solid' }}>

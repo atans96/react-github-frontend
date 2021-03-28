@@ -2,16 +2,16 @@ import React, { useCallback, useRef } from 'react';
 import { NavLink, RouteComponentProps } from 'react-router-dom';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
-import { IAction, IStateDiscover } from '../typing/interface';
+import { IAction, IStateDiscover, IStateShared } from '../typing/interface';
 import clsx from 'clsx';
 import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
-import StargazersDiscover from './CardBody/StargazersDiscover';
-import UserCardDiscover from './CardBody/UserCardDiscover';
 import { ActionDiscover } from '../store/Discover/reducer';
 import { ActionShared } from '../store/Shared/reducer';
+import UserCardDiscover from './CardBody/UserCardDiscover';
 import { ActionStargazers } from '../store/Staargazers/reducer';
+import StargazersDiscover from './CardBody/StargazersDiscover';
 
 export interface Card {
   index: number;
@@ -19,7 +19,7 @@ export interface Card {
 }
 
 interface CardRef extends Card {
-  stateDiscover: IStateDiscover;
+  stateDiscover: { stateDiscover: IStateDiscover; stateShared: IStateShared };
   dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
   dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
@@ -56,7 +56,8 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
     const stargazersMemoizedGithubData = useCallback(() => {
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [githubData.name, githubData.owner.login]);
+    }, [githubData.name, githubData.owner.login, githubData.full_name, githubData.id, githubData.stargazers_count]);
+
     const displayName: string | undefined = (CardDiscover as React.ComponentType<any>).displayName;
     const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
     const handleDetailsClicked = (e: React.MouseEvent) => {
@@ -112,7 +113,11 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               <div className="trunctuatedTexts">
                 <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
               </div>
-              <StargazersDiscover data={stargazersMemoizedGithubData()} githubDataId={githubData.id} />
+              <StargazersDiscover
+                data={stargazersMemoizedGithubData()}
+                stateDiscover={stateDiscover}
+                dispatchShared={dispatchShared}
+              />
               <div className={'language-github-color'}>
                 <ul
                   className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}

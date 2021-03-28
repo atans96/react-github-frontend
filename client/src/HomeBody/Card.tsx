@@ -5,13 +5,16 @@ import TopicsCard from './CardBody/TopicsCard';
 import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
-import { IState, IStateStargazers } from '../typing/interface';
+import { IAction, IState, IStateShared, IStateStargazers } from '../typing/interface';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import clsx from 'clsx';
 import ImagesCard from './CardBody/ImagesCard';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
+import { Action } from '../store/Home/reducer';
+import { ActionStargazers } from '../store/Staargazers/reducer';
+import { ActionShared } from '../store/Shared/reducer';
 
 export interface Card {
   index: number;
@@ -21,15 +24,28 @@ export interface Card {
 
 interface CardRef extends Card {
   state: IState;
-  stateStargazersMemoize: IStateStargazers;
-  dispatch: any;
-  dispatchStargazersUser: any;
+  stateStargazers: IStateStargazers;
+  stateShared: IStateShared;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
   columnCount: number;
 }
 
 const Card: React.FC<CardRef> = React.forwardRef(
   (
-    { columnCount, state, dispatch, githubData, index, stateStargazersMemoize, getRootProps, dispatchStargazersUser },
+    {
+      columnCount,
+      state,
+      dispatch,
+      dispatchShared,
+      githubData,
+      index,
+      stateShared,
+      stateStargazers,
+      getRootProps,
+      dispatchStargazersUser,
+    },
     ref
   ) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
@@ -37,7 +53,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
     const displayName: string | undefined = (Card as React.ComponentType<any>).displayName;
     const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
     const userCardMemoizedData = useCallback(() => {
-      return githubData;
+      return githubData.owner;
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [githubData.owner]);
 
@@ -46,10 +62,15 @@ const Card: React.FC<CardRef> = React.forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [githubData.topics]);
 
-    const stargazersMemoizedData = useCallback(() => {
-      return state;
+    const stateTopicsCardMemoizedData = useCallback(() => {
+      return stateShared;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.isLoggedIn, state.isLoading, state.tokenGQL]);
+    }, [stateShared.tokenGQL, stateShared.perPage]);
+
+    const stargazersMemoizedData = useCallback(() => {
+      return { state, stateStargazers, stateShared };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state, stateStargazers, stateShared]);
 
     const stargazersMemoizedGithubData = useCallback(() => {
       return githubData;
@@ -59,7 +80,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
     const handleDetailsClicked = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
-        if (state.isLoggedIn) {
+        if (stateShared.isLoggedIn) {
           clickedAdded({
             variables: {
               clickedInfo: [
@@ -79,7 +100,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [state.isLoggedIn, githubData.full_name, githubData.owner.login]
+      [stateShared.isLoggedIn, githubData.full_name, githubData.owner.login]
     );
     // TODO: show network data graph visualization
     // https://stackoverflow.com/questions/47792185/d3-how-to-pull-json-from-github-api
@@ -105,7 +126,12 @@ const Card: React.FC<CardRef> = React.forwardRef(
               })}
               style={!isVisibleRef.current ? { contentVisibility: 'auto' } : {}}
             >
-              <UserCard data={userCardMemoizedData()} dispatch={dispatch} dispatchStargazers={dispatchStargazersUser} />
+              <UserCard
+                data={userCardMemoizedData()}
+                dispatch={dispatch}
+                dispatchStargazers={dispatchStargazersUser}
+                dispatchShared={dispatchShared}
+              />
               <h3 style={{ textAlign: 'center' }}>
                 <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
               </h3>
@@ -115,10 +141,10 @@ const Card: React.FC<CardRef> = React.forwardRef(
               </div>
               <Stargazers
                 data={stargazersMemoizedGithubData()}
-                state={stargazersMemoizedData()}
-                stateStargazers={stateStargazersMemoize}
+                stateStargazers={stargazersMemoizedData()}
                 dispatch={dispatch}
                 dispatchStargazersUser={dispatchStargazersUser}
+                dispatchShared={dispatchShared}
                 githubDataFullName={githubData.full_name}
                 githubDataId={githubData.id}
               />
@@ -133,8 +159,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
                 <Then>
                   <TopicsCard
                     data={topicsCardMemoizedData()}
-                    state={stargazersMemoizedData()}
-                    perPage={state.perPage}
+                    state={stateTopicsCardMemoizedData()}
                     getRootProps={getRootProps}
                   />
                 </Then>

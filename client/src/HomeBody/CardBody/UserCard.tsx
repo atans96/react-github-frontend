@@ -1,18 +1,23 @@
 import React from 'react';
 import { useUserCardStyles } from './UserCardStyle';
-import { dispatchUsername } from '../../store/dispatcher';
 import { isEqualObjects } from '../../util';
+import { IAction } from '../../typing/interface';
+import { ActionShared } from '../../store/Shared/reducer';
+import { Action } from '../../store/Home/reducer';
+import { ActionStargazers } from '../../store/Staargazers/reducer';
+import { OwnerProps } from '../../typing/type';
 
 interface UserCard {
-  data: any;
-  dispatch: any;
-  dispatchStargazers: any;
+  data: OwnerProps;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 const UserCard = React.memo<UserCard>(
-  ({ data, dispatch, dispatchStargazers }) => {
+  ({ data, dispatch, dispatchStargazers, dispatchShared }) => {
     const classes = useUserCardStyles();
-    const { login, avatar_url, html_url } = data.owner;
+    const { login, avatar_url, html_url } = data;
 
     function onClick(e: React.MouseEvent) {
       e.preventDefault();
@@ -23,7 +28,12 @@ const UserCard = React.memo<UserCard>(
       dispatchStargazers({
         type: 'REMOVE_ALL',
       });
-      dispatchUsername(login, dispatch);
+      dispatchShared({
+        type: 'USERNAME_ADDED',
+        payload: {
+          username: login,
+        },
+      });
     }
 
     return (

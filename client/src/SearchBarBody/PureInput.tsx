@@ -7,8 +7,8 @@ import { If } from '../util/react-if/If';
 import { Result } from './PureInputBody/Result';
 import { StargazerProps } from '../typing/type';
 import { useApolloFactory } from '../hooks/useApolloFactory';
+import { Action } from '../store/Home/reducer';
 import { ActionStargazers } from '../store/Staargazers/reducer';
-import { Action } from '../store/reducer';
 
 interface SearchBarProps {
   setVisible: any;
@@ -128,12 +128,14 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       }
     };
     useEffect(() => {
-      // Bind the event listener
-      document.addEventListener('keydown', handleKey);
-      return () => {
-        // Unbind the event listener on clean up
-        document.removeEventListener('keydown', handleKey);
-      };
+      if (document.location.pathname === '/') {
+        // Bind the event listener
+        document.addEventListener('keydown', handleKey);
+        return () => {
+          // Unbind the event listener on clean up
+          document.removeEventListener('keydown', handleKey);
+        };
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleKey]);
     const handleDeleteBackspace = () => {

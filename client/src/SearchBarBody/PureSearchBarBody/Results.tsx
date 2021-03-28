@@ -6,7 +6,10 @@ import { Loading } from '../../util';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import { Else } from '../../util/react-if/Else';
-import { IStateShared } from '../../typing/interface';
+import { IAction, IStateShared } from '../../typing/interface';
+import { Action } from '../../store/Home/reducer';
+import { ActionStargazers } from '../../store/Staargazers/reducer';
+import { ActionShared } from '../../store/Shared/reducer';
 
 interface Results {
   isLoading: boolean;
@@ -15,13 +18,14 @@ interface Results {
   getRootProps: any;
   ref: React.Ref<HTMLDivElement>;
   state: IStateShared;
-  dispatch: any;
-  dispatchStargazer: any;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchStargazer: React.Dispatch<IAction<ActionStargazers>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 const avatarSize = 20;
 const Results: React.FC<Results> = React.forwardRef(
-  ({ state, data, isLoading, style, getRootProps, dispatch, dispatchStargazer }, ref) => {
+  ({ state, data, isLoading, style, getRootProps, dispatch, dispatchStargazer, dispatchShared }, ref) => {
     const classes = useUserCardStyles({ avatarSize });
     return (
       <>
@@ -50,6 +54,7 @@ const Results: React.FC<Results> = React.forwardRef(
                         userName={Object.keys(result).toString()}
                         key={idx}
                         dispatch={dispatch}
+                        dispatchShared={dispatchShared}
                         dispatchStargazer={dispatchStargazer}
                       >
                         <div className={classes.wrapper} style={{ borderBottom: 0 }}>

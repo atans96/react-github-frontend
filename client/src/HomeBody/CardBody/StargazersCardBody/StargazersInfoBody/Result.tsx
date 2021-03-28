@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Typography } from '@material-ui/core';
-import { dispatchUsername } from '../../../../store/dispatcher';
 import { useUserCardStyles } from '../../UserCardStyle';
 import './ResultStyle.scss';
 import '../StargazersInfoStyle.scss';
 import clsx from 'clsx';
-import { IStateStargazers } from '../../../../typing/interface';
+import { IAction, IState, IStateShared, IStateStargazers } from '../../../../typing/interface';
 import { StargazerProps, Login } from '../../../../typing/type';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import { useMutation } from '@apollo/client';
@@ -14,17 +13,27 @@ import { GET_WATCH_USERS } from '../../../../queries';
 import { fastFilter } from '../../../../util';
 import { useApolloFactory } from '../../../../hooks/useApolloFactory';
 import { noop } from '../../../../util/util';
+import { Action } from '../../../../store/Home/reducer';
+import { ActionStargazers } from '../../../../store/Staargazers/reducer';
+import { ActionShared } from '../../../../store/Shared/reducer';
 
 export interface Result {
   getRootPropsCard: any;
   stargazer: StargazerProps;
-  stateStargazers: IStateStargazers;
-  javascriptWidth?: number;
-  dispatch: any;
-  dispatchStargazers: any;
+  stateStargazers: { state: IState; stateStargazers: IStateStargazers; stateShared: IStateShared };
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
 }
 
-const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatch, stargazer, getRootPropsCard }) => {
+const Result: React.FC<Result> = ({
+  stateStargazers,
+  dispatchStargazersUser,
+  dispatch,
+  stargazer,
+  dispatchShared,
+  getRootPropsCard,
+}) => {
   const [hovered, setHovered] = useState('');
   const classes = useUserCardStyles();
   const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
@@ -49,7 +58,13 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
     },
   });
   useEffect(() => {
-    if (!loadingWatchUsersData && !errorWatchUsersData && watchUsersData && watchUsersData.getWatchUsers?.login) {
+    if (
+      !loadingWatchUsersData &&
+      !errorWatchUsersData &&
+      watchUsersData &&
+      watchUsersData.getWatchUsers?.login &&
+      document.location.pathname === '/'
+    ) {
       setSubscribe(watchUsersData.getWatchUsers?.login?.find((obj: Login) => obj.login === stargazer.login) !== null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,7 +83,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
   const onClickSubscribe = (e: React.MouseEvent) => {
     e.preventDefault();
     let subscribeStatus: boolean;
-    if (!watchUsersData?.getWatchUsers?.login?.find((obj: any) => obj.login === stargazer.login)) {
+    if (!watchUsersData?.getWatchUsers?.login?.find((obj: Login) => obj.login === stargazer.login)) {
       setSubscribe(true);
       subscribeStatus = true;
     } else {
@@ -94,23 +109,25 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
   };
   const onClickQueue = (e: React.MouseEvent) => {
     e.preventDefault();
-    dispatchStargazers({
+    dispatchStargazersUser({
       type: 'SET_QUEUE_STARGAZERS',
       payload: {
         stargazersQueueData: stargazer,
       },
     });
-    const updatedStargazersData = stateStargazers.stargazersData.find((obj: StargazerProps) => obj.id === stargazer.id);
+    const updatedStargazersData = stateStargazers.stateStargazers.stargazersData.find(
+      (obj: StargazerProps) => obj.id === stargazer.id
+    );
     if (updatedStargazersData !== undefined) {
       try {
         updatedStargazersData.isQueue = !updatedStargazersData.isQueue;
       } catch {
         updatedStargazersData['isQueue'] = false;
       }
-      dispatchStargazers({
+      dispatchStargazersUser({
         type: 'STARGAZERS_UPDATED',
         payload: {
-          stargazersData: stateStargazers.stargazersData.map((obj: StargazerProps) => {
+          stargazersData: stateStargazers.stateStargazers.stargazersData.map((obj: StargazerProps) => {
             if (obj.id === updatedStargazersData.id) {
               return updatedStargazersData;
             } else {
@@ -121,7 +138,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
       });
     } else {
       stargazer.isQueue = false;
-      dispatchStargazers({
+      dispatchStargazersUser({
         type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
         payload: {
           stargazersData: stargazer,
@@ -133,10 +150,15 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
     dispatch({
       type: 'REMOVE_ALL',
     });
-    dispatchStargazers({
+    dispatchStargazersUser({
       type: 'REMOVE_ALL',
     });
-    dispatchUsername(stargazer.login, dispatch);
+    dispatchShared({
+      type: 'USERNAME_ADDED',
+      payload: {
+        username: stargazer.login,
+      },
+    });
   };
   return (
     <tbody className={'drags'}>
@@ -193,7 +215,7 @@ const Result: React.FC<Result> = ({ stateStargazers, dispatchStargazers, dispatc
                 stargazer.starredRepositories.nodes
                   .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
                   .map((x: { name: string }) => x && x.name)
-                  .filter((language: string) => language === stateStargazers.language).length
+                  .filter((language: string) => language === stateStargazers.stateStargazers.language).length
               }
             </Typography>
           </div>

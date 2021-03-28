@@ -3,6 +3,7 @@ import React, { ReactNode, CSSProperties, TransitionEvent, MouseEvent, MutableRe
 import {
   ContributorsProps,
   HasNextPage,
+  ImagesDataProps,
   MergedDataProps,
   Nullable,
   RateLimit,
@@ -82,8 +83,8 @@ export interface IState {
   mergedData: MergedDataProps[];
   undisplayMergedData: SeenProps[];
   filteredMergedData: MergedDataProps[];
-  imagesData: any[];
-  searchUsers: [];
+  imagesData: ImagesDataProps[];
+  searchUsers: Array<{ [x: string]: string }>;
   visible: boolean;
   isLoading: boolean;
   page: number;

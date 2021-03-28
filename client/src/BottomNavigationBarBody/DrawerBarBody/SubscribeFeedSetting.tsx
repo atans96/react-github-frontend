@@ -12,7 +12,7 @@ import { IAction, IStateShared } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { Login } from '../../typing/type';
-import { Action } from '../../store/reducer';
+import { Action } from '../../store/Home/reducer';
 import { ActionStargazers } from '../../store/Staargazers/reducer';
 import { ActionShared } from '../../store/Shared/reducer';
 
@@ -139,6 +139,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
                         subscribedUsers={subscribedUsers}
                         key={idx}
                         dispatch={dispatch}
+                        dispatchShared={dispatchShared}
                         dispatchStargazersUser={dispatchStargazersUser}
                       />
                     );
@@ -153,6 +154,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
                                 subscribedUsers={subscribedUsers}
                                 key={idx}
                                 dispatch={dispatch}
+                                dispatchShared={dispatchShared}
                                 dispatchStargazersUser={dispatchStargazersUser}
                               />
                             );

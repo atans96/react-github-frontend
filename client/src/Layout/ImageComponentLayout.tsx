@@ -9,7 +9,6 @@ interface ImageComponentProps {
   urlLink: string;
   visible: boolean;
   handleClick: (arg: any) => void;
-  getImageSrc?: any;
 }
 export const ImageComponentLayout: React.FC<ImageComponentProps> = React.memo(
   ({ urlLink, visible, handleClick }) => {

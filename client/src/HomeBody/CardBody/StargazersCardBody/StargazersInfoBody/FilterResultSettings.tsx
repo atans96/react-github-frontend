@@ -3,7 +3,8 @@ import InputSlider from '../../../../Layout/SliderLayout';
 import { CheckIcon, PeopleIcon, ReposIcon } from '../../../../util/icons';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import Button from '@material-ui/core/Button';
-import { dispatchStargazersUsers, dispatchStargazersUsersRepos } from '../../../../store/dispatcher';
+import { IAction } from '../../../../typing/interface';
+import { ActionStargazers } from '../../../../store/Staargazers/reducer';
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -13,11 +14,19 @@ const useStyles = makeStyles((theme) => ({
 
 export interface FilterResultSettings {
   props: any;
-  dispatch: any;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
 }
 
-const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch }) => {
+const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatchStargazersUser }) => {
   const classes = useStyles();
+  const dispatchStargazersUsers = (stargazersUsers: number) => {
+    dispatchStargazersUser({
+      type: 'STARGAZERS_USERS',
+      payload: {
+        stargazersUsers: stargazersUsers,
+      },
+    });
+  };
   return (
     <div style={{ borderBottom: '1px solid #eaecef' }}>
       <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -30,8 +39,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
             inputWidth={30}
             sliderWidth={150}
             defaultValue={parseInt(localStorage.getItem('users') as string) || 2}
-            dispatcher={dispatchStargazersUsers}
-            dispatch={dispatch}
+            dispatch={dispatchStargazersUsers}
             icon={<PeopleIcon />}
           />
         </details>
@@ -44,8 +52,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
             inputWidth={30}
             sliderWidth={150}
             defaultValue={parseInt(localStorage.getItem('repos') as string) || 2}
-            dispatcher={dispatchStargazersUsersRepos}
-            dispatch={dispatch}
+            dispatch={dispatchStargazersUsers}
             icon={<ReposIcon />}
           />
         </details>

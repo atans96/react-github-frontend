@@ -9,14 +9,19 @@ import { WATCH_USER_REMOVED } from '../../../mutations';
 import { GET_WATCH_USERS } from '../../../queries';
 import useHover from '../../../hooks/useHover';
 import { fastFilter } from '../../../util';
+import { IAction } from '../../../typing/interface';
+import { ActionShared } from '../../../store/Shared/reducer';
+import { ActionStargazers } from '../../../store/Staargazers/reducer';
+import { Action } from '../../../store/Home/reducer';
 
 interface ResultProps {
   subscribedUsers: Login;
-  dispatch: any;
-  dispatchStargazersUser: any;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
+  dispatch: React.Dispatch<IAction<Action>>;
 }
 
-const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatch, dispatchStargazersUser }) => {
+const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatchShared, dispatch, dispatchStargazersUser }) => {
   const classes = useUserCardStyles();
   const [isHovered, bind] = useHover();
   const userTextNameRef = useRef<HTMLAnchorElement>(null);
@@ -56,7 +61,7 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatch, dispatchStar
     dispatchStargazersUser({
       type: 'REMOVE_ALL',
     });
-    dispatch({
+    dispatchShared({
       type: 'USERNAME_ADDED',
       payload: {
         username: subscribedUsers.login,

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { PureInputDiscover } from './PureInputDiscover';
 import { SearchBarProps } from '../SearchBarDiscover';

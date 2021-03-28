@@ -1,8 +1,8 @@
 import React, { useCallback } from 'react';
 import { IAction, IStateDiscover, IStateShared } from './typing/interface';
 import PureSearchBarDiscover from './SearchBarBody/PureSearchBarDiscover';
-import { ActionDiscover } from './store/Discover/reducer';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
+import { ActionDiscover } from './store/Discover/reducer';
 
 export interface SearchBarProps {
   stateShared: IStateShared;

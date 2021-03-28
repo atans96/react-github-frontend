@@ -4,8 +4,8 @@ import ColumnOne from './ManageProfileBody/ColumnOne';
 import { IAction, IStateManageProfile, IStateShared } from './typing/interface';
 import { useResizeHandler } from './hooks/hooks';
 import ColumnTwo from './ManageProfileBody/ColumnTwo';
-import { ActionShared } from './store/Shared/reducer';
 import { ActionManageProfile } from './store/ManageProfile/reducer';
+import { ActionShared } from './store/Shared/reducer';
 
 interface ManageProfileProps {
   stateShared: IStateShared;

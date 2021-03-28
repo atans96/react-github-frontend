@@ -126,6 +126,10 @@ export type OwnerProps = {
   avatar_url: string;
   html_url: string;
 };
+export type ImagesDataProps = {
+  id: number;
+  value: string[];
+};
 export type MergedDataProps = {
   id: number;
   stargazers_count: string;

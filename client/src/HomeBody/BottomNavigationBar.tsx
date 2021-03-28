@@ -2,7 +2,7 @@ import React from 'react';
 import { IAction, IState, IStateShared } from '../typing/interface';
 import PaginationBar from '../BottomNavigationBarBody/PaginationBar';
 import DrawerBar from '../BottomNavigationBarBody/DrawerBar';
-import { Action } from '../store/reducer';
+import { Action } from '../store/Home/reducer';
 import { ActionStargazers } from '../store/Staargazers/reducer';
 import { ActionShared } from '../store/Shared/reducer';
 

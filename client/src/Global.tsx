@@ -26,13 +26,6 @@ import useUserVerification from './hooks/useUserVerification';
 import { alreadySeenCardSelector } from './selectors/stateSelector';
 import { fastFilter } from './util';
 import { filterActionResolvedPromiseData } from './util/util';
-import {
-  dispatchAppendMergedData,
-  dispatchAppendMergedDataDiscover,
-  dispatchImagesData,
-  dispatchPage,
-  dispatchPageDiscover,
-} from './store/dispatcher';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { LanguagePreference, MergedDataProps, Nullable } from './typing/type';
 import eye from './new_16-2.gif';
@@ -40,7 +33,7 @@ import { ActionStargazers } from './store/Staargazers/reducer';
 import { ActionDiscover } from './store/Discover/reducer';
 import { ActionManageProfile } from './store/ManageProfile/reducer';
 import { ActionShared } from './store/Shared/reducer';
-import { Action } from './store/reducer';
+import { Action } from './store/Home/reducer';
 
 interface GlobalProps {
   state: IState;
@@ -61,7 +54,6 @@ export enum ActionResolvedPromise {
   error = 'error',
   nonAppend = 'nonAppend',
 }
-//TODO: refactor dispatcher.ts
 const Global: React.FC<{
   routerProps: RouteComponentProps<any, any, any>;
   componentProps: GlobalProps;
@@ -128,7 +120,12 @@ const Global: React.FC<{
 
           let inputForImagesData = [];
           if (filter1.length > 0) {
-            dispatchAppendMergedDataDiscover(filter1, props.componentProps.dispatch);
+            props.componentProps.dispatchDiscover({
+              type: 'MERGED_DATA_APPEND_DISCOVER',
+              payload: {
+                data: filter1,
+              },
+            });
             inputForImagesData = filter1.reduce((acc: any[], object: MergedDataProps) => {
               acc.push(
                 Object.assign(
@@ -145,7 +142,9 @@ const Global: React.FC<{
               return acc;
             }, []);
           } else if (filter1.length === 0) {
-            dispatchPageDiscover(props.componentProps.dispatch);
+            props.componentProps.dispatchDiscover({
+              type: 'ADVANCE_PAGE_DISCOVER',
+            });
           }
           break;
         }
@@ -178,21 +177,43 @@ const Global: React.FC<{
               },
             });
           }
-          dispatchAppendMergedData(filter1, props.componentProps.dispatch);
+          props.componentProps.dispatch({
+            type: 'MERGED_DATA_APPEND',
+            payload: {
+              data: filter1,
+            },
+          });
           if (filter1.length === 0) {
-            dispatchPage(props.componentProps.dispatch);
+            props.componentProps.dispatch({
+              type: 'ADVANCE_PAGE',
+            });
           } else {
             if (data.renderImages.length === 0) {
-              dispatchImagesData([], props.componentProps.dispatch);
+              props.componentProps.dispatch({
+                type: 'IMAGES_DATA_ADDED',
+                payload: {
+                  images: [],
+                },
+              });
             } else {
-              dispatchImagesData(data.renderImages, props.componentProps.dispatch);
+              props.componentProps.dispatch({
+                type: 'IMAGES_DATA_ADDED',
+                payload: {
+                  images: data.renderImages,
+                },
+              });
             }
             const temp = data.dataOne || data;
             temp.map((obj: MergedDataProps) => {
               obj['isQueue'] = false;
               return obj;
             });
-            dispatchAppendMergedData(temp, props.componentProps.dispatch);
+            props.componentProps.dispatch({
+              type: 'MERGED_DATA_APPEND',
+              payload: {
+                data: temp,
+              },
+            });
           }
           break;
         }
@@ -212,8 +233,8 @@ const Global: React.FC<{
   const actionResolvedPromise = useCallback(
     (
       action: ActionResolvedPromise,
-      setLoading: any,
-      setNotification: any,
+      setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+      setNotification: React.Dispatch<React.SetStateAction<string>>,
       isFetchFinish: boolean,
       displayName: string,
       data?: Nullable<IDataOne | any>,

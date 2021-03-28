@@ -24,101 +24,103 @@ const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
   const signUpAdded = useApolloFactory(displayName!).mutation.signUpAdded;
   const history = useHistory();
   useEffect(() => {
-    // After requesting Github access by logging using user account's Github
-    // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
-    const url = window.location.href;
-    const hasCode = url.includes('?code=');
+    if (document.location.pathname === '/login') {
+      // After requesting Github access by logging using user account's Github
+      // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
+      const url = window.location.href;
+      const hasCode = url.includes('?code=');
 
-    // If Github API returns the code parameter
-    if (hasCode) {
-      const newUrl = url.split('?code=');
-      // needed to prevent maximum depth exceed when the redirect URL from github is hit
-      window.history.pushState({}, '', newUrl[0]);
-      setData({ ...data, isLoading: true }); // re-render the html tag below to show the loader spinner
+      // If Github API returns the code parameter
+      if (hasCode) {
+        const newUrl = url.split('?code=');
+        // needed to prevent maximum depth exceed when the redirect URL from github is hit
+        window.history.pushState({}, '', newUrl[0]);
+        setData({ ...data, isLoading: true }); // re-render the html tag below to show the loader spinner
 
-      const proxy_url = stateShared.proxy_url;
-      const requestData = {
-        client_id: stateShared.client_id,
-        redirect_uri: stateShared.redirect_uri,
-        client_secret: stateShared.client_secret,
-        code: newUrl[1],
-      };
+        const proxy_url = stateShared.proxy_url;
+        const requestData = {
+          client_id: stateShared.client_id,
+          redirect_uri: stateShared.redirect_uri,
+          client_secret: stateShared.client_secret,
+          code: newUrl[1],
+        };
 
-      // Use code parameter and other parameters to make POST request to proxy_server
-      requestGithubLogin(proxy_url, requestData)
-        .then((response) => {
-          if (response.data) {
-            signUpAdded({
-              variables: {
-                username: response.data.login,
-                avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
-                token: response.token,
-                code: newUrl[1],
-                languagePreference: languageList.reduce((acc, language: string) => {
-                  acc.push(Object.assign({}, { language, checked: true }));
-                  return acc;
-                }, [] as any[]),
-              },
-            }).then(({ data }: any) => {
-              localStorage.setItem('sess', data.signUp.token);
-              localStorage.setItem(
-                'jbb',
-                CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
-              );
-            });
-            dispatchShared({
-              type: 'LOGIN',
-              payload: { isLoggedIn: true },
-            });
-            dispatchRateLimit({
-              type: 'RATE_LIMIT_ADDED',
-              payload: {
-                rateLimitAnimationAdded: false,
-              },
-            });
-            getRateLimitInfo(response.token).then((data) => {
-              if (data.rateLimit && data.rateLimitGQL) {
-                dispatchRateLimit({
-                  type: 'RATE_LIMIT_ADDED',
-                  payload: {
-                    rateLimitAnimationAdded: true,
-                  },
-                });
-                dispatchRateLimit({
-                  type: 'RATE_LIMIT',
-                  payload: {
-                    limit: data.rateLimit.limit,
-                    used: data.rateLimit.used,
-                    reset: data.rateLimit.reset,
-                  },
-                });
+        // Use code parameter and other parameters to make POST request to proxy_server
+        requestGithubLogin(proxy_url, requestData)
+          .then((response) => {
+            if (response.data) {
+              signUpAdded({
+                variables: {
+                  username: response.data.login,
+                  avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
+                  token: response.token,
+                  code: newUrl[1],
+                  languagePreference: languageList.reduce((acc, language: string) => {
+                    acc.push(Object.assign({}, { language, checked: true }));
+                    return acc;
+                  }, [] as any[]),
+                },
+              }).then(({ data }: any) => {
+                localStorage.setItem('sess', data.signUp.token);
+                localStorage.setItem(
+                  'jbb',
+                  CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
+                );
+              });
+              dispatchShared({
+                type: 'LOGIN',
+                payload: { isLoggedIn: true },
+              });
+              dispatchRateLimit({
+                type: 'RATE_LIMIT_ADDED',
+                payload: {
+                  rateLimitAnimationAdded: false,
+                },
+              });
+              getRateLimitInfo(response.token).then((data) => {
+                if (data.rateLimit && data.rateLimitGQL) {
+                  dispatchRateLimit({
+                    type: 'RATE_LIMIT_ADDED',
+                    payload: {
+                      rateLimitAnimationAdded: true,
+                    },
+                  });
+                  dispatchRateLimit({
+                    type: 'RATE_LIMIT',
+                    payload: {
+                      limit: data.rateLimit.limit,
+                      used: data.rateLimit.used,
+                      reset: data.rateLimit.reset,
+                    },
+                  });
 
-                dispatchRateLimit({
-                  type: 'RATE_LIMIT_GQL',
-                  payload: {
-                    limit: data.rateLimitGQL.limit,
-                    used: data.rateLimitGQL.used,
-                    reset: data.rateLimitGQL.reset,
-                  },
-                });
-              }
-            });
-          } else {
+                  dispatchRateLimit({
+                    type: 'RATE_LIMIT_GQL',
+                    payload: {
+                      limit: data.rateLimitGQL.limit,
+                      used: data.rateLimitGQL.used,
+                      reset: data.rateLimitGQL.reset,
+                    },
+                  });
+                }
+              });
+            } else {
+              setData({
+                isLoading: false,
+                errorMessage: 'Sorry! Login failed',
+              });
+            }
+          })
+          .then(() => {
+            history.push('/');
+          })
+          .catch(() => {
             setData({
               isLoading: false,
               errorMessage: 'Sorry! Login failed',
             });
-          }
-        })
-        .then(() => {
-          history.push('/');
-        })
-        .catch(() => {
-          setData({
-            isLoading: false,
-            errorMessage: 'Sorry! Login failed',
           });
-        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared, dispatchShared, data, history]);

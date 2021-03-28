@@ -7,10 +7,13 @@ import { Then } from '../../../util/react-if/Then';
 import { If } from '../../../util/react-if/If';
 import './StargazersInfoStyle.scss';
 import LanguagesList from './StargazersInfoBody/LanguagesList';
-import { IStateStargazers } from '../../../typing/interface';
+import { IAction, IState, IStateShared, IStateStargazers } from '../../../typing/interface';
 import { StargazerProps } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
 import { dragMove } from '../../../util';
+import { Action } from '../../../store/Home/reducer';
+import { ActionStargazers } from '../../../store/Staargazers/reducer';
+import { ActionShared } from '../../../store/Shared/reducer';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -19,9 +22,10 @@ export interface StargazersInfo {
   isLoading: boolean;
   stargazers_count: string;
   modalWidth: string;
-  dispatch: any;
-  dispatchStargazers: any;
-  stateStargazers: IStateStargazers;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
+  stateStargazers: { state: IState; stateStargazers: IStateStargazers; stateShared: IStateShared };
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -32,7 +36,8 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
       dispatch,
       getRootPropsCard,
       getRootProps,
-      dispatchStargazers,
+      dispatchShared,
+      dispatchStargazersUser,
       GQL_VARIABLES,
       isLoading,
       stargazers_count,
@@ -47,7 +52,7 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
     const stargazerModalRef = useRef<HTMLDivElement>(null);
     const handleClickFilterResult = () => {
       setIsLoadingFetchMore(true);
-      dispatchStargazers({
+      dispatchStargazersUser({
         type: 'REMOVE_ALL',
       });
     };
@@ -63,7 +68,12 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
     const dragRef = useRef<HTMLDivElement>(null);
     const appendAlready = useRef<boolean>(false); //prevent re-execute dragMove
     useEffect(() => {
-      if (dragRef.current && stargazerModalRef.current && !appendAlready.current) {
+      if (
+        dragRef.current &&
+        stargazerModalRef.current &&
+        !appendAlready.current &&
+        document.location.pathname === '/'
+      ) {
         appendAlready.current = true;
         dragMove(stargazerModalRef.current.querySelectorAll('.SelectMenu-modal:not(.NonDrag)')[0], dragRef.current);
       }
@@ -81,7 +91,7 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
 
           <div className="NonDrag">
             <FilterResultSettings
-              dispatch={dispatchStargazers}
+              dispatchStargazersUser={dispatchStargazersUser}
               props={getRootProps({
                 onClick: handleClickFilterResult,
                 params: { query: SEARCH_FOR_REPOS, variables: GQL_VARIABLES.GQL_variables },
@@ -99,25 +109,26 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
                   <th style={{ width: '10%' }} className="sticky-column-table" />
                   <th style={{ width: '100%' }} className="sticky-column-table" />
                   <th style={{ width: '30%' }} className="sticky-column-table">
-                    <LanguagesList stateStargazers={stateStargazers} dispatchStargazers={dispatchStargazers} />
+                    <LanguagesList stateStargazers={stateStargazers} dispatchStargazersUser={dispatchStargazersUser} />
                   </th>
                 </tr>
               </thead>
               <If condition={!isLoading || !isLoadingFetchMore}>
                 <Then>
-                  {stateStargazers.stargazersData.length > 0 &&
-                    stateStargazers.stargazersData.map((stargazer: StargazerProps, idx: number) => {
-                      if (idx === stateStargazers.stargazersData.length - 1) {
+                  {stateStargazers.stateStargazers.stargazersData.length > 0 &&
+                    stateStargazers.stateStargazers.stargazersData.map((stargazer: StargazerProps, idx: number) => {
+                      if (idx === stateStargazers.stateStargazers.stargazersData.length - 1) {
                         finishRef.current = true;
                       }
                       return (
                         <Result
                           key={idx}
                           stargazer={stargazer}
+                          dispatchShared={dispatchShared}
                           getRootPropsCard={getRootPropsCard}
                           dispatch={dispatch}
                           stateStargazers={stateStargazers}
-                          dispatchStargazers={dispatchStargazers}
+                          dispatchStargazersUser={dispatchStargazersUser}
                         />
                       );
                     })}
@@ -150,8 +161,8 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
           {/*        </th> */}
           {/*        </thead> */}
           {/*        <React.Fragment> */}
-          {/*          {stateStargazers.stargazersData.length > 0 && */}
-          {/*          stateStargazers.stargazersData.map((stargazer, idx) => { */}
+          {/*          {stateStargazers.stateStargazers.stargazersData.length > 0 && */}
+          {/*          stateStargazers.stateStargazers.stargazersData.map((stargazer, idx) => { */}
           {/*            return <Result key={idx} stargazer={stargazer} getRootPropsCard={getRootPropsCard} />; */}
           {/*          })} */}
           {/*        </React.Fragment> */}
@@ -173,8 +184,10 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
             {...getRootProps({
               onClick: handleClickLoadMore,
               params: {
-                query: stateStargazers.hasNextPage.hasNextPage ? SEARCH_FOR_MORE_REPOS : SEARCH_FOR_REPOS,
-                variables: stateStargazers.hasNextPage.hasNextPage
+                query: stateStargazers.stateStargazers.hasNextPage.hasNextPage
+                  ? SEARCH_FOR_MORE_REPOS
+                  : SEARCH_FOR_REPOS,
+                variables: stateStargazers.stateStargazers.hasNextPage.hasNextPage
                   ? GQL_VARIABLES.GQL_pagination_variables
                   : GQL_VARIABLES.GQL_variables,
               },
@@ -185,10 +198,14 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
             style={{ cursor: isLoadingFetchMore ? '' : 'pointer' }}
             ref={simulateClick}
           >
-            Load {stateStargazers.hasNextPage.hasNextPage ? `${stateStargazers.stargazersUsers}` : 0} More Users
+            Load{' '}
+            {stateStargazers.stateStargazers.hasNextPage.hasNextPage
+              ? `${stateStargazers.stateStargazers.stargazersUsers}`
+              : 0}{' '}
+            More Users
           </footer>
           <footer className="SelectMenu-footer">
-            Showing {stateStargazers.stargazersData.length} of {stargazers_count} Users
+            Showing {stateStargazers.stateStargazers.stargazersData.length} of {stargazers_count} Users
           </footer>
         </div>
       </div>

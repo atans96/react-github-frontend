@@ -1,5 +1,5 @@
 import { IAction, IStateShared } from '../../typing/interface';
-import { initialState } from '../reducer';
+import { initialState } from '../Home/reducer';
 import { initialStateDiscover } from '../Discover/reducer';
 import { initialStateStargazers } from '../Staargazers/reducer';
 import { readEnvironmentVariable } from '../../util';

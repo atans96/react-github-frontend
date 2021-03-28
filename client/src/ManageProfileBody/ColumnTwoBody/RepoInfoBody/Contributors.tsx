@@ -30,7 +30,7 @@ const Contributors = React.memo<ContributorsProps>(
     const [openContributors, setOpenContributors] = useState(false);
     const [contributionRepo, setContributionRepo] = useState<any[]>([]);
     useDeepCompareEffect(() => {
-      if (contributions.length > 0) {
+      if (contributions.length > 0 && document.location.pathname === '/profile') {
         const contribution = contributions.find((xx: any) => fullName === xx.fullName);
         if (contribution.data) {
           setContributionRepo(contribution.data);
