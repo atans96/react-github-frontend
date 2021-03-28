@@ -4,7 +4,7 @@ import React from 'react';
 interface AuthedHandlerProps extends RouteComponentProps {
   component: React.ComponentClass<any>;
   redirect?: string;
-  authenticator?: any;
+  authenticator?: boolean;
   componentProps?: any;
   [propName: string]: any;
 }

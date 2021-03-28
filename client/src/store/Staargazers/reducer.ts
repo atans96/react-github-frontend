@@ -1,5 +1,5 @@
 import { IAction, IStateStargazers } from '../../typing/interface';
-import { HasNextPage } from '../../typing/type';
+import { HasNextPage, StargazerProps } from '../../typing/type';
 import { fastFilter } from '../../util';
 import _ from 'lodash';
 export type ActionStargazers =
@@ -50,7 +50,10 @@ export const reducerStargazers = (
       return {
         ...state,
         stargazersQueueData: state.stargazersQueueData.find((obj) => action.payload.stargazersQueueData.id === obj.id)
-          ? fastFilter((obj: any) => obj.id !== action.payload.stargazersQueueData.id, state.stargazersQueueData)
+          ? fastFilter(
+              (obj: StargazerProps) => obj.id !== action.payload.stargazersQueueData.id,
+              state.stargazersQueueData
+            )
           : _.uniqBy([...state.stargazersQueueData, action.payload.stargazersQueueData], 'id'),
       };
     }

@@ -1,5 +1,5 @@
-import { IAction, IState } from '../typing/interface';
-import { fastFilter } from '../util';
+import { IAction, IState } from '../../typing/interface';
+import { fastFilter } from '../../util';
 import _ from 'lodash';
 
 export type Action =

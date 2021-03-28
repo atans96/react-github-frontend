@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
-import { dispatchUsername } from '../../../store/dispatcher';
-import { IStateShared } from '../../../typing/interface';
+import { IAction, IStateShared } from '../../../typing/interface';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
+import { Action } from '../../../store/Home/reducer';
+import { ActionStargazers } from '../../../store/Staargazers/reducer';
+import { ActionShared } from '../../../store/Shared/reducer';
 
 interface Result {
   children: React.ReactNode;
   userName: string;
   getRootProps: any;
   state: IStateShared;
-  dispatch: any;
-  dispatchStargazer: any;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchStargazer: React.Dispatch<IAction<ActionStargazers>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
-const Result: React.FC<Result> = ({ state, children, userName, getRootProps, dispatch, dispatchStargazer }) => {
+const Result: React.FC<Result> = ({
+  state,
+  children,
+  dispatchShared,
+  userName,
+  getRootProps,
+  dispatch,
+  dispatchStargazer,
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
@@ -30,7 +41,12 @@ const Result: React.FC<Result> = ({ state, children, userName, getRootProps, dis
     dispatchStargazer({
       type: 'REMOVE_ALL',
     });
-    dispatchUsername(userName, dispatch);
+    dispatchShared({
+      type: 'USERNAME_ADDED',
+      payload: {
+        username: userName,
+      },
+    });
     if (state.isLoggedIn) {
       searchesAdded({
         variables: {

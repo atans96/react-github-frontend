@@ -16,10 +16,10 @@ import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
+import { ActionResolvedPromise } from './Global';
 import { ActionDiscover } from './store/Discover/reducer';
 import { ActionShared } from './store/Shared/reducer';
 import { ActionStargazers } from './store/Staargazers/reducer';
-import { ActionResolvedPromise } from './Global';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -46,7 +46,6 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
     return (
       isEqualObjects(prevProps.data.length, nextProps.data.length) &&
       isEqualObjects(prevProps.stateDiscover.imagesDataDiscover, nextProps.stateDiscover.imagesDataDiscover) &&
-      isEqualObjects(prevProps.stateDiscover.widthDiscover, nextProps.stateDiscover.widthDiscover) &&
       isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width) &&
       isEqualObjects(prevProps.sorted, nextProps.sorted)
     ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
@@ -68,8 +67,8 @@ interface DiscoverProps {
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   actionResolvedPromise: (
     action: ActionResolvedPromise,
-    setLoading: any,
-    setNotification: any,
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    setNotification: React.Dispatch<React.SetStateAction<string>>,
     isFetchFinish: boolean,
     displayName: string,
     data?: Nullable<IDataOne | any>,
@@ -99,7 +98,7 @@ const Discover = React.memo<DiscoverProps>(
     const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
     const windowScreenRef = useRef<HTMLDivElement>(null);
     const fetchUserMore = () => {
-      if (!isFetchFinish.current && stateDiscover.pageDiscover > 1) {
+      if (!isFetchFinish.current && stateDiscover.pageDiscover > 1 && sortedDataRef?.current?.length > 0) {
         setLoading(true); // spawn loading spinner at bottom page
         paginationRef.current += stateShared.perPage;
         if (sortedDataRef.current.slice(0, paginationRef.current + stateShared.perPage).length === 0) {
@@ -182,13 +181,19 @@ const Discover = React.memo<DiscoverProps>(
     const isLoadingRef = useRef<boolean>(true);
     const notificationRef = useRef<string>('');
     useEffect(() => {
-      mergedDataRef.current = stateDiscover.mergedDataDiscover;
+      if (document.location.pathname === '/discover') {
+        mergedDataRef.current = stateDiscover.mergedDataDiscover;
+      }
     });
     useEffect(() => {
-      isLoadingRef.current = isLoading;
+      if (document.location.pathname === '/discover') {
+        isLoadingRef.current = isLoading;
+      }
     });
     useEffect(() => {
-      notificationRef.current = notification;
+      if (document.location.pathname === '/discover') {
+        notificationRef.current = notification;
+      }
     });
     const handleBottomHit = useCallback(
       () => {
@@ -264,23 +269,28 @@ const Discover = React.memo<DiscoverProps>(
     useResizeHandler(windowScreenRef, debounce(handleResize));
     useEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
-      if (!suggestedDataLoading && !!suggestedData?.getSuggestedRepo && !suggestedDataError) {
+      if (
+        !suggestedDataLoading &&
+        !!suggestedData?.getSuggestedRepo &&
+        !suggestedDataError &&
+        document.location.pathname === '/discover'
+      ) {
         fetchUser();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [suggestedDataLoading, suggestedDataError, sortedClicked]);
 
     useEffect(() => {
-      if (stateDiscover.pageDiscover > 1 && notification === '') {
+      if (stateDiscover.pageDiscover > 1 && notification === '' && document.location.pathname === '/discover') {
         fetchUserMore();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stateDiscover.pageDiscover]);
 
     const stateMemoize = useCallback(() => {
-      return stateDiscover;
+      return { stateDiscover, stateShared };
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateDiscover]);
+    }, [stateDiscover, stateShared]);
 
     const stateBottomNavigationBarMemoize = useCallback(() => {
       return stateDiscover;
@@ -288,8 +298,10 @@ const Discover = React.memo<DiscoverProps>(
     }, [stateDiscover.pageDiscover, stateDiscover.lastPageDiscover]);
 
     useEffect(() => {
-      setLoading(stateDiscover.isLoadingDiscover);
-      setNotification(stateDiscover.notificationDiscover);
+      if (document.location.pathname === '/discover') {
+        setLoading(stateDiscover.isLoadingDiscover);
+        setNotification(stateDiscover.notificationDiscover);
+      }
     }, [stateDiscover.isLoadingDiscover, stateDiscover.notificationDiscover]);
 
     const whichToUse = () => {

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useReducer, useRef } from 'reac
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { initialState, reducer } from './store/reducer';
+import { initialState, reducer } from './store/Home/reducer';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
@@ -115,7 +115,7 @@ export const Main = () => {
               });
             }
           } else if (message.includes('Unauthorized')) {
-            logoutAction(history, dispatchShared, dispatchStargazers);
+            logoutAction(history, dispatchShared);
           }
         });
       }
@@ -123,7 +123,7 @@ export const Main = () => {
         console.log('Network Error: ', networkError);
         if ('result' in networkError && networkError.result.message === 'TokenExpiredError') {
           localStorage.removeItem('sess');
-          logoutAction(history, dispatchShared, dispatchStargazers);
+          logoutAction(history, dispatchShared);
           window.alert('Your token has expired. We will logout you out.');
         }
       }
@@ -171,7 +171,13 @@ export const Main = () => {
               <AuthedHandler
                 component={NavBar}
                 authenticator={true}
-                componentProps={{ state, dispatch, dispatchStargazers }}
+                componentProps={{
+                  state,
+                  stateShared,
+                  dispatch,
+                  dispatchStargazers,
+                  dispatchShared,
+                }}
               />
               <Switch>
                 <AuthedHandler

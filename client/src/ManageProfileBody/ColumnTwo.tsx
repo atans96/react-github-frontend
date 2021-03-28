@@ -11,8 +11,8 @@ import Details from './ColumnTwoBody/Details';
 import RepoInfo from './ColumnTwoBody/RepoInfo';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
-import { ActionManageProfile } from '../store/ManageProfile/reducer';
 import { ActionShared } from '../store/Shared/reducer';
+import { ActionManageProfile } from '../store/ManageProfile/reducer';
 
 interface ColumnTwoProps {
   languageFilter: string[];
@@ -67,7 +67,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
-  const render = () => {
+  const render = (): RepoInfoProps[] => {
     const filter1 = fastFilter((obj: RepoInfoProps) => {
       if (languageFilter.length > 0 && languageFilter.includes(obj.language)) {
         return obj;
@@ -75,7 +75,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({
         return obj;
       }
     }, stateManageProfile.repoInfo);
-    const filter2 = fastFilter((obj: any) => {
+    const filter2 = fastFilter((obj: RepoInfoProps) => {
       if (
         (typedFilter.length > 0 &&
           checkedItems.descriptionTitle &&
@@ -90,14 +90,14 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({
         return obj;
       }
     }, filter1);
-    return fastFilter((obj: any) => !!obj, filter2);
+    return fastFilter((obj: RepoInfoProps) => !!obj, filter2);
   };
   const defaultWidth = useRef(stateManageProfile.columnWidth?.get(displayName!)?.width || 0);
   const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
     drawerWidthClient: defaultWidth.current,
   });
   useEffect(() => {
-    if (stateManageProfile.columnWidth) {
+    if (stateManageProfile.columnWidth && document.location.pathname === '/profile') {
       let total = 0;
       stateManageProfile.columnWidth.forEach((obj) => (total += obj.width));
       const res = stateManageProfile.columnWidth.set(

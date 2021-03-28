@@ -9,7 +9,7 @@ import InputSlider from '../Layout/SliderLayout';
 import { PureInput } from './PureInput';
 import { Tags } from './PureSearchBarBody/Tags';
 import _ from 'lodash';
-import { MergedDataProps, SearchesData, StargazerProps } from '../typing/type';
+import { MergedDataProps, SearchesData, StargazerProps, TopicsProps } from '../typing/type';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import useCollapse from '../hooks/useCollapse';
@@ -21,8 +21,8 @@ import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
 import HistoryIcon from '@material-ui/icons/History';
 import { fastFilter, Loading } from '../util';
 import { useApolloFactory } from '../hooks/useApolloFactory';
+import { Action } from '../store/Home/reducer';
 import { ActionStargazers } from '../store/Staargazers/reducer';
-import { Action } from '../store/reducer';
 import { ActionShared } from '../store/Shared/reducer';
 
 const defaultTheme = createMuiTheme();
@@ -229,7 +229,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
       } else {
         return createPortal(
           <div className={'tags'} {...collapseTopicTags()}>
-            {state.state.topics.map((obj, idx) => {
+            {state.state.topics.map((obj: TopicsProps, idx: number) => {
               if (renderTopicTags) {
                 return <Tags key={idx} obj={obj} clicked={obj.clicked} state={state.state} dispatch={dispatch} />;
               }
@@ -246,27 +246,29 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
     const { getRootProps } = useEventHandlerComposer({ onClickCb });
 
     useEffect(() => {
-      if (state.state.filteredTopics.length > 0) {
-        dispatch({
-          type: 'MERGED_DATA_FILTER_BY_TAGS',
-          payload: {
-            filteredMergedData: fastFilter((x: MergedDataProps) => {
-              const topics = [...x.topics];
-              if (x.language) {
-                topics.push(x.language.toLowerCase());
-              }
-              return _.intersection(topics, state.state.filteredTopics).length > 0;
-              // return _.intersection(topics, state.state.filteredTopics).length === state.state.filteredTopics.length;
-            }, state.state.mergedData),
-          },
-        });
-      } else {
-        dispatch({
-          type: 'MERGED_DATA_FILTER_BY_TAGS',
-          payload: {
-            filteredMergedData: [],
-          },
-        });
+      if (document.location.pathname === '/') {
+        if (state.state.filteredTopics.length > 0) {
+          dispatch({
+            type: 'MERGED_DATA_FILTER_BY_TAGS',
+            payload: {
+              filteredMergedData: fastFilter((x: MergedDataProps) => {
+                const topics = [...x.topics];
+                if (x.language) {
+                  topics.push(x.language.toLowerCase());
+                }
+                return _.intersection(topics, state.state.filteredTopics).length > 0;
+                // return _.intersection(topics, state.state.filteredTopics).length === state.state.filteredTopics.length;
+              }, state.state.mergedData),
+            },
+          });
+        } else {
+          dispatch({
+            type: 'MERGED_DATA_FILTER_BY_TAGS',
+            payload: {
+              filteredMergedData: [],
+            },
+          });
+        }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.state.filteredTopics, state.state.mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
@@ -286,56 +288,60 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
     }, []);
 
     useEffect(() => {
-      // this is to render the new topic tags based on filteredMergedData when it throws new data
-      const result: any[] = [];
-      whichToUse().forEach((obj: MergedDataProps) => {
-        const isTopicsNull = obj.topics || [];
-        const topics = [...isTopicsNull];
-        if (obj.language) {
-          topics.push(obj.language.toLowerCase());
-        }
-        const languageAndTopics = _.uniq(topics);
-        languageAndTopics.forEach((topic: string) => {
-          const index = state.state.topics.findIndex((x) => x.topic === topic);
-          if (!result.find((obj) => obj.topic === topic)) {
-            result.push(
-              Object.assign(
-                {},
-                {
-                  topic: topic,
-                  count: 1,
-                  clicked: index > -1 ? state.state.topics[index].clicked : false,
-                }
-              )
-            );
-          } else {
-            const index = result.findIndex((obj) => obj.topic === topic);
-            result[index].count = result[index].count + 1;
+      if (document.location.pathname === '/') {
+        // this is to render the new topic tags based on filteredMergedData when it throws new data
+        const result: any[] = [];
+        whichToUse().forEach((obj: MergedDataProps) => {
+          const isTopicsNull = obj.topics || [];
+          const topics = [...isTopicsNull];
+          if (obj.language) {
+            topics.push(obj.language.toLowerCase());
           }
+          const languageAndTopics = _.uniq(topics);
+          languageAndTopics.forEach((topic: string) => {
+            const index = state.state.topics.findIndex((x) => x.topic === topic);
+            if (!result.find((obj) => obj.topic === topic)) {
+              result.push(
+                Object.assign(
+                  {},
+                  {
+                    topic: topic,
+                    count: 1,
+                    clicked: index > -1 ? state.state.topics[index].clicked : false,
+                  }
+                )
+              );
+            } else {
+              const index = result.findIndex((obj) => obj.topic === topic);
+              result[index].count = result[index].count + 1;
+            }
+          });
         });
-      });
-      dispatch({
-        type: 'SET_TOPICS',
-        payload: {
-          topics: result,
-        },
-      });
+        dispatch({
+          type: 'SET_TOPICS',
+          payload: {
+            topics: result,
+          },
+        });
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.state.filteredMergedData]);
 
     useEffect(() => {
-      return () => {
-        dispatch({
-          type: 'VISIBLE',
-          payload: { visible: false },
-        });
-        dispatch({
-          type: 'LOADING',
-          payload: {
-            isLoading: false,
-          },
-        });
-      };
+      if (document.location.pathname === '/') {
+        return () => {
+          dispatch({
+            type: 'VISIBLE',
+            payload: { visible: false },
+          });
+          dispatch({
+            type: 'LOADING',
+            payload: {
+              isLoading: false,
+            },
+          });
+        };
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     useClickOutside(resultsRef, () => {
@@ -397,7 +403,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
                       .map((search: SearchesData, idx) => {
                         const newBody = search.search.replace(
                           new RegExp(valueRef.toLowerCase(), 'gi'),
-                          (match: any) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
+                          (match: string) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
                         );
                         return (
                           <Result
@@ -406,6 +412,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
                             userName={search.search}
                             key={idx}
                             dispatch={dispatch}
+                            dispatchShared={dispatchShared}
                             dispatchStargazer={dispatchStargazers}
                           >
                             <div className={classes.wrapper} style={{ borderBottom: 0 }}>
@@ -430,7 +437,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
                       <Then>
                         {fastFilter((search: SearchesData) => {
                           const temp =
-                            searchesData?.getSearches?.reduce((acc: any, obj: any) => {
+                            searchesData?.getSearches?.reduce((acc: any, obj: SearchesData) => {
                               acc.push(obj.search);
                               return acc;
                             }, []) || [];
@@ -442,6 +449,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
                             userName={Object.keys(result).toString()}
                             key={idx}
                             dispatch={dispatch}
+                            dispatchShared={dispatchShared}
                             dispatchStargazer={dispatchStargazers}
                           >
                             <div className={classes.wrapper} style={{ borderBottom: 0 }}>
@@ -471,6 +479,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
                   isLoading={state.state.isLoading}
                   style={style}
                   dispatch={dispatch}
+                  dispatchShared={dispatchShared}
                   dispatchStargazer={dispatchStargazers}
                 />
               </Then>

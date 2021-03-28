@@ -16,6 +16,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { noop } from '../../util/util';
+import { LanguagePreference } from '../../typing/type';
 
 interface StyleProps {
   drawerWidth: string;
@@ -56,25 +57,34 @@ const RowOne = React.memo(({}) => {
   const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
   useEffect(() => {
-    if (!userDataLoading && !userDataError && userData?.getUserData?.languagePreference?.length > 0) {
+    if (
+      !userDataLoading &&
+      !userDataError &&
+      userData?.getUserData?.languagePreference?.length > 0 &&
+      document.location.pathname === '/profile'
+    ) {
       setLanguagePreferences(userData.getUserData.languagePreference);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDataLoading, userDataError, userData]);
 
   useDeepCompareEffect(() => {
-    languagesPreferenceAdded({
-      variables: {
-        languagePreference: languagePreferences,
-      },
-    }).then(noop);
+    if (document.location.pathname === '/profile') {
+      languagesPreferenceAdded({
+        variables: {
+          languagePreference: languagePreferences,
+        },
+      }).then(noop);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languagePreferences]);
 
   const languagePreferencesRef = useRef<any[]>([]);
 
   useEffect(() => {
-    languagePreferencesRef.current = languagePreferences;
+    if (document.location.pathname === '/profile') {
+      languagePreferencesRef.current = languagePreferences;
+    }
   });
 
   const handleCheckboxChange = useCallback(
@@ -110,7 +120,7 @@ const RowOne = React.memo(({}) => {
         <div className="SelectMenu-list" style={{ background: 'var(--background-theme-color)', maxHeight: '300px' }}>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup>
-              {languagePreferences.map((obj: any, idx: number) => {
+              {languagePreferences.map((obj: LanguagePreference, idx: number) => {
                 return (
                   <FormControlLabel
                     control={<Checkbox checked={obj.checked} onChange={handleCheckboxChange} name={obj.language} />}

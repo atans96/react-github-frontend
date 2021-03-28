@@ -29,14 +29,16 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = ({ index, visible, imagesM
   });
 
   useEffect(() => {
-    let isCancelled = false;
-    if (!isCancelled && imagesMapDataDiscover.size > 0) {
-      const temp = imagesMapDataDiscover.get(index)?.value || [];
-      setRenderImages(temp);
+    if (document.location.pathname === '/discover') {
+      let isCancelled = false;
+      if (!isCancelled && imagesMapDataDiscover.size > 0) {
+        const temp = imagesMapDataDiscover.get(index)?.value || [];
+        setRenderImages(temp);
+      }
+      return () => {
+        isCancelled = true;
+      };
     }
-    return () => {
-      isCancelled = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imagesMapDataDiscover]);
 

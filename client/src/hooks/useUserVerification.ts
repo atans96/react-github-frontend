@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { verifyJWTToken } from '../services';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from '../util';
 import { logoutAction } from '../util/util';
 import { useApolloFactory } from './useApolloFactory';
 import { useHistory } from 'react-router';
+import { IAction } from '../typing/interface';
+import { ActionShared } from '../store/Shared/reducer';
 
 interface ComponentProps {
-  dispatch: any;
-  dispatchStargazers: any;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 interface useUserVerificationProps {
@@ -37,10 +38,10 @@ function useUserVerification(props: useUserVerificationProps) {
             setUsername(response.username);
             localStorage.setItem('sess', response.token);
           } else {
-            logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+            logoutAction(history, props.componentProps.dispatchShared);
           }
         } catch (e) {
-          logoutAction(history, props.componentProps.dispatch, props.componentProps.dispatchStargazers);
+          logoutAction(history, props.componentProps.dispatchShared);
           console.error(e);
         }
         isMounted.current = true;

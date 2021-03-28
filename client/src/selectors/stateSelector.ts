@@ -59,7 +59,7 @@ export function useSelector(selector: any) {
 //don't import createSelector to React component as it will re-create selector (not memoize) when the component gets rerender
 export const alreadySeenCardSelector = createSelector<Seen[] | [], any, any[]>(
   [(seenCards: Seen[]) => seenCards],
-  (seenCard: any) => {
+  (seenCard: Seen[]) => {
     return (
       seenCard?.reduce((acc: any[], obj: Seen) => {
         acc.push(obj.id);

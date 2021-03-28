@@ -1,17 +1,16 @@
 import React from 'react';
 import Topic from './TopicsCardBody/Topic';
 import { isEqualObjects } from '../../util';
-import { IState } from '../../typing/interface';
+import { IStateShared } from '../../typing/interface';
 
 interface TopicsCard {
   data: string[];
   getRootProps: any;
-  perPage: number;
-  state: IState;
+  state: IStateShared;
 }
 
 const TopicsCard = React.memo<TopicsCard>(
-  ({ data, getRootProps, state, perPage }) => {
+  ({ data, getRootProps, state }) => {
     return (
       <ul className="masonry space-center">
         {data?.map((topic, idx) => (
@@ -28,7 +27,7 @@ const TopicsCard = React.memo<TopicsCard>(
     return (
       isEqualObjects(prevProps.data, nextProps.data) &&
       isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL) &&
-      isEqualObjects(prevProps.perPage, nextProps.perPage)
+      isEqualObjects(prevProps.state.perPage, nextProps.state.perPage)
     );
   }
 );

@@ -58,7 +58,7 @@ const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
     });
     const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
     useEffect(() => {
-      if (stateReducer) {
+      if (stateReducer && document.location.pathname === '/profile') {
         const res = stateReducer.set(
           displayName!,
           Object.assign({}, { name: displayName!, width: drawerWidth, draggerPosition: drawerWidth })

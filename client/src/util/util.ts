@@ -2,9 +2,8 @@ import React, { RefObject, useCallback, useDebugValue, useEffect, useLayoutEffec
 import warning from 'tiny-warning';
 import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
-import { getRateLimitInfo, removeTokenGQL } from '../services';
+import { removeTokenGQL } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
-import { ActionRateLimit } from '../store/RateLimit/reducer';
 
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
@@ -429,46 +428,9 @@ export async function addRSSFeed(url: string) {
   }
 }
 
-export function logoutAction(
-  history: any,
-  dispatch: React.Dispatch<IAction<ActionShared>>,
-  dispatchRateLimit: React.Dispatch<IAction<ActionRateLimit>>
-) {
+export function logoutAction(history: any, dispatch: React.Dispatch<IAction<ActionShared>>) {
   history.push('/');
   removeTokenGQL().then(noop);
   dispatch({ type: 'LOGOUT' });
-  dispatchRateLimit({
-    type: 'RATE_LIMIT_ADDED',
-    payload: {
-      rateLimitAnimationAdded: false,
-    },
-  });
-  getRateLimitInfo(null).then((data) => {
-    if (data.rateLimit && data.rateLimitGQL) {
-      dispatchRateLimit({
-        type: 'RATE_LIMIT_ADDED',
-        payload: {
-          rateLimitAnimationAdded: true,
-        },
-      });
-      dispatchRateLimit({
-        type: 'RATE_LIMIT',
-        payload: {
-          limit: data.rateLimit.limit,
-          used: data.rateLimit.used,
-          reset: data.rateLimit.reset,
-        },
-      });
-
-      dispatchRateLimit({
-        type: 'RATE_LIMIT_GQL',
-        payload: {
-          limit: data.rateLimitGQL.limit,
-          used: data.rateLimitGQL.used,
-          reset: data.rateLimitGQL.reset,
-        },
-      });
-    }
-  });
   window.location.reload(false); // full refresh to reset everything at all components
 }

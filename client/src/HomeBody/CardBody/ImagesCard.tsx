@@ -30,14 +30,16 @@ const ImagesCard = React.memo<ImagesCardProps>(
     });
 
     useEffect(() => {
-      let isCancelled = false;
-      if (!isCancelled && Array.isArray(state.imagesData) && state.imagesData.length > 0) {
-        const temp = state.imagesMapData.get(index)?.value || [];
-        setRenderImages(temp);
+      if (document.location.pathname === '/') {
+        let isCancelled = false;
+        if (!isCancelled && Array.isArray(state.imagesData) && state.imagesData.length > 0) {
+          const temp = state.imagesMapData.get(index)?.value || [];
+          setRenderImages(temp);
+        }
+        return () => {
+          isCancelled = true;
+        };
       }
-      return () => {
-        isCancelled = true;
-      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.imagesData, state.imagesMapData]);
 

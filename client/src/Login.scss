@@ -27,24 +27,26 @@
       color: red;
     }
     .login-container {
-      background-color: #000;
-      width: 70%;
       border-radius: 3px;
       color: #fff;
-      display: flex;
       margin-bottom: 10px;
-      align-items: center;
-      justify-content: center;
-      > .login-link {
-        text-decoration: none;
-        color: #fff;
-        text-transform: uppercase;
-        cursor: pointer;
+      > .login-link-container {
         display: flex;
-        align-items: center;
-        height: 40px;
-        > span:nth-child(2) {
-          margin-left: 5px;
+        margin-bottom: 10px;
+        text-align: center;
+        justify-content: center;
+
+        .login-link {
+          text-decoration: none;
+          color: #fff;
+          background-color: #000000;
+          text-transform: uppercase;
+          cursor: pointer;
+          align-items: center;
+          width: 100%;
+          > span:nth-child(2) {
+            margin-left: 5px;
+          }
         }
       }
       .loader-container {

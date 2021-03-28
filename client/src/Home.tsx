@@ -5,7 +5,7 @@ import MasonryLayout from './Layout/MasonryLayout';
 import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
 import { IAction, IDataOne, IState, IStateShared, IStateStargazers } from './typing/interface';
-import { MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { ImagesDataProps, MergedDataProps, Nullable, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
@@ -19,10 +19,10 @@ import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
-import { ActionStargazers } from './store/Staargazers/reducer';
 import { ActionResolvedPromise } from './Global';
-import { Action } from './store/reducer';
+import { Action } from './store/Home/reducer';
 import { ActionShared } from './store/Shared/reducer';
+import { ActionStargazers } from './store/Staargazers/reducer';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -80,8 +80,8 @@ interface HomeProps {
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
   actionResolvedPromise: (
     action: ActionResolvedPromise,
-    setLoading: any,
-    setNotification: any,
+    setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+    setNotification: React.Dispatch<React.SetStateAction<string>>,
     isFetchFinish: boolean,
     displayName: string,
     data?: Nullable<IDataOne | any>,
@@ -113,8 +113,8 @@ const Home = React.memo<HomeProps>(
       if (data === undefined || data?.dataOne === undefined) {
         return [[], []];
       }
-      const oldID: any[] = [];
-      const newID: any[] = [];
+      const oldID: number[] = [];
+      const newID: number[] = [];
       state.mergedData.map((obj) => {
         return oldID.push(obj.id);
       });
@@ -325,23 +325,33 @@ const Home = React.memo<HomeProps>(
     };
     const mergedDataRef = useRef<MergedDataProps[]>([]);
     const isLoadingRef = useRef<boolean>(false);
-    const imagesDataRef = useRef<any[]>([]);
+    const imagesDataRef = useRef<ImagesDataProps[]>([]);
     const filterBySeenRef = useRef<boolean>(state.filterBySeen);
     const notificationRef = useRef<string>('');
     useEffect(() => {
-      mergedDataRef.current = state.mergedData;
+      if (document.location.pathname === '/') {
+        mergedDataRef.current = state.mergedData;
+      }
     });
     useEffect(() => {
-      isLoadingRef.current = isLoading;
+      if (document.location.pathname === '/') {
+        isLoadingRef.current = isLoading;
+      }
     });
     useEffect(() => {
-      notificationRef.current = notification;
+      if (document.location.pathname === '/') {
+        notificationRef.current = notification;
+      }
     });
     useEffect(() => {
-      imagesDataRef.current = state.imagesData;
+      if (document.location.pathname === '/') {
+        imagesDataRef.current = state.imagesData;
+      }
     });
     useEffect(() => {
-      filterBySeenRef.current = state.filterBySeen;
+      if (document.location.pathname === '/') {
+        filterBySeenRef.current = state.filterBySeen;
+      }
     });
     const handleBottomHit = useCallback(() => {
       if (
@@ -419,7 +429,7 @@ const Home = React.memo<HomeProps>(
 
     useDeepCompareEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-      if (stateShared.username.length > 0 && state.mergedData.length === 0) {
+      if (stateShared.username.length > 0 && state.mergedData.length === 0 && document.location.pathname === '/') {
         // we want to preserve stateShared.username so that when the user navigate away from Home, then go back again, and do the scroll again,
         // we still want to retain the memory of username so that's why we use reducer of stateShared.username.
         // However, as the component unmount, stateShared.username is not "", thus causing fetchUser to fire in useEffect
@@ -434,10 +444,12 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stateShared.username, stateShared.perPage, state.mergedData]);
     useEffect(() => {
-      if (stateShared.username.length > 0) {
-        fetchUserMore();
-      } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
-        fetchUserMore();
+      if (document.location.pathname === '/') {
+        if (stateShared.username.length > 0) {
+          fetchUserMore();
+        } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
+          fetchUserMore();
+        }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.page]);
@@ -447,7 +459,8 @@ const Home = React.memo<HomeProps>(
         !userDataError &&
         userData?.getUserData?.tokenRSS &&
         userData?.getUserData?.tokenRSS !== '' &&
-        stateShared.tokenRSS === ''
+        stateShared.tokenRSS === '' &&
+        document.location.pathname === '/'
       ) {
         dispatchShared({
           type: 'TOKEN_RSS_ADDED',
@@ -460,7 +473,13 @@ const Home = React.memo<HomeProps>(
     }, [userDataLoading, userDataError]);
 
     useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData && seenData.getSeen !== null) {
+      if (
+        !seenDataLoading &&
+        !seenDataError &&
+        seenData &&
+        seenData.getSeen !== null &&
+        document.location.pathname === '/'
+      ) {
         if (!state.filterBySeen) {
           const images = state.undisplayMergedData.reduce((acc: any[], obj: SeenProps) => {
             acc.push(
@@ -510,7 +529,13 @@ const Home = React.memo<HomeProps>(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.filterBySeen]);
     useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0) {
+      if (
+        !seenDataLoading &&
+        !seenDataError &&
+        seenData?.getSeen?.seenCards &&
+        seenData.getSeen.seenCards.length > 0 &&
+        document.location.pathname === '/'
+      ) {
         dispatch({
           type: 'UNDISPLAY_MERGED_DATA',
           payload: {
@@ -523,7 +548,12 @@ const Home = React.memo<HomeProps>(
     useEffect(
       () => {
         _isMounted.current = true;
-        if (_isMounted.current && state.mergedData.length > 0 && state.shouldFetchImages) {
+        if (
+          _isMounted.current &&
+          state.mergedData.length > 0 &&
+          state.shouldFetchImages &&
+          document.location.pathname === '/'
+        ) {
           // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
           const data = state.mergedData.reduce((acc, object) => {
             acc.push(
@@ -580,7 +610,9 @@ const Home = React.memo<HomeProps>(
     );
     const userDataRef = useRef<string>();
     useEffect(() => {
-      userDataRef.current = userData?.getUserData?.token || '';
+      if (document.location.pathname === '/') {
+        userDataRef.current = userData?.getUserData?.token || '';
+      }
     });
     const onClickTopic = useCallback(
       async ({ variables }) => {
@@ -635,16 +667,6 @@ const Home = React.memo<HomeProps>(
       [stateShared.tokenGQL, userDataRef.current, state.filterBySeen] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
     );
     const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
-
-    const stateMemoize = useCallback(() => {
-      return state;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state]);
-
-    const stateStargazersMemoize = useCallback(() => {
-      return stateStargazers;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateStargazers]);
 
     const whichToUse = useCallback(() => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
@@ -715,11 +737,13 @@ const Home = React.memo<HomeProps>(
                     <Card
                       key={idx}
                       columnCount={columnCount}
-                      stateStargazersMemoize={stateStargazersMemoize()}
+                      stateStargazers={stateStargazers}
+                      dispatchShared={dispatchShared}
                       getRootProps={getRootProps}
                       index={whichToUse()[idx].id}
                       githubData={whichToUse()[idx]}
-                      state={stateMemoize()}
+                      state={state}
+                      stateShared={stateShared}
                       dispatchStargazersUser={dispatchStargazers}
                       dispatch={dispatch}
                     />

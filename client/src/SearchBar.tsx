@@ -1,7 +1,7 @@
 import React, { useCallback, useRef } from 'react';
 import PureSearchBar from './SearchBarBody/PureSearchBar';
 import { IAction, IState, IStateShared, IStateStargazers } from './typing/interface';
-import { Action } from './store/reducer';
+import { Action } from './store/Home/reducer';
 import { ActionStargazers } from './store/Staargazers/reducer';
 import { ActionShared } from './store/Shared/reducer';
 

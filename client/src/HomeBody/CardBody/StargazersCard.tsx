@@ -6,7 +6,7 @@ import StargazersInfo from './StargazersCardBody/StargazersInfo';
 import { useClickOutside, useEventHandlerComposer } from '../../hooks/hooks';
 import { SEARCH_FOR_REPOS } from '../../queries';
 import { StarIcon } from '../../util/icons';
-import { IState, IStateStargazers } from '../../typing/interface';
+import { IAction, IState, IStateShared, IStateStargazers } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import { If } from '../../util/react-if/If';
@@ -15,6 +15,9 @@ import { removeStarredMe, setStarredMe } from '../../services';
 import clsx from 'clsx';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { noop } from '../../util/util';
+import { Action } from '../../store/Home/reducer';
+import { ActionStargazers } from '../../store/Staargazers/reducer';
+import { ActionShared } from '../../store/Shared/reducer';
 
 interface GQL {
   GQL_variables: {
@@ -29,12 +32,12 @@ interface GQL {
 
 interface StargazersCard {
   stargazerCount: string;
-  state: IState;
   GQL_VARIABLES: GQL;
   getRootProps: any;
-  dispatch: any;
-  dispatchStargazers: any;
-  stateStargazers: IStateStargazers;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  stateStargazers: { state: IState; stateStargazers: IStateStargazers; stateShared: IStateShared };
   githubDataId: number;
   githubDataFullName: string;
 }
@@ -45,8 +48,8 @@ const StargazersCard = React.memo<StargazersCard>(
     stateStargazers,
     githubDataId,
     githubDataFullName,
-    dispatchStargazers,
-    state,
+    dispatchShared,
+    dispatchStargazersUser,
     dispatch,
     stargazerCount,
     GQL_VARIABLES,
@@ -67,10 +70,10 @@ const StargazersCard = React.memo<StargazersCard>(
       dispatch({
         type: 'REMOVE_ALL',
       });
-      dispatchStargazers({
+      dispatchStargazersUser({
         type: 'REMOVE_ALL',
       });
-    }, [dispatch, dispatchStargazers]);
+    }, [dispatch, dispatchStargazersUser]);
     const { getRootProps: getRootPropsCard } = useEventHandlerComposer({ onClickCb: onClicked });
     const notLoggedInRef = useRef<HTMLDivElement>(null);
     useClickOutside(notLoggedInRef, () => setVisible(false));
@@ -80,7 +83,7 @@ const StargazersCard = React.memo<StargazersCard>(
     };
     const returnPortal = useCallback(() => {
       switch (visible) {
-        case state.tokenGQL.length > 0 && state.isLoggedIn: {
+        case stateStargazers.stateShared.tokenGQL.length > 0 && stateStargazers.stateShared.isLoggedIn: {
           return createPortal(
             <div
               style={{
@@ -95,7 +98,8 @@ const StargazersCard = React.memo<StargazersCard>(
                 stargazers_count={stargazerCount}
                 isLoading={isLoading}
                 stateStargazers={stateStargazers}
-                dispatchStargazers={dispatchStargazers}
+                dispatchShared={dispatchShared}
+                dispatchStargazersUser={dispatchStargazersUser}
                 dispatch={dispatch}
                 GQL_VARIABLES={GQL_VARIABLES}
                 getRootProps={getRootProps}
@@ -105,7 +109,7 @@ const StargazersCard = React.memo<StargazersCard>(
             document.body
           );
         }
-        case !state.isLoggedIn: {
+        case !stateStargazers.stateShared.isLoggedIn: {
           return createPortal(
             <div
               style={{
@@ -125,7 +129,7 @@ const StargazersCard = React.memo<StargazersCard>(
             document.body
           );
         }
-        case state.tokenGQL.length === 0: {
+        case stateStargazers.stateShared.tokenGQL.length === 0: {
           return createPortal(
             <div
               style={{
@@ -137,7 +141,7 @@ const StargazersCard = React.memo<StargazersCard>(
             >
               <LoginGQL
                 setVisible={setVisible}
-                dispatch={dispatch}
+                dispatchShared={dispatchShared}
                 style={{ display: 'absolute', width: 'fit-content' }}
               />
             </div>,
@@ -150,11 +154,17 @@ const StargazersCard = React.memo<StargazersCard>(
       // isLoading need to be in dependency array, otherwise we can't send isLoading state to StargazersInfo inside
       // returnPortal callback here
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.tokenGQL.length, visible, isLoading, state.isLoggedIn, stateStargazers]);
+    }, [
+      stateStargazers.stateShared.tokenGQL.length,
+      visible,
+      isLoading,
+      stateStargazers.stateShared.isLoggedIn,
+      stateStargazers,
+    ]);
 
     const handleClickStargazers = (event: React.MouseEvent<HTMLElement>) => {
       setVisible(true); // spawn modal of StargazersInfo
-      dispatchStargazers({
+      dispatchStargazersUser({
         type: 'REMOVE_ALL',
       });
       if (event.pageX + parseInt(modalWidth.current) > window.innerWidth) {
@@ -169,9 +179,9 @@ const StargazersCard = React.memo<StargazersCard>(
     };
 
     const handleClickStar = async () => {
-      if (state.tokenGQL !== '' && !starClicked) {
-        await setStarredMe(githubDataFullName, state.tokenGQL).then(() => {
-          if (state.isLoggedIn) {
+      if (stateStargazers.stateShared.tokenGQL !== '' && !starClicked) {
+        await setStarredMe(githubDataFullName, stateStargazers.stateShared.tokenGQL).then(() => {
+          if (stateStargazers.stateShared.isLoggedIn) {
             addedStarredMe({
               variables: {
                 starred: [githubDataId],
@@ -179,9 +189,9 @@ const StargazersCard = React.memo<StargazersCard>(
             }).then(noop);
           }
         });
-      } else if (state.tokenGQL !== '' && starClicked) {
-        await removeStarredMe(githubDataFullName, state.tokenGQL).then(() => {
-          if (state.isLoggedIn) {
+      } else if (stateStargazers.stateShared.tokenGQL !== '' && starClicked) {
+        await removeStarredMe(githubDataFullName, stateStargazers.stateShared.tokenGQL).then(() => {
+          if (stateStargazers.stateShared.isLoggedIn) {
             removeStarred({
               variables: {
                 removeStarred: githubDataId,
@@ -197,12 +207,12 @@ const StargazersCard = React.memo<StargazersCard>(
         <div className={`stargazer-card-container`}>
           <div
             className={clsx('star-container', {
-              confetti: starClicked && clicked && state.tokenGQL !== '',
+              confetti: starClicked && clicked && stateStargazers.stateShared.tokenGQL !== '',
             })}
             onClick={(e) => {
               e.preventDefault();
               setClicked(true);
-              if (state.tokenGQL === '') {
+              if (stateStargazers.stateShared.tokenGQL === '') {
                 handleClickStargazers(e);
               } else {
                 setStarClicked(!starClicked);
@@ -250,9 +260,7 @@ const StargazersCard = React.memo<StargazersCard>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.stateStargazers, nextProps.stateStargazers) &&
-      isEqualObjects(prevProps.GQL_VARIABLES, nextProps.GQL_VARIABLES) &&
-      isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn) &&
-      isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL)
+      isEqualObjects(prevProps.GQL_VARIABLES, nextProps.GQL_VARIABLES)
     );
   }
 );

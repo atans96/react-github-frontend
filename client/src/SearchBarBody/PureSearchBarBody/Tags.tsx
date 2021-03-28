@@ -1,11 +1,13 @@
 import React from 'react';
-import { IState } from '../../typing/interface';
+import { IAction, IState } from '../../typing/interface';
+import { TopicsProps } from '../../typing/type';
+import { Action } from '../../store/Home/reducer';
 
 interface TagsProps {
-  obj: any;
+  obj: TopicsProps;
   clicked: boolean;
   state: IState;
-  dispatch: any;
+  dispatch: React.Dispatch<IAction<Action>>;
 }
 
 export const Tags: React.FC<TagsProps> = ({ obj, clicked, state, dispatch }) => {

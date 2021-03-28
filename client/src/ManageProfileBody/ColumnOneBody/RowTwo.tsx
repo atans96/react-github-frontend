@@ -9,9 +9,10 @@ import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { getTopContributors, getUser } from '../../services';
 import moment from 'moment';
 import { epochToJsDate } from '../../util/util';
-import { IAction, IState, IStateShared } from '../../typing/interface';
-import { ActionManageProfile } from '../../store/ManageProfile/reducer';
+import { IAction, IStateShared } from '../../typing/interface';
 import { ActionShared } from '../../store/Shared/reducer';
+import { ActionManageProfile } from '../../store/ManageProfile/reducer';
+import { MergedDataProps } from '../../typing/type';
 
 interface RowTwoProps {
   handleLanguageFilter: (args?: string) => void;
@@ -44,7 +45,8 @@ const RowTwo = React.memo<RowTwoProps>(
         !userInfoDataError &&
         userInfoData &&
         userInfoData.getUserInfoData &&
-        userInfoData.getUserInfoData.repoContributions.length > 0
+        userInfoData.getUserInfoData.repoContributions.length > 0 &&
+        document.location.pathname === '/profile'
       ) {
         dispatchManageProfile({
           type: 'REPO_INFO_ADDED',
@@ -74,7 +76,8 @@ const RowTwo = React.memo<RowTwoProps>(
         state.fetchDataPath !== '' &&
         consumers[displayName!] &&
         consumers[displayName!].includes(state.fetchDataPath) &&
-        !alreadyFetch.current
+        !alreadyFetch.current &&
+        document.location.pathname === '/profile'
       ) {
         alreadyFetch.current = true;
         (async () => {
@@ -92,7 +95,7 @@ const RowTwo = React.memo<RowTwoProps>(
               setNotification('Sorry, API rate limit exceeded.');
             } else if (data?.dataOne?.length > 0) {
               const temp = data.dataOne.reduce(
-                (acc: any, obj: any) => {
+                (acc: any, obj: MergedDataProps) => {
                   const ja = Object.assign(
                     {},
                     {
