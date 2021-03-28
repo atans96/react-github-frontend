@@ -53,7 +53,7 @@ export type TimeSeries = {
 };
 export type starRanking = {
   id: number;
-  trends: Trends;
+  trends: Trends | any;
   timeSeries: TimeSeries;
 };
 export type StarRanking = {

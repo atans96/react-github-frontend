@@ -89,7 +89,7 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, dispat
             className="login-link"
             target="_blank"
             rel="noopener noreferrer"
-            href={'https://developer.github.com/v4/guides/forming-calls/#authenticating-with-graphql'}
+            href={'https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token'}
           >
             <GitHubIcon />
             <span>Click for tutorial</span>

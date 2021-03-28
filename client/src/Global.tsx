@@ -11,7 +11,6 @@ import { IDataOne, IState, IStateStargazers } from './typing/interface';
 import SearchBar from './SearchBar';
 import { getTokenGQL } from './services';
 import Discover from './Discover';
-import Trending from './Trending';
 import PrefetchKeepMountedLayout from './Layout/PrefetchKeepMountedLayout';
 import SearchBarDiscover from './SearchBarDiscover';
 import useUserVerification from './hooks/useUserVerification';
@@ -95,11 +94,6 @@ const Global: React.FC<{
               ),
             data
           );
-          //Matched a string that starts with 'discover'
-          filter1 = fastFilter((obj: MergedDataProps) => !!obj, filter1).map((obj: MergedDataProps) => {
-            obj['isQueue'] = false;
-            return obj;
-          });
 
           let inputForImagesData = [];
           if (filter1.length > 0) {
@@ -262,20 +256,6 @@ const Global: React.FC<{
                     actionResolvedPromise={actionResolvedPromise}
                   />
                 </React.Fragment>
-              );
-            }}
-          />
-          <PrefetchKeepMountedLayout
-            mountedCondition={props.routerProps.location.pathname === '/trending'}
-            render={() => {
-              return (
-                <Trending
-                  stateStargazers={props.componentProps.stateStargazers}
-                  dispatchStargazers={props.componentProps.dispatchStargazers}
-                  dispatch={props.componentProps.dispatch}
-                  state={props.componentProps.state}
-                  routerProps={props.routerProps}
-                />
               );
             }}
           />

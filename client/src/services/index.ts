@@ -1,5 +1,6 @@
 import { readEnvironmentVariable } from '../util';
-import { RepoRenderImages, SearchUser } from '../typing/interface';
+import { IDataOne, RepoRenderImages, SearchUser } from '../typing/interface';
+import { MergedDataProps } from '../typing/type';
 function rateLimitInfo(token: string) {
   return new Promise(function (resolve, reject) {
     (async () => {
@@ -155,13 +156,6 @@ export const getSearchTopics = async (topic: string, token: string | null) => {
   const validToken = toke.length === 0 ? token : toke;
   const response = await fetch(`/api/search_topics?topic=${topic}&token=${validToken === null ? '' : validToken}`, {
     method: 'GET',
-  });
-  return await response.json();
-};
-export const getElasticSearchBertRecommendation = async (query: string) => {
-  const response = await fetch(`${readEnvironmentVariable('BERT_RECOMMENDATION')}?q=${query}&docName=github`, {
-    method: 'GET',
-    mode: 'cors',
   });
   return await response.json();
 };

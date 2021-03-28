@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
-import { getElasticSearchBertRecommendation, markdownParsing } from './services';
+import { markdownParsing } from './services';
 import { GoBook } from 'react-icons/go';
 import './markdown-body.css';
 import { Then } from './util/react-if/Then';
@@ -35,13 +35,6 @@ const Details: React.FC = () => {
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
     (state: StaticState) => state.StarRanking
   );
-  useEffect(() => {
-    if (location.pathname.includes('/detail') && location.state.path === '/discover') {
-      getElasticSearchBertRecommendation(location.state.data.description).then((data) => {
-        console.log(data);
-      });
-    }
-  }, []);
   useEffect(() => {
     if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
       const temp = starRankingData.getStarRanking.starRanking.find(
@@ -86,13 +79,6 @@ const Details: React.FC = () => {
         }}
       >
         <div className={'background-container'} id="main-content">
-          <If condition={location.pathname.includes('/detail')}>
-            <Then>
-              <div>
-                <p>Similar Repo just like {location.state.data.full_name}:</p>
-              </div>
-            </Then>
-          </If>
           <If condition={!!data}>
             <Then>
               <div className="readme">

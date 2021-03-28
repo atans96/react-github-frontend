@@ -1,10 +1,16 @@
 import { createSelector } from 'reselect';
-import { fastFilter } from '../util';
 import { createContainer } from 'unstated-next';
 import { useQuery } from '@apollo/client';
 import { GET_STAR_RANKING, GET_SUGGESTED_REPO, GET_SUGGESTED_REPO_IMAGES } from '../queries';
 import { StaticState } from '../typing/interface';
-import { Seen, starRanking, StarRankingData, SuggestedData, SuggestedDataImages } from '../typing/type';
+import {
+  RepoInfoSuggested,
+  Seen,
+  starRanking,
+  StarRankingData,
+  SuggestedData,
+  SuggestedDataImages,
+} from '../typing/type';
 //only use when you have a static database (doesn't depend on mutation action by the user)
 
 const useStarRanking = () => {
@@ -63,40 +69,39 @@ export const alreadySeenCardSelector = createSelector<Seen[] | [], any, any[]>(
   }
 );
 
-export const sortedRepoInfoSelector = (starRankingFiltered: starRanking[]) =>
+export const sortedRepoInfoSelector = (starRankingFiltered: starRanking[], sorted: string) =>
   createSelector<StaticState, any, any[]>(
     [(data: StaticState) => data.SuggestedRepo],
     (suggestedRepo: SuggestedData) => {
       const ids = starRankingFiltered?.map((obj: starRanking) => obj.id);
       return suggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfo
         ?.slice()
-        .sort((a: any, b: any) => {
+        .sort((a: RepoInfoSuggested, b: RepoInfoSuggested) => {
           return ids.indexOf(a.id) - ids.indexOf(b.id);
         })
-        .map((obj: any) => {
-          const copyObj = Object.assign({}, obj);
-          copyObj.trends = starRankingFiltered.find((xx: any) => xx.id === obj.id)
-            ? starRankingFiltered?.find((xx: any) => xx.id === obj.id)?.trends.daily
-            : 0;
-          return copyObj;
+        .map((obj: RepoInfoSuggested) => {
+          return Object.assign(
+            {},
+            {
+              ...obj,
+              trends: starRankingFiltered.find((xx: starRanking) => xx.id === obj.id)
+                ? starRankingFiltered!.find((xx: starRanking) => xx.id === obj.id)!['trends'][sorted.toLowerCase()]
+                : 0,
+            }
+          );
         });
     }
   );
-export const starRankingFilteredSelector = createSelector<StaticState, any, starRanking[]>(
-  [(data: StaticState) => data.StarRanking, (data: StaticState) => data.SuggestedRepo],
-  (starRanking: StarRankingData, suggestedRepo: SuggestedData) => {
-    const ids = suggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfo.map((obj: any) => obj.id) || [];
-    return (
-      fastFilter(
-        (xx: starRanking) => ids.includes(xx.id),
-        starRanking?.starRankingData?.getStarRanking?.starRanking || []
-      )
-        .reduce((acc: any[], obj: starRanking) => {
-          const temp = Object.assign({}, { trends: obj.trends, id: obj.id });
-          acc.push(temp);
-          return acc;
-        }, [])
-        .sort((a: any, b: any) => b['trends']['daily'] - a['trends']['daily']) || []
-    );
-  }
-);
+export const starRankingFilteredSelector = (sorted: string) =>
+  createSelector<StaticState, any, starRanking[]>(
+    [(data: StaticState) => data.StarRanking],
+    (starRanking: StarRankingData) => {
+      return (
+        starRanking?.starRankingData?.getStarRanking?.starRanking
+          ?.slice()
+          .sort(
+            (a: starRanking, b: starRanking) => b['trends'][sorted.toLowerCase()] - a['trends'][sorted.toLowerCase()]
+          ) || []
+      );
+    }
+  );

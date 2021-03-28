@@ -370,7 +370,7 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
     case 'MERGED_DATA_APPEND_DISCOVER': {
       return {
         ...state,
-        mergedDataDiscover: _.uniqBy([...state.mergedDataDiscover, ...action.payload.data], 'id'),
+        mergedDataDiscover: action.payload.data, //TODO: because of _.uniqBy, so when you sortedClick, it will use the same data but the order different
       };
     }
     case 'MERGED_DATA_ADDED_DISCOVER': {

@@ -47,7 +47,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
 
   return (
     <div ref={readmeRef} style={width < 1100 ? { width: `${width - 650}px` } : {}}>
-      <div className={'readme background-readme'}>
+      <div className={'readme background-readme'} style={readme === '' ? { width: '100vw' } : {}}>
         <div className={'header'}>
           <GoBook className="icon" size={20} />
           README
