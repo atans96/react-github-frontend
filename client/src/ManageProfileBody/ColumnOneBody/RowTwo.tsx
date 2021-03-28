@@ -9,16 +9,19 @@ import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { getTopContributors, getUser } from '../../services';
 import moment from 'moment';
 import { epochToJsDate } from '../../util/util';
-import { IState } from '../../typing/interface';
+import { IAction, IState, IStateShared } from '../../typing/interface';
+import { ActionManageProfile } from '../../store/ManageProfile/reducer';
+import { ActionShared } from '../../store/Shared/reducer';
 
 interface RowTwoProps {
   handleLanguageFilter: (args?: string) => void;
-  dispatch: any;
-  state: IState;
+  dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  state: IStateShared;
 }
 
 const RowTwo = React.memo<RowTwoProps>(
-  ({ handleLanguageFilter, dispatch, state }) => {
+  ({ handleLanguageFilter, dispatchManageProfile, dispatchShared, state }) => {
     const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
     const displayName: string | undefined = (RowTwo as React.ComponentType<any>).displayName;
     const { userData } = useApolloFactory(displayName!).query.getUserData();
@@ -43,13 +46,13 @@ const RowTwo = React.memo<RowTwoProps>(
         userInfoData.getUserInfoData &&
         userInfoData.getUserInfoData.repoContributions.length > 0
       ) {
-        dispatch({
+        dispatchManageProfile({
           type: 'REPO_INFO_ADDED',
           payload: {
             repoInfo: userInfoData.getUserInfoData.repoInfo,
           },
         });
-        dispatch({
+        dispatchManageProfile({
           type: 'CONTRIBUTORS_ADDED',
           payload: {
             contributors: userInfoData.getUserInfoData.repoContributions,
@@ -143,11 +146,11 @@ const RowTwo = React.memo<RowTwoProps>(
                 );
                 return obj;
               });
-              dispatch({
+              dispatchShared({
                 type: 'NO_DATA_FETCH',
                 payload: { path: '' },
               });
-              dispatch({
+              dispatchManageProfile({
                 type: 'REPO_INFO_ADDED',
                 payload: {
                   repoInfo: temp.data,
@@ -169,7 +172,7 @@ const RowTwo = React.memo<RowTwoProps>(
                     return obj.value.data;
                   }
                 });
-                dispatch({
+                dispatchManageProfile({
                   type: 'CONTRIBUTORS_ADDED',
                   payload: {
                     contributors: [...fastFilter((x: any) => !!x, temp)],

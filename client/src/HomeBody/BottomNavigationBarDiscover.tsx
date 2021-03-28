@@ -1,15 +1,15 @@
 import React from 'react';
-import { IState } from '../typing/interface';
+import { IStateDiscover } from '../typing/interface';
 import PaginationBarDiscover from '../BottomNavigationBarBody/PaginationBarDiscover';
 
 interface BottomNavigationBarProps {
-  state: IState;
+  stateDiscover: IStateDiscover;
 }
 
-const BottomNavigationBarDiscover: React.FC<BottomNavigationBarProps> = ({ state }) => {
+const BottomNavigationBarDiscover: React.FC<BottomNavigationBarProps> = ({ stateDiscover }) => {
   return (
     <React.Fragment>
-      <PaginationBarDiscover state={state} />
+      <PaginationBarDiscover stateDiscover={stateDiscover} />
     </React.Fragment>
   );
 };

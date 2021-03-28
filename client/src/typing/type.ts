@@ -74,12 +74,6 @@ export type SuggestedDataImages = {
   suggestedDataImagesLoading: any;
   suggestedDataImagesError: any;
 };
-export enum Action {
-  append = 'append',
-  noData = 'noData',
-  error = 'error',
-  nonAppend = 'nonAppend',
-}
 export type ContributorsProps = {
   login: string;
   avatar_url: string;

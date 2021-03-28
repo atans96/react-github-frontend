@@ -6,16 +6,18 @@ import AuthedHandler from './AuthedHandler';
 import Logout from './NavBarBody/Logout';
 import Login from './NavBarBody/Login';
 import Home from './NavBarBody/Home';
-import { IState } from './typing/interface';
+import { IAction, IState } from './typing/interface';
 import Discover from './NavBarBody/SearchSuggested';
 import { logoutAction } from './util/util';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { useHistory } from 'react-router';
+import { Action } from './store/reducer';
+import { ActionStargazers } from './store/Staargazers/reducer';
 
 interface NavBarProps {
   state: IState;
-  dispatch: any;
-  dispatchStargazers: any;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
 }
 
 const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {

@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { getRateLimitInfo, requestGithubLogin } from './services';
-import { dispatchRateLimit, dispatchRateLimitAnimation } from './store/dispatcher';
 import LoginLayout from './Layout/LoginLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import './Login.scss';
@@ -8,16 +7,19 @@ import CryptoJS from 'crypto-js';
 import { languageList, readEnvironmentVariable } from './util';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { IState } from './typing/interface';
+import { IAction, IStateShared } from './typing/interface';
 import { useHistory } from 'react-router';
+import { ActionShared } from './store/Shared/reducer';
+import { initialStateRateLimit, reducerRateLimit } from './store/RateLimit/reducer';
 
 interface LoginProps {
-  state: IState;
-  dispatch: any;
+  stateShared: IStateShared;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
-const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
+const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
+  const [, dispatchRateLimit] = useReducer(reducerRateLimit, initialStateRateLimit);
   const displayName: string | undefined = (Login as React.ComponentType<any>).displayName;
   const signUpAdded = useApolloFactory(displayName!).mutation.signUpAdded;
   const history = useHistory();
@@ -34,11 +36,11 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
       window.history.pushState({}, '', newUrl[0]);
       setData({ ...data, isLoading: true }); // re-render the html tag below to show the loader spinner
 
-      const proxy_url = state.proxy_url;
+      const proxy_url = stateShared.proxy_url;
       const requestData = {
-        client_id: state.client_id,
-        redirect_uri: state.redirect_uri,
-        client_secret: state.client_secret,
+        client_id: stateShared.client_id,
+        redirect_uri: stateShared.redirect_uri,
+        client_secret: stateShared.client_secret,
         code: newUrl[1],
       };
 
@@ -64,15 +66,41 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
                 CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
               );
             });
-            dispatch({
+            dispatchShared({
               type: 'LOGIN',
               payload: { isLoggedIn: true },
             });
-            dispatchRateLimitAnimation(false, dispatch);
+            dispatchRateLimit({
+              type: 'RATE_LIMIT_ADDED',
+              payload: {
+                rateLimitAnimationAdded: false,
+              },
+            });
             getRateLimitInfo(response.token).then((data) => {
               if (data.rateLimit && data.rateLimitGQL) {
-                dispatchRateLimitAnimation(true, dispatch);
-                dispatchRateLimit(data.rateLimit, data.rateLimitGQL, dispatch);
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT_ADDED',
+                  payload: {
+                    rateLimitAnimationAdded: true,
+                  },
+                });
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT',
+                  payload: {
+                    limit: data.rateLimit.limit,
+                    used: data.rateLimit.used,
+                    reset: data.rateLimit.reset,
+                  },
+                });
+
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT_GQL',
+                  payload: {
+                    limit: data.rateLimitGQL.limit,
+                    used: data.rateLimitGQL.used,
+                    reset: data.rateLimitGQL.reset,
+                  },
+                });
               }
             });
           } else {
@@ -93,7 +121,7 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, dispatch, data, history]);
+  }, [stateShared, dispatchShared, data, history]);
 
   return (
     <React.Fragment>
@@ -105,7 +133,7 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
         {() => (
           <a
             className="login-link"
-            href={`https://github.com/login/oauth/authorize?scope=user&client_id=${state.client_id}&redirect_uri=${state.redirect_uri}`}
+            href={`https://github.com/login/oauth/authorize?scope=user&client_id=${stateShared.client_id}&redirect_uri=${stateShared.redirect_uri}`}
             onClick={() => {
               setData({ ...data, errorMessage: '' });
             }}

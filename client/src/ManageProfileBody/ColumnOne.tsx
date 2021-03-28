@@ -1,19 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import { IState } from '../typing/interface';
+import { IAction, IStateShared } from '../typing/interface';
 import RowOne from './ColumnOneBody/RowOne';
 import RowTwo from './ColumnOneBody/RowTwo';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
-import { ColumnWidthProps } from '../ManageProfile';
+import { ActionManageProfile, ColumnWidthProps } from '../store/ManageProfile/reducer';
+import { ActionShared } from '../store/Shared/reducer';
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
-  state: IState;
-  dispatch: any;
+  state: IStateShared;
   stateReducer: Map<string, ColumnWidthProps>;
-  dispatchReducer: any;
+  dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 interface StyleProps {
@@ -49,7 +50,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
 }));
 const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
-  ({ handleLanguageFilter, state, dispatch, stateReducer, dispatchReducer }, ref) => {
+  ({ handleLanguageFilter, state, dispatchManageProfile, dispatchShared, stateReducer }, ref) => {
     const displayName: string | undefined = (ColumnOne as React.ComponentType<any>).displayName;
     const drawerWidthRef = useRef(stateReducer?.get(displayName!)?.width);
     const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
@@ -62,7 +63,7 @@ const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
           displayName!,
           Object.assign({}, { name: displayName!, width: drawerWidth, draggerPosition: drawerWidth })
         );
-        dispatchReducer({ type: 'modify', payload: { columnWidth: res } });
+        dispatchManageProfile({ type: 'MODIFY', payload: { columnWidth: res } });
       }
     }, [drawerWidth]);
 
@@ -70,9 +71,14 @@ const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
       <React.Fragment>
         <Drawer variant="permanent" className={classes.drawer} open={true} ref={drawerRef}>
           <div className={classes.toolbar} />
-          <RowOne state={state} />
+          <RowOne />
           <Divider />
-          <RowTwo handleLanguageFilter={handleLanguageFilter} state={state} dispatch={dispatch} />
+          <RowTwo
+            handleLanguageFilter={handleLanguageFilter}
+            state={state}
+            dispatchManageProfile={dispatchManageProfile}
+            dispatchShared={dispatchShared}
+          />
         </Drawer>
         <DraggableCore key="columnOne" {...dragHandlers}>
           <div style={{ height: '100vh', width: '0px' }}>

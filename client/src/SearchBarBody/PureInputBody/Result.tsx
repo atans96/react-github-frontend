@@ -1,12 +1,13 @@
 import React from 'react';
-import { IStateStargazers } from '../../typing/interface';
+import { IAction, IStateStargazers } from '../../typing/interface';
 import { StargazerProps } from '../../typing/type';
 import { CrossIcon } from '../../util/icons';
+import { ActionStargazers } from '../../store/Staargazers/reducer';
 
 interface SearchBarProps {
-  stargazer: any;
+  stargazer: StargazerProps;
   stateStargazers: IStateStargazers;
-  dispatchStargazersUser: any;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
 }
 
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange

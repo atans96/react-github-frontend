@@ -20,30 +20,6 @@ export const dispatchRateLimit = (core: RateLimit, graphql: RateLimit, dispatch:
     },
   });
 };
-export const dispatchRateLimitAnimation = (rateLimitAnimationAdded: boolean, dispatch: React.Dispatch<any>) => {
-  dispatch({
-    type: 'RATE_LIMIT_ADDED',
-    payload: {
-      rateLimitAnimationAdded: rateLimitAnimationAdded,
-    },
-  });
-};
-export const dispatchLastPageDiscover = (lastPage: Nullable<number>, dispatch: React.Dispatch<any>) => {
-  dispatch({
-    type: 'LAST_PAGE_DISCOVER',
-    payload: {
-      lastPageDiscover: lastPage,
-    },
-  });
-};
-export const dispatchLastPage = (lastPage: Nullable<number>, dispatch: React.Dispatch<any>) => {
-  dispatch({
-    type: 'LAST_PAGE',
-    payload: {
-      lastPage: lastPage,
-    },
-  });
-};
 export const dispatchImagesData = (images: any, dispatch: React.Dispatch<any>) => {
   dispatch({
     type: 'IMAGES_DATA_ADDED',
@@ -81,14 +57,6 @@ export const dispatchSearchUsers = (data: any, dispatch: React.Dispatch<any>) =>
     type: 'SEARCH_USERS',
     payload: {
       data: data,
-    },
-  });
-};
-export const dispatchLoading = (isLoading: boolean, dispatch: React.Dispatch<any>) => {
-  dispatch({
-    type: 'LOADING',
-    payload: {
-      isLoading: isLoading,
     },
   });
 };
@@ -166,14 +134,6 @@ export const dispatchStargazersUsersRepos = (
     type: 'STARGAZERS_USERS_REPOS',
     payload: {
       stargazersUsersStarredRepositories: stargazersUsersStarredRepositories,
-    },
-  });
-};
-export const dispatchShouldFetchImagesData = (shouldFetchImages: boolean, dispatch: React.Dispatch<any>) => {
-  dispatch({
-    type: 'SHOULD_IMAGES_DATA_ADDED',
-    payload: {
-      shouldFetchImages: shouldFetchImages,
     },
   });
 };

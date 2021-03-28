@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import './RateLimitInfo.css';
 import { epochToJsDate } from '../util';
-import { IState } from '../typing/interface';
+import { IStateRateLimit } from '../typing/interface';
 import clsx from 'clsx';
 
 interface RateLimitInfo {
-  data: IState['rateLimit'];
+  data: IStateRateLimit['rateLimit'];
   setRefetch: React.Dispatch<React.SetStateAction<boolean>>;
   rateLimitAnimationAdded: boolean;
 }

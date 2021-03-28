@@ -7,7 +7,16 @@ import KeepMountedLayout from './Layout/KeepMountedLayout';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import Details from './Details';
-import { IDataOne, IState, IStateStargazers } from './typing/interface';
+import {
+  IAction,
+  IDataOne,
+  IState,
+  IStateDiscover,
+  IStateManageProfile,
+  IStateRateLimit,
+  IStateShared,
+  IStateStargazers,
+} from './typing/interface';
 import SearchBar from './SearchBar';
 import { getTokenGQL } from './services';
 import Discover from './Discover';
@@ -25,16 +34,33 @@ import {
   dispatchPageDiscover,
 } from './store/dispatcher';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { Action, LanguagePreference, MergedDataProps, Nullable } from './typing/type';
+import { LanguagePreference, MergedDataProps, Nullable } from './typing/type';
 import eye from './new_16-2.gif';
+import { ActionStargazers } from './store/Staargazers/reducer';
+import { ActionDiscover } from './store/Discover/reducer';
+import { ActionManageProfile } from './store/ManageProfile/reducer';
+import { ActionShared } from './store/Shared/reducer';
+import { Action } from './store/reducer';
 
 interface GlobalProps {
   state: IState;
+  stateDiscover: IStateDiscover;
   stateStargazers: IStateStargazers;
-  dispatch: any;
-  dispatchStargazers: any;
+  stateShared: IStateShared;
+  stateManageProfile: IStateManageProfile;
+  stateRateLimit: IStateRateLimit;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
+  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
+  dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
-
+export enum ActionResolvedPromise {
+  append = 'append',
+  noData = 'noData',
+  error = 'error',
+  nonAppend = 'nonAppend',
+}
 //TODO: refactor dispatcher.ts
 const Global: React.FC<{
   routerProps: RouteComponentProps<any, any, any>;
@@ -42,8 +68,8 @@ const Global: React.FC<{
 }> = (props) => {
   const { verifiedLoading, username } = useUserVerification(props);
   useEffect(() => {
-    if (!props.componentProps.state.isLoggedIn) {
-      props.componentProps.dispatch({
+    if (!props.componentProps.stateShared.isLoggedIn) {
+      props.componentProps.dispatchShared({
         type: 'LOGIN',
         payload: {
           isLoggedIn: !verifiedLoading && username !== '',
@@ -53,7 +79,7 @@ const Global: React.FC<{
     if (!verifiedLoading && username !== '') {
       getTokenGQL().then((res) => {
         if (res.tokenGQL) {
-          props.componentProps.dispatch({
+          props.componentProps.dispatchShared({
             type: 'TOKEN_ADDED',
             payload: {
               tokenGQL: res.tokenGQL,
@@ -63,7 +89,12 @@ const Global: React.FC<{
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [verifiedLoading, username, props.componentProps.state.isLoggedIn, props.componentProps.state.tokenGQL]);
+  }, [
+    verifiedLoading,
+    username,
+    props.componentProps.stateShared.isLoggedIn,
+    props.componentProps.stateShared.tokenGQL,
+  ]);
   const displayName: string | undefined = (Global as React.ComponentType<any>).displayName;
   const { userData, userDataLoading } = useApolloFactory(displayName!).query.getUserData();
   const { userStarred, loadingUserStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
@@ -133,9 +164,19 @@ const Global: React.FC<{
             data.renderImages
           );
           if (tempImages.length === 0) {
-            dispatchImagesData([], props.componentProps.dispatch);
+            props.componentProps.dispatch({
+              type: 'IMAGES_DATA_ADDED',
+              payload: {
+                images: [],
+              },
+            });
           } else {
-            dispatchImagesData(tempImages, props.componentProps.dispatch);
+            props.componentProps.dispatch({
+              type: 'IMAGES_DATA_ADDED',
+              payload: {
+                images: tempImages,
+              },
+            });
           }
           dispatchAppendMergedData(filter1, props.componentProps.dispatch);
           if (filter1.length === 0) {
@@ -170,7 +211,7 @@ const Global: React.FC<{
   };
   const actionResolvedPromise = useCallback(
     (
-      action: Action,
+      action: ActionResolvedPromise,
       setLoading: any,
       setNotification: any,
       isFetchFinish: boolean,
@@ -187,13 +228,13 @@ const Global: React.FC<{
       }
       if (action === 'noData') {
         isFetchFinish = true;
-        setNotification(`Sorry, no more data found for ${props.componentProps.state.username}`);
+        setNotification(`Sorry, no more data found for ${props.componentProps.stateShared.username}`);
       }
       if (action === 'error' && error) {
         throw new Error(`Something wrong at ${displayName} ${error}`);
       }
       if (data && data.error_404) {
-        setNotification(`Sorry, no data found for ${props.componentProps.state.username}`);
+        setNotification(`Sorry, no data found for ${props.componentProps.stateShared.username}`);
       } else if (data && data.error_403) {
         isFetchFinish = true;
         setNotification('Sorry, API rate limit exceeded.');
@@ -202,7 +243,7 @@ const Global: React.FC<{
       }
       return { isFetchFinish };
     },
-    [props.componentProps.state.username]
+    [props.componentProps.stateShared.username]
   );
 
   return (
@@ -225,15 +266,19 @@ const Global: React.FC<{
               return (
                 <React.Fragment>
                   <SearchBar
+                    stateShared={props.componentProps.stateShared}
                     state={props.componentProps.state}
                     stateStargazers={props.componentProps.stateStargazers}
                     dispatch={props.componentProps.dispatch}
                     dispatchStargazers={props.componentProps.dispatchStargazers}
+                    dispatchShared={props.componentProps.dispatchShared}
                   />
                   <Home
                     stateStargazers={props.componentProps.stateStargazers}
+                    stateShared={props.componentProps.stateShared}
                     dispatchStargazers={props.componentProps.dispatchStargazers}
                     dispatch={props.componentProps.dispatch}
+                    dispatchShared={props.componentProps.dispatchShared}
                     state={props.componentProps.state}
                     actionResolvedPromise={actionResolvedPromise}
                   />
@@ -246,12 +291,17 @@ const Global: React.FC<{
             render={() => {
               return (
                 <React.Fragment>
-                  <SearchBarDiscover state={props.componentProps.state} dispatch={props.componentProps.dispatch} />
+                  <SearchBarDiscover
+                    stateShared={props.componentProps.stateShared}
+                    stateDiscover={props.componentProps.stateDiscover}
+                    dispatchDiscover={props.componentProps.dispatchDiscover}
+                  />
                   <Discover
-                    stateStargazers={props.componentProps.stateStargazers}
+                    stateDiscover={props.componentProps.stateDiscover}
+                    stateShared={props.componentProps.stateShared}
+                    dispatchDiscover={props.componentProps.dispatchDiscover}
+                    dispatchShared={props.componentProps.dispatchShared}
                     dispatchStargazers={props.componentProps.dispatchStargazers}
-                    dispatch={props.componentProps.dispatch}
-                    state={props.componentProps.state}
                     routerProps={props.routerProps}
                     actionResolvedPromise={actionResolvedPromise}
                   />
@@ -261,14 +311,24 @@ const Global: React.FC<{
           />
           <If condition={props.routerProps.location.pathname === '/login'}>
             <Then>
-              <Login dispatch={props.componentProps.dispatch} state={props.componentProps.state} />
+              <Login
+                dispatchShared={props.componentProps.dispatchShared}
+                stateShared={props.componentProps.stateShared}
+              />
             </Then>
           </If>
 
           <PrefetchKeepMountedLayout
             mountedCondition={props.routerProps.location.pathname === '/profile'}
             render={() => {
-              return <ManageProfile dispatch={props.componentProps.dispatch} state={props.componentProps.state} />;
+              return (
+                <ManageProfile
+                  dispatchManageProfile={props.componentProps.dispatchManageProfile}
+                  stateShared={props.componentProps.stateShared}
+                  stateManageProfile={props.componentProps.stateManageProfile}
+                  dispatchShared={props.componentProps.dispatchShared}
+                />
+              );
             }}
           />
           <If condition={props.routerProps.location.pathname.includes('/detail')}>

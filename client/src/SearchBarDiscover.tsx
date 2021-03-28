@@ -1,20 +1,23 @@
-import React, { useCallback, useEffect } from 'react';
-import { IDataOne, IState } from './typing/interface';
+import React, { useCallback } from 'react';
+import { IAction, IStateDiscover, IStateShared } from './typing/interface';
 import PureSearchBarDiscover from './SearchBarBody/PureSearchBarDiscover';
-import { Action, Nullable } from './typing/type';
+import { ActionDiscover } from './store/Discover/reducer';
+import useDeepCompareEffect from './hooks/useDeepCompareEffect';
+
 export interface SearchBarProps {
-  state: IState;
-  dispatch: any;
+  stateShared: IStateShared;
+  stateDiscover: IStateDiscover;
+  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
 }
 
-const SearchBarDiscover: React.FC<SearchBarProps> = ({ state, dispatch }) => {
+const SearchBarDiscover: React.FC<SearchBarProps> = ({ stateShared, stateDiscover, dispatchDiscover }) => {
   const PureSearchBarDataMemoized = useCallback(() => {
-    return state;
+    return stateShared;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.width]);
-  useEffect(() => {
-    if (document.location.pathname !== '/discover' && state.filterMergedDataDiscover.length > 0) {
-      dispatch({
+  }, [stateShared.width]);
+  useDeepCompareEffect(() => {
+    if (stateDiscover.filterMergedDataDiscover.length > 0) {
+      dispatchDiscover({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
           data: [],
@@ -22,17 +25,17 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ state, dispatch }) => {
         },
       });
     }
-  }, [document.location.pathname]);
+  }, [stateDiscover.filterMergedDataDiscover]);
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
     <div
       style={{
-        marginLeft: `${state.drawerWidth > 60 && document.location.pathname === '/discover' ? state.drawerWidth : 0}px`,
+        marginLeft: `${stateShared.drawerWidth > 60 ? stateShared.drawerWidth : 0}px`,
         display: 'grid',
       }}
     >
-      <PureSearchBarDiscover state={PureSearchBarDataMemoized()} dispatch={dispatch} />
+      <PureSearchBarDiscover stateShared={PureSearchBarDataMemoized()} dispatchDiscover={dispatchDiscover} />
     </div>
   );
 };

@@ -7,12 +7,14 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import Result from './SubscribFeedSettingBody/Result';
 import SendIcon from '@material-ui/icons/Send';
-import { dispatchUsername } from '../../store/dispatcher';
 import { NavLink } from 'react-router-dom';
-import { IState } from '../../typing/interface';
+import { IAction, IStateShared } from '../../typing/interface';
 import { isEqualObjects } from '../../util';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { Login } from '../../typing/type';
+import { Action } from '../../store/reducer';
+import { ActionStargazers } from '../../store/Staargazers/reducer';
+import { ActionShared } from '../../store/Shared/reducer';
 
 const useStyles = makeStyles<Theme>(() => ({
   typographyQuery: {
@@ -44,13 +46,14 @@ const useStyles = makeStyles<Theme>(() => ({
 }));
 
 interface SubscribeFeedSettingProps {
-  dispatch: any;
-  dispatchStargazersUser: any;
-  state: IState;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  stateShared: IStateShared;
 }
 
 const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
-  ({ state, dispatch, dispatchStargazersUser }) => {
+  ({ stateShared, dispatch, dispatchShared, dispatchStargazersUser }) => {
     const displayName: string | undefined = (SubscribeFeedSetting as React.ComponentType<any>).displayName;
     const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory(
       displayName!
@@ -78,7 +81,12 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
       dispatch({
         type: 'REMOVE_ALL',
       });
-      dispatchUsername(usernameList, dispatch);
+      dispatchShared({
+        type: 'USERNAME_ADDED',
+        payload: {
+          username: usernameList,
+        },
+      });
     };
     useEffect(() => {
       if (
@@ -121,7 +129,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
               </div>
             </Then>
           </If>
-          <If condition={!loading && state.isLoggedIn}>
+          <If condition={!loading && stateShared.isLoggedIn}>
             <Then>
               <div className="SelectMenu-list" style={{ background: 'var(--background-theme-color)' }}>
                 <table style={{ marginLeft: '5px', display: 'table', width: '100%' }}>
@@ -175,7 +183,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
           </If>
           <If
             condition={
-              state.isLoggedIn &&
+              stateShared.isLoggedIn &&
               (watchUsersData?.getWatchUsers?.login?.length === undefined ||
                 watchUsersData?.getWatchUsers?.login?.length === 0)
             }
@@ -191,7 +199,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
               </ListItem>
             </Then>
           </If>
-          <If condition={!loading && !state.isLoggedIn}>
+          <If condition={!loading && !stateShared.isLoggedIn}>
             <Then>
               <div style={{ textAlign: 'center' }}>
                 <span>Please Login to access this feature</span>
@@ -210,7 +218,7 @@ const SubscribeFeedSetting = React.memo<SubscribeFeedSettingProps>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn);
+    return isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn);
   }
 );
 SubscribeFeedSetting.displayName = 'SubscribeFeedSetting';

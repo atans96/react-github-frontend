@@ -20,7 +20,7 @@ import { subscribeUser } from '../../services';
 import Parser from 'rss-parser';
 import _ from 'lodash';
 import { NavLink } from 'react-router-dom';
-import { IState } from '../../typing/interface';
+import { IStateShared } from '../../typing/interface';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { Login } from '../../typing/type';
 
@@ -56,11 +56,13 @@ const rssParser = new Parser({
     ] as Parser.CustomFieldItem<any>[],
   },
 });
+
 interface SubscribeFeedProps {
-  state: IState;
+  stateShared: IStateShared;
 }
+
 const SubscribeFeed = React.memo<SubscribeFeedProps>(
-  ({ state }) => {
+  ({ stateShared }) => {
     const displayName: string | undefined = (SubscribeFeed as React.ComponentType<any>).displayName;
     const { watchUsersData, loadingWatchUsersData, errorWatchUsersData } = useApolloFactory(
       displayName!
@@ -420,7 +422,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
               </div>
             </Then>
           </If>
-          <If condition={!loading && state.isLoggedIn}>
+          <If condition={!loading && stateShared.isLoggedIn}>
             <Then>
               <React.Fragment>
                 {xmlFileListAppend.slice(0, 5).map((xml: string, idx: number) => {
@@ -491,7 +493,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
               </If>
             </Then>
           </If>
-          <If condition={!loading && !state.isLoggedIn}>
+          <If condition={!loading && !stateShared.isLoggedIn}>
             <Then>
               <div style={{ textAlign: 'center' }}>
                 <span>Please Login to access this feature</span>
@@ -510,7 +512,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn);
+    return isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn);
   }
 );
 SubscribeFeed.displayName = 'SubscribeFeed';

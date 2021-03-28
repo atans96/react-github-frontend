@@ -8,7 +8,6 @@ import { useMutation } from '@apollo/client';
 import { WATCH_USER_REMOVED } from '../../../mutations';
 import { GET_WATCH_USERS } from '../../../queries';
 import useHover from '../../../hooks/useHover';
-import { dispatchUsername } from '../../../store/dispatcher';
 import { fastFilter } from '../../../util';
 
 interface ResultProps {
@@ -57,7 +56,12 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatch, dispatchStar
     dispatchStargazersUser({
       type: 'REMOVE_ALL',
     });
-    dispatchUsername(subscribedUsers.login, dispatch);
+    dispatch({
+      type: 'USERNAME_ADDED',
+      payload: {
+        username: subscribedUsers.login,
+      },
+    });
   };
   const handleClickUnsubscribe = (e: React.MouseEvent) => {
     e.preventDefault();
