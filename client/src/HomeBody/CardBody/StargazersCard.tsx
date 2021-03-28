@@ -229,41 +229,19 @@ const StargazersCard = React.memo<StargazersCard>(
               <span style={{ fontSize: '15px' }}>{starClicked ? 'Unstar' : 'Star'}</span>
             </div>
           </div>
-          <If condition={document.location.pathname === '/'}>
-            <Then>
-              <div
-                className="star-counts-container"
-                {...getRootProps({
-                  onClick: handleClickStargazers,
-                  params: { query: SEARCH_FOR_REPOS, variables: GQL_VARIABLES.GQL_variables },
-                  firstCallback: () => {
-                    setIsLoading(false);
-                  },
-                })}
-              >
-                <span className={'star-counts-text'}>{stargazerCount}</span>
-              </div>
-            </Then>
-          </If>
-          <If condition={document.location.pathname === '/discover'}>
-            <Then>
-              <div className="star-counts-container">
-                <span
-                  style={{
-                    textAlign: 'center',
-                    cursor: 'default',
-                    marginLeft: '5px',
-                    marginRight: '5px',
-                    fontSize: '15px',
-                    display: 'inline',
-                    color: 'blue',
-                  }}
-                >
-                  {stargazerCount}
-                </span>
-              </div>
-            </Then>
-          </If>
+
+          <div
+            className="star-counts-container"
+            {...getRootProps({
+              onClick: handleClickStargazers,
+              params: { query: SEARCH_FOR_REPOS, variables: GQL_VARIABLES.GQL_variables },
+              firstCallback: () => {
+                setIsLoading(false);
+              },
+            })}
+          >
+            <span className={'star-counts-text'}>{stargazerCount}</span>
+          </div>
         </div>
         {visible && returnPortal()}
       </React.Fragment>

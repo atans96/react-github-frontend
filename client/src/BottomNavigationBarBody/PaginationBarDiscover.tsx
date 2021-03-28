@@ -7,7 +7,7 @@ import { Theme } from '@material-ui/core';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import { isEqualObjects } from '../util';
-import { IState } from '../typing/interface';
+import { IStateDiscover } from '../typing/interface';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -36,22 +36,22 @@ const useStyles = makeStyles<Theme>((theme) => ({
 }));
 
 interface PaginationBarProps {
-  state: IState;
+  stateDiscover: IStateDiscover;
 }
 
 const PaginationBarDiscover: React.FC<PaginationBarProps> = React.memo(
-  ({ state }) => {
+  ({ stateDiscover }) => {
     const classes = useStyles();
     return (
       <AppBar position="fixed" color="primary" className={classes.appBar}>
         <Toolbar>
-          <If condition={state.lastPageDiscover > 0}>
+          <If condition={stateDiscover.lastPageDiscover > 0}>
             <Then>
               <div className={classes.paginationInfo}>
                 <Pagination
                   className={classes.buttonPagination}
-                  page={state.pageDiscover}
-                  count={state.lastPageDiscover}
+                  page={stateDiscover.pageDiscover}
+                  count={stateDiscover.lastPageDiscover}
                   color="secondary"
                 />
               </div>
@@ -64,8 +64,8 @@ const PaginationBarDiscover: React.FC<PaginationBarProps> = React.memo(
   },
   (prevProps: any, nextProps: any) => {
     return (
-      isEqualObjects(prevProps.state.pageDiscover, nextProps.state.pageDiscover) &&
-      isEqualObjects(prevProps.state.lastPageDiscover, nextProps.state.lastPageDiscover)
+      isEqualObjects(prevProps.stateDiscover.pageDiscover, nextProps.stateDiscover.pageDiscover) &&
+      isEqualObjects(prevProps.stateDiscover.lastPageDiscover, nextProps.stateDiscover.lastPageDiscover)
     );
   }
 );

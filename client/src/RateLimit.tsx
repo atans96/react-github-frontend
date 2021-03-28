@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import RateLimitInfo from './RateLimitInfoBody/RateLimitInfo';
 import { getRateLimitInfo } from './services';
-import { dispatchRateLimit, dispatchRateLimitAnimation } from './store/dispatcher';
-import { IState } from './typing/interface';
 import { useApolloFactory } from './hooks/useApolloFactory';
+import { initialStateRateLimit, reducerRateLimit } from './store/RateLimit/reducer';
+import { BottomNavigationBarProps } from './HomeBody/BottomNavigationBar';
 
-interface RateLimitProps {
-  state: IState;
-  dispatch: any;
-}
-
-const RateLimit: React.FC<{ componentProps: RateLimitProps }> = (props) => {
+const RateLimit: React.FC<{
+  componentProps: Omit<BottomNavigationBarProps, 'dispatchStargazersUser' | 'dispatchShared' | 'stateShared'>;
+}> = (props) => {
+  const [state, dispatch] = useReducer(reducerRateLimit, initialStateRateLimit);
   const [refetch, setRefetch] = useState(true);
   const displayName: string | undefined = (RateLimit as React.ComponentType<any>).displayName;
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
@@ -18,13 +16,39 @@ const RateLimit: React.FC<{ componentProps: RateLimitProps }> = (props) => {
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and
       // persist when switching the component
-      dispatchRateLimitAnimation(false, props.componentProps.dispatch);
+      dispatch({
+        type: 'RATE_LIMIT_ADDED',
+        payload: {
+          rateLimitAnimationAdded: false,
+        },
+      });
       getRateLimitInfo(
         !userDataLoading && !userDataError && userData && userData.getUserData ? userData.getUserData.token : ''
       ).then((data) => {
         if (data.rateLimit && data.rateLimitGQL) {
-          dispatchRateLimitAnimation(true, props.componentProps.dispatch);
-          dispatchRateLimit(data.rateLimit, data.rateLimitGQL, props.componentProps.dispatch);
+          dispatch({
+            type: 'RATE_LIMIT_ADDED',
+            payload: {
+              rateLimitAnimationAdded: true,
+            },
+          });
+          dispatch({
+            type: 'RATE_LIMIT',
+            payload: {
+              limit: data.rateLimit.limit,
+              used: data.rateLimit.used,
+              reset: data.rateLimit.reset,
+            },
+          });
+
+          dispatch({
+            type: 'RATE_LIMIT_GQL',
+            payload: {
+              limit: data.rateLimitGQL.limit,
+              used: data.rateLimitGQL.used,
+              reset: data.rateLimitGQL.reset,
+            },
+          });
         }
         setRefetch(false); // turn back to default after setting to true from RateLimitInfo
       });
@@ -41,9 +65,9 @@ const RateLimit: React.FC<{ componentProps: RateLimitProps }> = (props) => {
   );
   return (
     <RateLimitInfo
-      data={props.componentProps.state.rateLimit}
+      data={state.rateLimit}
       setRefetch={setRefetch}
-      rateLimitAnimationAdded={props.componentProps.state.rateLimitAnimationAdded}
+      rateLimitAnimationAdded={state.rateLimitAnimationAdded}
     />
   );
 };

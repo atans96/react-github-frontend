@@ -5,16 +5,16 @@ import { SearchBarProps } from '../SearchBarDiscover';
 import { isEqualObjects } from '../util';
 import { getElasticSearchBert } from '../services';
 
-const SearchBarDiscover = React.memo<SearchBarProps>(
-  ({ state, dispatch }) => {
+const SearchBarDiscover = React.memo<Omit<SearchBarProps, 'stateDiscover'>>(
+  ({ stateShared, dispatchDiscover }) => {
     const size = {
       width: '500px',
       minWidth: '100px',
       maxWidth: '100%',
     };
     let style: React.CSSProperties;
-    if (state.width < 711) {
-      style = { width: `${state.width - 200}px` };
+    if (stateShared.width < 711) {
+      style = { width: `${stateShared.width - 200}px` };
     } else {
       style = {
         maxWidth: size.maxWidth,
@@ -27,7 +27,7 @@ const SearchBarDiscover = React.memo<SearchBarProps>(
       event.preventDefault();
       event.stopPropagation();
       getElasticSearchBert(query?.current?.getState()).then((res) => {
-        dispatch({
+        dispatchDiscover({
           type: 'MERGED_DATA_ADDED_DISCOVER',
           payload: {
             data: res,
@@ -38,17 +38,17 @@ const SearchBarDiscover = React.memo<SearchBarProps>(
       });
     };
     return (
-      <SearchBarLayout style={{ width: `${state.width}px` }} onSubmit={handleSubmit}>
+      <SearchBarLayout style={{ width: `${stateShared.width}px` }} onSubmit={handleSubmit}>
         {() => (
           <React.Fragment>
-            <PureInputDiscover style={style} dispatch={dispatch} ref={query} />
+            <PureInputDiscover style={style} dispatchDiscover={dispatchDiscover} ref={query} />
           </React.Fragment>
         )}
       </SearchBarLayout>
     );
   },
   (prevProps: any, nextProps: any) => {
-    return isEqualObjects(prevProps.state.width, nextProps.state.width);
+    return isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width);
   }
 );
 SearchBarDiscover.displayName = 'SearchBarDiscover';

@@ -3,30 +3,26 @@ import CardSkeleton from './HomeBody/CardSkeleton';
 import { getOrg, getRepoImages, getSearchTopics, getUser } from './services';
 import MasonryLayout from './Layout/MasonryLayout';
 import _ from 'lodash';
-import {
-  dispatchImagesData,
-  dispatchLastPage,
-  dispatchMergedData,
-  dispatchPage,
-  dispatchShouldFetchImagesData,
-  dispatchUsername,
-} from './store/dispatcher';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
-import { IDataOne, IState, IStateStargazers } from './typing/interface';
-import { Action, MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { IAction, IDataOne, IState, IStateShared, IStateStargazers } from './typing/interface';
+import { MergedDataProps, Nullable, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { debounce, fastFilter, isEqualObjects } from './util';
+import { fastFilter, isEqualObjects } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
+import { ActionStargazers } from './store/Staargazers/reducer';
+import { ActionResolvedPromise } from './Global';
+import { Action } from './store/reducer';
+import { ActionShared } from './store/Shared/reducer';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -35,6 +31,7 @@ interface MasonryLayoutMemo {
   children: any;
   data: IState['mergedData'];
   state: IState;
+  stateShared: IStateShared;
 }
 
 // const screenWidth = (width) => {
@@ -44,12 +41,12 @@ interface MasonryLayoutMemo {
 // propsAreEqual condition checker, the child of Masonry's Card won't get updated state like new tokenGQL when the user logged in using
 // LoginGQL component from StargazersCard. We want to memoize masonry since it involves expensive DOM manipulation
 const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
-  ({ children, data, state }) => {
-    let columnCount = state.width < 760 ? 1 : 2;
+  ({ children, data, state, stateShared }) => {
+    let columnCount = stateShared.width < 760 ? 1 : 2;
     let increment = 300;
     const baseWidth = 760;
-    if (state.width > 760) {
-      while (baseWidth + increment < state.width) {
+    if (stateShared.width > 760) {
+      while (baseWidth + increment < stateShared.width) {
         columnCount += 1;
         increment += 300;
       }
@@ -59,11 +56,11 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.data.length, nextProps.data.length) &&
-      isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL) &&
-      isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn) &&
+      isEqualObjects(prevProps.stateShared.tokenGQL, nextProps.stateShared.tokenGQL) &&
+      isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn) &&
       isEqualObjects(prevProps.state.imagesData, nextProps.state.imagesData) &&
-      isEqualObjects(prevProps.state.perPage, nextProps.state.perPage) &&
-      isEqualObjects(prevProps.state.width, nextProps.state.width)
+      isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
+      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width)
     ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
     // it needs to get re-render to get new data.
   }
@@ -77,10 +74,12 @@ interface Output {
 interface HomeProps {
   state: IState;
   stateStargazers: IStateStargazers;
-  dispatch: any;
-  dispatchStargazers: any;
+  stateShared: IStateShared;
+  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
+  dispatch: React.Dispatch<IAction<Action>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
   actionResolvedPromise: (
-    action: Action,
+    action: ActionResolvedPromise,
     setLoading: any,
     setNotification: any,
     isFetchFinish: boolean,
@@ -91,7 +90,7 @@ interface HomeProps {
 }
 
 const Home = React.memo<HomeProps>(
-  ({ state, dispatch, dispatchStargazers, stateStargazers, actionResolvedPromise }) => {
+  ({ state, stateShared, dispatch, dispatchStargazers, dispatchShared, stateStargazers, actionResolvedPromise }) => {
     const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
     const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
     const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
@@ -138,14 +137,28 @@ const Home = React.memo<HomeProps>(
           : isFunction(callback);
       };
       if (isDataExists(res)) {
-        actionResolvedPromise(Action.append, setLoading, setNotification, isFetchFinish.current, displayName!, res);
+        actionResolvedPromise(
+          ActionResolvedPromise.append,
+          setLoading,
+          setNotification,
+          isFetchFinish.current,
+          displayName!,
+          res
+        );
       } else if (res !== undefined && (res.error_404 || res.error_403)) {
         callback
           ? promiseOrNot()
-          : actionResolvedPromise(Action.error, setLoading, setNotification, isFetchFinish.current, displayName!, res);
+          : actionResolvedPromise(
+              ActionResolvedPromise.error,
+              setLoading,
+              setNotification,
+              isFetchFinish.current,
+              displayName!,
+              res
+            );
       } else {
         isFetchFinish.current = actionResolvedPromise(
-          Action.noData,
+          ActionResolvedPromise.noData,
           setLoading,
           setNotification,
           isFetchFinish.current,
@@ -172,33 +185,44 @@ const Home = React.memo<HomeProps>(
               actionController(res);
             })
             .catch((error) => {
-              actionResolvedPromise(Action.error, setLoading, setNotification, isFetchFinish.current, error);
+              actionResolvedPromise(
+                ActionResolvedPromise.error,
+                setLoading,
+                setNotification,
+                isFetchFinish.current,
+                error
+              );
             });
         } else {
           let userNameTransformed: string[];
-          if (!Array.isArray(state.username)) {
-            userNameTransformed = [state.username];
+          if (!Array.isArray(stateShared.username)) {
+            userNameTransformed = [stateShared.username];
           } else {
-            userNameTransformed = state.username;
+            userNameTransformed = stateShared.username;
           }
           const promises: Promise<void>[] = [];
           userNameTransformed.forEach((name) => {
             promises.push(
               getUser(
                 name,
-                state.perPage,
+                stateShared.perPage,
                 state.page,
                 userData && userData.getUserData ? userData.getUserData.token : ''
               )
                 .then((data: IDataOne) => {
                   const callback = () =>
-                    getOrg(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
+                    getOrg(
+                      name,
+                      stateShared.perPage,
+                      1,
+                      userData && userData.getUserData ? userData.getUserData.token : ''
+                    )
                       .then((data: IDataOne) => {
                         actionController(data);
                       })
                       .catch((err) => {
                         actionResolvedPromise(
-                          Action.error,
+                          ActionResolvedPromise.error,
                           setLoading,
                           setNotification,
                           isFetchFinish.current,
@@ -210,7 +234,7 @@ const Home = React.memo<HomeProps>(
                 })
                 .catch((error) => {
                   actionResolvedPromise(
-                    Action.error,
+                    ActionResolvedPromise.error,
                     setLoading,
                     setNotification,
                     isFetchFinish.current,
@@ -229,22 +253,27 @@ const Home = React.memo<HomeProps>(
       isFetchFinish.current = false;
       setNotification('');
       let userNameTransformed: string[];
-      if (!Array.isArray(state.username)) {
-        userNameTransformed = [state.username];
+      if (!Array.isArray(stateShared.username)) {
+        userNameTransformed = [stateShared.username];
       } else {
-        userNameTransformed = state.username;
+        userNameTransformed = stateShared.username;
       }
       const promises: Promise<void>[] = [];
       let paginationInfo = 0;
       userNameTransformed.forEach((name) => {
         promises.push(
-          getUser(name, state.perPage, 1, userData ? userData.getUserData.token : '')
+          getUser(name, stateShared.perPage, 1, userData ? userData.getUserData.token : '')
             .then((data: IDataOne) => {
               const callback = () =>
-                getOrg(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
+                getOrg(name, stateShared.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
                   .then((data: IDataOne) => {
                     paginationInfo += data.paginationInfoData;
-                    dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+                    dispatch({
+                      type: 'LAST_PAGE',
+                      payload: {
+                        lastPage: paginationInfo,
+                      },
+                    });
                     setTimeout(() => {
                       // setTimeout is not sync function so it will execute setRenderSkeleton(true);
                       // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
@@ -256,7 +285,7 @@ const Home = React.memo<HomeProps>(
                   })
                   .catch((err) => {
                     actionResolvedPromise(
-                      Action.error,
+                      ActionResolvedPromise.error,
                       setLoading,
                       setNotification,
                       isFetchFinish.current,
@@ -265,7 +294,12 @@ const Home = React.memo<HomeProps>(
                     );
                   });
               paginationInfo += data.paginationInfoData;
-              dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+              dispatch({
+                type: 'LAST_PAGE',
+                payload: {
+                  lastPage: paginationInfo,
+                },
+              });
               setTimeout(() => {
                 // setTimeout is not sync function so it will execute setRenderSkeleton(true);
                 // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
@@ -277,7 +311,7 @@ const Home = React.memo<HomeProps>(
             })
             .catch((err) => {
               actionResolvedPromise(
-                Action.error,
+                ActionResolvedPromise.error,
                 setLoading,
                 setNotification,
                 isFetchFinish.current,
@@ -318,7 +352,9 @@ const Home = React.memo<HomeProps>(
         notificationRef.current === '' &&
         filterBySeenRef.current
       ) {
-        dispatchPage(dispatch);
+        dispatch({
+          type: 'ADVANCE_PAGE',
+        });
         const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
           const temp = Object.assign(
             {},
@@ -344,7 +380,7 @@ const Home = React.memo<HomeProps>(
           acc.push(temp);
           return acc;
         }, [] as MergedDataProps[]);
-        if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
+        if (result.length > 0 && imagesDataRef.current.length > 0 && stateShared.isLoggedIn) {
           seenAdded({
             variables: {
               seenCards: result,
@@ -361,7 +397,7 @@ const Home = React.memo<HomeProps>(
       notificationRef.current,
       window.location.pathname,
       filterBySeenRef.current,
-      state.isLoggedIn,
+      stateShared.isLoggedIn,
     ]);
 
     useBottomHit(
@@ -371,40 +407,36 @@ const Home = React.memo<HomeProps>(
     );
 
     function handleResize() {
-      dispatch({
+      dispatchShared({
         type: 'SET_WIDTH',
         payload: {
           width: window.innerWidth,
         },
       });
     }
+
     useResizeHandler(windowScreenRef, handleResize);
 
     useDeepCompareEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-      if (state.username.length > 0 && state.mergedData.length === 0) {
-        // we want to preserve state.username so that when the user navigate away from Home, then go back again, and do the scroll again,
-        // we still want to retain the memory of username so that's why we use reducer of state.username.
-        // However, as the component unmount, state.username is not "", thus causing fetchUser to fire in useEffect
+      if (stateShared.username.length > 0 && state.mergedData.length === 0) {
+        // we want to preserve stateShared.username so that when the user navigate away from Home, then go back again, and do the scroll again,
+        // we still want to retain the memory of username so that's why we use reducer of stateShared.username.
+        // However, as the component unmount, stateShared.username is not "", thus causing fetchUser to fire in useEffect
         // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
-        // otherwise, don't re-fetch. in this way, state.username and state.mergedData are still preserved
+        // otherwise, don't re-fetch. in this way, stateShared.username and state.mergedData are still preserved
         fetchUser();
       }
       // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
-      // it cannot fetch because if the dependency array of fetchUser() is only [state.username] so state.username not change so not execute
-      // so you need another dependency of state.perPage
+      // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.username] so stateShared.username not change so not execute
+      // so you need another dependency of stateShared.perPage
       // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.username, state.perPage, state.mergedData]);
+    }, [stateShared.username, stateShared.perPage, state.mergedData]);
     useEffect(() => {
-      if (state.username.length > 0 && document.location.pathname === '/') {
+      if (stateShared.username.length > 0) {
         fetchUserMore();
-      } else if (
-        state.username.length === 0 &&
-        clickedGQLTopic.queryTopic !== '' &&
-        document.location.pathname === '/' &&
-        state.filterBySeen
-      ) {
+      } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         fetchUserMore();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -415,9 +447,9 @@ const Home = React.memo<HomeProps>(
         !userDataError &&
         userData?.getUserData?.tokenRSS &&
         userData?.getUserData?.tokenRSS !== '' &&
-        state.tokenRSS === ''
+        stateShared.tokenRSS === ''
       ) {
-        dispatch({
+        dispatchShared({
           type: 'TOKEN_RSS_ADDED',
           payload: {
             tokenRSS: userData?.getUserData?.tokenRSS,
@@ -442,8 +474,18 @@ const Home = React.memo<HomeProps>(
             );
             return acc;
           }, [] as SeenProps[]);
-          dispatchImagesData(images, dispatch);
-          dispatchMergedData(state.undisplayMergedData, dispatch);
+          dispatch({
+            type: 'IMAGES_DATA_ADDED',
+            payload: {
+              images: images,
+            },
+          });
+          dispatch({
+            type: 'MERGED_DATA_ADDED',
+            payload: {
+              data: state.undisplayMergedData,
+            },
+          });
         } else {
           const ids = state.undisplayMergedData.reduce((acc, obj) => {
             acc.push(obj.id);
@@ -457,7 +499,12 @@ const Home = React.memo<HomeProps>(
               imagesData: images,
             },
           });
-          dispatchMergedData(temp, dispatch);
+          dispatch({
+            type: 'MERGED_DATA_ADDED',
+            payload: {
+              data: temp,
+            },
+          });
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -494,16 +541,31 @@ const Home = React.memo<HomeProps>(
             return acc;
           }, [] as any[]);
           const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          getRepoImages(data, Array.isArray(state.username) ? state.username[0] : state.username, state.page, token)
+          getRepoImages(
+            data,
+            Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+            state.page,
+            token
+          )
             .then((repoImage) => {
               if (repoImage.renderImages.length > 0) {
-                dispatchShouldFetchImagesData(false, dispatch);
-                dispatchImagesData(repoImage.renderImages, dispatch);
+                dispatch({
+                  type: 'SHOULD_IMAGES_DATA_ADDED',
+                  payload: {
+                    shouldFetchImages: false,
+                  },
+                });
+                dispatch({
+                  type: 'IMAGES_DATA_ADDED',
+                  payload: {
+                    images: repoImage.renderImages,
+                  },
+                });
               }
             })
             .catch((err) => {
               actionResolvedPromise(
-                Action.error,
+                ActionResolvedPromise.error,
                 setLoading,
                 setNotification,
                 isFetchFinish.current,
@@ -522,7 +584,7 @@ const Home = React.memo<HomeProps>(
     });
     const onClickTopic = useCallback(
       async ({ variables }) => {
-        if (state.tokenGQL !== '' && userDataRef.current && state.filterBySeen) {
+        if (stateShared.tokenGQL !== '' && userDataRef.current && state.filterBySeen) {
           setLoading(true);
           dispatch({
             type: 'REMOVE_ALL',
@@ -530,7 +592,12 @@ const Home = React.memo<HomeProps>(
           dispatchStargazers({
             type: 'REMOVE_ALL',
           });
-          dispatchUsername('', dispatch);
+          dispatchShared({
+            type: 'USERNAME_ADDED',
+            payload: {
+              username: '',
+            },
+          });
           isFetchFinish.current = false;
           setNotification('');
           setGQLTopic({
@@ -540,7 +607,12 @@ const Home = React.memo<HomeProps>(
           return await getSearchTopics(variables.queryTopic, userDataRef.current!)
             .then((result: IDataOne) => {
               paginationInfo += result.paginationInfoData;
-              dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
+              dispatch({
+                type: 'LAST_PAGE',
+                payload: {
+                  lastPage: paginationInfo,
+                },
+              });
               actionController(result);
               setTimeout(() => {
                 setRenderSkeleton(false);
@@ -549,7 +621,7 @@ const Home = React.memo<HomeProps>(
             })
             .catch((err) => {
               actionResolvedPromise(
-                Action.error,
+                ActionResolvedPromise.error,
                 setLoading,
                 setNotification,
                 isFetchFinish.current,
@@ -560,7 +632,7 @@ const Home = React.memo<HomeProps>(
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [state.tokenGQL, userDataRef.current, state.filterBySeen] // if not specified, state.tokenGQL !== '' will always true when you click it again, even though state.tokenGQL already updated
+      [stateShared.tokenGQL, userDataRef.current, state.filterBySeen] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
     );
     const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
@@ -613,7 +685,7 @@ const Home = React.memo<HomeProps>(
           className={clsx('', {
             header: state.mergedData?.length > 0,
           })}
-          style={{ marginLeft: `${state.drawerWidth + 5}px`, zIndex: state.visible ? -1 : 0 }}
+          style={{ marginLeft: `${stateShared.drawerWidth + 5}px`, zIndex: state.visible ? -1 : 0 }}
         >
           {
             // we want to render Card first and ImagesCard later because it requires more bandwith
@@ -637,7 +709,7 @@ const Home = React.memo<HomeProps>(
           </If>
           <If condition={state.mergedData?.length > 0 && !shouldRenderSkeleton}>
             <Then>
-              <MasonryLayoutMemo data={whichToUse()} state={state}>
+              <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
                 {(columnCount: number) => {
                   return Object.keys(whichToUse()).map((key, idx) => (
                     <Card
@@ -658,7 +730,7 @@ const Home = React.memo<HomeProps>(
           </If>
           <If condition={shouldRenderSkeleton}>
             <Then>
-              <MasonryLayoutMemo data={whichToUse()} state={state}>
+              <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
                 {() => {
                   return Object.keys(state.mergedData).map((_, idx) => <CardSkeleton key={idx} />);
                 }}
@@ -689,9 +761,15 @@ const Home = React.memo<HomeProps>(
             </Then>
           </If>
         </div>
-        <If condition={state.width > 1100}>
+        <If condition={stateShared.width > 1100}>
           <Then>
-            <BottomNavigationBar state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazers} />
+            <BottomNavigationBar
+              state={state}
+              stateShared={stateShared}
+              dispatch={dispatch}
+              dispatchStargazersUser={dispatchStargazers}
+              dispatchShared={dispatchShared}
+            />
           </Then>
         </If>
       </React.Fragment>
@@ -701,6 +779,7 @@ const Home = React.memo<HomeProps>(
     return (
       isEqualObjects(prevProps.path, nextProps.path) &&
       isEqualObjects(prevProps.state, nextProps.state) &&
+      isEqualObjects(prevProps.stateShared, nextProps.stateShared) &&
       isEqualObjects(prevProps.stateStargazers, nextProps.stateStargazers)
     );
   }

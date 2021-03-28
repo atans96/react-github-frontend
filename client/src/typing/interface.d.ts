@@ -40,31 +40,46 @@ export interface IStateStargazers {
   stargazersUsers: number;
   stargazersUsersStarredRepositories: number;
 }
-export interface IState {
-  isLoadingDiscover: boolean;
-  notificationDiscover: string;
-  fetchDataPath: string;
-  repoInfo: RepoInfoProps[];
-  contributors: ContributorsProps[];
-  imagesMapData: Map<number, any>;
-  isLoggedIn: boolean;
-  tokenGQL: string;
-  filterBySeen: boolean;
-  shouldFetchImages: boolean;
-  drawerWidth: number;
-  topics: TopicsProps[];
-  filteredTopics: string[];
+export interface IStateShared {
   width: number;
+  perPage: number;
+  fetchDataPath: string;
+  username: string[];
+  tokenRSS: string;
+  tokenGQL: string;
+  drawerWidth: number;
+  isLoggedIn: boolean;
   client_id: Nullable<string>;
   redirect_uri: Nullable<string>;
   client_secret: Nullable<string>;
   proxy_url: string;
+}
+export interface IStateDiscover {
+  visibleDiscover: boolean;
+  isLoadingDiscover: boolean;
+  notificationDiscover: string;
+  mergedDataDiscover: MergedDataProps[]; // assign object of MergedData to your array
+  filterMergedDataDiscover: MergedDataProps[];
+  pageDiscover: number;
+  lastPageDiscover: number;
+}
+export interface IStateRateLimit {
   rateLimit: Partial<RateLimit>; // can be initialized with empty object in initialState
   rateLimitGQL: Partial<RateLimit>; // can be initialized with empty object in initialState
   rateLimitAnimationAdded: boolean;
-  mergedDataDiscover: MergedDataProps[]; // assign object of MergedData to your array
+}
+export interface IStateManageProfile {
+  contributors: ContributorsProps[];
+  columnWidth: Map<string, any>;
+  repoInfo: RepoInfoProps[];
+}
+export interface IState {
+  imagesMapData: Map<number, any>;
+  filterBySeen: boolean;
+  shouldFetchImages: boolean;
+  topics: TopicsProps[];
+  filteredTopics: string[];
   mergedData: MergedDataProps[];
-  filterMergedDataDiscover: MergedDataProps[];
   undisplayMergedData: SeenProps[];
   filteredMergedData: MergedDataProps[];
   imagesData: any[];
@@ -72,12 +87,7 @@ export interface IState {
   visible: boolean;
   isLoading: boolean;
   page: number;
-  pageDiscover: number;
-  perPage: number;
-  username: string[];
-  tokenRSS: string;
   lastPage: number;
-  lastPageDiscover: number;
 }
 export interface GraphQLUserData {
   getUserData: UserData;

@@ -6,7 +6,7 @@ import { Loading } from '../../util';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import { Else } from '../../util/react-if/Else';
-import { IState } from '../../typing/interface';
+import { IStateShared } from '../../typing/interface';
 
 interface Results {
   isLoading: boolean;
@@ -14,7 +14,7 @@ interface Results {
   data: { [key: string]: string }[];
   getRootProps: any;
   ref: React.Ref<HTMLDivElement>;
-  state: IState;
+  state: IStateShared;
   dispatch: any;
   dispatchStargazer: any;
 }

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { dispatchUsername } from '../../../store/dispatcher';
-import { IState } from '../../../typing/interface';
+import { IStateShared } from '../../../typing/interface';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 
 interface Result {
   children: React.ReactNode;
   userName: string;
   getRootProps: any;
-  state: IState;
+  state: IStateShared;
   dispatch: any;
   dispatchStargazer: any;
 }

@@ -1,14 +1,17 @@
 import React, { useCallback, useRef } from 'react';
 import { NavLink, RouteComponentProps } from 'react-router-dom';
-import UserCard from './CardBody/UserCard';
-import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
-import { IState, IStateStargazers } from '../typing/interface';
+import { IAction, IStateDiscover } from '../typing/interface';
 import clsx from 'clsx';
 import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
+import StargazersDiscover from './CardBody/StargazersDiscover';
+import UserCardDiscover from './CardBody/UserCardDiscover';
+import { ActionDiscover } from '../store/Discover/reducer';
+import { ActionShared } from '../store/Shared/reducer';
+import { ActionStargazers } from '../store/Staargazers/reducer';
 
 export interface Card {
   index: number;
@@ -16,10 +19,10 @@ export interface Card {
 }
 
 interface CardRef extends Card {
-  state: IState;
-  stateStargazersMemoize: IStateStargazers;
-  dispatch: any;
-  dispatchStargazersUser: any;
+  stateDiscover: IStateDiscover;
+  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   columnCount: number;
   imagesMapDataDiscover: Map<number, any>;
@@ -30,13 +33,13 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
   (
     {
       routerProps,
-      state,
-      dispatch,
+      stateDiscover,
+      dispatchDiscover,
+      dispatchStargazers,
       githubData,
       index,
-      dispatchStargazersUser,
+      dispatchShared,
       columnCount,
-      stateStargazersMemoize,
       imagesMapDataDiscover,
       sorted,
     },
@@ -50,16 +53,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [githubData.owner]);
 
-    const routerPropsMemoizedData = useCallback(() => {
-      return routerProps;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [routerProps]);
-
-    const stargazersMemoizedData = useCallback(() => {
-      return state;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.isLoggedIn, state.isLoading, state.tokenGQL]);
-
     const stargazersMemoizedGithubData = useCallback(() => {
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,24 +61,22 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
     const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
     const handleDetailsClicked = (e: React.MouseEvent) => {
       e.preventDefault();
-      if (state.isLoggedIn) {
-        clickedAdded({
-          variables: {
-            clickedInfo: [
-              Object.assign(
-                {},
-                {
-                  full_name: githubData.full_name,
-                  owner: {
-                    login: githubData.owner.login,
-                  },
-                  is_queried: false,
-                }
-              ),
-            ],
-          },
-        }).then(noop);
-      }
+      clickedAdded({
+        variables: {
+          clickedInfo: [
+            Object.assign(
+              {},
+              {
+                full_name: githubData.full_name,
+                owner: {
+                  login: githubData.owner.login,
+                },
+                is_queried: false,
+              }
+            ),
+          ],
+        },
+      }).then(noop);
     };
     const isVisibleRef = useRef(false);
     if (!githubData) return <p>No githubData, sorry</p>;
@@ -102,12 +93,13 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               })}
               style={!isVisibleRef.current ? { contentVisibility: 'auto' } : {}}
             >
-              <UserCard
+              <UserCardDiscover
                 data={userCardMemoizedData()}
-                dispatch={dispatch}
                 sorted={sorted}
-                dispatchStargazers={dispatchStargazersUser}
-                routerProps={routerPropsMemoizedData()}
+                routerProps={routerProps}
+                dispatchDiscover={dispatchDiscover}
+                dispatchShared={dispatchShared}
+                dispatchStargazers={dispatchStargazers}
               />
               <h3 style={{ textAlign: 'center' }}>
                 <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
@@ -120,15 +112,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               <div className="trunctuatedTexts">
                 <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
               </div>
-              <Stargazers
-                data={stargazersMemoizedGithubData()}
-                state={stargazersMemoizedData()}
-                stateStargazers={stateStargazersMemoize}
-                dispatch={dispatch}
-                dispatchStargazersUser={dispatchStargazersUser}
-                githubDataFullName={githubData.full_name}
-                githubDataId={githubData.id}
-              />
+              <StargazersDiscover data={stargazersMemoizedGithubData()} githubDataId={githubData.id} />
               <div className={'language-github-color'}>
                 <ul
                   className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}

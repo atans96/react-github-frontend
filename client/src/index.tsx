@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useReducer, useRef } from 'reac
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { initialState, initialStateStargazers, reducer, reducerStargazers } from './store/reducer';
+import { initialState, reducer } from './store/reducer';
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
@@ -16,6 +16,10 @@ import { logoutAction } from './util/util';
 import { useHistory } from 'react-router';
 import { getValidGQLProperties } from './services';
 import { StarRankingContainer, SuggestedRepoContainer, SuggestedRepoImagesContainer } from './selectors/stateSelector';
+import { initialStateDiscover, reducerDiscover } from './store/Discover/reducer';
+import { initialStateManageProfile, reducerManageProfile } from './store/ManageProfile/reducer';
+import { initialStateShared, reducerShared } from './store/Shared/reducer';
+import { initialStateStargazers, reducerStargazers } from './store/Staargazers/reducer';
 const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
   const ApolloContext = getApolloContext();
   const value = useMemo(
@@ -27,14 +31,18 @@ const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
 };
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
 export const Main = () => {
+  const [stateShared, dispatchShared] = useReducer(reducerShared, initialStateShared);
   const [state, dispatch] = useReducer(reducer, initialState);
-  const history = useHistory();
   const [stateStargazers, dispatchStargazers] = useReducer(reducerStargazers, initialStateStargazers);
+  const [stateDiscover, dispatchDiscover] = useReducer(reducerDiscover, initialStateDiscover);
+  const [stateManageProfile, dispatchManageProfile] = useReducer(reducerManageProfile, initialStateManageProfile);
+
+  const history = useHistory();
   // Create First Link for querying data to external Github GQL API
   const githubGateway = new HttpLink({
     uri: 'https://api.github.com/graphql',
     headers: {
-      Authorization: `Bearer ${state.tokenGQL}`,
+      Authorization: `Bearer ${stateShared.tokenGQL}`,
     },
   });
   // Create Second Link for appending data to MongoDB using GQL
@@ -77,9 +85,9 @@ export const Main = () => {
       },
     },
   });
-  const isLoggedInRef = useRef(state.isLoggedIn);
+  const isLoggedInRef = useRef(stateShared.isLoggedIn);
   useEffect(() => {
-    isLoggedInRef.current = state.isLoggedIn;
+    isLoggedInRef.current = stateShared.isLoggedIn;
   });
   const link = ApolloLink.from([
     onError(({ graphQLErrors, networkError }) => {
@@ -99,7 +107,7 @@ export const Main = () => {
           if (property && property.length > 0 && validGQLProperties.data.includes(property) && isLoggedInRef.current) {
             // if no data exist when the user logged-in
             if (path) {
-              dispatch({
+              dispatchShared({
                 type: 'NO_DATA_FETCH',
                 payload: {
                   path: path[0],
@@ -107,7 +115,7 @@ export const Main = () => {
               });
             }
           } else if (message.includes('Unauthorized')) {
-            logoutAction(history, dispatch, dispatchStargazers);
+            logoutAction(history, dispatchShared, dispatchStargazers);
           }
         });
       }
@@ -115,7 +123,7 @@ export const Main = () => {
         console.log('Network Error: ', networkError);
         if ('result' in networkError && networkError.result.message === 'TokenExpiredError') {
           localStorage.removeItem('sess');
-          logoutAction(history, dispatch, dispatchStargazers);
+          logoutAction(history, dispatchShared, dispatchStargazers);
           window.alert('Your token has expired. We will logout you out.');
         }
       }
@@ -152,20 +160,14 @@ export const Main = () => {
   }, [localStorage.getItem('sess')]);
 
   const tokenGQLMemo = useCallback(() => {
-    return state.tokenGQL;
-  }, [state.tokenGQL]);
+    return stateShared.tokenGQL;
+  }, [stateShared.tokenGQL]);
   return (
     <CustomApolloProvider client={client} tokenGQL={tokenGQLMemo()} session={session()}>
       <SuggestedRepoImagesContainer.Provider>
         <SuggestedRepoContainer.Provider>
           <StarRankingContainer.Provider>
             <Router>
-              {/*<AuthedHandler*/}
-              {/*  component={RateLimit}*/}
-              {/*  path="/profile"*/}
-              {/*  authenticator={state.width > 830}*/}
-              {/*  componentProps={{ state, dispatch }}*/}
-              {/*/>*/}
               <AuthedHandler
                 component={NavBar}
                 authenticator={true}
@@ -177,43 +179,91 @@ export const Main = () => {
                   path="/"
                   component={Global}
                   authenticator={true}
-                  componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+                  componentProps={{
+                    state,
+                    stateShared,
+                    stateManageProfile,
+                    stateDiscover,
+                    stateStargazers,
+                    dispatch,
+                    dispatchStargazers,
+                    dispatchDiscover,
+                    dispatchManageProfile,
+                    dispatchShared,
+                  }}
                 />
                 <AuthedHandler
                   exact
                   path="/login"
                   component={Global}
-                  authenticator={state.isLoggedIn === false}
-                  componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+                  authenticator={stateShared.isLoggedIn === false}
+                  componentProps={{
+                    state,
+                    stateShared,
+                    stateManageProfile,
+                    stateDiscover,
+                    stateStargazers,
+                    dispatch,
+                    dispatchStargazers,
+                    dispatchDiscover,
+                    dispatchManageProfile,
+                    dispatchShared,
+                  }}
                 />
                 <AuthedHandler
                   exact
                   path="/discover"
                   component={Global}
-                  authenticator={state.isLoggedIn === true}
-                  componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
-                />
-                <AuthedHandler
-                  exact
-                  path="/trending"
-                  component={Global}
-                  authenticator={state.isLoggedIn === true}
-                  componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+                  authenticator={stateShared.isLoggedIn === true}
+                  componentProps={{
+                    state,
+                    stateShared,
+                    stateManageProfile,
+                    stateDiscover,
+                    stateStargazers,
+                    dispatch,
+                    dispatchStargazers,
+                    dispatchDiscover,
+                    dispatchManageProfile,
+                    dispatchShared,
+                  }}
                 />
                 <AuthedHandler
                   exact
                   path="/profile"
                   component={Global}
-                  authenticator={state.isLoggedIn === true}
-                  componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+                  authenticator={stateShared.isLoggedIn === true}
+                  componentProps={{
+                    state,
+                    stateShared,
+                    stateManageProfile,
+                    stateDiscover,
+                    stateStargazers,
+                    dispatch,
+                    dispatchStargazers,
+                    dispatchDiscover,
+                    dispatchManageProfile,
+                    dispatchShared,
+                  }}
                 />
                 <AuthedHandler
                   exact
                   path="/detail/:id"
                   redirect="/login"
                   component={Global}
-                  authenticator={state.isLoggedIn === true}
-                  componentProps={{ state, stateStargazers, dispatch, dispatchStargazers }}
+                  authenticator={stateShared.isLoggedIn === true}
+                  componentProps={{
+                    state,
+                    stateShared,
+                    stateManageProfile,
+                    stateDiscover,
+                    stateStargazers,
+                    dispatch,
+                    dispatchStargazers,
+                    dispatchDiscover,
+                    dispatchManageProfile,
+                    dispatchShared,
+                  }}
                 />
                 <Route render={() => <h1>404</h1>} />
               </Switch>

@@ -6,22 +6,29 @@ import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import _ from 'lodash';
 import { fastFilter } from '../util';
-import { IState } from '../typing/interface';
+import { IAction, IStateManageProfile, IStateShared } from '../typing/interface';
 import Details from './ColumnTwoBody/Details';
 import RepoInfo from './ColumnTwoBody/RepoInfo';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
-import { ColumnWidthProps } from '../ManageProfile';
+import { ActionManageProfile } from '../store/ManageProfile/reducer';
+import { ActionShared } from '../store/Shared/reducer';
 
 interface ColumnTwoProps {
   languageFilter: string[];
-  state: IState;
-  dispatch: any;
-  stateReducer: Map<string, ColumnWidthProps>;
-  dispatchReducer: any;
+  stateManageProfile: IStateManageProfile;
+  stateShared: IStateShared;
+  dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
-const ColumnTwo: React.FC<ColumnTwoProps> = ({ state, languageFilter, dispatch, stateReducer, dispatchReducer }) => {
+const ColumnTwo: React.FC<ColumnTwoProps> = ({
+  stateShared,
+  languageFilter,
+  dispatchManageProfile,
+  stateManageProfile,
+  dispatchShared,
+}) => {
   const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
   const displayName: string | undefined = (ColumnTwo as React.ComponentType<any>).displayName;
   const [typedFilter, setTypedFilter] = useState('');
@@ -67,7 +74,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ state, languageFilter, dispatch, 
       } else if (languageFilter.length === 0) {
         return obj;
       }
-    }, state.repoInfo);
+    }, stateManageProfile.repoInfo);
     const filter2 = fastFilter((obj: any) => {
       if (
         (typedFilter.length > 0 &&
@@ -85,21 +92,21 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ state, languageFilter, dispatch, 
     }, filter1);
     return fastFilter((obj: any) => !!obj, filter2);
   };
-  const defaultWidth = useRef(stateReducer?.get(displayName!)?.width || 0);
+  const defaultWidth = useRef(stateManageProfile.columnWidth?.get(displayName!)?.width || 0);
   const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
     drawerWidthClient: defaultWidth.current,
   });
   useEffect(() => {
-    if (stateReducer) {
+    if (stateManageProfile.columnWidth) {
       let total = 0;
-      stateReducer.forEach((obj) => (total += obj.width));
-      const res = stateReducer.set(
+      stateManageProfile.columnWidth.forEach((obj) => (total += obj.width));
+      const res = stateManageProfile.columnWidth.set(
         displayName!,
         Object.assign({}, { name: displayName!, width: drawerWidth, draggerPosition: total })
       );
-      dispatchReducer({ type: 'modify', payload: { columnWidth: res } });
+      dispatchManageProfile({ type: 'MODIFY', payload: { columnWidth: res } });
     }
-  }, [stateReducer.get('ColumnOne'), drawerWidth]);
+  }, [stateManageProfile.columnWidth.get('ColumnOne'), drawerWidth]);
   return (
     <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
       <table>
@@ -132,22 +139,22 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ state, languageFilter, dispatch, 
                   return (
                     <RepoInfo
                       active={active}
-                      state={state}
+                      state={stateManageProfile}
                       obj={obj}
                       key={idx}
                       onClickRepoInfo={onClickRepoInfo}
-                      dispatch={dispatch}
+                      dispatchShared={dispatchShared}
                     />
                   );
                 })}
               </div>
             </td>
             <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
-              <If condition={fullName !== '' && state.width > 850}>
+              <If condition={fullName !== '' && stateShared.width > 850}>
                 <Then>
                   <Details
                     fullName={fullName}
-                    width={state.width}
+                    width={stateShared.width}
                     branch={branch}
                     html_url={htmlUrl}
                     handleHeightChange={handleHeightChange}
@@ -164,7 +171,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ state, languageFilter, dispatch, 
             className={'dragger'}
             style={{
               top: '40%',
-              left: `${stateReducer?.get(displayName!)?.draggerPosition || 0}px`,
+              left: `${stateManageProfile.columnWidth?.get(displayName!)?.draggerPosition || 0}px`,
             }}
           />
         </div>

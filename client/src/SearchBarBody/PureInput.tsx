@@ -1,21 +1,22 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { dispatchLoading, dispatchSearchUsers, dispatchVisible } from '../store/dispatcher';
 import { getSearchUsers } from '../services';
 import _ from 'lodash';
-import { IState, IStateStargazers } from '../typing/interface';
+import { IAction, IState, IStateStargazers } from '../typing/interface';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import { Result } from './PureInputBody/Result';
 import { StargazerProps } from '../typing/type';
 import { useApolloFactory } from '../hooks/useApolloFactory';
+import { ActionStargazers } from '../store/Staargazers/reducer';
+import { Action } from '../store/reducer';
 
 interface SearchBarProps {
   setVisible: any;
   stateStargazers: IStateStargazers;
   style: React.CSSProperties;
-  dispatch: any;
+  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
+  dispatch: React.Dispatch<IAction<Action>>;
   ref: any;
-  dispatchStargazersUser: any;
   handleChange: any;
   visibleSearchesHistory: any;
   setVisibleSearchesHistory: any;
@@ -46,17 +47,37 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       _.debounce(function (username) {
         if (username.toString().trim().length > 0) {
           setVisible(true); // show the autocomplete
-          dispatchVisible(true, dispatch); // need this to set zIndex for Masonry Layout at Home.js
+          dispatch({
+            type: 'VISIBLE',
+            payload: {
+              visible: true,
+            },
+          }); // need this to set zIndex for Masonry Layout at Home.js
 
           // as you won't get to see the loading spinner when you first enter query to do autocomplete
           // since you need to wait API response to come before setting dispatchSearchUsers(data.users, true, dispatch); below
-          dispatchLoading(true, dispatch);
+          dispatch({
+            type: 'LOADING',
+            payload: {
+              isLoading: true,
+            },
+          });
           getSearchUsers(
             username.toString().trim(),
             userData && userData.getUserData ? userData.getUserData.token : ''
           ).then((data) => {
-            dispatchSearchUsers(data.users, dispatch);
-            dispatchLoading(false, dispatch);
+            dispatch({
+              type: 'SEARCH_USERS',
+              payload: {
+                data: data.users,
+              },
+            });
+            dispatch({
+              type: 'LOADING',
+              payload: {
+                isLoading: false,
+              },
+            });
           });
         }
       }, 1500),
@@ -87,7 +108,12 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         setVisibleSearchesHistory(true);
       }
       if (!state.visible) {
-        dispatchVisible(true, dispatch);
+        dispatch({
+          type: 'VISIBLE',
+          payload: {
+            visible: true,
+          },
+        });
       }
       handler(e.currentTarget.value);
     };
@@ -159,7 +185,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       <div className={'input-bar-container-control-searchbar'} style={style}>
         <If condition={stateStargazers.stargazersQueueData.length > 0}>
           <Then>
-            {stateStargazers.stargazersQueueData.map((obj, idx) => {
+            {stateStargazers.stargazersQueueData.map((obj: StargazerProps, idx) => {
               return (
                 <Result
                   stateStargazers={stateStargazers}

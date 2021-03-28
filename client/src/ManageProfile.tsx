@@ -1,45 +1,25 @@
-import React, { useCallback, useReducer, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { fastFilter } from './util';
 import ColumnOne from './ManageProfileBody/ColumnOne';
-import { IAction, IState } from './typing/interface';
+import { IAction, IStateManageProfile, IStateShared } from './typing/interface';
 import { useResizeHandler } from './hooks/hooks';
 import ColumnTwo from './ManageProfileBody/ColumnTwo';
+import { ActionShared } from './store/Shared/reducer';
+import { ActionManageProfile } from './store/ManageProfile/reducer';
 
 interface ManageProfileProps {
-  state: IState;
-  dispatch: any;
+  stateShared: IStateShared;
+  stateManageProfile: IStateManageProfile;
+  dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
-export interface State {
-  columnWidth: Map<string, any>;
-}
-const ColumnWidth = new Map(
-  [
-    { name: 'ColumnOne', width: 250, draggerPosition: 250 },
-    { name: 'ColumnTwo', width: 350, draggerPosition: 350 },
-  ].map((obj: ColumnWidthProps) => [obj.name, obj])
-);
 
-const initialState: State = {
-  columnWidth: ColumnWidth,
-};
-export interface ColumnWidthProps {
-  name: string;
-  width: number;
-  draggerPosition: number;
-}
-type ManageProfileAction = 'modify';
-
-const reducer = (state = initialState, action: IAction<ManageProfileAction>) => {
-  switch (action.type) {
-    case 'modify': {
-      return {
-        ...state,
-        columnWidth: action.payload.columnWidth,
-      };
-    }
-  }
-};
-const ManageProfile: React.FC<ManageProfileProps> = ({ state, dispatch }) => {
+const ManageProfile: React.FC<ManageProfileProps> = ({
+  stateShared,
+  dispatchManageProfile,
+  stateManageProfile,
+  dispatchShared,
+}) => {
   const [languageFilter, setLanguageFilter] = useState<string[]>([]);
   const handleLanguageFilter = useCallback((language) => {
     if (language) {
@@ -54,16 +34,21 @@ const ManageProfile: React.FC<ManageProfileProps> = ({ state, dispatch }) => {
   }, []);
 
   const columnOneDataMemoize = useCallback(() => {
-    return state;
-  }, [state.isLoggedIn, state.fetchDataPath]);
+    return stateShared;
+  }, [stateShared.fetchDataPath]);
 
-  const columnTwoDataMemoize = useCallback(() => {
-    return state;
-  }, [state.repoInfo, state.contributors]);
+  const stateManageProfileMemo = useCallback(() => {
+    return stateManageProfile;
+  }, [stateManageProfile.repoInfo, stateManageProfile.contributors, stateManageProfile.columnWidth]);
+
+  const stateSharedMemo = useCallback(() => {
+    return stateShared;
+  }, [stateShared.width]);
 
   const manageProfileRef = useRef<HTMLDivElement>(null);
+
   function handleResize() {
-    dispatch({
+    dispatchShared({
       type: 'SET_WIDTH',
       payload: {
         width: window.innerWidth,
@@ -72,22 +57,21 @@ const ManageProfile: React.FC<ManageProfileProps> = ({ state, dispatch }) => {
   }
 
   useResizeHandler(manageProfileRef, handleResize);
-  const [stateReducer, dispatchReducer] = useReducer(reducer, initialState);
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <ColumnOne
         handleLanguageFilter={handleLanguageFilter}
         state={columnOneDataMemoize()}
-        dispatch={dispatch}
-        stateReducer={stateReducer.columnWidth}
-        dispatchReducer={dispatchReducer}
+        dispatchManageProfile={dispatchManageProfile}
+        dispatchShared={dispatchShared}
+        stateReducer={stateManageProfile.columnWidth}
       />
       <ColumnTwo
         languageFilter={languageFilter}
-        dispatch={dispatch}
-        stateReducer={stateReducer.columnWidth}
-        dispatchReducer={dispatchReducer}
-        state={columnTwoDataMemoize()}
+        dispatchManageProfile={dispatchManageProfile}
+        dispatchShared={dispatchShared}
+        stateManageProfile={stateManageProfileMemo()}
+        stateShared={stateSharedMemo()}
       />
     </div>
   );

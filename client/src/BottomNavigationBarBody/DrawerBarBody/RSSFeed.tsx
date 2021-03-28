@@ -12,14 +12,15 @@ import {
 } from '@material-ui/core';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { addRSSFeed } from '../../util/util';
+import { addRSSFeed, noop } from '../../util/util';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
-import { IState } from '../../typing/interface';
+import { IAction, IStateShared } from '../../typing/interface';
 import { fastFilter, isEqualObjects, uniqFast } from '../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
+import { ActionShared } from '../../store/Shared/reducer';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -40,12 +41,12 @@ const useStyles = makeStyles<Theme>(() => ({
 }));
 
 interface RSSFeedProps {
-  state: IState;
-  dispatch: any;
+  stateShared: IStateShared;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 const RSSFeed: React.FC<RSSFeedProps> = React.memo(
-  ({ state, dispatch }) => {
+  ({ stateShared, dispatchShared }) => {
     const classes = useStyles();
     const displayName: string | undefined = (RSSFeed as React.ComponentType<any>).displayName;
     const tokenRSSAdded = useApolloFactory(displayName!).mutation.tokenRSSAdded;
@@ -113,15 +114,15 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                 });
                 HTML.push(a);
               });
-              if (state.tokenRSS === '') {
+              if (stateShared.tokenRSS === '') {
                 setLoading(false);
                 setToken('');
                 tokenRSSAdded({
                   variables: {
                     tokenRSS: token,
                   },
-                }).then(() => {});
-                dispatch({
+                }).then(noop);
+                dispatchShared({
                   type: 'TOKEN_RSS_ADDED',
                   payload: {
                     tokenRSS: token,
@@ -133,7 +134,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                     rss: HTML,
                     rssLastSeen: HTML,
                   },
-                }).then(() => {});
+                }).then(noop);
               }
               if (!openRSS) {
                 unseenFeeds.current = [];
@@ -159,7 +160,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                     resolve({ status: 400 });
                   });
               } else {
-                if (state.tokenRSS !== '') {
+                if (stateShared.tokenRSS !== '') {
                   const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
                   rssFeedAdded({
                     variables: {
@@ -230,8 +231,8 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
       event.preventDefault();
       event.stopPropagation();
-      if (state.tokenRSS !== '' || token !== '') {
-        const tokenAdd = state.tokenRSS !== '' ? state.tokenRSS : token;
+      if (stateShared.tokenRSS !== '' || token !== '') {
+        const tokenAdd = stateShared.tokenRSS !== '' ? stateShared.tokenRSS : token;
         if (token !== '') {
           setLoading(true);
         }
@@ -239,8 +240,8 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
       }
     };
     useEffect(() => {
-      if (state.tokenRSS !== '' || token !== '') {
-        const tokenAdd = state.tokenRSS !== '' ? state.tokenRSS : token;
+      if (stateShared.tokenRSS !== '' || token !== '') {
+        const tokenAdd = stateShared.tokenRSS !== '' ? stateShared.tokenRSS : token;
         if (token !== '') {
           setLoading(true);
         }
@@ -250,7 +251,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
         updaterWrapper(tokenAdd, re);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.tokenRSS, token, openRSS]);
+    }, [stateShared.tokenRSS, token, openRSS]);
     return (
       <List>
         <ListItem button key={'RSS Feed'} onClick={handleOpenRSS}>
@@ -263,7 +264,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
           {openRSS ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
         <Collapse in={openRSS} timeout="auto" unmountOnExit>
-          <If condition={state.tokenRSS === ''}>
+          <If condition={stateShared.tokenRSS === ''}>
             <Then>
               <If condition={loading}>
                 <Then>
@@ -272,7 +273,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                   </div>
                 </Then>
               </If>
-              <If condition={!loading && state.isLoggedIn}>
+              <If condition={!loading && stateShared.isLoggedIn}>
                 <Then>
                   <form action="#" method="get" className="input-group" style={{ padding: '1em' }}>
                     <div style={{ display: 'flex' }}>
@@ -306,7 +307,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
                   </div>
                 </Then>
               </If>
-              <If condition={!loading && !state.isLoggedIn}>
+              <If condition={!loading && !stateShared.isLoggedIn}>
                 <Then>
                   <div style={{ textAlign: 'center' }}>
                     <span>{notification !== '' ? notification : `Please Login to access this feature`}</span>
@@ -322,7 +323,7 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
               </If>
             </Then>
           </If>
-          <If condition={state.tokenRSS !== ''}>
+          <If condition={stateShared.tokenRSS !== ''}>
             <Then>
               <If condition={rssFeed.length === 0 && openRSS}>
                 <Then>
@@ -385,8 +386,8 @@ const RSSFeed: React.FC<RSSFeedProps> = React.memo(
   },
   (prevProps: any, nextProps: any) => {
     return (
-      isEqualObjects(prevProps.state.tokenRSS, nextProps.state.tokenRSS) &&
-      isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn)
+      isEqualObjects(prevProps.stateShared.tokenRSS, nextProps.stateShared.tokenRSS) &&
+      isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn)
     );
   }
 );

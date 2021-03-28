@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import MasonryLayout from './Layout/MasonryLayout';
-import { dispatchLastPageDiscover, dispatchPageDiscover } from './store/dispatcher';
 import { useResizeHandler } from './hooks/hooks';
-import { IDataOne, IState, IStateStargazers, StaticState } from './typing/interface';
-import { Action, MergedDataProps, Nullable, RenderImages, SeenProps } from './typing/type';
+import { IAction, IDataOne, IStateDiscover, IStateShared, StaticState } from './typing/interface';
+import { MergedDataProps, Nullable, RenderImages, SeenProps } from './typing/type';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
@@ -17,21 +16,26 @@ import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
+import { ActionDiscover } from './store/Discover/reducer';
+import { ActionShared } from './store/Shared/reducer';
+import { ActionStargazers } from './store/Staargazers/reducer';
+import { ActionResolvedPromise } from './Global';
 
 interface MasonryLayoutMemo {
   children: any;
-  data: IState['mergedData'];
-  state: IState;
+  data: IStateDiscover['mergedDataDiscover'];
+  stateDiscover: IStateDiscover;
+  stateShared: IStateShared;
   sorted: string;
 }
 
 const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
-  ({ children, data, state }) => {
+  ({ children, data, stateDiscover, stateShared }) => {
     let columnCount = 1;
     let increment = 300;
     const baseWidth = 760;
-    if (state.width > 760) {
-      while (baseWidth + increment <= state.width) {
+    if (stateShared.width > 760) {
+      while (baseWidth + increment <= stateShared.width) {
         columnCount += 1;
         increment += 300;
       }
@@ -41,9 +45,9 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.data.length, nextProps.data.length) &&
-      isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL) &&
-      isEqualObjects(prevProps.state.imagesDataDiscover, nextProps.state.imagesDataDiscover) &&
-      isEqualObjects(prevProps.state.width, nextProps.state.width) &&
+      isEqualObjects(prevProps.stateDiscover.imagesDataDiscover, nextProps.stateDiscover.imagesDataDiscover) &&
+      isEqualObjects(prevProps.stateDiscover.widthDiscover, nextProps.stateDiscover.widthDiscover) &&
+      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width) &&
       isEqualObjects(prevProps.sorted, nextProps.sorted)
     ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
     // it needs to get re-render to get new data.
@@ -56,13 +60,14 @@ interface Output {
 }
 
 interface DiscoverProps {
-  state: IState;
-  stateStargazers: IStateStargazers;
-  dispatch: any;
-  dispatchStargazers: any;
+  stateDiscover: IStateDiscover;
+  stateShared: IStateShared;
+  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   actionResolvedPromise: (
-    action: Action,
+    action: ActionResolvedPromise,
     setLoading: any,
     setNotification: any,
     isFetchFinish: boolean,
@@ -71,9 +76,16 @@ interface DiscoverProps {
     error?: string
   ) => Output;
 }
-
 const Discover = React.memo<DiscoverProps>(
-  ({ state, stateStargazers, dispatch, dispatchStargazers, routerProps, actionResolvedPromise }) => {
+  ({
+    stateDiscover,
+    stateShared,
+    dispatchDiscover,
+    routerProps,
+    dispatchShared,
+    dispatchStargazers,
+    actionResolvedPromise,
+  }) => {
     const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
     const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
     const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
@@ -81,18 +93,18 @@ const Discover = React.memo<DiscoverProps>(
     );
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(false);
-    const paginationRef = useRef(state.perPage);
+    const paginationRef = useRef(stateShared.perPage);
     const sortedDataRef = useRef([]);
     const [notification, setNotification] = useState('');
     const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
     const windowScreenRef = useRef<HTMLDivElement>(null);
     const fetchUserMore = () => {
-      if (!isFetchFinish.current && state.pageDiscover > 1) {
+      if (!isFetchFinish.current && stateDiscover.pageDiscover > 1) {
         setLoading(true); // spawn loading spinner at bottom page
-        paginationRef.current += state.perPage;
-        if (sortedDataRef.current.slice(0, paginationRef.current + state.perPage).length === 0) {
+        paginationRef.current += stateShared.perPage;
+        if (sortedDataRef.current.slice(0, paginationRef.current + stateShared.perPage).length === 0) {
           isFetchFinish.current = actionResolvedPromise(
-            Action.noData,
+            ActionResolvedPromise.noData,
             setLoading,
             setNotification,
             isFetchFinish.current,
@@ -100,12 +112,12 @@ const Discover = React.memo<DiscoverProps>(
           ).isFetchFinish;
         } else {
           actionResolvedPromise(
-            Action.append,
+            ActionResolvedPromise.append,
             setLoading,
             setNotification,
             isFetchFinish.current,
             displayName!,
-            sortedDataRef.current.slice(0, paginationRef.current + state.perPage)
+            sortedDataRef.current.slice(0, paginationRef.current + stateShared.perPage)
           );
         }
       }
@@ -118,10 +130,15 @@ const Discover = React.memo<DiscoverProps>(
     const fetchUser = () => {
       isFetchFinish.current = false;
       setLoading(true);
-      dispatchLastPageDiscover(Math.ceil(suggestedData?.getSuggestedRepo?.repoInfo?.length / state.perPage), dispatch);
-      if (sortedDataRef.current.slice(0, state.perPage).length === 0) {
+      dispatchDiscover({
+        type: 'LAST_PAGE_DISCOVER',
+        payload: {
+          lastPageDiscover: Math.ceil(suggestedData?.getSuggestedRepo?.repoInfo?.length / stateShared.perPage),
+        },
+      });
+      if (sortedDataRef.current.slice(0, stateShared.perPage).length === 0) {
         isFetchFinish.current = actionResolvedPromise(
-          Action.noData,
+          ActionResolvedPromise.noData,
           setLoading,
           setNotification,
           isFetchFinish.current,
@@ -129,12 +146,12 @@ const Discover = React.memo<DiscoverProps>(
         ).isFetchFinish;
       } else {
         actionResolvedPromise(
-          Action.append,
+          ActionResolvedPromise.append,
           setLoading,
           setNotification,
           isFetchFinish.current,
           displayName!,
-          sortedDataRef.current.slice(0, state.perPage)
+          sortedDataRef.current.slice(0, stateShared.perPage)
         );
       }
     };
@@ -165,7 +182,7 @@ const Discover = React.memo<DiscoverProps>(
     const isLoadingRef = useRef<boolean>(true);
     const notificationRef = useRef<string>('');
     useEffect(() => {
-      mergedDataRef.current = state.mergedDataDiscover;
+      mergedDataRef.current = stateDiscover.mergedDataDiscover;
     });
     useEffect(() => {
       isLoadingRef.current = isLoading;
@@ -182,7 +199,7 @@ const Discover = React.memo<DiscoverProps>(
           window.location.pathname === '/discover' &&
           notificationRef.current === ''
         ) {
-          dispatchPageDiscover(dispatch);
+          dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
           const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
             const temp = Object.assign(
               {},
@@ -236,7 +253,7 @@ const Discover = React.memo<DiscoverProps>(
     );
 
     function handleResize() {
-      dispatch({
+      dispatchShared({
         type: 'SET_WIDTH',
         payload: {
           width: window.innerWidth,
@@ -254,41 +271,36 @@ const Discover = React.memo<DiscoverProps>(
     }, [suggestedDataLoading, suggestedDataError, sortedClicked]);
 
     useEffect(() => {
-      if (state.pageDiscover > 1 && notification === '') {
+      if (stateDiscover.pageDiscover > 1 && notification === '') {
         fetchUserMore();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.pageDiscover]);
+    }, [stateDiscover.pageDiscover]);
 
     const stateMemoize = useCallback(() => {
-      return state;
+      return stateDiscover;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state]);
+    }, [stateDiscover]);
 
     const stateBottomNavigationBarMemoize = useCallback(() => {
-      return state;
+      return stateDiscover;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.pageDiscover, state.lastPageDiscover]);
-
-    const stateStargazersMemoize = useCallback(() => {
-      return stateStargazers;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateStargazers]);
+    }, [stateDiscover.pageDiscover, stateDiscover.lastPageDiscover]);
 
     useEffect(() => {
-      setLoading(state.isLoadingDiscover);
-      setNotification(state.notificationDiscover);
-    }, [state.isLoadingDiscover, state.notificationDiscover]);
+      setLoading(stateDiscover.isLoadingDiscover);
+      setNotification(stateDiscover.notificationDiscover);
+    }, [stateDiscover.isLoadingDiscover, stateDiscover.notificationDiscover]);
 
     const whichToUse = () => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
       // is not part of the dependencies for the callback.
-      if (state.filterMergedDataDiscover.length > 0) {
+      if (stateDiscover.filterMergedDataDiscover.length > 0) {
         isFetchFinish.current = true;
-        return state.filterMergedDataDiscover;
+        return stateDiscover.filterMergedDataDiscover;
       }
       isFetchFinish.current = false;
-      return state.mergedDataDiscover; // return this if filteredTopics.length === 0
+      return stateDiscover.mergedDataDiscover; // return this if filteredTopics.length === 0
     };
 
     return (
@@ -301,7 +313,7 @@ const Discover = React.memo<DiscoverProps>(
           className={clsx('', {
             header: whichToUse()?.length > 0,
           })}
-          style={{ marginLeft: `${state.drawerWidth + 5}px`, zIndex: state.visible ? -1 : 0 }}
+          style={{ marginLeft: `${stateShared.drawerWidth + 5}px`, zIndex: stateDiscover.visibleDiscover ? -1 : 0 }}
         >
           <header className={'header-discover'}>
             <nav>
@@ -341,7 +353,12 @@ const Discover = React.memo<DiscoverProps>(
           </header>
           <If condition={notification === '' && whichToUse()?.length > 0}>
             <Then>
-              <MasonryLayoutMemo data={whichToUse()} state={state} sorted={sortedClicked}>
+              <MasonryLayoutMemo
+                data={whichToUse()}
+                stateDiscover={stateDiscover}
+                sorted={sortedClicked}
+                stateShared={stateShared}
+              >
                 {(columnCount: number) => {
                   return Object.keys(whichToUse()).map((key, idx) => (
                     <CardDiscover
@@ -352,10 +369,10 @@ const Discover = React.memo<DiscoverProps>(
                       routerProps={routerProps}
                       index={whichToUse()[idx].id}
                       githubData={whichToUse()[idx]}
-                      state={stateMemoize()}
-                      dispatchStargazersUser={dispatchStargazers}
-                      stateStargazersMemoize={stateStargazersMemoize()}
-                      dispatch={dispatch}
+                      stateDiscover={stateMemoize()}
+                      dispatchShared={dispatchShared}
+                      dispatchStargazers={dispatchStargazers}
+                      dispatchDiscover={dispatchDiscover}
                     />
                   ));
                 }}
@@ -386,9 +403,9 @@ const Discover = React.memo<DiscoverProps>(
             </Then>
           </If>
         </div>
-        <If condition={state.width > 1100}>
+        <If condition={stateShared.width > 1100}>
           <Then>
-            <BottomNavigationBarDiscover state={stateBottomNavigationBarMemoize()} />
+            <BottomNavigationBarDiscover stateDiscover={stateBottomNavigationBarMemoize()} />
           </Then>
         </If>
       </React.Fragment>
@@ -397,8 +414,10 @@ const Discover = React.memo<DiscoverProps>(
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.path, nextProps.path) &&
-      isEqualObjects(prevProps.state, nextProps.state) &&
-      isEqualObjects(prevProps.stateStargazers, nextProps.stateStargazers)
+      isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
+      isEqualObjects(prevProps.stateShared.drawerWidth, nextProps.stateShared.drawerWidth) &&
+      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width) &&
+      isEqualObjects(prevProps.stateDiscover, nextProps.stateDiscover)
     );
   }
 );

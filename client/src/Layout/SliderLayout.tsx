@@ -20,8 +20,7 @@ const useStyles = makeStyles<Theme, StyleProps>({
 
 interface InputSlider {
   type: string;
-  dispatch: React.Dispatch<any>;
-  dispatcher: (xx: any, x: React.Dispatch<any>) => void;
+  dispatch: (args: any) => void;
   defaultValue: number;
   icon?: any;
   maxSliderRange?: number;
@@ -36,7 +35,6 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
     {
       type,
       dispatch,
-      dispatcher,
       defaultValue,
       icon,
       maxSliderRange = 100,
@@ -73,7 +71,7 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
               value={value}
               margin="dense"
               onChange={handleInputChange}
-              onBlur={() => dispatcher(value, dispatch)}
+              onBlur={() => dispatch(value)}
               inputProps={{
                 step: 1,
                 min: { minSliderRange },
@@ -107,7 +105,7 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
               max={maxSliderRange}
               value={value}
               onChange={handleSliderChange}
-              onMouseUp={() => dispatcher(value, dispatch)}
+              onMouseUp={() => dispatch(value)}
               aria-labelledby="input-slider"
             />
           </Grid>

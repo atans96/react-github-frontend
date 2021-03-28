@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { dispatchLoading, dispatchPerPage, dispatchUsername, dispatchVisible } from '../store/dispatcher';
 import Results from './PureSearchBarBody/Results';
 import Tooltip from '@material-ui/core/Tooltip';
 import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
@@ -15,13 +14,16 @@ import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import useCollapse from '../hooks/useCollapse';
 import clsx from 'clsx';
-import { IState, IStateStargazers } from '../typing/interface';
+import { IAction, IState, IStateShared, IStateStargazers } from '../typing/interface';
 import Result from './PureSearchBarBody/ResultsBody/Result';
 import { Typography } from '@material-ui/core';
 import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
 import HistoryIcon from '@material-ui/icons/History';
 import { fastFilter, Loading } from '../util';
 import { useApolloFactory } from '../hooks/useApolloFactory';
+import { ActionStargazers } from '../store/Staargazers/reducer';
+import { Action } from '../store/reducer';
+import { ActionShared } from '../store/Shared/reducer';
 
 const defaultTheme = createMuiTheme();
 const theme = createMuiTheme({
@@ -36,14 +38,14 @@ const theme = createMuiTheme({
 
 interface SearchBarProps {
   portalExpandable: any;
-  state: IState;
-  stateStargazers: IStateStargazers;
-  dispatch: any;
-  dispatchStargazersUser: any;
+  state: { state: IState; stateShared: IStateShared; stateStargazers: IStateStargazers };
+  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatch: React.Dispatch<IAction<Action>>;
 }
 
-const SearchBar = React.memo<SearchBarProps>(
-  ({ portalExpandable, dispatch, dispatchStargazersUser, state, stateStargazers }) => {
+const SearchBar: React.FC<SearchBarProps> = React.memo(
+  ({ portalExpandable, dispatch, dispatchShared, dispatchStargazers, state }) => {
     const displayName: string | undefined = (SearchBar as React.ComponentType<any>).displayName;
     const { searchesData } = useApolloFactory(displayName!).query.getSearchesData();
     const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
@@ -55,8 +57,8 @@ const SearchBar = React.memo<SearchBarProps>(
       maxWidth: '100%',
     };
     let style: React.CSSProperties;
-    if (state.width < 711) {
-      style = { width: `${state.width - 200}px` };
+    if (state.stateShared.width < 711) {
+      style = { width: `${state.stateShared.width - 200}px` };
     } else {
       style = {
         maxWidth: size.maxWidth,
@@ -84,7 +86,7 @@ const SearchBar = React.memo<SearchBarProps>(
       switch (type) {
         case 'search':
           return `Searching GITHUB username will return both the users' starred and watched repos.
-        We will fetch ${state.perPage} pages per scroll based on your setting.`;
+        We will fetch ${state.stateShared.perPage} pages per scroll based on your setting.`;
         case 'filterTags':
           return 'Filter data based on topics tags.';
         case 'filterSearchBar':
@@ -107,27 +109,40 @@ const SearchBar = React.memo<SearchBarProps>(
     const handleSubmit = (event: React.FormEvent): void => {
       event.preventDefault();
       event.stopPropagation();
-      const usernameList = stateStargazers.stargazersQueueData.reduce((acc: string[], stargazer: StargazerProps) => {
-        acc.push(stargazer.login);
-        return acc;
-      }, []);
+      const usernameList = state.stateStargazers.stargazersQueueData.reduce(
+        (acc: string[], stargazer: StargazerProps) => {
+          acc.push(stargazer.login);
+          return acc;
+        },
+        []
+      );
       if (username.current.getState() !== '') {
-        dispatchUsername([...usernameList, username.current.getState()], dispatch);
+        dispatchShared({
+          type: 'USERNAME_ADDED',
+          payload: {
+            username: [...usernameList, username.current.getState()],
+          },
+        });
       } else {
-        dispatchUsername(usernameList, dispatch);
+        dispatchShared({
+          type: 'USERNAME_ADDED',
+          payload: {
+            username: usernameList,
+          },
+        });
       }
       dispatch({
         type: 'REMOVE_ALL',
       });
-      dispatchStargazersUser({
+      dispatchStargazers({
         type: 'REMOVE_ALL',
       });
-      dispatchStargazersUser({
+      dispatchStargazers({
         type: 'REMOVE_QUEUE',
       });
       setVisible(false);
       setVisibleSearchesHistory(false);
-      if (state.isLoggedIn) {
+      if (state.stateShared.isLoggedIn) {
         searchesAdded({
           variables: {
             search: [
@@ -153,10 +168,10 @@ const SearchBar = React.memo<SearchBarProps>(
       dispatch({
         type: 'REMOVE_ALL',
       });
-      dispatchStargazersUser({
+      dispatchStargazers({
         type: 'REMOVE_ALL',
       });
-      dispatchStargazersUser({
+      dispatchStargazers({
         type: 'REMOVE_QUEUE',
       });
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -176,11 +191,18 @@ const SearchBar = React.memo<SearchBarProps>(
       dispatch({
         type: 'FILTER_CARDS_BY_SEEN',
         payload: {
-          filterBySeen: !state.filterBySeen,
+          filterBySeen: !state.state.filterBySeen,
         },
       });
     };
-
+    const dispatchPerPage = (perPage: string) => {
+      dispatchShared({
+        type: 'PER_PAGE',
+        payload: {
+          perPage: perPage,
+        },
+      });
+    };
     const spawnSlider = (portal: React.RefObject<Element>) => {
       if (portal.current === null) {
         return null;
@@ -191,9 +213,8 @@ const SearchBar = React.memo<SearchBarProps>(
               type={'perPage'}
               inputWidth={40}
               sliderWidth={480}
-              defaultValue={state.perPage}
-              dispatcher={dispatchPerPage}
-              dispatch={dispatch}
+              defaultValue={state.stateShared.perPage}
+              dispatch={dispatchPerPage}
               maxSliderRange={1000}
             />
           </div>,
@@ -208,9 +229,9 @@ const SearchBar = React.memo<SearchBarProps>(
       } else {
         return createPortal(
           <div className={'tags'} {...collapseTopicTags()}>
-            {state.topics.map((obj, idx) => {
+            {state.state.topics.map((obj, idx) => {
               if (renderTopicTags) {
-                return <Tags key={idx} obj={obj} clicked={obj.clicked} state={state} dispatch={dispatch} />;
+                return <Tags key={idx} obj={obj} clicked={obj.clicked} state={state.state} dispatch={dispatch} />;
               }
               return <></>;
             })}
@@ -225,7 +246,7 @@ const SearchBar = React.memo<SearchBarProps>(
     const { getRootProps } = useEventHandlerComposer({ onClickCb });
 
     useEffect(() => {
-      if (state.filteredTopics.length > 0) {
+      if (state.state.filteredTopics.length > 0) {
         dispatch({
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
@@ -234,9 +255,9 @@ const SearchBar = React.memo<SearchBarProps>(
               if (x.language) {
                 topics.push(x.language.toLowerCase());
               }
-              return _.intersection(topics, state.filteredTopics).length > 0;
-              // return _.intersection(topics, state.filteredTopics).length === state.filteredTopics.length;
-            }, state.mergedData),
+              return _.intersection(topics, state.state.filteredTopics).length > 0;
+              // return _.intersection(topics, state.state.filteredTopics).length === state.state.filteredTopics.length;
+            }, state.state.mergedData),
           },
         });
       } else {
@@ -248,17 +269,17 @@ const SearchBar = React.memo<SearchBarProps>(
         });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.filteredTopics, state.mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
+    }, [state.state.filteredTopics, state.state.mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
     // being executed at Home.js, thus causing mergedData to change. Now if filteredTopics.length > 0, that means we only display new
     // cards that have been fetched that only match with filteredTopics.
 
     const whichToUse = useCallback(() => {
-      if (state.filteredMergedData.length > 0) {
-        return state.filteredMergedData;
+      if (state.state.filteredMergedData.length > 0) {
+        return state.state.filteredMergedData;
       }
-      return state.mergedData;
+      return state.state.mergedData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.mergedData, state.filteredMergedData]);
+    }, [state.state.mergedData, state.state.filteredMergedData]);
 
     const handleChange = useCallback((value: string) => {
       setValue(value);
@@ -275,7 +296,7 @@ const SearchBar = React.memo<SearchBarProps>(
         }
         const languageAndTopics = _.uniq(topics);
         languageAndTopics.forEach((topic: string) => {
-          const index = state.topics.findIndex((x) => x.topic === topic);
+          const index = state.state.topics.findIndex((x) => x.topic === topic);
           if (!result.find((obj) => obj.topic === topic)) {
             result.push(
               Object.assign(
@@ -283,7 +304,7 @@ const SearchBar = React.memo<SearchBarProps>(
                 {
                   topic: topic,
                   count: 1,
-                  clicked: index > -1 ? state.topics[index].clicked : false,
+                  clicked: index > -1 ? state.state.topics[index].clicked : false,
                 }
               )
             );
@@ -300,19 +321,30 @@ const SearchBar = React.memo<SearchBarProps>(
         },
       });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.filteredMergedData]);
+    }, [state.state.filteredMergedData]);
 
     useEffect(() => {
       return () => {
-        dispatchVisible(false, dispatch);
-        dispatchLoading(false, dispatch);
+        dispatch({
+          type: 'VISIBLE',
+          payload: { visible: false },
+        });
+        dispatch({
+          type: 'LOADING',
+          payload: {
+            isLoading: false,
+          },
+        });
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     useClickOutside(resultsRef, () => {
       setVisible(false);
       setVisibleSearchesHistory(false);
-      dispatchVisible(false, dispatch);
+      dispatch({
+        type: 'VISIBLE',
+        payload: { visible: false },
+      });
     });
     const filter = (searchesHistory: SearchesData[] | undefined, valueRef: string) => {
       const result: any[] = [];
@@ -326,7 +358,7 @@ const SearchBar = React.memo<SearchBarProps>(
       return result;
     };
     return (
-      <SearchBarLayout style={{ width: `${state.width}px` }} onSubmit={handleSubmit}>
+      <SearchBarLayout style={{ width: `${state.stateShared.width}px` }} onSubmit={handleSubmit}>
         {(portal) => (
           <React.Fragment>
             {renderSlider && spawnSlider(portal)}
@@ -336,15 +368,15 @@ const SearchBar = React.memo<SearchBarProps>(
             to Home.tsx, we put it in new component */}
             <PureInput
               setVisible={setVisible}
-              stateStargazers={stateStargazers}
+              stateStargazers={state.stateStargazers}
               visibleSearchesHistory={visibleSearchesHistory}
               setVisibleSearchesHistory={setVisibleSearchesHistory}
               style={style}
-              state={state}
+              state={state.state}
               dispatch={dispatch}
               handleChange={handleChange}
               ref={username}
-              dispatchStargazersUser={dispatchStargazersUser}
+              dispatchStargazersUser={dispatchStargazers}
             />
 
             <If
@@ -369,12 +401,12 @@ const SearchBar = React.memo<SearchBarProps>(
                         );
                         return (
                           <Result
-                            state={state}
+                            state={state.stateShared}
                             getRootProps={getRootProps}
                             userName={search.search}
                             key={idx}
                             dispatch={dispatch}
-                            dispatchStargazer={dispatchStargazersUser}
+                            dispatchStargazer={dispatchStargazers}
                           >
                             <div className={classes.wrapper} style={{ borderBottom: 0 }}>
                               <HistoryIcon style={{ transform: 'scale(1.5)' }} />
@@ -387,14 +419,14 @@ const SearchBar = React.memo<SearchBarProps>(
                           </Result>
                         );
                       })}
-                    <If condition={state.isLoading}>
+                    <If condition={state.state.isLoading}>
                       <Then>
                         <li className={'clearfix'}>
                           <Loading />
                         </li>
                       </Then>
                     </If>
-                    <If condition={!state.isLoading}>
+                    <If condition={!state.state.isLoading}>
                       <Then>
                         {fastFilter((search: SearchesData) => {
                           const temp =
@@ -403,14 +435,14 @@ const SearchBar = React.memo<SearchBarProps>(
                               return acc;
                             }, []) || [];
                           return !temp.includes(Object.keys(search)[0]);
-                        }, state.searchUsers).map((result, idx) => (
+                        }, state.state.searchUsers).map((result, idx) => (
                           <Result
-                            state={state}
+                            state={state.stateShared}
                             getRootProps={getRootProps}
                             userName={Object.keys(result).toString()}
                             key={idx}
                             dispatch={dispatch}
-                            dispatchStargazer={dispatchStargazersUser}
+                            dispatchStargazer={dispatchStargazers}
                           >
                             <div className={classes.wrapper} style={{ borderBottom: 0 }}>
                               <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
@@ -433,13 +465,13 @@ const SearchBar = React.memo<SearchBarProps>(
               <Then>
                 <Results
                   ref={resultsRef}
-                  state={state}
+                  state={state.stateShared}
                   getRootProps={getRootProps}
-                  data={state.searchUsers}
-                  isLoading={state.isLoading}
+                  data={state.state.searchUsers}
+                  isLoading={state.state.isLoading}
                   style={style}
                   dispatch={dispatch}
-                  dispatchStargazer={dispatchStargazersUser}
+                  dispatchStargazer={dispatchStargazers}
                 />
               </Then>
             </If>
@@ -477,17 +509,17 @@ const SearchBar = React.memo<SearchBarProps>(
 
               <MuiThemeProvider theme={defaultTheme}>
                 <MuiThemeProvider theme={theme}>
-                  <Tooltip title={showTipsText(state.mergedData.length > 0 ? 'filterTags' : 'noData')}>
+                  <Tooltip title={showTipsText(state.state.mergedData.length > 0 ? 'filterTags' : 'noData')}>
                     <div
                       {...toogleTopicTags({
                         onClick: handleClickSearchTopicTags,
-                        disabled: state.mergedData.length > 0 ? false : true,
+                        disabled: state.state.mergedData.length > 0 ? false : true,
                       })}
                       className={clsx('btn', {
                         'btn-success': renderTopicTags,
                         'btn-default': !renderTopicTags,
                       })}
-                      style={state.mergedData.length > 0 ? { cursor: 'pointer' } : { cursor: 'not-allowed' }}
+                      style={state.state.mergedData.length > 0 ? { cursor: 'pointer' } : { cursor: 'not-allowed' }}
                     >
                       <span className="glyphicon glyphicon-tags" />
                     </div>
@@ -497,23 +529,27 @@ const SearchBar = React.memo<SearchBarProps>(
 
               <MuiThemeProvider theme={defaultTheme}>
                 <MuiThemeProvider theme={theme}>
-                  <If condition={state.isLoggedIn}>
+                  <If condition={state.stateShared.isLoggedIn}>
                     <Then>
-                      <Tooltip title={showTipsText(`${state.filterBySeen ? 'noFilterSeen' : 'filterSeen'}`)}>
+                      <Tooltip title={showTipsText(`${state.state.filterBySeen ? 'noFilterSeen' : 'filterSeen'}`)}>
                         <div onClick={handleClickFilterSeenCards} className="btn" style={{ cursor: 'pointer' }}>
                           <span
-                            className={`glyphicon ${state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`}
+                            className={`glyphicon ${
+                              state.state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'
+                            }`}
                           />
                         </div>
                       </Tooltip>
                     </Then>
                   </If>
-                  <If condition={!state.isLoggedIn}>
+                  <If condition={!state.stateShared.isLoggedIn}>
                     <Then>
                       <Tooltip title={showTipsText(`login`)}>
                         <div className="btn" style={{ cursor: 'not-allowed', opacity: 0.6 }}>
                           <span
-                            className={`glyphicon ${state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`}
+                            className={`glyphicon ${
+                              state.state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'
+                            }`}
                           />
                         </div>
                       </Tooltip>

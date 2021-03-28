@@ -6,6 +6,7 @@ import { isEqualObjects } from '../util';
 import { IState } from '../typing/interface';
 import RateLimit from '../RateLimit';
 import ToolBar from './PaginationBarBody/ToolBar';
+import { BottomNavigationBarProps } from '../HomeBody/BottomNavigationBar';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -33,12 +34,9 @@ const useStyles = makeStyles<Theme>((theme) => ({
   },
 }));
 
-interface PaginationBarProps {
-  state: IState;
-  dispatch: any;
-}
-
-const PaginationBar: React.FC<PaginationBarProps> = React.memo(
+const PaginationBar: React.FC<
+  Omit<BottomNavigationBarProps, 'dispatchStargazersUser' | 'dispatchShared' | 'stateShared'>
+> = React.memo(
   ({ state, dispatch }) => {
     const classes = useStyles();
     return (

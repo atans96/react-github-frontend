@@ -8,11 +8,13 @@ import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 import { If } from '../../../util/react-if/If';
 import { Then } from '../../../util/react-if/Then';
 import Contributor from './ContributorsBody/Contributor';
+import { IAction } from '../../../typing/interface';
+import { ActionShared } from '../../../store/Shared/reducer';
 
 interface ContributorsProps {
   fullName: string;
   contributions: any;
-  dispatch: any;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 const useStyles = makeStyles<Theme>(() => ({
@@ -23,7 +25,7 @@ const useStyles = makeStyles<Theme>(() => ({
   },
 }));
 const Contributors = React.memo<ContributorsProps>(
-  ({ contributions, fullName, dispatch }) => {
+  ({ contributions, fullName, dispatchShared }) => {
     const classes = useStyles();
     const [openContributors, setOpenContributors] = useState(false);
     const [contributionRepo, setContributionRepo] = useState<any[]>([]);
@@ -62,7 +64,7 @@ const Contributors = React.memo<ContributorsProps>(
             <Collapse in={openContributors} timeout={0.1} unmountOnExit>
               <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
                 {contributionRepo.map((obj, idx) => {
-                  return <Contributor key={idx} dispatch={dispatch} obj={obj} />;
+                  return <Contributor key={idx} dispatchShared={dispatchShared} obj={obj} />;
                 })}
               </div>
             </Collapse>

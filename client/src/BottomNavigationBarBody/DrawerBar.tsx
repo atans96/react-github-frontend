@@ -10,6 +10,7 @@ import SubscribeFeed from './DrawerBarBody/SubscribeFeed';
 import SubscribeFeedSetting from './DrawerBarBody/SubscribeFeedSetting';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
+import { BottomNavigationBarProps } from '../HomeBody/BottomNavigationBar';
 
 interface StyleProps {
   drawerWidth: string;
@@ -58,13 +59,13 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
 }));
 
-interface DrawerBarProps {
-  dispatch: any;
-  state: IState;
-  dispatchStargazersUser: any;
-}
-
-const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargazersUser }) => {
+const DrawerBar: React.FC<BottomNavigationBarProps> = ({
+  dispatch,
+  state,
+  dispatchStargazersUser,
+  dispatchShared,
+  stateShared,
+}) => {
   const [open, setOpen] = useState(false);
   const [drawerWidth, dragHandlers, drawerRef] = useDraggable({});
   const classes = useStyles({ drawerWidth: open ? `${drawerWidth}px` : '0px' });
@@ -75,7 +76,7 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
   }, []);
 
   useEffect(() => {
-    dispatch({
+    dispatchShared({
       type: 'SET_DRAWER_WIDTH',
       payload: {
         drawerWidth: open ? 200 : 0,
@@ -85,7 +86,7 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
 
   useEffect(() => {
     return () => {
-      dispatch({
+      dispatchShared({
         type: 'SET_DRAWER_WIDTH',
         payload: {
           drawerWidth: 0,
@@ -121,9 +122,14 @@ const DrawerBar: React.FC<DrawerBarProps> = ({ dispatch, state, dispatchStargaze
         <div className={classes.toolbar}>
           <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
         </div>
-        <RSSFeed state={state} dispatch={dispatch} />
-        <SubscribeFeed state={state} />
-        <SubscribeFeedSetting state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazersUser} />
+        <RSSFeed stateShared={stateShared} dispatchShared={dispatchShared} />
+        <SubscribeFeed stateShared={stateShared} />
+        <SubscribeFeedSetting
+          stateShared={stateShared}
+          dispatchShared={dispatchShared}
+          dispatch={dispatch}
+          dispatchStargazersUser={dispatchStargazersUser}
+        />
       </Drawer>
       {open && (
         <DraggableCore key="drawerBar" {...dragHandlers}>

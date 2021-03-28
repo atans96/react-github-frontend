@@ -2,18 +2,20 @@ import React from 'react';
 import { isEqualObjects } from '../../../../util';
 import { ContributorsProps } from '../../../../typing/type';
 import { useHistory } from 'react-router';
+import { IAction } from '../../../../typing/interface';
+import { ActionShared } from '../../../../store/Shared/reducer';
 
 interface ContributorProps {
   obj: ContributorsProps;
-  dispatch: any;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 const Contributor = React.memo<ContributorProps>(
-  ({ obj, dispatch }) => {
+  ({ obj, dispatchShared }) => {
     const history = useHistory();
     const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
       e.preventDefault();
-      dispatch({
+      dispatchShared({
         type: 'USERNAME_ADDED',
         payload: {
           username: contributor,

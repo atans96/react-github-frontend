@@ -4,18 +4,19 @@ import UpdateIcon from '@material-ui/icons/Update';
 import { ForkIcon } from '../../util/icons';
 import { isEqualObjects } from '../../util';
 import Contributors from './RepoInfoBody/Contributors';
-import { IState } from '../../typing/interface';
+import { IAction, IStateManageProfile } from '../../typing/interface';
+import { ActionShared } from '../../store/Shared/reducer';
 
 interface RepoInfoProps {
   obj: any;
   onClickRepoInfo: any;
-  dispatch: any;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
   active: string;
-  state: IState;
+  state: IStateManageProfile;
 }
 
 const RepoInfo = React.memo<RepoInfoProps>(
-  ({ obj, onClickRepoInfo, dispatch, active, state }) => {
+  ({ obj, onClickRepoInfo, dispatchShared, active, state }) => {
     return (
       <div style={{ borderBottom: 'solid' }}>
         <div style={active === obj.fullName ? { borderLeft: '5px solid', backgroundColor: '#f8fafc' } : {}}>
@@ -56,7 +57,7 @@ const RepoInfo = React.memo<RepoInfoProps>(
               </div>
             </div>
           </div>
-          <Contributors contributions={state.contributors} fullName={obj.fullName} dispatch={dispatch} />
+          <Contributors contributions={state.contributors} fullName={obj.fullName} dispatchShared={dispatchShared} />
         </div>
       </div>
     );
