@@ -8,8 +8,8 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { debounce, isEqualObjects } from './util';
-import { RouteComponentProps } from 'react-router-dom';
+import { isEqualObjects } from './util';
+import { RouteComponentProps, useLocation } from 'react-router-dom';
 import CardDiscover from './HomeBody/CardDiscover';
 import BottomNavigationBarDiscover from './HomeBody/BottomNavigationBarDiscover';
 import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
@@ -46,6 +46,7 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
     return (
       isEqualObjects(prevProps.data.length, nextProps.data.length) &&
       isEqualObjects(prevProps.stateDiscover.imagesDataDiscover, nextProps.stateDiscover.imagesDataDiscover) &&
+      isEqualObjects(prevProps.stateDiscover.mergedDataDiscover, nextProps.stateDiscover.mergedDataDiscover) &&
       isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width) &&
       isEqualObjects(prevProps.sorted, nextProps.sorted)
     ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
@@ -90,6 +91,7 @@ const Discover = React.memo<DiscoverProps>(
     const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
       (data: StaticState) => data.SuggestedRepo
     );
+    const location = useLocation();
     // useState is used when the HTML depends on it directly to render something
     const [isLoading, setLoading] = useState(false);
     const paginationRef = useRef(stateShared.perPage);
@@ -180,28 +182,32 @@ const Discover = React.memo<DiscoverProps>(
 
     const isLoadingRef = useRef<boolean>(true);
     const notificationRef = useRef<string>('');
+
     useEffect(() => {
-      if (document.location.pathname === '/discover') {
+      if (location.pathname === '/discover') {
         mergedDataRef.current = stateDiscover.mergedDataDiscover;
       }
-    });
+    }, [stateDiscover.mergedDataDiscover, location.pathname]);
+
     useEffect(() => {
-      if (document.location.pathname === '/discover') {
+      if (location.pathname === '/discover') {
         isLoadingRef.current = isLoading;
       }
-    });
+    }, [isLoading, location.pathname]);
+
     useEffect(() => {
-      if (document.location.pathname === '/discover') {
+      if (location.pathname === '/discover') {
         notificationRef.current = notification;
       }
-    });
+    }, [notification, location.pathname]);
+
     const handleBottomHit = useCallback(
       () => {
         if (
           !isFetchFinish.current &&
           mergedDataRef.current.length > 0 &&
           !isLoadingRef.current &&
-          window.location.pathname === '/discover' &&
+          location.pathname === '/discover' &&
           notificationRef.current === ''
         ) {
           dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
@@ -223,7 +229,7 @@ const Discover = React.memo<DiscoverProps>(
                 html_url: obj.html_url,
                 id: obj.id,
                 imagesData:
-                  imagesDataDiscover.arrayData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+                  imagesDataDiscover.arrayData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] ?? [],
                 name: obj.name,
                 is_queried: false,
               }
@@ -247,7 +253,7 @@ const Discover = React.memo<DiscoverProps>(
         isLoadingRef.current,
         imagesDataDiscover,
         notificationRef.current,
-        window.location.pathname,
+        location.pathname,
       ]
     );
 
@@ -266,26 +272,26 @@ const Discover = React.memo<DiscoverProps>(
       });
     }
 
-    useResizeHandler(windowScreenRef, debounce(handleResize));
+    useResizeHandler(windowScreenRef, handleResize);
     useEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
       if (
         !suggestedDataLoading &&
         !!suggestedData?.getSuggestedRepo &&
         !suggestedDataError &&
-        document.location.pathname === '/discover'
+        location.pathname === '/discover'
       ) {
         fetchUser();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [suggestedDataLoading, suggestedDataError, sortedClicked]);
+    }, [suggestedDataLoading, suggestedDataError, sortedClicked, location.pathname]);
 
     useEffect(() => {
-      if (stateDiscover.pageDiscover > 1 && notification === '' && document.location.pathname === '/discover') {
+      if (stateDiscover.pageDiscover > 1 && notification === '' && location.pathname === '/discover') {
         fetchUserMore();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateDiscover.pageDiscover]);
+    }, [stateDiscover.pageDiscover, location.pathname]);
 
     const stateMemoize = useCallback(() => {
       return { stateDiscover, stateShared };
@@ -298,11 +304,11 @@ const Discover = React.memo<DiscoverProps>(
     }, [stateDiscover.pageDiscover, stateDiscover.lastPageDiscover]);
 
     useEffect(() => {
-      if (document.location.pathname === '/discover') {
+      if (location.pathname === '/discover') {
         setLoading(stateDiscover.isLoadingDiscover);
         setNotification(stateDiscover.notificationDiscover);
       }
-    }, [stateDiscover.isLoadingDiscover, stateDiscover.notificationDiscover]);
+    }, [stateDiscover.isLoadingDiscover, stateDiscover.notificationDiscover, location.pathname]);
 
     const whichToUse = () => {
       // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
@@ -328,39 +334,82 @@ const Discover = React.memo<DiscoverProps>(
           style={{ marginLeft: `${stateShared.drawerWidth + 5}px`, zIndex: stateDiscover.visibleDiscover ? -1 : 0 }}
         >
           <header className={'header-discover'}>
-            <nav>
-              <a
-                className={clsx('', {
-                  underline: sortedClicked === 'Daily',
+            <nav className={'navbar-nav'}>
+              <li
+                className={clsx('nav-item', {
+                  active: sortedClicked === 'Daily',
                 })}
                 onClick={(e) => setSortedClicked(e.currentTarget.innerText)}
               >
-                Daily
-              </a>
-              <a
-                className={clsx('', {
-                  underline: sortedClicked === 'Weekly',
+                <a
+                  className={clsx('', {
+                    active: sortedClicked === 'Daily',
+                  })}
+                  style={{ lineHeight: '50px' }}
+                >
+                  Daily
+                </a>
+              </li>
+              <li
+                className={clsx('nav-item', {
+                  active: sortedClicked === 'Weekly',
                 })}
                 onClick={(e) => setSortedClicked(e.currentTarget.innerText)}
               >
-                Weekly
-              </a>
-              <a
-                className={clsx('', {
-                  underline: sortedClicked === 'Monthly',
+                <a
+                  className={clsx('', {
+                    active: sortedClicked === 'Weekly',
+                  })}
+                  style={{ lineHeight: '50px' }}
+                >
+                  Weekly
+                </a>
+              </li>
+              <li
+                className={clsx('nav-item', {
+                  active: sortedClicked === 'Monthly',
                 })}
                 onClick={(e) => setSortedClicked(e.currentTarget.innerText)}
               >
-                Monthly
-              </a>
-              <a
-                className={clsx('', {
-                  underline: sortedClicked === 'Yearly',
+                <a
+                  className={clsx('', {
+                    active: sortedClicked === 'Monthly',
+                  })}
+                  style={{ lineHeight: '50px' }}
+                >
+                  Monthly
+                </a>
+              </li>
+              <li
+                className={clsx('nav-item', {
+                  active: sortedClicked === 'Quarterly',
                 })}
                 onClick={(e) => setSortedClicked(e.currentTarget.innerText)}
               >
-                Yearly
-              </a>
+                <a
+                  className={clsx('', {
+                    active: sortedClicked === 'Quarterly',
+                  })}
+                  style={{ lineHeight: '50px' }}
+                >
+                  Quarterly
+                </a>
+              </li>
+              <li
+                className={clsx('nav-item', {
+                  active: sortedClicked === 'Yearly',
+                })}
+                onClick={(e) => setSortedClicked(e.currentTarget.innerText)}
+              >
+                <a
+                  className={clsx('', {
+                    active: sortedClicked === 'Yearly',
+                  })}
+                  style={{ lineHeight: '50px' }}
+                >
+                  Yearly
+                </a>
+              </li>
             </nav>
           </header>
           <If condition={notification === '' && whichToUse()?.length > 0}>
@@ -425,7 +474,6 @@ const Discover = React.memo<DiscoverProps>(
   },
   (prevProps: any, nextProps: any) => {
     return (
-      isEqualObjects(prevProps.path, nextProps.path) &&
       isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
       isEqualObjects(prevProps.stateShared.drawerWidth, nextProps.stateShared.drawerWidth) &&
       isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width) &&

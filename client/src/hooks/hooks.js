@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { composeEventHandlers, composeParamsHandler, debounce } from '../util';
+import { composeEventHandlers, composeParamsHandler } from '../util';
 import ResizeObserver from 'resize-observer-polyfill';
 import useResizeObserver from './useResizeObserver';
 

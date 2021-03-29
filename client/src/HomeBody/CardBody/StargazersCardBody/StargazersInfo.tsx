@@ -14,6 +14,7 @@ import { dragMove } from '../../../util';
 import { Action } from '../../../store/Home/reducer';
 import { ActionStargazers } from '../../../store/Staargazers/reducer';
 import { ActionShared } from '../../../store/Shared/reducer';
+import { useLocation } from 'react-router-dom';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -67,18 +68,17 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
     useClickOutside(stargazerModalRef, () => setVisible(false), ['multivalue-cross', 'hamburger']);
     const dragRef = useRef<HTMLDivElement>(null);
     const appendAlready = useRef<boolean>(false); //prevent re-execute dragMove
+
+    const location = useLocation();
+
     useEffect(() => {
-      if (
-        dragRef.current &&
-        stargazerModalRef.current &&
-        !appendAlready.current &&
-        document.location.pathname === '/'
-      ) {
+      if (dragRef.current && stargazerModalRef.current && !appendAlready.current && location.pathname === '/') {
         appendAlready.current = true;
         dragMove(stargazerModalRef.current.querySelectorAll('.SelectMenu-modal:not(.NonDrag)')[0], dragRef.current);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dragRef.current]);
+    }, [dragRef.current, location.pathname]);
+
     return (
       <div className="SelectMenu" ref={stargazerModalRef}>
         <div className="SelectMenu-modal" style={{ width: modalWidth }}>

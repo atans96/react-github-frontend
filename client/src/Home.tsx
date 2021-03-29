@@ -12,7 +12,7 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { fastFilter, isEqualObjects } from './util';
+import { Counter, fastFilter, isEqualObjects } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
@@ -23,6 +23,7 @@ import { ActionResolvedPromise } from './Global';
 import { Action } from './store/Home/reducer';
 import { ActionShared } from './store/Shared/reducer';
 import { ActionStargazers } from './store/Staargazers/reducer';
+import { useLocation } from 'react-router-dom';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -92,6 +93,7 @@ interface HomeProps {
 const Home = React.memo<HomeProps>(
   ({ state, stateShared, dispatch, dispatchStargazers, dispatchShared, stateStargazers, actionResolvedPromise }) => {
     const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
+    const location = useLocation();
     const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
     const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
     const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
@@ -137,6 +139,19 @@ const Home = React.memo<HomeProps>(
           : isFunction(callback);
       };
       if (isDataExists(res)) {
+        const ja = Counter(res.dataOne, 'language');
+        const repoStat = Object.entries(ja)
+          .slice(0, 5)
+          .map((arr: any) => {
+            const ja = state?.repoStat?.find((xx) => xx[0] === arr[0]) ?? [0, 0];
+            return [arr[0], ja[1] + arr[1]];
+          });
+        dispatch({
+          type: 'REPO_STAT',
+          payload: {
+            repoStat: repoStat,
+          },
+        });
         actionResolvedPromise(
           ActionResolvedPromise.append,
           setLoading,
@@ -328,37 +343,40 @@ const Home = React.memo<HomeProps>(
     const imagesDataRef = useRef<ImagesDataProps[]>([]);
     const filterBySeenRef = useRef<boolean>(state.filterBySeen);
     const notificationRef = useRef<string>('');
+
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         mergedDataRef.current = state.mergedData;
       }
-    });
+    }, [state.mergedData, location.pathname]);
+
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         isLoadingRef.current = isLoading;
       }
-    });
+    }, [isLoading, location.pathname]);
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         notificationRef.current = notification;
       }
-    });
+    }, [notification, location.pathname]);
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         imagesDataRef.current = state.imagesData;
       }
-    });
+    }, [state.imagesData, location.pathname]);
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         filterBySeenRef.current = state.filterBySeen;
       }
-    });
+    }, [state.filterBySeen, location.pathname]);
+
     const handleBottomHit = useCallback(() => {
       if (
         !isFetchFinish.current &&
         mergedDataRef.current.length > 0 &&
         !isLoadingRef.current &&
-        window.location.pathname === '/' &&
+        location.pathname === '/' &&
         notificationRef.current === '' &&
         filterBySeenRef.current
       ) {
@@ -382,7 +400,7 @@ const Home = React.memo<HomeProps>(
               topics: obj.topics,
               html_url: obj.html_url,
               id: obj.id,
-              imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+              imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] ?? [],
               name: obj.name,
               is_queried: false,
             }
@@ -405,9 +423,9 @@ const Home = React.memo<HomeProps>(
       isLoadingRef.current,
       imagesDataRef.current,
       notificationRef.current,
-      window.location.pathname,
       filterBySeenRef.current,
       stateShared.isLoggedIn,
+      location.pathname,
     ]);
 
     useBottomHit(
@@ -429,7 +447,7 @@ const Home = React.memo<HomeProps>(
 
     useDeepCompareEffect(() => {
       // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-      if (stateShared.username.length > 0 && state.mergedData.length === 0 && document.location.pathname === '/') {
+      if (stateShared.username.length > 0 && state.mergedData.length === 0 && location.pathname === '/') {
         // we want to preserve stateShared.username so that when the user navigate away from Home, then go back again, and do the scroll again,
         // we still want to retain the memory of username so that's why we use reducer of stateShared.username.
         // However, as the component unmount, stateShared.username is not "", thus causing fetchUser to fire in useEffect
@@ -442,9 +460,10 @@ const Home = React.memo<HomeProps>(
       // so you need another dependency of stateShared.perPage
       // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateShared.username, stateShared.perPage, state.mergedData]);
+    }, [stateShared.username, stateShared.perPage, state.mergedData, location.pathname]);
+
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         if (stateShared.username.length > 0) {
           fetchUserMore();
         } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
@@ -452,7 +471,8 @@ const Home = React.memo<HomeProps>(
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.page]);
+    }, [state.page, location.pathname]);
+
     useEffect(() => {
       if (
         !userDataLoading &&
@@ -460,7 +480,7 @@ const Home = React.memo<HomeProps>(
         userData?.getUserData?.tokenRSS &&
         userData?.getUserData?.tokenRSS !== '' &&
         stateShared.tokenRSS === '' &&
-        document.location.pathname === '/'
+        location.pathname === '/'
       ) {
         dispatchShared({
           type: 'TOKEN_RSS_ADDED',
@@ -470,16 +490,10 @@ const Home = React.memo<HomeProps>(
         });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userDataLoading, userDataError]);
+    }, [userDataLoading, userDataError, location.pathname]);
 
     useEffect(() => {
-      if (
-        !seenDataLoading &&
-        !seenDataError &&
-        seenData &&
-        seenData.getSeen !== null &&
-        document.location.pathname === '/'
-      ) {
+      if (!seenDataLoading && !seenDataError && seenData && seenData.getSeen !== null && location.pathname === '/') {
         if (!state.filterBySeen) {
           const images = state.undisplayMergedData.reduce((acc: any[], obj: SeenProps) => {
             acc.push(
@@ -527,14 +541,15 @@ const Home = React.memo<HomeProps>(
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.filterBySeen]);
+    }, [state.filterBySeen, location.pathname]);
+
     useEffect(() => {
       if (
         !seenDataLoading &&
         !seenDataError &&
         seenData?.getSeen?.seenCards &&
         seenData.getSeen.seenCards.length > 0 &&
-        document.location.pathname === '/'
+        location.pathname === '/'
       ) {
         dispatch({
           type: 'UNDISPLAY_MERGED_DATA',
@@ -544,16 +559,11 @@ const Home = React.memo<HomeProps>(
         });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [seenDataLoading, seenDataError, seenData]);
+    }, [seenDataLoading, seenDataError, seenData, location.pathname]);
     useEffect(
       () => {
         _isMounted.current = true;
-        if (
-          _isMounted.current &&
-          state.mergedData.length > 0 &&
-          state.shouldFetchImages &&
-          document.location.pathname === '/'
-        ) {
+        if (_isMounted.current && state.mergedData.length > 0 && state.shouldFetchImages && location.pathname === '/') {
           // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
           const data = state.mergedData.reduce((acc, object) => {
             acc.push(
@@ -606,14 +616,15 @@ const Home = React.memo<HomeProps>(
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [state.mergedData, state.shouldFetchImages]
+      [state.mergedData, state.shouldFetchImages, location.pathname]
     );
     const userDataRef = useRef<string>();
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         userDataRef.current = userData?.getUserData?.token || '';
       }
-    });
+    }, [location.pathname]);
+
     const onClickTopic = useCallback(
       async ({ variables }) => {
         if (stateShared.tokenGQL !== '' && userDataRef.current && state.filterBySeen) {
@@ -767,7 +778,12 @@ const Home = React.memo<HomeProps>(
               <div style={{ textAlign: 'center' }}>
                 <img src={eye} style={{ width: '100px' }} />
                 <div style={{ textAlign: 'center' }}>
-                  <h3>Please wait while fetching your data</h3>
+                  <h3>
+                    Please wait while fetching your query of:{' '}
+                    <p>
+                      <a className={'underlining'}>{stateShared.username}</a>
+                    </p>
+                  </h3>
                 </div>
               </div>
             </Then>

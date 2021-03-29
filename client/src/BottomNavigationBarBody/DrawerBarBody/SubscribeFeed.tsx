@@ -208,7 +208,7 @@ const SubscribeFeed = React.memo<SubscribeFeedProps>(
                       fastFilter((x: any) => x.login === obj.login, unseenFeeds.current).reduce((acc, obj) => {
                         acc.push(...obj.unseenFeeds);
                         return acc;
-                      }, []) || [];
+                      }, []) ?? [];
                     const feeds = uniqFast(
                       fastFilter((x: any) => x.login === obj.login, HTML).map((x: any) => x.feeds)
                     );

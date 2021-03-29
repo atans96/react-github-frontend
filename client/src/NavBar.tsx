@@ -37,10 +37,11 @@ const NavBar: React.FC<{ componentProps: NavBarProps }> = (props) => {
   const Active = url.split('/');
   const displayName: string | undefined = (NavBar as React.ComponentType<any>).displayName;
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
+  // console.log(userData?.getUserData?.avatar);
   useEffect(() => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [url]);
   const history = useHistory();
   const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click

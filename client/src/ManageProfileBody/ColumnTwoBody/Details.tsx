@@ -5,6 +5,7 @@ import { CircularProgress } from '@material-ui/core';
 import { markdownParsing } from '../../services';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
+import { useLocation } from 'react-router-dom';
 
 interface DetailsProps {
   branch: string;
@@ -18,9 +19,11 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
   const _isMounted = useRef(true);
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
+  const location = useLocation();
+
   useEffect(
     () => {
-      if (document.location.pathname === '/profile' || document.location.pathname === '/detail') {
+      if (location.pathname === '/profile' || location.pathname === '/detail') {
         _isMounted.current = true;
         markdownParsing(fullName, branch).then((data) => {
           if (_isMounted.current) {
@@ -33,10 +36,10 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fullName, branch]
+    [fullName, branch, location.pathname]
   );
   useEffect(() => {
-    if (readmeRef?.current && readme !== '' && document.location.pathname === '/profile') {
+    if (readmeRef?.current && readme !== '' && location.pathname === '/profile') {
       setTimeout(() => {
         //because it takes time to render, we need to setTimeout to wait a little bit to determine the full height
         if (readmeRef?.current) {
@@ -45,7 +48,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
       }, 1500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readmeRef.current, readme]);
+  }, [readmeRef.current, readme, location.pathname]);
 
   return (
     <div ref={readmeRef} style={width < 1100 ? { width: `${width - 650}px` } : {}}>

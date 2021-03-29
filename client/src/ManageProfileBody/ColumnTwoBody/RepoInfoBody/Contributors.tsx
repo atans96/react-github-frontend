@@ -10,11 +10,14 @@ import { Then } from '../../../util/react-if/Then';
 import Contributor from './ContributorsBody/Contributor';
 import { IAction } from '../../../typing/interface';
 import { ActionShared } from '../../../store/Shared/reducer';
+import { Action } from '../../../store/Home/reducer';
+import { useLocation } from 'react-router-dom';
 
 interface ContributorsProps {
   fullName: string;
   contributions: any;
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatch: React.Dispatch<IAction<Action>>;
 }
 
 const useStyles = makeStyles<Theme>(() => ({
@@ -25,12 +28,14 @@ const useStyles = makeStyles<Theme>(() => ({
   },
 }));
 const Contributors = React.memo<ContributorsProps>(
-  ({ contributions, fullName, dispatchShared }) => {
+  ({ contributions, fullName, dispatchShared, dispatch }) => {
     const classes = useStyles();
     const [openContributors, setOpenContributors] = useState(false);
     const [contributionRepo, setContributionRepo] = useState<any[]>([]);
+    const location = useLocation();
+
     useDeepCompareEffect(() => {
-      if (contributions.length > 0 && document.location.pathname === '/profile') {
+      if (contributions.length > 0 && location.pathname === '/profile') {
         const contribution = contributions.find((xx: any) => fullName === xx.fullName);
         if (contribution.data) {
           setContributionRepo(contribution.data);
@@ -38,11 +43,13 @@ const Contributors = React.memo<ContributorsProps>(
           setContributionRepo(contribution.contributors);
         }
       }
-    }, [contributions]);
+    }, [contributions, location.pathname]);
+
     const handleOpenContributors = (e: React.MouseEvent) => {
       e.preventDefault();
       setOpenContributors(!openContributors);
     };
+
     return (
       <React.Fragment>
         <If condition={contributionRepo.length > 0}>
@@ -64,7 +71,7 @@ const Contributors = React.memo<ContributorsProps>(
             <Collapse in={openContributors} timeout={0.1} unmountOnExit>
               <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
                 {contributionRepo.map((obj, idx) => {
-                  return <Contributor key={idx} dispatchShared={dispatchShared} obj={obj} />;
+                  return <Contributor key={idx} dispatchShared={dispatchShared} obj={obj} dispatch={dispatch} />;
                 })}
               </div>
             </Collapse>

@@ -5,6 +5,7 @@ import _ from 'lodash';
 export type Action =
   | 'LAST_PAGE'
   | 'LOADING'
+  | 'REPO_STAT'
   | 'REMOVE_ALL'
   | 'VISIBLE'
   | 'SEARCH_USERS'
@@ -27,6 +28,7 @@ export const initialState: IState = {
   // localStorage.getItem() can return either a string or null
   undisplayMergedData: [],
   mergedData: [],
+  repoStat: [],
   filteredMergedData: [],
   filterBySeen: true,
   filteredTopics: [],
@@ -42,6 +44,12 @@ export const initialState: IState = {
 };
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
+    case 'REPO_STAT': {
+      return {
+        ...state,
+        repoStat: action.payload.repoStat,
+      };
+    }
     case 'UNDISPLAY_MERGED_DATA': {
       return {
         ...state,

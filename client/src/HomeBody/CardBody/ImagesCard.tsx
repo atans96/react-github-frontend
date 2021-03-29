@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -13,6 +13,7 @@ import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
+import { useLocation } from 'react-router-dom';
 interface ImagesCardProps {
   index: number;
   visible: boolean;
@@ -28,12 +29,13 @@ const ImagesCard = React.memo<ImagesCardProps>(
     const { getToggleProps, getCollapseProps } = useCollapse({
       defaultExpanded: false, // is the images already expanded in the first place?
     });
+    const location = useLocation();
 
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         let isCancelled = false;
         if (!isCancelled && Array.isArray(state.imagesData) && state.imagesData.length > 0) {
-          const temp = state.imagesMapData.get(index)?.value || [];
+          const temp = state.imagesMapData.get(index)?.value ?? [];
           setRenderImages(temp);
         }
         return () => {
@@ -41,7 +43,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
         };
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.imagesData, state.imagesMapData]);
+    }, [state.imagesData, state.imagesMapData, location.pathname]);
 
     const handleClickUnrenderImages = useCallback((e: React.MouseEvent) => {
       e.preventDefault();

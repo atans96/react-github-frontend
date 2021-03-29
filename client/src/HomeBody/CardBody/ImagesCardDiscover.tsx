@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -12,6 +12,7 @@ import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
+import { useLocation } from 'react-router-dom';
 
 interface ImagesCardProps {
   index: number;
@@ -28,11 +29,13 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = ({ index, visible, imagesM
     defaultExpanded: false, // is the images already expanded in the first place?
   });
 
+  const location = useLocation();
+
   useEffect(() => {
-    if (document.location.pathname === '/discover') {
+    if (location.pathname === '/discover') {
       let isCancelled = false;
       if (!isCancelled && imagesMapDataDiscover.size > 0) {
-        const temp = imagesMapDataDiscover.get(index)?.value || [];
+        const temp = imagesMapDataDiscover.get(index)?.value ?? [];
         setRenderImages(temp);
       }
       return () => {
@@ -40,7 +43,7 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = ({ index, visible, imagesM
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imagesMapDataDiscover]);
+  }, [imagesMapDataDiscover, location.pathname]);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -72,6 +75,7 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = ({ index, visible, imagesM
           </div>
           <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
             {renderChildren &&
+              renderImages.length > 0 &&
               renderImages.slice(2).map((image: string, idx: number) => {
                 return <ImageComponentLayout handleClick={handleClick} visible={visible} key={idx} urlLink={image} />;
               })}

@@ -7,17 +7,19 @@ import Contributors from './RepoInfoBody/Contributors';
 import { IAction, IStateManageProfile } from '../../typing/interface';
 import { ActionShared } from '../../store/Shared/reducer';
 import { RepoInfoProps } from '../../typing/type';
+import { Action } from '../../store/Home/reducer';
 
 interface Props {
   obj: RepoInfoProps;
   onClickRepoInfo: any;
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatch: React.Dispatch<IAction<Action>>;
   active: string;
   state: IStateManageProfile;
 }
 
 const RepoInfo = React.memo<Props>(
-  ({ obj, onClickRepoInfo, dispatchShared, active, state }) => {
+  ({ obj, onClickRepoInfo, dispatchShared, active, state, dispatch }) => {
     return (
       <div style={{ borderBottom: 'solid' }}>
         <div style={active === obj.fullName ? { borderLeft: '5px solid', backgroundColor: '#f8fafc' } : {}}>
@@ -58,7 +60,12 @@ const RepoInfo = React.memo<Props>(
               </div>
             </div>
           </div>
-          <Contributors contributions={state.contributors} fullName={obj.fullName} dispatchShared={dispatchShared} />
+          <Contributors
+            contributions={state.contributors}
+            fullName={obj.fullName}
+            dispatchShared={dispatchShared}
+            dispatch={dispatch}
+          />
         </div>
       </div>
     );

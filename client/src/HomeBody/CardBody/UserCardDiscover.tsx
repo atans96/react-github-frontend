@@ -3,15 +3,14 @@ import { useUserCardStyles } from './UserCardStyle';
 import { Typography } from '@material-ui/core';
 import { isEqualObjects } from '../../util';
 import { RouteComponentProps } from 'react-router-dom';
-import { If } from '../../util/react-if/If';
-import { Then } from '../../util/react-if/Then';
 import { ActionDiscover } from '../../store/Discover/reducer';
 import { ActionStargazers } from '../../store/Staargazers/reducer';
 import { ActionShared } from '../../store/Shared/reducer';
 import { IAction } from '../../typing/interface';
+import { MergedDataProps } from '../../typing/type';
 
 interface UserCardDiscover {
-  data: any;
+  data: MergedDataProps;
   sorted: string;
   routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
@@ -52,18 +51,14 @@ const UserCardDiscover = React.memo<UserCardDiscover>(
             <a href={html_url} onClick={onClick}>
               <strong>{login}</strong>
             </a>
-            <If condition={data.trends}>
-              <Then>
-                <Typography
-                  style={{ fontSize: '14px' }}
-                  color="textSecondary"
-                  variant="body2"
-                  className={classes.typographySmall}
-                >
-                  Star added {sorted}: + <strong style={{ color: 'green' }}>{data.trends}</strong>
-                </Typography>
-              </Then>
-            </If>
+            <Typography
+              style={{ fontSize: '14px' }}
+              color="textSecondary"
+              variant="body2"
+              className={classes.typographySmall}
+            >
+              Star added {sorted}: + <strong style={{ color: 'green' }}>{data.trends}</strong>
+            </Typography>
           </div>
         </div>
       </div>

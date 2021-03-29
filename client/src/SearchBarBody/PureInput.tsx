@@ -9,6 +9,7 @@ import { StargazerProps } from '../typing/type';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { Action } from '../store/Home/reducer';
 import { ActionStargazers } from '../store/Staargazers/reducer';
+import { useLocation } from 'react-router-dom';
 
 interface SearchBarProps {
   setVisible: any;
@@ -127,8 +128,11 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         handleDeleteBackspace();
       }
     };
+
+    const location = useLocation();
+
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         // Bind the event listener
         document.addEventListener('keydown', handleKey);
         return () => {
@@ -137,7 +141,8 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         };
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [handleKey]);
+    }, [handleKey, location.pathname]);
+
     const handleDeleteBackspace = () => {
       const stargazer = stateStargazers.stargazersQueueData.slice(-1)[0];
       const updatedStargazersData = stateStargazers.stargazersData.find(

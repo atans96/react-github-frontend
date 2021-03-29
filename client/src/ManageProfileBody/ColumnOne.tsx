@@ -8,11 +8,12 @@ import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
 import { ActionManageProfile, ColumnWidthProps } from '../store/ManageProfile/reducer';
 import { ActionShared } from '../store/Shared/reducer';
+import { useLocation } from 'react-router-dom';
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
   state: IStateShared;
-  stateReducer: Map<string, ColumnWidthProps>;
+  columnWidth: Map<string, ColumnWidthProps>;
   dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
@@ -50,22 +51,24 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
 }));
 const ColumnOne: React.FC<ColumnOneProps> = React.forwardRef(
-  ({ handleLanguageFilter, state, dispatchManageProfile, dispatchShared, stateReducer }, ref) => {
+  ({ handleLanguageFilter, state, dispatchManageProfile, dispatchShared, columnWidth }, ref) => {
     const displayName: string | undefined = (ColumnOne as React.ComponentType<any>).displayName;
-    const drawerWidthRef = useRef(stateReducer?.get(displayName!)?.width);
+    const drawerWidthRef = useRef(columnWidth?.get(displayName!)?.width);
     const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
       drawerWidthClient: drawerWidthRef.current,
     });
     const classes = useStyles({ drawerWidth: `${drawerWidth}px` });
+    const location = useLocation();
+
     useEffect(() => {
-      if (stateReducer && document.location.pathname === '/profile') {
-        const res = stateReducer.set(
+      if (columnWidth && location.pathname === '/profile') {
+        const res = columnWidth.set(
           displayName!,
           Object.assign({}, { name: displayName!, width: drawerWidth, draggerPosition: drawerWidth })
         );
         dispatchManageProfile({ type: 'MODIFY', payload: { columnWidth: res } });
       }
-    }, [drawerWidth]);
+    }, [drawerWidth, location.pathname]);
 
     return (
       <React.Fragment>

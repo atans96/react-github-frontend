@@ -109,6 +109,8 @@ const Card: React.FC<CardRef> = React.forwardRef(
     // TODO: show network data graph based on the card that we click and analyse it after storing to database
     // show the network users that we've clicked, and see their connection to other users
 
+    //TODO: open new tab for /detail when click mouse wheel or ctrl+click + add to Clicked database
+
     // when isVisible props changes, children will gets re-render
     // so wrap the component that is not subscribed to isVisible by using React Memo
     const isVisibleRef = useRef(false);

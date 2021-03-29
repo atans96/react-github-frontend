@@ -11,7 +11,7 @@ interface TrendsCardProps {
 }
 
 export const TrendsCard = React.memo<TrendsCardProps>(({ project }) => {
-  const dailyDeltas = project.timeSeries?.daily || [];
+  const dailyDeltas = project.timeSeries?.daily ?? [];
   const numberOfDailyDeltas = fastFilter((delta: any) => delta !== null, dailyDeltas);
   const showHeatMap = numberOfDailyDeltas.length > 1; // show the heatmap only if we at least 2 numbers
 
