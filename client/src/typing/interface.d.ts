@@ -50,6 +50,7 @@ export interface IStateShared {
   tokenGQL: string;
   drawerWidth: number;
   isLoggedIn: boolean;
+  languagesInfo: [];
   client_id: Nullable<string>;
   redirect_uri: Nullable<string>;
   client_secret: Nullable<string>;
@@ -75,6 +76,7 @@ export interface IStateManageProfile {
   repoInfo: RepoInfoProps[];
 }
 export interface IState {
+  repoStat: [];
   imagesMapData: Map<number, any>;
   filterBySeen: boolean;
   shouldFetchImages: boolean;

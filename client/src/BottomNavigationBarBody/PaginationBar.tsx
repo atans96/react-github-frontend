@@ -4,9 +4,10 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Theme } from '@material-ui/core';
 import { isEqualObjects } from '../util';
 import { IState } from '../typing/interface';
-import RateLimit from '../RateLimit';
+import RateLimit from './PaginationBarBody/RateLimit';
 import ToolBar from './PaginationBarBody/ToolBar';
 import { BottomNavigationBarProps } from '../HomeBody/BottomNavigationBar';
+import RepoStat from './PaginationBarBody/RepoStat';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -42,6 +43,7 @@ const PaginationBar: React.FC<
     return (
       <AppBar position="fixed" color="primary" className={classes.appBar}>
         <ToolBar state={state} />
+        <RepoStat componentProps={{ state }} />
         <RateLimit componentProps={{ state, dispatch }} />
       </AppBar>
     );
@@ -53,7 +55,8 @@ const PaginationBar: React.FC<
       isEqualObjects(prevProps.state.mergedData.length, nextProps.state.mergedData.length) &&
       isEqualObjects(prevProps.state.searchUsers.length, nextProps.state.searchUsers.length) &&
       isEqualObjects(prevProps.state.rateLimit, nextProps.state.rateLimit) &&
-      isEqualObjects(prevProps.state.rateLimitAnimationAdded, nextProps.state.rateLimitAnimationAdded)
+      isEqualObjects(prevProps.state.rateLimitAnimationAdded, nextProps.state.rateLimitAnimationAdded) &&
+      isEqualObjects(prevProps.state.repoStat, nextProps.state.repoStat)
     );
   }
 );

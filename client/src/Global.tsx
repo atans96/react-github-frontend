@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { RouteComponentProps } from 'react-router-dom';
 import Login from './Login';
 import ManageProfile from './ManageProfile';
@@ -94,12 +94,21 @@ const Global: React.FC<{
   const alreadySeenCards: number[] = React.useMemo(() => {
     //Every time Global re-renders and nothing is memoized because each render re creates the selector.
     // To solve this we can use React.useMemo. Here is the correct way to use createSelectItemById.
-    return alreadySeenCardSelector(seenData?.getSeen?.seenCards || []);
+    return alreadySeenCardSelector(seenData?.getSeen?.seenCards ?? []);
   }, [seenData?.getSeen?.seenCards]);
 
   const languagePreference = React.useMemo(() => {
     return new Map(userData?.getUserData?.languagePreference?.map((obj: LanguagePreference) => [obj.language, obj]));
   }, [userData?.getUserData?.languagePreference]);
+
+  const languagePreferenceRef = useRef(languagePreference);
+  const alreadySeenCardsRef = useRef(alreadySeenCards);
+  useEffect(() => {
+    alreadySeenCardsRef.current = alreadySeenCards;
+  });
+  useEffect(() => {
+    languagePreferenceRef.current = languagePreference;
+  });
 
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (props.componentProps.state.filterBySeen) {
@@ -111,8 +120,8 @@ const Global: React.FC<{
             (obj: MergedDataProps) =>
               filterActionResolvedPromiseData(
                 obj,
-                !alreadySeenCards.includes(obj.id),
-                languagePreference.get(obj.language),
+                !alreadySeenCardsRef.current.includes(obj.id),
+                languagePreferenceRef.current.get(obj.language),
                 userStarred?.getUserInfoStarred?.starred?.includes(obj.id) === false
               ),
             data
@@ -153,13 +162,13 @@ const Global: React.FC<{
             (obj: MergedDataProps) =>
               filterActionResolvedPromiseData(
                 obj,
-                !alreadySeenCards.includes(obj.id),
-                languagePreference.get(obj.language)
+                !alreadySeenCardsRef.current.includes(obj.id),
+                languagePreferenceRef.current.get(obj.language)
               ),
             data.dataOne
           );
           const tempImages = fastFilter(
-            (obj: MergedDataProps) => !alreadySeenCards.includes(obj.id),
+            (obj: MergedDataProps) => !alreadySeenCardsRef.current.includes(obj.id),
             data.renderImages
           );
           if (tempImages.length === 0) {
@@ -218,12 +227,12 @@ const Global: React.FC<{
           break;
         }
         default: {
-          console.log(displayName.match(/^discover/gi) || {});
           throw new Error('No valid component found!');
         }
       }
     }
   };
+
   const actionNonAppend = (data: IDataOne | any, displayName: string) => {
     switch (displayName) {
       case (displayName.match(/^discover/gi) || {}).input: {
@@ -264,9 +273,8 @@ const Global: React.FC<{
       }
       return { isFetchFinish };
     },
-    [props.componentProps.stateShared.username]
+    [props.componentProps.stateShared.username, userStarred, loadingUserStarred]
   );
-
   return (
     <React.Fragment>
       <If condition={seenDataLoading && userDataLoading && loadingUserStarred}>
@@ -339,19 +347,18 @@ const Global: React.FC<{
             </Then>
           </If>
 
-          <PrefetchKeepMountedLayout
-            mountedCondition={props.routerProps.location.pathname === '/profile'}
-            render={() => {
-              return (
-                <ManageProfile
-                  dispatchManageProfile={props.componentProps.dispatchManageProfile}
-                  stateShared={props.componentProps.stateShared}
-                  stateManageProfile={props.componentProps.stateManageProfile}
-                  dispatchShared={props.componentProps.dispatchShared}
-                />
-              );
-            }}
-          />
+          <If condition={props.routerProps.location.pathname === '/profile'}>
+            <Then>
+              <ManageProfile
+                dispatchManageProfile={props.componentProps.dispatchManageProfile}
+                stateShared={props.componentProps.stateShared}
+                stateManageProfile={props.componentProps.stateManageProfile}
+                dispatchShared={props.componentProps.dispatchShared}
+                dispatch={props.componentProps.dispatch}
+              />
+            </Then>
+          </If>
+
           <If condition={props.routerProps.location.pathname.includes('/detail')}>
             <Then>
               <Details />

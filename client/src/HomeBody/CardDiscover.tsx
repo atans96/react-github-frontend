@@ -51,7 +51,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
     const userCardMemoizedData = useCallback(() => {
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [githubData.owner]);
+    }, [githubData.owner, githubData.trends, sorted]);
 
     const stargazersMemoizedGithubData = useCallback(() => {
       return githubData;

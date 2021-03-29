@@ -6,12 +6,14 @@ import { useResizeHandler } from './hooks/hooks';
 import ColumnTwo from './ManageProfileBody/ColumnTwo';
 import { ActionManageProfile } from './store/ManageProfile/reducer';
 import { ActionShared } from './store/Shared/reducer';
+import { Action } from './store/Home/reducer';
 
 interface ManageProfileProps {
   stateShared: IStateShared;
   stateManageProfile: IStateManageProfile;
   dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatch: React.Dispatch<IAction<Action>>;
 }
 
 const ManageProfile: React.FC<ManageProfileProps> = ({
@@ -19,10 +21,11 @@ const ManageProfile: React.FC<ManageProfileProps> = ({
   dispatchManageProfile,
   stateManageProfile,
   dispatchShared,
+  dispatch,
 }) => {
   const [languageFilter, setLanguageFilter] = useState<string[]>([]);
-  const handleLanguageFilter = useCallback((language) => {
-    if (language) {
+  const handleLanguageFilter = useCallback((language, remove = false) => {
+    if (language && !remove) {
       setLanguageFilter((prevState) => {
         return [...prevState, language];
       });
@@ -55,7 +58,6 @@ const ManageProfile: React.FC<ManageProfileProps> = ({
       },
     });
   }
-
   useResizeHandler(manageProfileRef, handleResize);
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
@@ -64,12 +66,13 @@ const ManageProfile: React.FC<ManageProfileProps> = ({
         state={columnOneDataMemoize()}
         dispatchManageProfile={dispatchManageProfile}
         dispatchShared={dispatchShared}
-        stateReducer={stateManageProfile.columnWidth}
+        columnWidth={stateManageProfile.columnWidth}
       />
       <ColumnTwo
         languageFilter={languageFilter}
         dispatchManageProfile={dispatchManageProfile}
         dispatchShared={dispatchShared}
+        dispatch={dispatch}
         stateManageProfile={stateManageProfileMemo()}
         stateShared={stateSharedMemo()}
       />

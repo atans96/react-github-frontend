@@ -16,6 +16,7 @@ import { noop } from '../../../../util/util';
 import { Action } from '../../../../store/Home/reducer';
 import { ActionStargazers } from '../../../../store/Staargazers/reducer';
 import { ActionShared } from '../../../../store/Shared/reducer';
+import { useLocation } from 'react-router-dom';
 
 export interface Result {
   getRootPropsCard: any;
@@ -57,18 +58,20 @@ const Result: React.FC<Result> = ({
       });
     },
   });
+  const location = useLocation();
+
   useEffect(() => {
     if (
       !loadingWatchUsersData &&
       !errorWatchUsersData &&
       watchUsersData &&
       watchUsersData.getWatchUsers?.login &&
-      document.location.pathname === '/'
+      location.pathname === '/'
     ) {
       setSubscribe(watchUsersData.getWatchUsers?.login?.find((obj: Login) => obj.login === stargazer.login) !== null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchUsersData, loadingWatchUsersData, errorWatchUsersData]);
+  }, [watchUsersData, loadingWatchUsersData, errorWatchUsersData, location.pathname]);
   const [subscribe, setSubscribe] = useState(false);
   const renderStyleEffect = () => {
     let style;

@@ -11,6 +11,7 @@ import { IAction, IStateShared } from './typing/interface';
 import { useHistory } from 'react-router';
 import { ActionShared } from './store/Shared/reducer';
 import { initialStateRateLimit, reducerRateLimit } from './store/RateLimit/reducer';
+import { useLocation } from 'react-router-dom';
 
 interface LoginProps {
   stateShared: IStateShared;
@@ -23,8 +24,9 @@ const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
   const displayName: string | undefined = (Login as React.ComponentType<any>).displayName;
   const signUpAdded = useApolloFactory(displayName!).mutation.signUpAdded;
   const history = useHistory();
+  const location = useLocation();
   useEffect(() => {
-    if (document.location.pathname === '/login') {
+    if (location.pathname === '/login') {
       // After requesting Github access by logging using user account's Github
       // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
       const url = window.location.href;
@@ -66,43 +68,44 @@ const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
                   'jbb',
                   CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
                 );
-              });
-              dispatchShared({
-                type: 'LOGIN',
-                payload: { isLoggedIn: true },
-              });
-              dispatchRateLimit({
-                type: 'RATE_LIMIT_ADDED',
-                payload: {
-                  rateLimitAnimationAdded: false,
-                },
-              });
-              getRateLimitInfo(response.token).then((data) => {
-                if (data.rateLimit && data.rateLimitGQL) {
-                  dispatchRateLimit({
-                    type: 'RATE_LIMIT_ADDED',
-                    payload: {
-                      rateLimitAnimationAdded: true,
-                    },
-                  });
-                  dispatchRateLimit({
-                    type: 'RATE_LIMIT',
-                    payload: {
-                      limit: data.rateLimit.limit,
-                      used: data.rateLimit.used,
-                      reset: data.rateLimit.reset,
-                    },
-                  });
+                dispatchShared({
+                  type: 'LOGIN',
+                  payload: { isLoggedIn: true },
+                });
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT_ADDED',
+                  payload: {
+                    rateLimitAnimationAdded: false,
+                  },
+                });
+                getRateLimitInfo(response.token).then((data) => {
+                  if (data.rateLimit && data.rateLimitGQL) {
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT_ADDED',
+                      payload: {
+                        rateLimitAnimationAdded: true,
+                      },
+                    });
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT',
+                      payload: {
+                        limit: data.rateLimit.limit,
+                        used: data.rateLimit.used,
+                        reset: data.rateLimit.reset,
+                      },
+                    });
 
-                  dispatchRateLimit({
-                    type: 'RATE_LIMIT_GQL',
-                    payload: {
-                      limit: data.rateLimitGQL.limit,
-                      used: data.rateLimitGQL.used,
-                      reset: data.rateLimitGQL.reset,
-                    },
-                  });
-                }
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT_GQL',
+                      payload: {
+                        limit: data.rateLimitGQL.limit,
+                        used: data.rateLimitGQL.used,
+                        reset: data.rateLimitGQL.reset,
+                      },
+                    });
+                  }
+                });
+                history.push('/');
               });
             } else {
               setData({
@@ -110,9 +113,6 @@ const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
                 errorMessage: 'Sorry! Login failed',
               });
             }
-          })
-          .then(() => {
-            history.push('/');
           })
           .catch(() => {
             setData({
@@ -123,7 +123,7 @@ const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared, dispatchShared, data, history]);
+  }, [stateShared, dispatchShared, data, location.pathname]);
 
   return (
     <React.Fragment>
@@ -133,16 +133,18 @@ const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
       </Helmet>
       <LoginLayout data={data} apiType={'API'} notification="">
         {() => (
-          <a
-            className="login-link"
-            href={`https://github.com/login/oauth/authorize?scope=user&client_id=${stateShared.client_id}&redirect_uri=${stateShared.redirect_uri}`}
-            onClick={() => {
-              setData({ ...data, errorMessage: '' });
-            }}
-          >
-            <GitHubIcon />
-            <span>Login with GitHub</span>
-          </a>
+          <div className={'login-link-container'}>
+            <a
+              className="login-link"
+              href={`https://github.com/login/oauth/authorize?scope=user&client_id=${stateShared.client_id}&redirect_uri=${stateShared.redirect_uri}`}
+              onClick={() => {
+                setData({ ...data, errorMessage: '' });
+              }}
+            >
+              <GitHubIcon />
+              <span>Login with GitHub</span>
+            </a>
+          </div>
         )}
       </LoginLayout>
     </React.Fragment>

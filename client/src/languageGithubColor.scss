@@ -20,6 +20,13 @@
       background-color: #0e60e3;
     }
   }
+  .Starlak {
+    @if $isColor{
+      color: #76d275;
+    } @else {
+      background-color: #76d275;
+    }
+  }
   .ABAP {
     @if $isColor{
       color: #e8274b;

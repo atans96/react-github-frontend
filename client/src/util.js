@@ -40,10 +40,27 @@ export function readEnvironmentVariable(key) {
   // See https://create-react-app.dev/docs/adding-custom-environment-variables/#docsNav
   return process.env[`REACT_APP_${key}`];
 }
-export function Counter(array) {
-  var count = {};
-  array.forEach((val) => (count[val] = (count[val] || 0) + 1));
-  return count;
+function renameKeys(obj, newKeys) {
+  const keyValues = Object.keys(obj).map((key) => {
+    const newKey = newKeys[key] || key;
+    return { [newKey]: obj[key] };
+  });
+  return Object.assign({}, ...keyValues);
+}
+export function Counter(array, property) {
+  let count = {};
+  if (property) {
+    array.forEach((val) => {
+      count[val[property]] = (count[val[property]] || 0) + 1;
+    });
+  } else {
+    array.forEach((val) => (count[val] = (count[val] || 0) + 1));
+  }
+  const nullExist = count['null'];
+  if (nullExist) {
+    count = renameKeys(count, { null: 'No Language' });
+  }
+  return Object.fromEntries(Object.entries(count).sort((a, b) => b[1] - a[1]));
 }
 export const fastFilter = (fn, a) => {
   const f = []; //final

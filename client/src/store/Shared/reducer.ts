@@ -12,6 +12,7 @@ export type ActionShared =
   | 'PER_PAGE'
   | 'LOGOUT'
   | 'SET_WIDTH'
+  | 'LANGUAGES_INFO'
   | 'USERNAME_ADDED'
   | 'SET_DRAWER_WIDTH'
   | 'TOKEN_RSS_ADDED'
@@ -19,6 +20,7 @@ export type ActionShared =
 
 export const initialStateShared: IStateShared = {
   width: 0,
+  languagesInfo: [],
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
   tokenGQL: '', //setting
@@ -42,6 +44,12 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateStargazers,
         ...initialStateManageProfile,
         ...initialStateRateLimit,
+      };
+    }
+    case 'LANGUAGES_INFO': {
+      return {
+        ...state,
+        languagesInfo: action.payload.languagesInfo,
       };
     }
     case 'NO_DATA_FETCH': {

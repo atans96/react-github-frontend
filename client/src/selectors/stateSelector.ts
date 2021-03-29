@@ -64,7 +64,7 @@ export const alreadySeenCardSelector = createSelector<Seen[] | [], any, any[]>(
       seenCard?.reduce((acc: any[], obj: Seen) => {
         acc.push(obj.id);
         return acc;
-      }, []) || []
+      }, []) ?? []
     );
   }
 );
@@ -101,7 +101,7 @@ export const starRankingFilteredSelector = (sorted: string) =>
           ?.slice()
           .sort(
             (a: starRanking, b: starRanking) => b['trends'][sorted.toLowerCase()] - a['trends'][sorted.toLowerCase()]
-          ) || []
+          ) ?? []
       );
     }
   );

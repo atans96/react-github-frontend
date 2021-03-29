@@ -11,6 +11,7 @@ import SubscribeFeedSetting from './DrawerBarBody/SubscribeFeedSetting';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
 import { BottomNavigationBarProps } from '../HomeBody/BottomNavigationBar';
+import { useLocation } from 'react-router-dom';
 
 interface StyleProps {
   drawerWidth: string;
@@ -74,27 +75,31 @@ const DrawerBar: React.FC<BottomNavigationBarProps> = ({
     e.preventDefault();
     setOpen((prev) => !prev);
   }, []);
-
+  const location = useLocation();
   useEffect(() => {
-    dispatchShared({
-      type: 'SET_DRAWER_WIDTH',
-      payload: {
-        drawerWidth: open ? 200 : 0,
-      },
-    });
-  }, [open]);
-
-  useEffect(() => {
-    return () => {
+    if (location.pathname === '/') {
       dispatchShared({
         type: 'SET_DRAWER_WIDTH',
         payload: {
-          drawerWidth: 0,
+          drawerWidth: open ? 200 : 0,
         },
       });
-    };
+    }
+  }, [open, location.pathname]);
+
+  useEffect(() => {
+    if (location.pathname === '/') {
+      return () => {
+        dispatchShared({
+          type: 'SET_DRAWER_WIDTH',
+          payload: {
+            drawerWidth: 0,
+          },
+        });
+      };
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.pathname]);
 
   return (
     <React.Fragment>

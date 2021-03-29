@@ -13,9 +13,10 @@ import { IAction, IStateShared } from '../../typing/interface';
 import { ActionShared } from '../../store/Shared/reducer';
 import { ActionManageProfile } from '../../store/ManageProfile/reducer';
 import { MergedDataProps } from '../../typing/type';
+import { useLocation } from 'react-router-dom';
 
 interface RowTwoProps {
-  handleLanguageFilter: (args?: string) => void;
+  handleLanguageFilter: (...args: any) => void;
   dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
   state: IStateShared;
@@ -23,6 +24,7 @@ interface RowTwoProps {
 
 const RowTwo = React.memo<RowTwoProps>(
   ({ handleLanguageFilter, dispatchManageProfile, dispatchShared, state }) => {
+    const location = useLocation();
     const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
     const displayName: string | undefined = (RowTwo as React.ComponentType<any>).displayName;
     const { userData } = useApolloFactory(displayName!).query.getUserData();
@@ -36,7 +38,7 @@ const RowTwo = React.memo<RowTwoProps>(
       if (clicked) {
         handleLanguageFilter(language);
       } else {
-        handleLanguageFilter();
+        handleLanguageFilter(language, true);
       }
     };
     useEffect(() => {
@@ -46,7 +48,7 @@ const RowTwo = React.memo<RowTwoProps>(
         userInfoData &&
         userInfoData.getUserInfoData &&
         userInfoData.getUserInfoData.repoContributions.length > 0 &&
-        document.location.pathname === '/profile'
+        location.pathname === '/profile'
       ) {
         dispatchManageProfile({
           type: 'REPO_INFO_ADDED',
@@ -61,13 +63,10 @@ const RowTwo = React.memo<RowTwoProps>(
           },
         });
         setIsLoading(false);
-        const languages = Object.entries(Counter(userInfoData.getUserInfoData.languages));
-        const sortedLanguages = languages.sort((a, b) => {
-          return b[1] - a[1];
-        });
-        setLanguageStarsInfo(sortedLanguages);
+        const languages = Object.entries(Counter(userInfoData?.getUserInfoData?.languages ?? []));
+        setLanguageStarsInfo(languages);
       }
-    }, [userInfoData, userInfoDataLoading, userInfoDataError]);
+    }, [userInfoData, userInfoDataLoading, userInfoDataError, location.pathname]);
 
     const consumers = useApolloFactory(displayName!).consumers().consumers;
     const alreadyFetch = useRef(false);
@@ -77,7 +76,7 @@ const RowTwo = React.memo<RowTwoProps>(
         consumers[displayName!] &&
         consumers[displayName!].includes(state.fetchDataPath) &&
         !alreadyFetch.current &&
-        document.location.pathname === '/profile'
+        location.pathname === '/profile'
       ) {
         alreadyFetch.current = true;
         (async () => {
@@ -160,11 +159,8 @@ const RowTwo = React.memo<RowTwoProps>(
                 },
               });
               setIsLoading(false);
-              const languages = Object.entries(Counter(temp.languages));
-              const sortedLanguages = languages.sort((a, b) => {
-                return b[1] - a[1];
-              });
-              setLanguageStarsInfo(sortedLanguages);
+              const languages = Object.entries(Counter(temp.languages ?? []));
+              setLanguageStarsInfo(languages);
             }
           });
           if (!isApiExceeded) {
@@ -192,7 +188,7 @@ const RowTwo = React.memo<RowTwoProps>(
         });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.fetchDataPath, consumers, alreadyFetch.current]);
+    }, [state.fetchDataPath, consumers, alreadyFetch.current, location.pathname]);
 
     return (
       <List>
@@ -244,7 +240,7 @@ const RowTwo = React.memo<RowTwoProps>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return isEqualObjects(prevProps.state, nextProps.state);
+    return isEqualObjects(prevProps.state, nextProps.state) && isEqualObjects(prevProps.state, nextProps.state);
   }
 );
 RowTwo.displayName = 'LanguageStars';

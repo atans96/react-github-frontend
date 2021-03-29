@@ -17,6 +17,7 @@ import { useApolloFactory } from '../../hooks/useApolloFactory';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { noop } from '../../util/util';
 import { LanguagePreference } from '../../typing/type';
+import { useLocation } from 'react-router-dom';
 
 interface StyleProps {
   drawerWidth: string;
@@ -52,6 +53,7 @@ const RowOne = React.memo(({}) => {
     e.preventDefault();
     setOpenLanguages(!openLanguages);
   };
+  const location = useLocation();
   const displayName: string | undefined = (RowOne as React.ComponentType<any>).displayName;
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
@@ -61,15 +63,15 @@ const RowOne = React.memo(({}) => {
       !userDataLoading &&
       !userDataError &&
       userData?.getUserData?.languagePreference?.length > 0 &&
-      document.location.pathname === '/profile'
+      location.pathname === '/profile'
     ) {
       setLanguagePreferences(userData.getUserData.languagePreference);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userDataLoading, userDataError, userData]);
+  }, [userDataLoading, userDataError, userData, location.pathname]);
 
   useDeepCompareEffect(() => {
-    if (document.location.pathname === '/profile') {
+    if (location.pathname === '/profile') {
       languagesPreferenceAdded({
         variables: {
           languagePreference: languagePreferences,
@@ -77,15 +79,15 @@ const RowOne = React.memo(({}) => {
       }).then(noop);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languagePreferences]);
+  }, [languagePreferences, location.pathname]);
 
   const languagePreferencesRef = useRef<any[]>([]);
 
   useEffect(() => {
-    if (document.location.pathname === '/profile') {
+    if (location.pathname === '/profile') {
       languagePreferencesRef.current = languagePreferences;
     }
-  });
+  }, [languagePreferences, location.pathname]);
 
   const handleCheckboxChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {

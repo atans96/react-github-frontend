@@ -24,6 +24,7 @@ import { useApolloFactory } from '../hooks/useApolloFactory';
 import { Action } from '../store/Home/reducer';
 import { ActionStargazers } from '../store/Staargazers/reducer';
 import { ActionShared } from '../store/Shared/reducer';
+import { useLocation } from 'react-router-dom';
 
 const defaultTheme = createMuiTheme();
 const theme = createMuiTheme({
@@ -245,8 +246,10 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
     // with the state at their respective component without the need to pass the state to the children.
     const { getRootProps } = useEventHandlerComposer({ onClickCb });
 
+    const location = useLocation();
+
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         if (state.state.filteredTopics.length > 0) {
           dispatch({
             type: 'MERGED_DATA_FILTER_BY_TAGS',
@@ -271,7 +274,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.state.filteredTopics, state.state.mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
+    }, [state.state.filteredTopics, state.state.mergedData, location.pathname]); // we want this to be re-executed when the user scroll and fetchUserMore
     // being executed at Home.js, thus causing mergedData to change. Now if filteredTopics.length > 0, that means we only display new
     // cards that have been fetched that only match with filteredTopics.
 
@@ -288,11 +291,11 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
     }, []);
 
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         // this is to render the new topic tags based on filteredMergedData when it throws new data
         const result: any[] = [];
         whichToUse().forEach((obj: MergedDataProps) => {
-          const isTopicsNull = obj.topics || [];
+          const isTopicsNull = obj.topics ?? [];
           const topics = [...isTopicsNull];
           if (obj.language) {
             topics.push(obj.language.toLowerCase());
@@ -325,10 +328,10 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
         });
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.state.filteredMergedData]);
+    }, [state.state.filteredMergedData, location.pathname]);
 
     useEffect(() => {
-      if (document.location.pathname === '/') {
+      if (location.pathname === '/') {
         return () => {
           dispatch({
             type: 'VISIBLE',
@@ -343,7 +346,8 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
         };
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [location.pathname]);
+
     useClickOutside(resultsRef, () => {
       setVisible(false);
       setVisibleSearchesHistory(false);
@@ -440,7 +444,7 @@ const SearchBar: React.FC<SearchBarProps> = React.memo(
                             searchesData?.getSearches?.reduce((acc: any, obj: SearchesData) => {
                               acc.push(obj.search);
                               return acc;
-                            }, []) || [];
+                            }, []) ?? [];
                           return !temp.includes(Object.keys(search)[0]);
                         }, state.state.searchUsers).map((result, idx) => (
                           <Result

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './RateLimitInfo.css';
-import { epochToJsDate } from '../util';
-import { IStateRateLimit } from '../typing/interface';
+import { epochToJsDate } from '../../../util';
+import { IStateRateLimit } from '../../../typing/interface';
 import clsx from 'clsx';
+import { useLocation } from 'react-router-dom';
 
 interface RateLimitInfo {
   data: IStateRateLimit['rateLimit'];
@@ -12,21 +13,25 @@ interface RateLimitInfo {
 
 const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch, rateLimitAnimationAdded }) => {
   const [resetTime, setResetTime] = useState<string>('');
+  const location = useLocation();
   useEffect(() => {
-    const interval = setInterval(() => {
-      setResetTime(epochToJsDate(data.reset));
-    }, 1000);
-    if (resetTime === '00 second') {
-      // prevent the interval to be changed further after hit 00 seconds
-      clearInterval(interval);
-      setRefetch(true); // setState from parent here so that it will refetch the rate_limit_info again
-      setResetTime(''); // setState here to set back the resetTime from '00 second' to '' to be cleared
-      // otherwise after setRefetch(true), the condition here won't get hit
+    if (location.pathname === '/') {
+      const interval = setInterval(() => {
+        setResetTime(epochToJsDate(data.reset));
+      }, 1000);
+      if (resetTime === '00 second') {
+        // prevent the interval to be changed further after hit 00 seconds
+        clearInterval(interval);
+        setRefetch(true); // setState from parent here so that it will refetch the rate_limit_info again
+        setResetTime(''); // setState here to set back the resetTime from '00 second' to '' to be cleared
+        // otherwise after setRefetch(true), the condition here won't get hit
+      }
+      return () => {
+        clearInterval(interval);
+      };
     }
-    return () => {
-      clearInterval(interval);
-    };
-  }, [data.reset, resetTime, setRefetch]);
+  }, [data.reset, resetTime, setRefetch, location.pathname]);
+
   return (
     <div id="container">
       <div
