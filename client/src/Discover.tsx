@@ -441,6 +441,22 @@ const Discover = React.memo<DiscoverProps>(
             </Then>
           </If>
 
+          <If
+            condition={
+              !suggestedDataLoading &&
+              !suggestedDataError &&
+              !suggestedData?.suggestedData?.getSuggestedRepo?.repoInfo?.length
+            }
+          >
+            <Then>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <h3>Sorry we don't have the data yet!</h3>
+                </div>
+              </div>
+            </Then>
+          </If>
+
           <If condition={isLoading}>
             <Then>
               <div style={{ textAlign: 'center' }}>

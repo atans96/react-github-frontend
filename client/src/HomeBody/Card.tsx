@@ -153,7 +153,7 @@ const Card: React.FC<CardRef> = React.forwardRef(
               <div className={'language-github-color'}>
                 <ul className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}>
                   <li className={'language-list'}>
-                    <h6 style={{ color: 'black' }}>{githubData.language}</h6>
+                    <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
                   </li>
                 </ul>
               </div>
