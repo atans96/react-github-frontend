@@ -20,6 +20,9 @@ import { initialStateDiscover, reducerDiscover } from './store/Discover/reducer'
 import { initialStateManageProfile, reducerManageProfile } from './store/ManageProfile/reducer';
 import { initialStateShared, reducerShared } from './store/Shared/reducer';
 import { initialStateStargazers, reducerStargazers } from './store/Staargazers/reducer';
+import { IContext } from './typing/interface';
+import Details from './Details';
+
 const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
   const ApolloContext = getApolloContext();
   const value = useMemo(
@@ -30,6 +33,7 @@ const CustomApolloProvider = ({ client, children, tokenGQL, session }: any) => {
   return <ApolloContext.Provider value={value}>{children}</ApolloContext.Provider>;
 };
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
+const CountContext = React.createContext<IContext | undefined>(undefined);
 export const Main = () => {
   const [stateShared, dispatchShared] = useReducer(reducerShared, initialStateShared);
   const [state, dispatch] = useReducer(reducer, initialState);
@@ -170,12 +174,18 @@ export const Main = () => {
             <Router>
               <AuthedHandler
                 component={NavBar}
+                path="/"
                 authenticator={true}
                 componentProps={{
                   state,
                   stateShared,
+                  stateManageProfile,
+                  stateDiscover,
+                  stateStargazers,
                   dispatch,
                   dispatchStargazers,
+                  dispatchDiscover,
+                  dispatchManageProfile,
                   dispatchShared,
                 }}
               />
@@ -219,6 +229,7 @@ export const Main = () => {
                 <AuthedHandler
                   exact
                   path="/discover"
+                  redirect="/login"
                   component={Global}
                   authenticator={stateShared.isLoggedIn === true}
                   componentProps={{
@@ -237,6 +248,7 @@ export const Main = () => {
                 <AuthedHandler
                   exact
                   path="/profile"
+                  redirect="/login"
                   component={Global}
                   authenticator={stateShared.isLoggedIn === true}
                   componentProps={{
@@ -256,7 +268,7 @@ export const Main = () => {
                   exact
                   path="/detail/:id"
                   redirect="/login"
-                  component={Global}
+                  component={Details}
                   authenticator={stateShared.isLoggedIn === true}
                   componentProps={{
                     state,

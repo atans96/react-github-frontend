@@ -1364,6 +1364,13 @@
       background-color: #1f1f1f;
     }
   }
+  .Vim-script {
+    @if $isColor{
+      color: #199f4b;
+    } @else {
+      background-color: #199f4b;
+    }
+  }
   .Vue {
     @if $isColor{
       color: #2c3e50;

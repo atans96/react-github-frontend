@@ -315,6 +315,7 @@ const Global: React.FC<{
               );
             }}
           />
+
           <PrefetchKeepMountedLayout
             mountedCondition={props.routerProps.location.pathname === '/discover'}
             render={() => {
@@ -338,6 +339,7 @@ const Global: React.FC<{
               );
             }}
           />
+
           <If condition={props.routerProps.location.pathname === '/login'}>
             <Then>
               <Login
