@@ -12,14 +12,14 @@ import {
 } from '@material-ui/core';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { addRSSFeed, noop } from '../../util/util';
-import { Then } from '../../util/react-if/Then';
-import { If } from '../../util/react-if/If';
-import { fastFilter, uniqFast } from '../../util';
+import { addRSSFeed, noop } from '../../../util/util';
+import { Then } from '../../../util/react-if/Then';
+import { If } from '../../../util/react-if/If';
+import { fastFilter, uniqFast } from '../../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
-import { useTrackedStateShared } from '../../selectors/stateContextSelector';
+import { useApolloFactory } from '../../../hooks/useApolloFactory';
+import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import idx from 'idx';
 
 const useStyles = makeStyles<Theme>(() => ({

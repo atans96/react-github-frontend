@@ -6,7 +6,7 @@ import clsx from 'clsx';
 import { Loading } from '../util';
 import { If } from '../util/react-if/If';
 import useImage from '../hooks/useImage';
-import SliderImage from '../HomeBody/CardBody/SliderImage';
+import SliderImage from './SliderImage';
 import { useClickOutside } from '../hooks/hooks';
 
 interface ImagesModalLayoutProps {

@@ -1,7 +1,7 @@
 import { createSelector } from 'reselect';
 import { createContainer } from 'unstated-next';
 import { useQuery } from '@apollo/client';
-import { GET_STAR_RANKING, GET_SUGGESTED_REPO, GET_SUGGESTED_REPO_IMAGES } from '../queries';
+import { GET_STAR_RANKING, GET_SUGGESTED_REPO, GET_SUGGESTED_REPO_IMAGES } from '../graphql/queries';
 import { StaticState } from '../typing/interface';
 import {
   RepoInfoSuggested,

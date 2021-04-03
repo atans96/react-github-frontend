@@ -3,14 +3,14 @@ import { CircularProgress, Collapse, List, ListItem, ListItemIcon, ListItemText,
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import SettingsIcon from '@material-ui/icons/Settings';
-import { If } from '../../util/react-if/If';
-import { Then } from '../../util/react-if/Then';
+import { If } from '../../../util/react-if/If';
+import { Then } from '../../../util/react-if/Then';
 import Result from './SubscribFeedSettingBody/Result';
 import SendIcon from '@material-ui/icons/Send';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
-import { Login } from '../../typing/type';
-import { useTrackedState, useTrackedStateShared } from '../../selectors/stateContextSelector';
+import { useApolloFactory } from '../../../hooks/useApolloFactory';
+import { Login } from '../../../typing/type';
+import { useTrackedState, useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import idx from 'idx';
 
 const useStyles = makeStyles<Theme>(() => ({

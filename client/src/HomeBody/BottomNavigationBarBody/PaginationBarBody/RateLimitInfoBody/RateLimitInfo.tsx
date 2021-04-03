@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import './RateLimitInfo.css';
-import { epochToJsDate } from '../../../util';
+import { epochToJsDate } from '../../../../util';
 import clsx from 'clsx';
 import { useLocation } from 'react-router-dom';
-import { useTrackedStateRateLimit } from '../../../selectors/stateContextSelector';
+import { useTrackedStateRateLimit } from '../../../../selectors/stateContextSelector';
 
 interface RateLimitInfo {
   setRefetch: any;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { OnlyYesterday } from './TrendSummaryBody/OnlyYesterday';
 import { MonthlyTrendsItem } from './TrendSummaryBody/MonthlyTrendsItem';
-import { fastFilter } from '../../../util';
+import { fastFilter } from '../../util';
 import './TrendSummaryStyle.scss';
 
 interface TrendSummaryProps {
