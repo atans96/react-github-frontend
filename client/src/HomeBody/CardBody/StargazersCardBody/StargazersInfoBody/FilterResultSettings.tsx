@@ -3,8 +3,7 @@ import InputSlider from '../../../../Layout/SliderLayout';
 import { CheckIcon, PeopleIcon, ReposIcon } from '../../../../util/icons';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import Button from '@material-ui/core/Button';
-import { IAction } from '../../../../typing/interface';
-import { ActionStargazers } from '../../../../store/Staargazers/reducer';
+import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -14,13 +13,13 @@ const useStyles = makeStyles((theme) => ({
 
 export interface FilterResultSettings {
   props: any;
-  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
 }
 
-const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatchStargazersUser }) => {
+const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props }) => {
   const classes = useStyles();
+  const [, dispatch] = useTrackedStateStargazers();
   const dispatchStargazersUsers = (stargazersUsers: number) => {
-    dispatchStargazersUser({
+    dispatch({
       type: 'STARGAZERS_USERS',
       payload: {
         stargazersUsers: stargazersUsers,
@@ -71,6 +70,6 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatchS
       </div>
     </div>
   );
-};
+});
 FilterResultSettings.displayName = 'FilterResultSettings';
 export default FilterResultSettings;

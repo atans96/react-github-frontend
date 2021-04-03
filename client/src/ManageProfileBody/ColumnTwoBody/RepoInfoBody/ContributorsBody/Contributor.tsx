@@ -1,18 +1,16 @@
 import React from 'react';
-import { ContributorsProps } from '../../../../typing/type';
-import { useHistory } from 'react-router';
-import { IAction } from '../../../../typing/interface';
-import { ActionShared } from '../../../../store/Shared/reducer';
-import { Action } from '../../../../store/Home/reducer';
+import { useHistory } from 'react-router-dom';
+import { useTrackedState, useTrackedStateShared } from '../../../../selectors/stateContextSelector';
+import { ContributorProps } from '../../../../typing/type';
 
-interface ContributorProps {
-  obj: ContributorsProps;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatch: React.Dispatch<IAction<Action>>;
+interface Props {
+  obj: ContributorProps;
 }
 
-const Contributor: React.FC<ContributorProps> = ({ obj, dispatchShared, dispatch }) => {
+const Contributor: React.FC<Props> = ({ obj }) => {
   const history = useHistory();
+  const [, dispatchShared] = useTrackedStateShared();
+  const [, dispatch] = useTrackedState();
   const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
     e.preventDefault();
     dispatchShared({

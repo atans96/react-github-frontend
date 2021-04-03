@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Search from './ColumnTwoBody/Search';
 import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../typing/type';
@@ -6,36 +6,26 @@ import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import _ from 'lodash';
 import { fastFilter, isEqualObjects } from '../util';
-import { IAction, IStateManageProfile, IStateShared } from '../typing/interface';
 import Details from './ColumnTwoBody/Details';
 import RepoInfo from './ColumnTwoBody/RepoInfo';
-import { useDraggable } from '../hooks/useDraggable';
-import { DraggableCore } from 'react-draggable';
-import { ActionShared } from '../store/Shared/reducer';
-import { ActionManageProfile } from '../store/ManageProfile/reducer';
-import { useLocation } from 'react-router-dom';
-import { Action } from '../store/Home/reducer';
+import { useTrackedStateManageProfile, useTrackedStateShared } from '../selectors/stateContextSelector';
+import { useDeepMemo } from '../hooks/useDeepMemo';
 
 interface ColumnTwoProps {
   languageFilter: string[];
-  stateManageProfile: IStateManageProfile;
-  stateShared: IStateShared;
-  dispatchManageProfile: React.Dispatch<IAction<ActionManageProfile>>;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatch: React.Dispatch<IAction<Action>>;
 }
 
 const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
-  ({ stateShared, languageFilter, dispatchManageProfile, stateManageProfile, dispatchShared, dispatch }) => {
+  ({ languageFilter }) => {
+    const [state] = useTrackedStateManageProfile();
+    const [stateShared] = useTrackedStateShared();
     const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
-    const displayName: string | undefined = (ColumnTwo as React.ComponentType<any>).displayName;
     const [typedFilter, setTypedFilter] = useState('');
     const [active, setActive] = useState('');
     const [height, setHeight] = useState('100vh');
     const [fullName, setFullName] = useState('');
     const [branch, setBranch] = useState('');
     const [htmlUrl, setHtmlUrl] = useState('');
-    const location = useLocation();
     const handleHeightChange = (readmeHeight: string) => {
       setHeight(readmeHeight);
     };
@@ -66,14 +56,15 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
       []
     );
-    const render = (): RepoInfoProps[] => {
+
+    const render = () => {
       const filter1 = fastFilter((obj: RepoInfoProps) => {
         if (languageFilter.length > 0 && languageFilter.includes(obj.language)) {
           return obj;
         } else if (languageFilter.length === 0) {
           return obj;
         }
-      }, stateManageProfile.repoInfo);
+      }, state.repoInfo);
       const filter2 = fastFilter((obj: RepoInfoProps) => {
         if (
           (typedFilter.length > 0 &&
@@ -91,22 +82,6 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
       }, filter1);
       return fastFilter((obj: RepoInfoProps) => !!obj, filter2);
     };
-    const defaultWidth = useRef(stateManageProfile.columnWidth?.get(displayName!)?.width || 0);
-    const [drawerWidth, dragHandlers, drawerRef] = useDraggable({
-      drawerWidthClient: defaultWidth.current,
-    });
-
-    useEffect(() => {
-      if (stateManageProfile.columnWidth && location.pathname === '/profile') {
-        let total = 0;
-        stateManageProfile.columnWidth.forEach((obj) => (total += obj.width));
-        const res = stateManageProfile.columnWidth.set(
-          displayName!,
-          Object.assign({}, { name: displayName!, width: drawerWidth, draggerPosition: total })
-        );
-        dispatchManageProfile({ type: 'MODIFY', payload: { columnWidth: res } });
-      }
-    }, [stateManageProfile.columnWidth.get('ColumnOne'), drawerWidth, location.pathname]);
 
     return (
       <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
@@ -114,10 +89,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
           <thead>
             <tr>
               <th>
-                <Search
-                  handleInputChange={handleInputChange}
-                  width={drawerWidth < defaultWidth.current ? defaultWidth.current : drawerWidth}
-                />
+                <Search handleInputChange={handleInputChange} width={350} />
                 <p>Search in:</p>
                 <Checkboxes checkedItems={checkedItems} handleCheckboxClick={handleCheckboxClick} />
               </th>
@@ -128,27 +100,18 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
               <td style={{ position: 'absolute' }}>
                 <div
                   style={{
-                    width: `${drawerWidth < defaultWidth.current ? defaultWidth.current : drawerWidth}px`,
+                    width: `350px`,
                     background: 'var(--background-theme-color)',
                     overflowY: 'auto',
                     height: height,
                     display: 'inline-block',
                   }}
-                  ref={drawerRef}
                 >
-                  {render().map((obj: RepoInfoProps, idx) => {
-                    return (
-                      <RepoInfo
-                        active={active}
-                        state={stateManageProfile}
-                        obj={obj}
-                        key={idx}
-                        onClickRepoInfo={onClickRepoInfo}
-                        dispatchShared={dispatchShared}
-                        dispatch={dispatch}
-                      />
-                    );
-                  })}
+                  {useDeepMemo(() => {
+                    return render().map((obj: RepoInfoProps, idx) => {
+                      return <RepoInfo active={active} obj={obj} key={idx} onClickRepoInfo={onClickRepoInfo} />;
+                    });
+                  }, [state.repoInfo, checkedItems])}
                 </div>
               </td>
               <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
@@ -167,26 +130,11 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
             </tr>
           </tbody>
         </table>
-        <DraggableCore key="columnTwo" {...dragHandlers}>
-          <div style={{ height: '100vh', width: '0px' }}>
-            <div
-              className={'dragger'}
-              style={{
-                top: '40%',
-                left: `${stateManageProfile.columnWidth?.get(displayName!)?.draggerPosition || 0}px`,
-              }}
-            />
-          </div>
-        </DraggableCore>
       </div>
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.stateShared, nextProps.stateShared) &&
-      isEqualObjects(prevProps.stateManageProfile, nextProps.stateManageProfile) &&
-      isEqualObjects(prevProps.languageFilter, nextProps.languageFilter)
-    );
+    return isEqualObjects(prevProps.languageFilter, nextProps.languageFilter);
   }
 );
 ColumnTwo.displayName = 'ColumnTwo';

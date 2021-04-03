@@ -1,23 +1,25 @@
 import React from 'react';
-import { BottomNavigationBarProps } from '../../HomeBody/BottomNavigationBar';
 import './RepoStat.css';
+import idx from 'idx';
+import { useTrackedState } from '../../selectors/stateContextSelector';
 
-const RepoStat: React.FC<{
-  componentProps: Pick<BottomNavigationBarProps, 'state'>;
-}> = (props) => {
+const RepoStat = () => {
+  const [state] = useTrackedState();
   return (
     <div id={'container-stat'}>
-      {props.componentProps.state.repoStat.map((arr, idx) => {
-        return (
-          <React.Fragment key={idx}>
-            <div id="box-stat" style={{ borderRight: '1px solid black' }}>
-              <span style={{ padding: '10px' }}>
-                {arr[0]}: {arr[1]}
-              </span>
-            </div>
-          </React.Fragment>
-        );
-      })}
+      {idx(state, (_) =>
+        _.repoStat.map((arr, idx) => {
+          return (
+            <React.Fragment key={idx}>
+              <div id="box-stat" style={{ borderRight: '1px solid black' }}>
+                <span style={{ padding: '10px' }}>
+                  {arr[0]}: {arr[1]}
+                </span>
+              </div>
+            </React.Fragment>
+          );
+        })
+      ) ?? <></>}
     </div>
   );
 };

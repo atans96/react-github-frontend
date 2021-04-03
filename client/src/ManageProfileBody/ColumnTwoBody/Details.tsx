@@ -36,7 +36,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fullName, branch, location.pathname]
+    [fullName, branch]
   );
   useEffect(() => {
     if (readmeRef?.current && readme !== '' && location.pathname === '/profile') {
@@ -48,7 +48,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url, ha
       }, 1500);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readmeRef.current, readme, location.pathname]);
+  }, [readmeRef.current, readme]);
 
   return (
     <div ref={readmeRef} style={width < 1100 ? { width: `${width - 650}px` } : {}}>

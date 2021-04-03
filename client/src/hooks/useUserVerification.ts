@@ -4,7 +4,7 @@ import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from '../util';
 import { logoutAction } from '../util/util';
 import { useApolloFactory } from './useApolloFactory';
-import { useHistory } from 'react-router';
+import { useHistory } from 'react-router-dom';
 import { IAction } from '../typing/interface';
 import { ActionShared } from '../store/Shared/reducer';
 
@@ -13,10 +13,10 @@ interface ComponentProps {
 }
 
 interface useUserVerificationProps {
-  componentProps: ComponentProps;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
-function useUserVerification(props: useUserVerificationProps) {
+function useUserVerification(dispatchShared: React.Dispatch<IAction<ActionShared>>) {
   const history = useHistory();
   const [username, setUsername] = useState<any>(undefined);
   const { userDataLoading } = useApolloFactory(Function.name).query.getUserData();
@@ -38,10 +38,10 @@ function useUserVerification(props: useUserVerificationProps) {
             setUsername(response.username);
             localStorage.setItem('sess', response.token);
           } else {
-            logoutAction(history, props.componentProps.dispatchShared);
+            logoutAction(history, dispatchShared);
           }
         } catch (e) {
-          logoutAction(history, props.componentProps.dispatchShared);
+          logoutAction(history, dispatchShared);
           console.error(e);
         }
         isMounted.current = true;

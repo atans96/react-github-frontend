@@ -1,17 +1,14 @@
 import React, { useCallback, useRef } from 'react';
-import { NavLink, RouteComponentProps } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
-import { IAction, IStateDiscover, IStateShared } from '../typing/interface';
 import clsx from 'clsx';
 import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
-import { ActionDiscover } from '../store/Discover/reducer';
-import { ActionShared } from '../store/Shared/reducer';
 import UserCardDiscover from './CardBody/UserCardDiscover';
-import { ActionStargazers } from '../store/Staargazers/reducer';
 import StargazersDiscover from './CardBody/StargazersDiscover';
+import { StateStargazersProvider } from '../selectors/stateContextSelector';
 
 export interface Card {
   index: number;
@@ -19,35 +16,15 @@ export interface Card {
 }
 
 interface CardRef extends Card {
-  stateDiscover: { stateDiscover: IStateDiscover; stateShared: IStateShared };
-  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
-  routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
   columnCount: number;
   imagesMapDataDiscover: Map<number, any>;
   sorted: string;
 }
 
 const CardDiscover: React.FC<CardRef> = React.forwardRef(
-  (
-    {
-      routerProps,
-      stateDiscover,
-      dispatchDiscover,
-      dispatchStargazers,
-      githubData,
-      index,
-      dispatchShared,
-      columnCount,
-      imagesMapDataDiscover,
-      sorted,
-    },
-    ref
-  ) => {
+  ({ githubData, index, columnCount, imagesMapDataDiscover, sorted }, ref) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
     // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
-
     const userCardMemoizedData = useCallback(() => {
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,6 +57,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
       }).then(noop);
     };
     const isVisibleRef = useRef(false);
+    const location = useLocation();
     if (!githubData) return <p>No githubData, sorry</p>;
     return (
       <VisibilitySensor>
@@ -94,14 +72,9 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               })}
               style={!isVisibleRef.current ? { contentVisibility: 'auto' } : {}}
             >
-              <UserCardDiscover
-                data={userCardMemoizedData()}
-                sorted={sorted}
-                routerProps={routerProps}
-                dispatchDiscover={dispatchDiscover}
-                dispatchShared={dispatchShared}
-                dispatchStargazers={dispatchStargazers}
-              />
+              <StateStargazersProvider>
+                <UserCardDiscover data={userCardMemoizedData()} sorted={sorted} />
+              </StateStargazersProvider>
               <h3 style={{ textAlign: 'center' }}>
                 <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
               </h3>
@@ -113,11 +86,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               <div className="trunctuatedTexts">
                 <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
               </div>
-              <StargazersDiscover
-                data={stargazersMemoizedGithubData()}
-                stateDiscover={stateDiscover}
-                dispatchShared={dispatchShared}
-              />
+              <StargazersDiscover data={stargazersMemoizedGithubData()} />
               <div className={'language-github-color'}>
                 <ul
                   className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
@@ -135,7 +104,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
                 <NavLink
                   to={{
                     pathname: `/detail/${githubData.id}`,
-                    state: { data: githubData, path: document.location.pathname },
+                    state: { data: githubData, path: location.pathname },
                   }}
                   className="btn-clear nav-link"
                 >

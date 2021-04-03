@@ -1,16 +1,14 @@
 import React from 'react';
 import Topic from './TopicsCardBody/Topic';
 import { isEqualObjects } from '../../util';
-import { IStateShared } from '../../typing/interface';
 
 interface TopicsCard {
   data: string[];
   getRootProps: any;
-  state: IStateShared;
 }
 
 const TopicsCard = React.memo<TopicsCard>(
-  ({ data, getRootProps, state }) => {
+  ({ data, getRootProps }) => {
     return (
       <ul className="masonry space-center">
         {data?.map((topic, idx) => (
@@ -24,11 +22,7 @@ const TopicsCard = React.memo<TopicsCard>(
     // by getRootProps to re-declare since it's using tokenGQL as its dependency, so you need to
     // include to dependency array for this TopicCard to re-declare getRootProps with updated tokenGQL
     // otherwise it will use stale state in the callback
-    return (
-      isEqualObjects(prevProps.data, nextProps.data) &&
-      isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL) &&
-      isEqualObjects(prevProps.state.perPage, nextProps.state.perPage)
-    );
+    return isEqualObjects(prevProps.data, nextProps.data);
   }
 );
 TopicsCard.displayName = 'TopicsCard';

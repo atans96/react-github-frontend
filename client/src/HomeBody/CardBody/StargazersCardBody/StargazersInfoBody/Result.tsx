@@ -4,8 +4,7 @@ import { useUserCardStyles } from '../../UserCardStyle';
 import './ResultStyle.scss';
 import '../StargazersInfoStyle.scss';
 import clsx from 'clsx';
-import { IAction, IState, IStateShared, IStateStargazers } from '../../../../typing/interface';
-import { StargazerProps, Login } from '../../../../typing/type';
+import { Login, StargazerProps } from '../../../../typing/type';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import { useMutation } from '@apollo/client';
 import { WATCH_USER_REMOVED } from '../../../../mutations';
@@ -13,28 +12,23 @@ import { GET_WATCH_USERS } from '../../../../queries';
 import { fastFilter } from '../../../../util';
 import { useApolloFactory } from '../../../../hooks/useApolloFactory';
 import { noop } from '../../../../util/util';
-import { Action } from '../../../../store/Home/reducer';
-import { ActionStargazers } from '../../../../store/Staargazers/reducer';
-import { ActionShared } from '../../../../store/Shared/reducer';
 import { useLocation } from 'react-router-dom';
+import idx from 'idx';
+import {
+  useTrackedState,
+  useTrackedStateShared,
+  useTrackedStateStargazers,
+} from '../../../../selectors/stateContextSelector';
 
 export interface Result {
   getRootPropsCard: any;
   stargazer: StargazerProps;
-  stateStargazers: { state: IState; stateStargazers: IStateStargazers; stateShared: IStateShared };
-  dispatch: React.Dispatch<IAction<Action>>;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
 }
 
-const Result: React.FC<Result> = ({
-  stateStargazers,
-  dispatchStargazersUser,
-  dispatch,
-  stargazer,
-  dispatchShared,
-  getRootPropsCard,
-}) => {
+const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
+  const [, dispatchShared] = useTrackedStateShared();
+  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
+  const [, dispatch] = useTrackedState();
   const [hovered, setHovered] = useState('');
   const classes = useUserCardStyles();
   const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
@@ -61,17 +55,21 @@ const Result: React.FC<Result> = ({
   const location = useLocation();
 
   useEffect(() => {
+    let isFinished = false;
     if (
       !loadingWatchUsersData &&
       !errorWatchUsersData &&
-      watchUsersData &&
-      watchUsersData.getWatchUsers?.login &&
-      location.pathname === '/'
+      idx(watchUsersData, (_) => _.getWatchUsers.login) &&
+      location.pathname === '/' &&
+      !isFinished
     ) {
-      setSubscribe(watchUsersData.getWatchUsers?.login?.find((obj: Login) => obj.login === stargazer.login) !== null);
+      setSubscribe(watchUsersData.getWatchUsers.login.find((obj: Login) => obj.login === stargazer.login) !== null);
+      return () => {
+        isFinished = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchUsersData, loadingWatchUsersData, errorWatchUsersData, location.pathname]);
+  }, [watchUsersData, loadingWatchUsersData, errorWatchUsersData]);
   const [subscribe, setSubscribe] = useState(false);
   const renderStyleEffect = () => {
     let style;
@@ -86,7 +84,8 @@ const Result: React.FC<Result> = ({
   const onClickSubscribe = (e: React.MouseEvent) => {
     e.preventDefault();
     let subscribeStatus: boolean;
-    if (!watchUsersData?.getWatchUsers?.login?.find((obj: Login) => obj.login === stargazer.login)) {
+    const ja = idx(watchUsersData, (_) => _.getWatchUsers.login) ?? [];
+    if (!ja.find((obj) => obj.login === stargazer.login)) {
       setSubscribe(true);
       subscribeStatus = true;
     } else {
@@ -112,36 +111,39 @@ const Result: React.FC<Result> = ({
   };
   const onClickQueue = (e: React.MouseEvent) => {
     e.preventDefault();
-    dispatchStargazersUser({
+    dispatchStargazers({
       type: 'SET_QUEUE_STARGAZERS',
       payload: {
         stargazersQueueData: stargazer,
       },
     });
-    const updatedStargazersData = stateStargazers.stateStargazers.stargazersData.find(
-      (obj: StargazerProps) => obj.id === stargazer.id
-    );
+    const ja = idx(stateStargazers, (_) => _.stargazersData) ?? [];
+    const updatedStargazersData = ja.find((obj: StargazerProps) => obj.id === stargazer.id);
     if (updatedStargazersData !== undefined) {
       try {
         updatedStargazersData.isQueue = !updatedStargazersData.isQueue;
       } catch {
         updatedStargazersData['isQueue'] = false;
       }
-      dispatchStargazersUser({
+      dispatchStargazers({
         type: 'STARGAZERS_UPDATED',
         payload: {
-          stargazersData: stateStargazers.stateStargazers.stargazersData.map((obj: StargazerProps) => {
-            if (obj.id === updatedStargazersData.id) {
-              return updatedStargazersData;
-            } else {
-              return obj;
-            }
-          }),
+          stargazersData: idx(
+            stateStargazers,
+            (_) =>
+              _.stargazersData.map((obj: StargazerProps) => {
+                if (obj.id === updatedStargazersData.id) {
+                  return updatedStargazersData;
+                } else {
+                  return obj;
+                }
+              }) ?? []
+          ),
         },
       });
     } else {
       stargazer.isQueue = false;
-      dispatchStargazersUser({
+      dispatchStargazers({
         type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
         payload: {
           stargazersData: stargazer,
@@ -153,7 +155,7 @@ const Result: React.FC<Result> = ({
     dispatch({
       type: 'REMOVE_ALL',
     });
-    dispatchStargazersUser({
+    dispatchStargazers({
       type: 'REMOVE_ALL',
     });
     dispatchShared({
@@ -215,10 +217,14 @@ const Result: React.FC<Result> = ({
             <Typography variant="subtitle2" className={classes.typography}>
               {
                 // filter will get updated when state.language changes due to LanguagesList.tsx click event
-                stargazer.starredRepositories.nodes
-                  .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
-                  .map((x: { name: string }) => x && x.name)
-                  .filter((language: string) => language === stateStargazers.stateStargazers.language).length
+                idx(
+                  stargazer,
+                  (_) =>
+                    _.starredRepositories.nodes
+                      .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
+                      .map((x: { name: string }) => x && x.name)
+                      .filter((language: string) => language === stateStargazers.language).length
+                ) ?? 'No Language'
               }
             </Typography>
           </div>

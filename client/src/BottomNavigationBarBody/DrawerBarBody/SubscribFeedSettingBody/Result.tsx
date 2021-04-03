@@ -9,20 +9,22 @@ import { WATCH_USER_REMOVED } from '../../../mutations';
 import { GET_WATCH_USERS } from '../../../queries';
 import useHover from '../../../hooks/useHover';
 import { fastFilter } from '../../../util';
-import { IAction } from '../../../typing/interface';
-import { ActionShared } from '../../../store/Shared/reducer';
-import { ActionStargazers } from '../../../store/Staargazers/reducer';
-import { Action } from '../../../store/Home/reducer';
+import {
+  useTrackedState,
+  useTrackedStateShared,
+  useTrackedStateStargazers,
+} from '../../../selectors/stateContextSelector';
+import { useLocation } from 'react-router-dom';
 
 interface ResultProps {
   subscribedUsers: Login;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
-  dispatch: React.Dispatch<IAction<Action>>;
 }
 
-const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatchShared, dispatch, dispatchStargazersUser }) => {
+const Result: React.FC<ResultProps> = ({ subscribedUsers }) => {
   const classes = useUserCardStyles();
+  const [, dispatchShared] = useTrackedStateShared();
+  const [, dispatch] = useTrackedState();
+  const [, dispatchStargazers] = useTrackedStateStargazers();
   const [isHovered, bind] = useHover();
   const userTextNameRef = useRef<HTMLAnchorElement>(null);
   const [hovered, setHovered] = useState('');
@@ -58,7 +60,7 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatchShared, dispat
     dispatch({
       type: 'REMOVE_ALL',
     });
-    dispatchStargazersUser({
+    dispatchStargazers({
       type: 'REMOVE_ALL',
     });
     dispatchShared({
@@ -76,8 +78,11 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatchShared, dispat
       },
     }).then(() => {});
   };
+
+  const location = useLocation();
   useEffect(() => {
-    if (userTextNameRef.current) {
+    let isFinished = false;
+    if (userTextNameRef.current && location.pathname === '/' && !isFinished) {
       if (hovered !== '') {
         userTextNameRef.current.style.textDecoration = 'underline';
         userTextNameRef.current.style.color = 'red';
@@ -85,8 +90,12 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatchShared, dispat
         userTextNameRef.current.style.textDecoration = 'none';
         userTextNameRef.current.style.color = 'black';
       }
+      return () => {
+        isFinished = true;
+      };
     }
   }, [hovered]);
+
   return (
     <tbody {...bind}>
       <tr>
@@ -121,4 +130,5 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers, dispatchShared, dispat
     </tbody>
   );
 };
+Result.displayName = 'Result';
 export default Result;

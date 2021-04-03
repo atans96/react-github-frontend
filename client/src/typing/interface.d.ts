@@ -21,6 +21,12 @@ import {
   UserInfoData,
   WatchUsersData,
 } from './type';
+import { ActionShared } from '../store/Shared/reducer';
+import { Action } from '../store/Home/reducer';
+import { ActionStargazers } from '../store/Staargazers/reducer';
+import { ActionDiscover } from '../store/Discover/reducer';
+import { ActionManageProfile } from '../store/ManageProfile/reducer';
+import { ActionRateLimit } from '../store/RateLimit/reducer';
 
 export interface IAction<T> {
   type: T;
@@ -72,7 +78,6 @@ export interface IStateRateLimit {
 }
 export interface IStateManageProfile {
   contributors: ContributorsProps[];
-  columnWidth: Map<string, any>;
   repoInfo: RepoInfoProps[];
 }
 export interface IState {
@@ -125,7 +130,17 @@ export interface RepoRenderImages {
 export interface SearchUser {
   users: { [x: string]: any };
 }
-
+export interface SelectorReducerProps {
+  stateShared: { dispatch: React.Dispatch<IAction<ActionShared>>; state: IStateShared };
+  state: { dispatch: React.Dispatch<IAction<Action>>; state: IState };
+  stateStargazers: { dispatch: React.Dispatch<IAction<ActionStargazers>>; state: IStateStargazers };
+  stateDiscover: { dispatch: React.Dispatch<IAction<ActionDiscover>>; state: IStateDiscover };
+  stateManageProfile: {
+    dispatch: React.Dispatch<IAction<ActionManageProfile>>;
+    state: IStateManageProfile;
+  };
+  stateRateLimit: { dispatch: React.Dispatch<IAction<ActionRateLimit>>; state: IStateRateLimit };
+}
 export interface IContext {
   state: IState;
   dispatch: Dispatch<IAction<any>>;
@@ -200,7 +215,7 @@ export interface UseCollapseOutput {
   getCollapseProps: (config?: GetCollapsePropsInput) => GetCollapsePropsOutput;
   getToggleProps: (config?: GetTogglePropsInput) => GetTogglePropsOutput;
   isExpanded: boolean;
-  setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  setExpanded: any;
 }
 
 export type NullOrUndefined = null | undefined;

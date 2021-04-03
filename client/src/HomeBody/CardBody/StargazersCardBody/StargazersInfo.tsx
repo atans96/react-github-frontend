@@ -7,14 +7,13 @@ import { Then } from '../../../util/react-if/Then';
 import { If } from '../../../util/react-if/If';
 import './StargazersInfoStyle.scss';
 import LanguagesList from './StargazersInfoBody/LanguagesList';
-import { IAction, IState, IStateShared, IStateStargazers } from '../../../typing/interface';
 import { StargazerProps } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
-import { dragMove } from '../../../util';
-import { Action } from '../../../store/Home/reducer';
-import { ActionStargazers } from '../../../store/Staargazers/reducer';
-import { ActionShared } from '../../../store/Shared/reducer';
+import { dragMove, isEqualObjects } from '../../../util';
 import { useLocation } from 'react-router-dom';
+import { useTrackedStateStargazers } from '../../../selectors/stateContextSelector';
+import { useDeepMemo } from '../../../hooks/useDeepMemo';
+import idx from 'idx';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -23,37 +22,18 @@ export interface StargazersInfo {
   isLoading: boolean;
   stargazers_count: string;
   modalWidth: string;
-  dispatch: React.Dispatch<IAction<Action>>;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
-  stateStargazers: { state: IState; stateStargazers: IStateStargazers; stateShared: IStateShared };
-  setVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  setVisible: any;
 }
 
-const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
-  (
-    {
-      stateStargazers,
-      dispatch,
-      getRootPropsCard,
-      getRootProps,
-      dispatchShared,
-      dispatchStargazersUser,
-      GQL_VARIABLES,
-      isLoading,
-      stargazers_count,
-      setVisible,
-      modalWidth,
-    },
-    ref
-  ) => {
+const StargazersInfo: React.FC<StargazersInfo> = React.memo(
+  ({ getRootPropsCard, getRootProps, GQL_VARIABLES, isLoading, stargazers_count, setVisible, modalWidth }) => {
     const [isLoadingFetchMore, setIsLoadingFetchMore] = useState(false);
-    const finishRef = useRef<boolean>(false);
     const simulateClick = useRef<HTMLElement>();
     const stargazerModalRef = useRef<HTMLDivElement>(null);
+    const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
     const handleClickFilterResult = () => {
       setIsLoadingFetchMore(true);
-      dispatchStargazersUser({
+      dispatchStargazers({
         type: 'REMOVE_ALL',
       });
     };
@@ -77,7 +57,7 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
         dragMove(stargazerModalRef.current.querySelectorAll('.SelectMenu-modal:not(.NonDrag)')[0], dragRef.current);
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dragRef.current, location.pathname]);
+    }, [dragRef.current]);
 
     return (
       <div className="SelectMenu" ref={stargazerModalRef}>
@@ -91,7 +71,6 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
 
           <div className="NonDrag">
             <FilterResultSettings
-              dispatchStargazersUser={dispatchStargazersUser}
               props={getRootProps({
                 onClick: handleClickFilterResult,
                 params: { query: SEARCH_FOR_REPOS, variables: GQL_VARIABLES.GQL_variables },
@@ -109,29 +88,21 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
                   <th style={{ width: '10%' }} className="sticky-column-table" />
                   <th style={{ width: '100%' }} className="sticky-column-table" />
                   <th style={{ width: '30%' }} className="sticky-column-table">
-                    <LanguagesList stateStargazers={stateStargazers} dispatchStargazersUser={dispatchStargazersUser} />
+                    <LanguagesList />
                   </th>
                 </tr>
               </thead>
               <If condition={!isLoading || !isLoadingFetchMore}>
                 <Then>
-                  {stateStargazers.stateStargazers.stargazersData.length > 0 &&
-                    stateStargazers.stateStargazers.stargazersData.map((stargazer: StargazerProps, idx: number) => {
-                      if (idx === stateStargazers.stateStargazers.stargazersData.length - 1) {
-                        finishRef.current = true;
-                      }
-                      return (
-                        <Result
-                          key={idx}
-                          stargazer={stargazer}
-                          dispatchShared={dispatchShared}
-                          getRootPropsCard={getRootPropsCard}
-                          dispatch={dispatch}
-                          stateStargazers={stateStargazers}
-                          dispatchStargazersUser={dispatchStargazersUser}
-                        />
-                      );
-                    })}
+                  {useDeepMemo(() => {
+                    return (
+                      idx(stateStargazers, (_) =>
+                        _.stargazersData.map((stargazer: StargazerProps, idx: number) => (
+                          <Result key={idx} getRootPropsCard={getRootPropsCard} stargazer={stargazer} />
+                        ))
+                      ) ?? <></>
+                    );
+                  }, [idx(stateStargazers, (_) => _.stargazersData)])}
                 </Then>
               </If>
             </table>
@@ -184,10 +155,8 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
             {...getRootProps({
               onClick: handleClickLoadMore,
               params: {
-                query: stateStargazers.stateStargazers.hasNextPage.hasNextPage
-                  ? SEARCH_FOR_MORE_REPOS
-                  : SEARCH_FOR_REPOS,
-                variables: stateStargazers.stateStargazers.hasNextPage.hasNextPage
+                query: stateStargazers.hasNextPage.hasNextPage ? SEARCH_FOR_MORE_REPOS : SEARCH_FOR_REPOS,
+                variables: stateStargazers.hasNextPage.hasNextPage
                   ? GQL_VARIABLES.GQL_pagination_variables
                   : GQL_VARIABLES.GQL_variables,
               },
@@ -198,17 +167,21 @@ const StargazersInfo: React.FC<StargazersInfo> = React.forwardRef(
             style={{ cursor: isLoadingFetchMore ? '' : 'pointer' }}
             ref={simulateClick}
           >
-            Load{' '}
-            {stateStargazers.stateStargazers.hasNextPage.hasNextPage
-              ? `${stateStargazers.stateStargazers.stargazersUsers}`
-              : 0}{' '}
-            More Users
+            Load {stateStargazers.hasNextPage.hasNextPage ? `${stateStargazers.stargazersUsers}` : 0} More Users
           </footer>
           <footer className="SelectMenu-footer">
-            Showing {stateStargazers.stateStargazers.stargazersData.length} of {stargazers_count} Users
+            Showing {stateStargazers.stargazersData.length} of {stargazers_count} Users
           </footer>
         </div>
       </div>
+    );
+  },
+  (prevProps: any, nextProps: any) => {
+    return (
+      isEqualObjects(prevProps.GQL_VARIABLES, nextProps.GQL_VARIABLES) &&
+      isEqualObjects(prevProps.isLoading, nextProps.isLoading) &&
+      isEqualObjects(prevProps.stargazers_count, nextProps.stargazers_count) &&
+      isEqualObjects(prevProps.modalWidth, nextProps.modalWidth)
     );
   }
 );

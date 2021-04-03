@@ -1,45 +1,28 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getSearchUsers } from '../services';
 import _ from 'lodash';
-import { IAction, IState, IStateStargazers } from '../typing/interface';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import { Result } from './PureInputBody/Result';
 import { StargazerProps } from '../typing/type';
 import { useApolloFactory } from '../hooks/useApolloFactory';
-import { Action } from '../store/Home/reducer';
-import { ActionStargazers } from '../store/Staargazers/reducer';
 import { useLocation } from 'react-router-dom';
+import { useTrackedState, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 
 interface SearchBarProps {
   setVisible: any;
-  stateStargazers: IStateStargazers;
   style: React.CSSProperties;
-  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
-  dispatch: React.Dispatch<IAction<Action>>;
   ref: any;
   handleChange: any;
   visibleSearchesHistory: any;
   setVisibleSearchesHistory: any;
-  state: IState;
 }
 
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
 export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
-  (
-    {
-      visibleSearchesHistory,
-      setVisibleSearchesHistory,
-      setVisible,
-      handleChange,
-      stateStargazers,
-      style,
-      state,
-      dispatch,
-      dispatchStargazersUser,
-    },
-    ref
-  ) => {
+  ({ visibleSearchesHistory, setVisibleSearchesHistory, setVisible, handleChange, style }, ref) => {
+    const [state, dispatch] = useTrackedState();
+    const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
     const displayName: string | undefined = (PureInput as React.ComponentType<any>).displayName;
     const { userData } = useApolloFactory(displayName!).query.getUserData();
     const [username, setUsername] = useState('');
@@ -132,16 +115,18 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     const location = useLocation();
 
     useEffect(() => {
-      if (location.pathname === '/') {
+      let isFinished = false;
+      if (location.pathname === '/' && !isFinished) {
         // Bind the event listener
         document.addEventListener('keydown', handleKey);
         return () => {
           // Unbind the event listener on clean up
           document.removeEventListener('keydown', handleKey);
+          isFinished = true;
         };
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [handleKey, location.pathname]);
+    }, [handleKey]);
 
     const handleDeleteBackspace = () => {
       const stargazer = stateStargazers.stargazersQueueData.slice(-1)[0];
@@ -154,7 +139,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         } catch {
           updatedStargazersData['isQueue'] = false;
         }
-        dispatchStargazersUser({
+        dispatchStargazers({
           type: 'STARGAZERS_UPDATED',
           payload: {
             stargazersData: stateStargazers.stargazersData.map((obj: StargazerProps) => {
@@ -166,7 +151,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             }),
           },
         });
-        dispatchStargazersUser({
+        dispatchStargazers({
           type: 'SET_QUEUE_STARGAZERS',
           payload: {
             stargazersQueueData: stargazer,
@@ -174,13 +159,13 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         });
       } else {
         stargazer.isQueue = false;
-        dispatchStargazersUser({
+        dispatchStargazers({
           type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
           payload: {
             stargazersData: stargazer,
           },
         });
-        dispatchStargazersUser({
+        dispatchStargazers({
           type: 'SET_QUEUE_STARGAZERS',
           payload: {
             stargazersQueueData: stargazer,
@@ -193,14 +178,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         <If condition={stateStargazers.stargazersQueueData.length > 0}>
           <Then>
             {stateStargazers.stargazersQueueData.map((obj: StargazerProps, idx) => {
-              return (
-                <Result
-                  stateStargazers={stateStargazers}
-                  key={idx}
-                  dispatchStargazersUser={dispatchStargazersUser}
-                  stargazer={obj}
-                />
-              );
+              return <Result key={idx} stargazer={obj} />;
             })}
           </Then>
         </If>

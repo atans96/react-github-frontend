@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getRateLimitInfo, requestGithubLogin } from './services';
 import LoginLayout from './Layout/LoginLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
@@ -7,20 +7,13 @@ import CryptoJS from 'crypto-js';
 import { languageList, readEnvironmentVariable } from './util';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { IAction, IStateShared } from './typing/interface';
-import { useHistory } from 'react-router';
-import { ActionShared } from './store/Shared/reducer';
-import { initialStateRateLimit, reducerRateLimit } from './store/RateLimit/reducer';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
+import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
 
-interface LoginProps {
-  stateShared: IStateShared;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-}
-
-const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
+const Login = () => {
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
-  const [, dispatchRateLimit] = useReducer(reducerRateLimit, initialStateRateLimit);
   const displayName: string | undefined = (Login as React.ComponentType<any>).displayName;
   const signUpAdded = useApolloFactory(displayName!).mutation.signUpAdded;
   const history = useHistory();
@@ -123,7 +116,7 @@ const Login: React.FC<LoginProps> = ({ stateShared, dispatchShared }) => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared, dispatchShared, data, location.pathname]);
+  }, [data]);
 
   return (
     <React.Fragment>

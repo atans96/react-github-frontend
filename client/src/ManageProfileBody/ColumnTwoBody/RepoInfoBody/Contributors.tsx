@@ -8,16 +8,12 @@ import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 import { If } from '../../../util/react-if/If';
 import { Then } from '../../../util/react-if/Then';
 import Contributor from './ContributorsBody/Contributor';
-import { IAction } from '../../../typing/interface';
-import { ActionShared } from '../../../store/Shared/reducer';
-import { Action } from '../../../store/Home/reducer';
+import { useTrackedStateManageProfile } from '../../../selectors/stateContextSelector';
+import { ContributorProps, ContributorsProps } from '../../../typing/type';
 import { useLocation } from 'react-router-dom';
 
-interface ContributorsProps {
+interface Props {
   fullName: string;
-  contributions: any;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatch: React.Dispatch<IAction<Action>>;
 }
 
 const useStyles = makeStyles<Theme>(() => ({
@@ -27,23 +23,25 @@ const useStyles = makeStyles<Theme>(() => ({
     },
   },
 }));
-const Contributors = React.memo<ContributorsProps>(
-  ({ contributions, fullName, dispatchShared, dispatch }) => {
+const Contributors = React.memo<Props>(
+  ({ fullName }) => {
     const classes = useStyles();
     const [openContributors, setOpenContributors] = useState(false);
-    const [contributionRepo, setContributionRepo] = useState<any[]>([]);
+    const [contributionRepo, setContributionRepo] = useState<ContributorProps[]>([]);
+    const [stateManageProfile] = useTrackedStateManageProfile();
     const location = useLocation();
-
     useDeepCompareEffect(() => {
-      if (contributions.length > 0 && location.pathname === '/profile') {
-        const contribution = contributions.find((xx: any) => fullName === xx.fullName);
-        if (contribution.data) {
-          setContributionRepo(contribution.data);
-        } else {
+      let isFinished = false;
+      if (stateManageProfile.contributors.length > 0 && location.pathname === '/profile' && !isFinished) {
+        const contribution = stateManageProfile.contributors.find((xx: ContributorsProps) => fullName === xx.fullName);
+        if (contribution) {
           setContributionRepo(contribution.contributors);
         }
+        return () => {
+          isFinished = true;
+        };
       }
-    }, [contributions, location.pathname]);
+    }, [stateManageProfile.contributors]);
 
     const handleOpenContributors = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -71,7 +69,7 @@ const Contributors = React.memo<ContributorsProps>(
             <Collapse in={openContributors} timeout={0.1} unmountOnExit>
               <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
                 {contributionRepo.map((obj, idx) => {
-                  return <Contributor key={idx} dispatchShared={dispatchShared} obj={obj} dispatch={dispatch} />;
+                  return <Contributor key={idx} obj={obj} />;
                 })}
               </div>
             </Collapse>
@@ -92,10 +90,7 @@ const Contributors = React.memo<ContributorsProps>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.fullName, nextProps.fullName) &&
-      isEqualObjects(prevProps.contributions, nextProps.contributions)
-    );
+    return isEqualObjects(prevProps.fullName, nextProps.fullName);
   }
 );
 Contributors.displayName = 'Contributors';

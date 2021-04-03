@@ -1,23 +1,24 @@
 import React from 'react';
 import { useUserCardStyles } from './UserCardStyle';
 import { isEqualObjects } from '../../util';
-import { IAction } from '../../typing/interface';
-import { ActionShared } from '../../store/Shared/reducer';
-import { Action } from '../../store/Home/reducer';
-import { ActionStargazers } from '../../store/Staargazers/reducer';
 import { OwnerProps } from '../../typing/type';
+import {
+  useTrackedState,
+  useTrackedStateShared,
+  useTrackedStateStargazers,
+} from '../../selectors/stateContextSelector';
 
 interface UserCard {
   data: OwnerProps;
-  dispatch: React.Dispatch<IAction<Action>>;
-  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
 }
 
 const UserCard = React.memo<UserCard>(
-  ({ data, dispatch, dispatchStargazers, dispatchShared }) => {
+  ({ data }) => {
     const classes = useUserCardStyles();
     const { login, avatar_url, html_url } = data;
+    const [, dispatch] = useTrackedState();
+    const [, dispatchShared] = useTrackedStateShared();
+    const [, dispatchStargazers] = useTrackedStateStargazers();
 
     function onClick(e: React.MouseEvent) {
       e.preventDefault();
@@ -52,9 +53,7 @@ const UserCard = React.memo<UserCard>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.data, nextProps.data) && isEqualObjects(prevProps.routerProps, nextProps.routerProps)
-    );
+    return isEqualObjects(prevProps.data, nextProps.data);
   }
 );
 UserCard.displayName = 'UserCard';

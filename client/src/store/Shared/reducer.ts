@@ -24,7 +24,7 @@ export const initialStateShared: IStateShared = {
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
   tokenGQL: '', //setting
-  isLoggedIn: false,
+  isLoggedIn: !!localStorage.getItem('jbb') || false,
   fetchDataPath: '',
   username: [], //multiple username or queue
   drawerWidth: 0, //persist drawer width once it's dragged and moved by the user

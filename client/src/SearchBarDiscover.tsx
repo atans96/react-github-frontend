@@ -1,22 +1,21 @@
 import React, { useCallback } from 'react';
-import { IAction, IStateDiscover, IStateShared } from './typing/interface';
 import PureSearchBarDiscover from './SearchBarBody/PureSearchBarDiscover';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
-import { ActionDiscover } from './store/Discover/reducer';
+import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
+import { useLocation } from 'react-router-dom';
 
-export interface SearchBarProps {
-  stateShared: IStateShared;
-  stateDiscover: IStateDiscover;
-  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
-}
-
-const SearchBarDiscover: React.FC<SearchBarProps> = ({ stateShared, stateDiscover, dispatchDiscover }) => {
+const SearchBarDiscover = () => {
+  const [stateShared] = useTrackedStateShared();
+  const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
   const PureSearchBarDataMemoized = useCallback(() => {
     return stateShared;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.width]);
+
+  const location = useLocation();
   useDeepCompareEffect(() => {
-    if (stateDiscover.filterMergedDataDiscover.length > 0) {
+    let isFinished = false;
+    if (stateDiscover.filterMergedDataDiscover.length > 0 && location.pathname === '/discover' && !isFinished) {
       dispatchDiscover({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
@@ -24,8 +23,13 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ stateShared, stateDiscove
           notificationDiscover: '',
         },
       });
+      return () => {
+        isFinished = true;
+      };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateDiscover.filterMergedDataDiscover]);
+
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
@@ -35,7 +39,7 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ stateShared, stateDiscove
         display: 'grid',
       }}
     >
-      <PureSearchBarDiscover stateShared={PureSearchBarDataMemoized()} dispatchDiscover={dispatchDiscover} />
+      <PureSearchBarDiscover stateShared={PureSearchBarDataMemoized()} />
     </div>
   );
 };

@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import './RateLimitInfo.css';
 import { epochToJsDate } from '../../../util';
-import { IStateRateLimit } from '../../../typing/interface';
 import clsx from 'clsx';
 import { useLocation } from 'react-router-dom';
+import { useTrackedStateRateLimit } from '../../../selectors/stateContextSelector';
 
 interface RateLimitInfo {
-  data: IStateRateLimit['rateLimit'];
-  setRefetch: React.Dispatch<React.SetStateAction<boolean>>;
-  rateLimitAnimationAdded: boolean;
+  setRefetch: any;
 }
 
-const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch, rateLimitAnimationAdded }) => {
+const RateLimitInfo: React.FC<RateLimitInfo> = ({ setRefetch }) => {
+  const [stateRateLimit] = useTrackedStateRateLimit();
   const [resetTime, setResetTime] = useState<string>('');
   const location = useLocation();
   useEffect(() => {
+    let isFinished = false;
     if (location.pathname === '/') {
       const interval = setInterval(() => {
-        setResetTime(epochToJsDate(data.reset));
+        setResetTime(epochToJsDate(stateRateLimit.rateLimit.reset));
       }, 1000);
       if (resetTime === '00 second') {
         // prevent the interval to be changed further after hit 00 seconds
@@ -27,38 +27,39 @@ const RateLimitInfo: React.FC<RateLimitInfo> = ({ data, setRefetch, rateLimitAni
         // otherwise after setRefetch(true), the condition here won't get hit
       }
       return () => {
+        isFinished = true;
         clearInterval(interval);
       };
     }
-  }, [data.reset, resetTime, setRefetch, location.pathname]);
+  }, [stateRateLimit.rateLimit.reset, resetTime]);
 
   return (
     <div id="container">
       <div
         className={clsx('', {
-          added: rateLimitAnimationAdded,
+          added: stateRateLimit.rateLimitAnimationAdded,
         })}
         id="box"
         style={{ borderRight: '1px solid black' }}
       >
-        <span style={{ padding: '10px' }}>LIMIT: {data.limit}</span>
+        <span style={{ padding: '10px' }}>LIMIT: {stateRateLimit.rateLimit.limit}</span>
       </div>
       <div
         className={clsx('', {
-          added: rateLimitAnimationAdded,
+          added: stateRateLimit.rateLimitAnimationAdded,
         })}
         id="box"
         style={{ borderRight: '1px solid black' }}
       >
-        <span style={{ padding: '10px' }}>USED: {data.used}</span>
+        <span style={{ padding: '10px' }}>USED: {stateRateLimit.rateLimit.used}</span>
       </div>
       <div
         className={clsx('', {
-          added: rateLimitAnimationAdded,
+          added: stateRateLimit.rateLimitAnimationAdded,
         })}
         id="box"
       >
-        <span style={{ padding: '10px' }}>RESET IN: {data.reset && resetTime}</span>
+        <span style={{ padding: '10px' }}>RESET IN: {stateRateLimit.rateLimit.reset && resetTime}</span>
       </div>
     </div>
   );

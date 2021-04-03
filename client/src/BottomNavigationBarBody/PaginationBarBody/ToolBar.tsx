@@ -3,10 +3,9 @@ import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
-import { IState } from '../../typing/interface';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
-import { isEqualObjects } from '../../util';
+import { useTrackedState } from '../../selectors/stateContextSelector';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -34,37 +33,26 @@ const useStyles = makeStyles<Theme>((theme) => ({
   },
 }));
 
-interface ToolBarProps {
-  state: IState;
-}
-
-const ToolBar: React.FC<ToolBarProps> = React.memo(
-  ({ state }) => {
-    const classes = useStyles();
-    return (
-      <Toolbar>
-        <If condition={state.lastPage > 0}>
-          <Then>
-            <div className={classes.paginationInfo}>
-              <Pagination
-                className={classes.buttonPagination}
-                page={state.page}
-                count={state.lastPage}
-                color="secondary"
-              />
-            </div>
-          </Then>
-        </If>
-        <div className={classes.grow} />
-      </Toolbar>
-    );
-  },
-  (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.state.page, nextProps.state.page) &&
-      isEqualObjects(prevProps.state.lastPage, nextProps.state.lastPage)
-    );
-  }
-);
+const ToolBar = () => {
+  const classes = useStyles();
+  const [state] = useTrackedState();
+  return (
+    <Toolbar>
+      <If condition={state.lastPage > 0}>
+        <Then>
+          <div className={classes.paginationInfo}>
+            <Pagination
+              className={classes.buttonPagination}
+              page={state.page}
+              count={state.lastPage}
+              color="secondary"
+            />
+          </div>
+        </Then>
+      </If>
+      <div className={classes.grow} />
+    </Toolbar>
+  );
+};
 ToolBar.displayName = 'ToolBar';
 export default ToolBar;

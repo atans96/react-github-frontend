@@ -10,6 +10,7 @@ import { useSelector } from '../selectors/stateSelector';
 import { IAction, StaticState } from '../typing/interface';
 import { RepoInfoSuggested } from '../typing/type';
 import { ActionDiscover } from '../store/Discover/reducer';
+import idx from 'idx';
 
 interface SearchBarProps {
   style: React.CSSProperties;
@@ -76,7 +77,9 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
     setQuery(e.currentTarget.value);
     handler(e.currentTarget.value);
   };
-  const repoInfo = useSelector((state: StaticState) => state?.SuggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfo);
+  const repoInfo = useSelector((state: StaticState) =>
+    idx(state, (_) => _.SuggestedRepo.suggestedData.getSuggestedRepo.repoInfo)
+  );
   const handleClick = (event: React.FormEvent) => (query: string) => {
     event.preventDefault();
     event.stopPropagation();

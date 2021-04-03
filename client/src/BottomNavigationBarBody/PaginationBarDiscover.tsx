@@ -6,8 +6,7 @@ import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
-import { isEqualObjects } from '../util';
-import { IStateDiscover } from '../typing/interface';
+import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -35,39 +34,28 @@ const useStyles = makeStyles<Theme>((theme) => ({
   },
 }));
 
-interface PaginationBarProps {
-  stateDiscover: IStateDiscover;
-}
-
-const PaginationBarDiscover: React.FC<PaginationBarProps> = React.memo(
-  ({ stateDiscover }) => {
-    const classes = useStyles();
-    return (
-      <AppBar position="fixed" color="primary" className={classes.appBar}>
-        <Toolbar>
-          <If condition={stateDiscover.lastPageDiscover > 0}>
-            <Then>
-              <div className={classes.paginationInfo}>
-                <Pagination
-                  className={classes.buttonPagination}
-                  page={stateDiscover.pageDiscover}
-                  count={stateDiscover.lastPageDiscover}
-                  color="secondary"
-                />
-              </div>
-            </Then>
-          </If>
-          <div className={classes.grow} />
-        </Toolbar>
-      </AppBar>
-    );
-  },
-  (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.stateDiscover.pageDiscover, nextProps.stateDiscover.pageDiscover) &&
-      isEqualObjects(prevProps.stateDiscover.lastPageDiscover, nextProps.stateDiscover.lastPageDiscover)
-    );
-  }
-);
+const PaginationBarDiscover = React.memo(() => {
+  const classes = useStyles();
+  const [stateDiscover] = useTrackedStateDiscover();
+  return (
+    <AppBar position="fixed" color="primary" className={classes.appBar}>
+      <Toolbar>
+        <If condition={stateDiscover.lastPageDiscover > 0}>
+          <Then>
+            <div className={classes.paginationInfo}>
+              <Pagination
+                className={classes.buttonPagination}
+                page={stateDiscover.pageDiscover}
+                count={stateDiscover.lastPageDiscover}
+                color="secondary"
+              />
+            </div>
+          </Then>
+        </If>
+        <div className={classes.grow} />
+      </Toolbar>
+    </AppBar>
+  );
+});
 PaginationBarDiscover.displayName = 'PaginationBarDiscover';
 export default PaginationBarDiscover;

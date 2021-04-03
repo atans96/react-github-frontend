@@ -1,12 +1,18 @@
 import React, { useRef } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { PureInputDiscover } from './PureInputDiscover';
-import { SearchBarProps } from '../SearchBarDiscover';
 import { isEqualObjects } from '../util';
 import { getElasticSearchBert } from '../services';
+import { IStateShared } from '../typing/interface';
+import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
 
-const SearchBarDiscover = React.memo<Omit<SearchBarProps, 'stateDiscover'>>(
-  ({ stateShared, dispatchDiscover }) => {
+export interface SearchBarProps {
+  stateShared: IStateShared;
+}
+
+const SearchBarDiscover = React.memo<SearchBarProps>(
+  ({ stateShared }) => {
+    const [, dispatchDiscover] = useTrackedStateDiscover();
     const size = {
       width: '500px',
       minWidth: '100px',
