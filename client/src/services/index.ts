@@ -1,6 +1,6 @@
 import { readEnvironmentVariable } from '../util';
-import { IDataOne, RepoRenderImages, SearchUser } from '../typing/interface';
-import { MergedDataProps } from '../typing/type';
+import { RepoRenderImages, SearchUser } from '../typing/interface';
+
 function rateLimitInfo(token: string) {
   return new Promise(function (resolve, reject) {
     (async () => {
@@ -12,6 +12,7 @@ function rateLimitInfo(token: string) {
     })();
   });
 }
+
 async function rotateTokens() {
   //TODO: in production, user only get 1 token, that is provided by him/her
   const tokens = readEnvironmentVariable('TOKENS')!.split(',');
@@ -26,7 +27,8 @@ async function rotateTokens() {
   }
   return validToken;
 }
-export const getTopContributors = async (fullName: string, token: string | null) => {
+
+export const getTopContributors = async (fullName: string, token: string | null | undefined) => {
   const toke = await rotateTokens();
   const validToken = toke.length === 0 ? token : toke;
   const response = await fetch(`/api/getTopContributors?fullName=${fullName}&token=${validToken}`, {
@@ -35,14 +37,14 @@ export const getTopContributors = async (fullName: string, token: string | null)
   });
   return await response.json();
 };
-export const removeStarredMe = async (repoFullName: string, token: string | null) => {
+export const removeStarredMe = async (repoFullName: string, token: string | null | undefined) => {
   const response = await fetch(`/api/removeStarredMe?repoFullName=${repoFullName}&token=${token}`, {
     method: 'GET',
     credentials: 'include',
   });
   return await response.json();
 };
-export const setStarredMe = async (repoFullName: string, token: string | null) => {
+export const setStarredMe = async (repoFullName: string, token: string | null | undefined) => {
   const response = await fetch(`/api/setStarredMe?repoFullName=${repoFullName}&token=${token}`, {
     method: 'GET',
     credentials: 'include',
@@ -79,10 +81,11 @@ export const subscribeUser = async (username: string, signal: any) => {
   }
 };
 export const getUser = async (
+  signal: any,
   username: string,
   perPage: number,
   page: number,
-  token: string | null,
+  token: string | null | undefined,
   noImageQuery = false
 ) => {
   if (username !== '') {
@@ -94,12 +97,19 @@ export const getUser = async (
       }&noImageQuery=${noImageQuery}`,
       {
         method: 'GET',
+        signal,
       }
     );
     return await response.json();
   }
 };
-export const getOrg = async (org: string, perPage: number, page: number, token: string | null) => {
+export const getOrg = async (
+  signal: any,
+  org: string,
+  perPage: number,
+  page: number,
+  token: string | null | undefined
+) => {
   if (org !== '') {
     const toke = await rotateTokens();
     const validToken = toke.length === 0 ? token : toke;
@@ -107,6 +117,7 @@ export const getOrg = async (org: string, perPage: number, page: number, token: 
       `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${token === null ? '' : validToken}`,
       {
         method: 'GET',
+        signal,
       }
     );
     return await response.json();
@@ -122,7 +133,7 @@ export const markdownParsing = async (full_name: string, branch: string) => {
   const response = await fetch(`/api/markdown?full_name=${full_name}&branch=${branch}`);
   return await response.json();
 };
-export const getRateLimitInfo = async (token: string | null) => {
+export const getRateLimitInfo = async (token: string | null | undefined) => {
   const response = await fetch(`/api/get_rate_limit?token=${token === null ? '' : token}`, {
     method: 'GET',
   });
@@ -143,7 +154,7 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
   });
   return await response.json();
 };
-export const getSearchUsers = async (query: string, token: string | null) => {
+export const getSearchUsers = async (query: string, token: string | null | undefined) => {
   const toke = await rotateTokens();
   const validToken = toke.length === 0 ? token : toke;
   const response = await fetch(`/api/search_users?user=${query}&token=${validToken === null ? '' : validToken}`, {
@@ -151,11 +162,12 @@ export const getSearchUsers = async (query: string, token: string | null) => {
   });
   return (await response.json()) as SearchUser;
 };
-export const getSearchTopics = async (topic: string, token: string | null) => {
+export const getSearchTopics = async (signal: any, topic: string, token: string | null | undefined) => {
   const toke = await rotateTokens();
   const validToken = toke.length === 0 ? token : toke;
   const response = await fetch(`/api/search_topics?topic=${topic}&token=${validToken === null ? '' : validToken}`, {
     method: 'GET',
+    signal,
   });
   return await response.json();
 };
@@ -183,7 +195,7 @@ export const requestGithubGraphQLLogin = async (token: string) => {
   });
   return await response.json();
 };
-export const getRepoImages = async (data: any[], topic: string, page: number, token: string) => {
+export const getRepoImages = async (signal: any, data: any[], topic: string, page: number, token: string) => {
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
   const toke = await rotateTokens();
@@ -199,6 +211,7 @@ export const getRepoImages = async (data: any[], topic: string, page: number, to
     // the body is JSON. Thus, when using fetch request to Fastify, we need to use headers of content-type
     // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
     headers: new Headers({ 'content-type': 'application/json' }),
+    signal,
   });
   return (await response.json()) as RepoRenderImages;
 };

@@ -4,14 +4,13 @@ import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import { IState } from '../typing/interface';
 import RSSFeed from './DrawerBarBody/RSSFeed';
 import SubscribeFeed from './DrawerBarBody/SubscribeFeed';
 import SubscribeFeedSetting from './DrawerBarBody/SubscribeFeedSetting';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
-import { BottomNavigationBarProps } from '../HomeBody/BottomNavigationBar';
 import { useLocation } from 'react-router-dom';
+import { useTrackedStateShared } from '../selectors/stateContextSelector';
 
 interface StyleProps {
   drawerWidth: string;
@@ -60,17 +59,11 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
 }));
 
-const DrawerBar: React.FC<BottomNavigationBarProps> = ({
-  dispatch,
-  state,
-  dispatchStargazersUser,
-  dispatchShared,
-  stateShared,
-}) => {
+const DrawerBar = () => {
   const [open, setOpen] = useState(false);
   const [drawerWidth, dragHandlers, drawerRef] = useDraggable({});
   const classes = useStyles({ drawerWidth: open ? `${drawerWidth}px` : '0px' });
-
+  const [, dispatch] = useTrackedStateShared();
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setOpen((prev) => !prev);
@@ -78,19 +71,14 @@ const DrawerBar: React.FC<BottomNavigationBarProps> = ({
   const location = useLocation();
   useEffect(() => {
     if (location.pathname === '/') {
-      dispatchShared({
+      dispatch({
         type: 'SET_DRAWER_WIDTH',
         payload: {
           drawerWidth: open ? 200 : 0,
         },
       });
-    }
-  }, [open, location.pathname]);
-
-  useEffect(() => {
-    if (location.pathname === '/') {
       return () => {
-        dispatchShared({
+        dispatch({
           type: 'SET_DRAWER_WIDTH',
           payload: {
             drawerWidth: 0,
@@ -98,8 +86,7 @@ const DrawerBar: React.FC<BottomNavigationBarProps> = ({
         });
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [open]);
 
   return (
     <React.Fragment>
@@ -127,14 +114,9 @@ const DrawerBar: React.FC<BottomNavigationBarProps> = ({
         <div className={classes.toolbar}>
           <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
         </div>
-        <RSSFeed stateShared={stateShared} dispatchShared={dispatchShared} />
-        <SubscribeFeed stateShared={stateShared} />
-        <SubscribeFeedSetting
-          stateShared={stateShared}
-          dispatchShared={dispatchShared}
-          dispatch={dispatch}
-          dispatchStargazersUser={dispatchStargazersUser}
-        />
+        <RSSFeed />
+        <SubscribeFeed />
+        <SubscribeFeedSetting />
       </Drawer>
       {open && (
         <DraggableCore key="drawerBar" {...dragHandlers}>

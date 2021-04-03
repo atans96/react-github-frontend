@@ -291,10 +291,13 @@ function equal(a, b) {
     // START: fast-deep-equal
     return true;
   }
-
   return a !== a && b !== b;
 }
 // end fast-deep-equal
+const arrayCompare = (f) => ([x, ...xs]) => ([y, ...ys]) =>
+  x === undefined && y === undefined ? true : Boolean(f(x)(y)) && arrayCompare(f)(xs)(ys);
+const arrayDeepCompare = (f) =>
+  arrayCompare((a) => (b) => (Array.isArray(a) && Array.isArray(b) ? arrayDeepCompare(f)(a)(b) : f(a)(b)));
 
 export function isEqualObjects(a, b) {
   try {

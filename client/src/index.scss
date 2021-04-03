@@ -359,6 +359,14 @@ i.special {
     }
   }
 }
+.navbar a:hover {
+  text-decoration: none;
+  color: black;
+}
+.navbar a {
+  text-decoration: none;
+  color: black;
+}
 .navbar {
   position: relative;
   vertical-align: middle;
@@ -383,6 +391,9 @@ i.special {
         color: black;
         text-decoration: none;
         cursor: pointer;
+        &:hover {
+          text-decoration: none;
+        }
       }
     }
     li.active {

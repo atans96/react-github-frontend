@@ -8,10 +8,11 @@ import { If } from './util/react-if/If';
 import { CircularProgress } from '@material-ui/core';
 import { TrendsCard } from './HomeBody/DetailsBody/TrendsCard';
 import { Helmet } from 'react-helmet';
-import { useHistory } from 'react-router';
+import { useHistory } from 'react-router-dom';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
-import { starRanking } from './typing/type';
+import { Nullable, starRanking } from './typing/type';
+import idx from 'idx';
 
 interface StateProps {
   data: {
@@ -26,63 +27,88 @@ interface StateProps {
   };
   path: string;
 }
-
 const Details: React.FC = () => {
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
-  const [data, setData] = useState<any>();
-  const location = useLocation<StateProps>();
+  const [data, setData] = useState<Nullable<StateProps>>(null);
+  const [dataStarRanking, setDataStarRanking] = useState<any>();
+  const location = useLocation<any>();
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
     (state: StaticState) => state.StarRanking
   );
+  const isStarRankingExist = idx(
+    starRankingData,
+    (_) => !starRankingDataLoading && !starRankingDataError && _.getStarRanking
+  );
+  const fullName = idx(data, (_) => _.data.full_name) ?? '';
+
   useEffect(() => {
-    if (!starRankingDataLoading && !starRankingDataError && starRankingData && starRankingData?.getStarRanking) {
-      const temp = starRankingData.getStarRanking.starRanking.find(
-        (obj: starRanking) => obj.id === location.state.data.id
-      );
+    let isFinished = false;
+    if (isStarRankingExist && !isFinished && /detail/.test(location.pathname) && !!data) {
+      const temp = starRankingData.getStarRanking.starRanking.find((obj: starRanking) => obj.id === data.data.id);
       if (!!temp) {
-        setData(temp);
+        setDataStarRanking(temp);
       }
+      return () => {
+        isFinished = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starRankingData, starRankingDataLoading, starRankingDataError]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (!isFinished && /detail/.test(location.pathname)) {
+      if (location.state) {
+        setData(JSON.parse(location.state));
+      } else {
+        setData(JSON.parse(localStorage.getItem('detailsData') || ''));
+        localStorage.removeItem('detailsData');
+      }
+      return () => {};
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(
     () => {
-      _isMounted.current = true;
-      markdownParsing(location.state.data.full_name, location.state.data.default_branch).then((data) => {
-        if (_isMounted.current) {
-          setReadme(data.readme);
-        }
-      });
-      return () => {
-        _isMounted.current = false;
-      };
+      let isFinished = false;
+      if (!isFinished && /detail/.test(location.pathname) && !!data) {
+        markdownParsing(fullName, data.data.default_branch).then((dataStarRanking) => {
+          if (_isMounted.current) {
+            setReadme(dataStarRanking.readme);
+          }
+        });
+        return () => {
+          isFinished = true;
+        };
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [location.state.data]
+    [data]
   );
   const history = useHistory();
   return (
     <React.Fragment>
       <Helmet>
-        <title>{location.state.data.full_name}</title>
-        <meta name="description" content={`Github Readme for ${location.state.data.full_name}`} />
+        <title>{fullName}</title>
+        <meta name="description" content={`Github Readme for ${fullName}`} />
       </Helmet>
       <div
         className={'background-readme-details'}
         onClick={(e) => {
           e.preventDefault();
           if (e.target === e.currentTarget) {
-            const path = location.state.path === '/' ? '/' : '/discover';
+            const path = data?.path === '/' ? '/' : '/discover';
             history.push(path);
           }
         }}
       >
         <div className={'background-container'} id="main-content">
-          <If condition={!!data}>
+          <If condition={!!dataStarRanking}>
             <Then>
               <div className="readme">
-                <TrendsCard project={data} />
+                <TrendsCard project={dataStarRanking} />
               </div>
             </Then>
           </If>
@@ -108,7 +134,7 @@ const Details: React.FC = () => {
               </If>
             </div>
             <div className={'footer'}>
-              <a href={location.state.data.html_url}>View on GitHub</a>
+              <a href={data?.data?.html_url}>View on GitHub</a>
             </div>
           </div>
         </div>

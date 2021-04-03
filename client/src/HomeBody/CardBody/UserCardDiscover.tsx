@@ -2,31 +2,32 @@ import React from 'react';
 import { useUserCardStyles } from './UserCardStyle';
 import { Typography } from '@material-ui/core';
 import { isEqualObjects } from '../../util';
-import { RouteComponentProps } from 'react-router-dom';
-import { ActionDiscover } from '../../store/Discover/reducer';
-import { ActionStargazers } from '../../store/Staargazers/reducer';
-import { ActionShared } from '../../store/Shared/reducer';
-import { IAction } from '../../typing/interface';
 import { MergedDataProps } from '../../typing/type';
+import { useHistory } from 'react-router-dom';
+import {
+  useTrackedStateDiscover,
+  useTrackedStateShared,
+  useTrackedStateStargazers,
+} from '../../selectors/stateContextSelector';
 
 interface UserCardDiscover {
   data: MergedDataProps;
   sorted: string;
-  routerProps: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
-  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatchStargazers: React.Dispatch<IAction<ActionStargazers>>;
 }
 
 const UserCardDiscover = React.memo<UserCardDiscover>(
-  ({ data, sorted, routerProps, dispatchShared, dispatchDiscover, dispatchStargazers }) => {
+  ({ data, sorted }) => {
     const classes = useUserCardStyles();
     const { login, avatar_url, html_url } = data.owner;
+    const history = useHistory();
+    const [, dispatchShared] = useTrackedStateShared();
+    const [, dispatchDiscover] = useTrackedStateDiscover();
+    const [, dispatchStargazers] = useTrackedStateStargazers();
 
     function onClick(e: React.MouseEvent) {
       e.preventDefault();
       e.stopPropagation();
-      routerProps.history.push('/');
+      history.push('/');
       dispatchDiscover({
         type: 'REMOVE_ALL',
       });
@@ -65,11 +66,7 @@ const UserCardDiscover = React.memo<UserCardDiscover>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.data, nextProps.data) &&
-      isEqualObjects(prevProps.routerProps, nextProps.routerProps) &&
-      isEqualObjects(prevProps.sorted, nextProps.sorted)
-    );
+    return isEqualObjects(prevProps.data, nextProps.data) && isEqualObjects(prevProps.sorted, nextProps.sorted);
   }
 );
 UserCardDiscover.displayName = 'UserCardDiscover';

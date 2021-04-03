@@ -6,25 +6,24 @@ import { requestGithubGraphQLLogin, setTokenGQL } from '../../../services';
 import { Nullable } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
 import { noop } from '../../../util/util';
-import { IAction } from '../../../typing/interface';
-import { ActionShared } from '../../../store/Shared/reducer';
+import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 
 interface LoginGQLProps {
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
   style: CSSProperties;
-  setVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  setVisible: any;
 }
 
-const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, dispatchShared, style }, ref) => {
+const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, style }, ref) => {
   const [token, setToken] = useState('');
   const [loginLayoutRef, setRef] = useState<Nullable<React.RefObject<HTMLDivElement>>>(null);
   const [notification, setNotification] = useState('');
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
+  const [, dispatch] = useTrackedStateShared();
   const verifyTokenGQL = async () => {
     await requestGithubGraphQLLogin(token).then((res) => {
       if (res.success) {
         setTokenGQL(token).then(noop);
-        dispatchShared({
+        dispatch({
           type: 'TOKEN_ADDED',
           payload: {
             tokenGQL: token,

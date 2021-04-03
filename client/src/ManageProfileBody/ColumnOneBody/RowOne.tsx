@@ -18,6 +18,7 @@ import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { noop } from '../../util/util';
 import { LanguagePreference } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
+import idx from 'idx';
 
 interface StyleProps {
   drawerWidth: string;
@@ -46,7 +47,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     margin: theme.spacing(3),
   },
 }));
-const RowOne = React.memo(({}) => {
+const RowOne = React.memo(() => {
   const [openLanguages, setOpenLanguages] = useState(false);
   const classes = useStyles({ drawerWidth: '250px' });
   const handleOpenLanguages = (e: React.MouseEvent) => {
@@ -58,36 +59,49 @@ const RowOne = React.memo(({}) => {
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
+
   useEffect(() => {
+    let isFinished = false;
     if (
-      !userDataLoading &&
-      !userDataError &&
-      userData?.getUserData?.languagePreference?.length > 0 &&
-      location.pathname === '/profile'
+      idx(userData, (_) => !userDataLoading && !userDataError && _.getUserData.languagePreference.length > 0) &&
+      location.pathname === '/profile' &&
+      !isFinished
     ) {
       setLanguagePreferences(userData.getUserData.languagePreference);
+      return () => {
+        isFinished = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userDataLoading, userDataError, userData, location.pathname]);
+  }, [userDataLoading, userDataError, userData]);
 
   useDeepCompareEffect(() => {
-    if (location.pathname === '/profile') {
+    let isFinished = false;
+    if (location.pathname === '/profile' && !isFinished) {
       languagesPreferenceAdded({
         variables: {
           languagePreference: languagePreferences,
         },
       }).then(noop);
+      return () => {
+        isFinished = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languagePreferences, location.pathname]);
+  }, [languagePreferences]);
 
   const languagePreferencesRef = useRef<any[]>([]);
 
   useEffect(() => {
-    if (location.pathname === '/profile') {
+    let isFinished = false;
+    if (location.pathname === '/profile' && !isFinished) {
       languagePreferencesRef.current = languagePreferences;
+      return () => {
+        isFinished = true;
+      };
     }
-  }, [languagePreferences, location.pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [languagePreferences]);
 
   const handleCheckboxChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {

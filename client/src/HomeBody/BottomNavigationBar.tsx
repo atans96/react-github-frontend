@@ -1,36 +1,49 @@
 import React from 'react';
-import { IAction, IState, IStateShared } from '../typing/interface';
-import PaginationBar from '../BottomNavigationBarBody/PaginationBar';
 import DrawerBar from '../BottomNavigationBarBody/DrawerBar';
-import { Action } from '../store/Home/reducer';
-import { ActionStargazers } from '../store/Staargazers/reducer';
-import { ActionShared } from '../store/Shared/reducer';
-
-export interface BottomNavigationBarProps {
-  state: IState;
-  stateShared: IStateShared;
-  dispatch: React.Dispatch<IAction<Action>>;
-  dispatchStargazersUser: React.Dispatch<IAction<ActionStargazers>>;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-}
-
-const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({
-  dispatchStargazersUser,
-  state,
-  dispatch,
-  dispatchShared,
-  stateShared,
-}) => {
+import { makeStyles } from '@material-ui/core/styles';
+import { Theme } from '@material-ui/core';
+import ToolBar from '../BottomNavigationBarBody/PaginationBarBody/ToolBar';
+import RepoStat from '../BottomNavigationBarBody/PaginationBarBody/RepoStat';
+import RateLimit from '../BottomNavigationBarBody/PaginationBarBody/RateLimit';
+import AppBar from '@material-ui/core/AppBar';
+import { StateRateLimitProvider } from '../selectors/stateContextSelector';
+const useStyles = makeStyles<Theme>((theme) => ({
+  buttonPagination: {
+    '& .MuiPaginationItem-root': {
+      color: '#ffffff',
+      fontSize: '13px',
+    },
+  },
+  appBar: {
+    zIndex: 2,
+    top: 'auto',
+    bottom: 0,
+    height: '50px',
+    backgroundColor: '#000000',
+  },
+  grow: {
+    flexGrow: 1,
+  },
+  paginationInfo: {
+    position: 'fixed',
+    left: '50%',
+    bottom: '-10px',
+    transform: 'translate(-50%, -50%)',
+    margin: '0 auto',
+  },
+}));
+const BottomNavigationBar = () => {
+  const classes = useStyles();
   return (
     <React.Fragment>
-      <PaginationBar state={state} dispatch={dispatch} />
-      <DrawerBar
-        dispatch={dispatch}
-        state={state}
-        stateShared={stateShared}
-        dispatchStargazersUser={dispatchStargazersUser}
-        dispatchShared={dispatchShared}
-      />
+      <AppBar position="fixed" color="primary" className={classes.appBar}>
+        <ToolBar />
+        <RepoStat />
+        <StateRateLimitProvider>
+          <RateLimit />
+        </StateRateLimitProvider>
+      </AppBar>
+      <DrawerBar />
     </React.Fragment>
   );
 };
