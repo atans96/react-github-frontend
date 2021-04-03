@@ -9,7 +9,7 @@ import { removeStarredMe, setStarredMe } from '../../services';
 import { noop } from '../../util/util';
 import { MergedDataProps } from '../../typing/type';
 import { createPortal } from 'react-dom';
-import LoginGQL from './StargazersCardBody/LoginGQL';
+import LoginGQL from '../../HomeBody/CardBody/StargazersCardBody/LoginGQL';
 import clsx from 'clsx';
 import { useClickOutside } from '../../hooks/hooks';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';

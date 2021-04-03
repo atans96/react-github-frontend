@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Typography } from '@material-ui/core';
-import { useUserCardStyles } from '../../UserCardStyle';
+import { useUserCardStyles } from '../../../../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import './ResultStyle.scss';
 import '../StargazersInfoStyle.scss';
 import clsx from 'clsx';
 import { Login, StargazerProps } from '../../../../typing/type';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import { useMutation } from '@apollo/client';
-import { WATCH_USER_REMOVED } from '../../../../mutations';
-import { GET_WATCH_USERS } from '../../../../queries';
+import { WATCH_USER_REMOVED } from '../../../../graphql/mutations';
+import { GET_WATCH_USERS } from '../../../../graphql/queries';
 import { fastFilter } from '../../../../util';
 import { useApolloFactory } from '../../../../hooks/useApolloFactory';
 import { noop } from '../../../../util/util';

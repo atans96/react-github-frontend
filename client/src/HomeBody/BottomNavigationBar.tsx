@@ -1,10 +1,10 @@
 import React from 'react';
-import DrawerBar from '../BottomNavigationBarBody/DrawerBar';
+import DrawerBar from '../DiscoverBody/DrawerBar';
 import { makeStyles } from '@material-ui/core/styles';
 import { Theme } from '@material-ui/core';
-import ToolBar from '../BottomNavigationBarBody/PaginationBarBody/ToolBar';
-import RepoStat from '../BottomNavigationBarBody/PaginationBarBody/RepoStat';
-import RateLimit from '../BottomNavigationBarBody/PaginationBarBody/RateLimit';
+import ToolBar from './BottomNavigationBarBody/PaginationBarBody/ToolBar';
+import RepoStat from './BottomNavigationBarBody/PaginationBarBody/RepoStat';
+import RateLimit from './BottomNavigationBarBody/PaginationBarBody/RateLimit';
 import AppBar from '@material-ui/core/AppBar';
 import { StateRateLimitProvider } from '../selectors/stateContextSelector';
 const useStyles = makeStyles<Theme>((theme) => ({

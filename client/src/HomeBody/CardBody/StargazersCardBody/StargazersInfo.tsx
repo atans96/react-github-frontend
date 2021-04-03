@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Result from './StargazersInfoBody/Result';
 import FilterResultSettings from './StargazersInfoBody/FilterResultSettings';
 import { CloseIcon } from '../../../util/icons';
-import { SEARCH_FOR_MORE_REPOS, SEARCH_FOR_REPOS } from '../../../queries';
+import { SEARCH_FOR_MORE_REPOS, SEARCH_FOR_REPOS } from '../../../graphql/queries';
 import { Then } from '../../../util/react-if/Then';
 import { If } from '../../../util/react-if/If';
 import './StargazersInfoStyle.scss';

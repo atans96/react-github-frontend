@@ -3,8 +3,8 @@ import { GoGraph } from 'react-icons/go';
 import { TrendSummary } from './TrendsCardBody/TrendSummary';
 import MonthlyTrends from './TrendsCardBody/MonthlyTrends';
 import { HeatMapContainer } from './TrendsCardBody/HeatMapContainer';
-import { fastFilter } from '../../util';
-import { starRanking } from '../../typing/type';
+import { fastFilter } from '../util';
+import { starRanking } from '../typing/type';
 
 interface TrendsCardProps {
   project: starRanking;

@@ -14,7 +14,7 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { StarIcon } from '../../util/icons';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
-import { SEARCH_FOR_REPOS } from '../../queries';
+import { SEARCH_FOR_REPOS } from '../../graphql/queries';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { createPortal } from 'react-dom';
 import StargazersInfo from './StargazersCardBody/StargazersInfo';

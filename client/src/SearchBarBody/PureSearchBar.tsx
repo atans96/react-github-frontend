@@ -16,7 +16,7 @@ import useCollapse from '../hooks/useCollapse';
 import clsx from 'clsx';
 import Result from './PureSearchBarBody/ResultsBody/Result';
 import { Typography } from '@material-ui/core';
-import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
+import { useUserCardStyles } from '../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import HistoryIcon from '@material-ui/icons/History';
 import { fastFilter, Loading } from '../util';
 import { useApolloFactory } from '../hooks/useApolloFactory';

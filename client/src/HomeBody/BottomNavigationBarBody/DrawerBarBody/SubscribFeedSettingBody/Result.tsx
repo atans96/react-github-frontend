@@ -1,19 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Typography } from '@material-ui/core';
-import { useUserCardStyles } from '../../../HomeBody/CardBody/UserCardStyle';
-import { If } from '../../../util/react-if/If';
-import { Then } from '../../../util/react-if/Then';
-import { Login } from '../../../typing/type';
+import { useUserCardStyles } from '../../../../DiscoverBody/CardDiscoverBody/UserCardStyle';
+import { If } from '../../../../util/react-if/If';
+import { Then } from '../../../../util/react-if/Then';
+import { Login } from '../../../../typing/type';
 import { useMutation } from '@apollo/client';
-import { WATCH_USER_REMOVED } from '../../../mutations';
-import { GET_WATCH_USERS } from '../../../queries';
-import useHover from '../../../hooks/useHover';
-import { fastFilter } from '../../../util';
+import { WATCH_USER_REMOVED } from '../../../../graphql/mutations';
+import { GET_WATCH_USERS } from '../../../../graphql/queries';
+import useHover from '../../../../hooks/useHover';
+import { fastFilter } from '../../../../util';
 import {
   useTrackedState,
   useTrackedStateShared,
   useTrackedStateStargazers,
-} from '../../../selectors/stateContextSelector';
+} from '../../../../selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
 
 interface ResultProps {

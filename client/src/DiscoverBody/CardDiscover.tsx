@@ -1,13 +1,13 @@
 import React, { useCallback, useRef } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useHistory, useLocation } from 'react-router-dom';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
 import clsx from 'clsx';
-import ImagesCardDiscover from './CardBody/ImagesCardDiscover';
+import ImagesCardDiscover from './CardDiscoverBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
-import UserCardDiscover from './CardBody/UserCardDiscover';
-import StargazersDiscover from './CardBody/StargazersDiscover';
+import UserCardDiscover from './CardDiscoverBody/UserCardDiscover';
+import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
 import { StateStargazersProvider } from '../selectors/stateContextSelector';
 
 export interface Card {
@@ -37,8 +37,34 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
 
     const displayName: string | undefined = (CardDiscover as React.ComponentType<any>).displayName;
     const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
+    const mouseDownHandler = (event: React.MouseEvent) => {
+      event.preventDefault();
+      if (event.button === 1) {
+        localStorage.setItem('detailsData', JSON.stringify({ data: githubData, path: location.pathname }));
+        // history.push(`/detail/${githubData.id}`);
+        window.open(`/detail/${githubData.id}`);
+        clickedAdded({
+          variables: {
+            clickedInfo: [
+              Object.assign(
+                {},
+                {
+                  full_name: githubData.full_name,
+                  owner: {
+                    login: githubData.owner.login,
+                  },
+                  is_queried: false,
+                }
+              ),
+            ],
+          },
+        }).then(noop);
+      }
+    };
+    const history = useHistory();
     const handleDetailsClicked = (e: React.MouseEvent) => {
       e.preventDefault();
+      history.push(`/detail/${githubData.id}`);
       clickedAdded({
         variables: {
           clickedInfo: [
@@ -100,11 +126,11 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
               <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
                 <a href={githubData.html_url}>{githubData.html_url}</a>
               </div>
-              <div className="details" onClick={handleDetailsClicked}>
+              <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
                 <NavLink
                   to={{
                     pathname: `/detail/${githubData.id}`,
-                    state: { data: githubData, path: location.pathname },
+                    state: JSON.stringify({ data: githubData, path: location.pathname }),
                   }}
                   className="btn-clear nav-link"
                 >

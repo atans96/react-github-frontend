@@ -9,7 +9,7 @@ import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
 import { isEqualObjects } from './util';
 import { useLocation } from 'react-router-dom';
-import CardDiscover from './HomeBody/CardDiscover';
+import CardDiscover from './DiscoverBody/CardDiscover';
 import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
@@ -17,7 +17,7 @@ import eye from './new_16-2.gif';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import idx from 'idx';
 import { useDeepMemo } from './hooks/useDeepMemo';
-import PaginationBarDiscover from './BottomNavigationBarBody/PaginationBarDiscover';
+import PaginationBarDiscover from './DiscoverBody/PaginationBarDiscover';
 import { IStateDiscover, IStateShared, StaticState } from './typing/interface';
 import { ActionResolvePromiseOutput } from './index';
 

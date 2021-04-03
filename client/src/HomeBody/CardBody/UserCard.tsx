@@ -1,5 +1,5 @@
 import React from 'react';
-import { useUserCardStyles } from './UserCardStyle';
+import { useUserCardStyles } from '../../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import { isEqualObjects } from '../../util';
 import { OwnerProps } from '../../typing/type';
 import {

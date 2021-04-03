@@ -1,7 +1,7 @@
 import React from 'react';
 import Result from './ResultsBody/Result';
 import { Typography } from '@material-ui/core';
-import { useUserCardStyles } from '../../HomeBody/CardBody/UserCardStyle';
+import { useUserCardStyles } from '../../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import { Loading } from '../../util';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';

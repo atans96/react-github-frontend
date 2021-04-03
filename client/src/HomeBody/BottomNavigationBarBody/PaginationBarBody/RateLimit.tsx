@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import RateLimitInfo from './RateLimitInfoBody/RateLimitInfo';
-import { getRateLimitInfo } from '../../services';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
+import { getRateLimitInfo } from '../../../services';
+import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
-import { useTrackedState, useTrackedStateRateLimit } from '../../selectors/stateContextSelector';
+import { useTrackedState, useTrackedStateRateLimit } from '../../../selectors/stateContextSelector';
 import idx from 'idx';
 
 const RateLimit = () => {

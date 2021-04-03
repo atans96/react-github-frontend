@@ -4,7 +4,7 @@ import { getElasticSearchBertAutocomplete } from '../services';
 import { Then } from '../util/react-if/Then';
 import { Typography } from '@material-ui/core';
 import { If } from '../util/react-if/If';
-import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
+import { useUserCardStyles } from '../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import { useClickOutside } from '../hooks/hooks';
 import { useSelector } from '../selectors/stateSelector';
 import { IAction, StaticState } from '../typing/interface';

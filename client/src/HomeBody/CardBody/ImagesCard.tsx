@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import './ImagesCardStyle.scss';
+import '../../DiscoverBody/CardDiscoverBody/ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
