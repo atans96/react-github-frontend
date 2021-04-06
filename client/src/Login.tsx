@@ -99,6 +99,7 @@ const Login = () => {
                   }
                 });
                 history.push('/');
+                window.location.reload(false);
               });
             } else {
               setData({

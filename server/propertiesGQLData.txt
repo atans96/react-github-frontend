@@ -33,7 +33,7 @@ imagesData
 is_queried
 seenCards
 rss
-rssLastSeen
+lastSeen
 avatarUrl
 feeds
 lastSeenFeeds

@@ -19,7 +19,7 @@ export type ActionShared =
   | 'NO_DATA_FETCH';
 
 export const initialStateShared: IStateShared = {
-  width: 0,
+  width: window.innerWidth,
   languagesInfo: [],
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting

@@ -128,7 +128,7 @@ const RSSFeed = () => {
               rssFeedAdded({
                 variables: {
                   rss: HTML,
-                  rssLastSeen: HTML,
+                  lastSeen: HTML,
                 },
               }).then(noop);
             }
@@ -137,13 +137,13 @@ const RSSFeed = () => {
               rssFeedAdded({
                 variables: {
                   rss: HTML,
-                  rssLastSeen: [],
+                  lastSeen: [],
                 },
               })
                 .then((res: any) => {
                   if (res.data.rssFeedAdded) {
                     unseenFeeds.current = fastFilter(
-                      (x: string) => res.data.rssFeedAdded.rssLastSeen.indexOf(x) === -1,
+                      (x: string) => res.data.rssFeedAdded.lastSeen.indexOf(x) === -1,
                       res.data.rssFeedAdded.rss
                     );
                     setNotificationBadge(unseenFeeds.current.length);
@@ -161,11 +161,11 @@ const RSSFeed = () => {
                 rssFeedAdded({
                   variables: {
                     rss: HTML,
-                    rssLastSeen: uniqq,
+                    lastSeen: uniqq,
                   },
                 })
                   .then((res: any) => {
-                    const uniqq = uniqFast([...res.data.rssFeedAdded.rssLastSeen, ...res.data.rssFeedAdded.rss]);
+                    const uniqq = uniqFast([...res.data.rssFeedAdded.lastSeen, ...res.data.rssFeedAdded.rss]);
                     setRSSFeed(uniqq.reverse()); //show it to the user
                     if (notificationBadge > 0) {
                       setNotificationBadge(0);

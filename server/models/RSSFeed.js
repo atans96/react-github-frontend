@@ -7,16 +7,13 @@ const RSSFeed = new mongoose.Schema({
   rss: {
     type: [String],
     default: [],
-    maxlength: 100,
   },
-  rssLastSeen: {
+  lastSeen: {
     type: [String],
     default: [],
-    maxlength: 100,
   },
 });
 RSSFeed.index({
   rss: 1,
-  rssLastSeen: 1,
 });
 module.exports = mongoose.model("RSSFeed", RSSFeed);
