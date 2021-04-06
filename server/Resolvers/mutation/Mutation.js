@@ -200,11 +200,6 @@ const Mutation = {
             },
           },
         },
-        {
-          $set: {
-            userName: currentUser?.username,
-          },
-        },
         { upsert: true }
       );
       // return await RSSFeed.findOneAndUpdate(
@@ -239,11 +234,6 @@ const Mutation = {
         {
           $addToSet: {
             seenCards: seenCards,
-          },
-        },
-        {
-          $set: {
-            userName: currentUser?.username,
           },
         },
         { upsert: true }
@@ -281,11 +271,6 @@ const Mutation = {
           return await Search.findOneAndUpdate(
             { userName: currentUser?.username },
             {
-              $addToSet: {
-                searches: search,
-              },
-            },
-            {
               $set: {
                 userName: currentUser?.username,
               },
@@ -302,25 +287,6 @@ const Mutation = {
     ) => {
       if (currentUser?.username === undefined) {
         return null;
-      }
-      const clicked = await Clicked.findOne({
-        userName: currentUser?.username,
-      });
-      if (clicked === null) {
-        return await Clicked.findOneAndUpdate(
-          { userName: currentUser?.username },
-          {
-            $addToSet: {
-              clicked: clickedInfo,
-            },
-          },
-          {
-            $set: {
-              userName: currentUser?.username,
-            },
-          },
-          { upsert: true }
-        );
       }
       const hasSeen = await Seen.aggregate([
         {
@@ -348,11 +314,6 @@ const Mutation = {
           {
             $addToSet: {
               clicked: clickedInfo,
-            },
-          },
-          {
-            $set: {
-              userName: currentUser?.username,
             },
           },
           { upsert: true }
