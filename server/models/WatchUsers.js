@@ -12,12 +12,10 @@ const WatchUsers = new mongoose.Schema({
         feeds: {
           type: [String],
           default: [],
-          maxlength: 300,
         },
         lastSeenFeeds: {
           type: [String],
           default: [],
-          maxlength: 300,
         },
         createdAt: {
           type: Date,

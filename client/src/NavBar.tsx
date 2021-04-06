@@ -32,7 +32,7 @@ const NavBar = React.memo(() => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home');
     return () => {};
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.pathname]);
 
   const history = useHistory();
 
@@ -58,33 +58,29 @@ const NavBar = React.memo(() => {
       }}
     >
       <ul>
-        <If condition={state.isLoggedIn}>
-          <Then>
-            <NavLink
-              to={{
-                pathname: `/`,
-              }}
-              className="btn-clear nav-link"
-            >
-              <Home
-                componentProps={{
-                  id: 'home',
-                  className: active === 'home' ? 'active' : '',
-                  onClick: handleClick,
-                  active: active,
-                  binder: bindHome,
-                  style:
-                    isHoveredHome && active !== 'home'
-                      ? {
-                          backgroundColor: '#f03e76',
-                          cursor: 'pointer',
-                        }
-                      : {},
-                }}
-              />
-            </NavLink>
-          </Then>
-        </If>
+        <NavLink
+          to={{
+            pathname: `/`,
+          }}
+          className="btn-clear nav-link"
+        >
+          <Home
+            componentProps={{
+              id: 'home',
+              className: active === 'home' ? 'active' : '',
+              onClick: handleClick,
+              active: active,
+              binder: bindHome,
+              style:
+                isHoveredHome && active !== 'home'
+                  ? {
+                      backgroundColor: '#f03e76',
+                      cursor: 'pointer',
+                    }
+                  : {},
+            }}
+          />
+        </NavLink>
 
         <If condition={state.isLoggedIn}>
           <Then>

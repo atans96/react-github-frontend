@@ -420,8 +420,7 @@ export function useStateWithLabel(initialValue: any, name: string) {
 export async function addRSSFeed(url: string) {
   const source = new RSSSource(url);
   try {
-    const feed = await RSSSource.fetchMetaData(source);
-    return feed;
+    return await RSSSource.fetchMetaData(source);
   } catch (e) {
     console.log('error');
     throw e;

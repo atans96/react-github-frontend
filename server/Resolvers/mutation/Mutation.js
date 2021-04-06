@@ -14,31 +14,18 @@ const Mutation = {
       { username, avatar, token, languagePreference, code },
       { models: { User } }
     ) => {
-      const user = await User.findOne({ userName: username });
-      // populate MongoDB database
-      if (user === null) {
-        await new User({
-          userName: username,
-          tokenRSS: "",
-          starred: [],
-          avatar,
-          code,
-          languagePreference,
-          token,
-        }).save();
-      } else {
-        await User.findOneAndUpdate(
-          { userName: username },
-          {
-            $set: {
-              avatar: avatar,
-              code: code,
-              languagePreference: languagePreference,
-              token: token,
-            },
-          }
-        );
-      }
+      await User.findOneAndUpdate(
+        { userName: username },
+        {
+          $set: {
+            avatar: avatar,
+            code: code,
+            languagePreference: languagePreference,
+            token: token,
+          },
+        },
+        { upsert: true }
+      );
       return {
         token: createToken(username, "6hr"),
       };
@@ -75,17 +62,15 @@ const Mutation = {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const user = await User.findOne({ userName: currentUser?.username });
-      if (user !== null && languagePreference.length > 0) {
-        return User.findOneAndUpdate(
-          { userName: currentUser?.username },
-          {
-            $set: {
-              languagePreference: languagePreference,
-            },
-          }
-        );
-      }
+      return await User.findOneAndUpdate(
+        { userName: currentUser?.username },
+        {
+          $set: {
+            languagePreference: languagePreference,
+          },
+        },
+        { upsert: true }
+      );
     },
     watchUsersFeedsAdded: async (
       root,
@@ -95,42 +80,38 @@ const Mutation = {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const watchUsers = await WatchUsers.findOne({
-        userName: currentUser?.username,
-      });
-      if (watchUsers !== null) {
-        await WatchUsers.updateOne(
-          { userName: currentUser?.username, "login.login": login },
-          {
-            $addToSet: {
-              "login.$.feeds": {
-                $each: feeds,
-              },
-              "login.$.lastSeenFeeds": {
-                $each: lastSeenFeeds,
-              },
+      return await WatchUsers.findOneAndUpdate(
+        { userName: currentUser?.username, "login.login": login },
+        {
+          $addToSet: {
+            "login.$.feeds": {
+              $each: feeds,
             },
-          }
-        );
-        return await WatchUsers.findOneAndUpdate(
-          { userName: currentUser?.username, "login.login": login },
-          {
-            $push: {
-              "login.$.feeds": {
-                //for $each takes an array of items to "add" in the $push operation,
-                // which in this case we leave empty since we do not actually want to add anything
-                $each: [],
-                $slice: -300, //get the last 300, which means to exclude anything greater than 300 at first n element (the oldest data)
-              },
-              "login.$.lastSeenFeeds": {
-                $each: [],
-                $slice: -300,
-              },
+            "login.$.lastSeenFeeds": {
+              $each: lastSeenFeeds,
             },
           },
-          { new: true } //return new document
-        );
-      }
+        },
+        { upsert: true }
+      );
+      // return await WatchUsers.findOneAndUpdate(
+      //   { userName: currentUser?.username, "login.login": login },
+      //   {
+      //     $push: {
+      //       "login.$.feeds": {
+      //         //for $each takes an array of items to "add" in the $push operation,
+      //         // which in this case we leave empty since we do not actually want to add anything
+      //         $each: [],
+      //         $slice: -300, //get the last 300, which means to exclude anything greater than 300 at first n element (the oldest data)
+      //       },
+      //       "login.$.lastSeenFeeds": {
+      //         $each: [],
+      //         $slice: -300,
+      //       },
+      //     },
+      //   },
+      //   { new: true } //return new document
+      // );
     },
     watchUsersAdded: async (
       root,
@@ -160,7 +141,13 @@ const Mutation = {
       }
       return await UserStarred.findOneAndUpdate(
         { userName: currentUser?.username },
-        { $addToSet: { starred: starred } }
+        { $addToSet: { starred: starred } },
+        {
+          $set: {
+            userName: currentUser?.username,
+          },
+        },
+        { upsert: true }
       );
     },
     starredMeRemoved: async (
@@ -173,7 +160,8 @@ const Mutation = {
       }
       return await UserStarred.findOneAndUpdate(
         { userName: currentUser?.username },
-        { $pull: { starred: removeStarred } }
+        { $pull: { starred: removeStarred } },
+        { upsert: true }
       );
     },
     tokenRSSAdded: async (
@@ -186,90 +174,90 @@ const Mutation = {
       }
       await User.updateOne(
         { userName: currentUser?.username },
-        { $set: { tokenRSS: tokenRSS } }
+        { $set: { tokenRSS: tokenRSS } },
+        { upsert: true }
       );
       return true;
     },
     rssFeedAdded: async (
       root,
-      { rss, rssLastSeen },
+      { rss, lastSeen },
       { models: { RSSFeed }, currentUser }
     ) => {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const Rss = await RSSFeed.findOne({ userName: currentUser?.username });
-      if (Rss !== null) {
-        await RSSFeed.updateOne(
-          { userName: currentUser?.username },
-          {
-            $addToSet: {
-              rss: {
-                $each: rss,
-              },
-              rssLastSeen: {
-                $each: rssLastSeen,
-              },
+      return await RSSFeed.findOneAndUpdate(
+        { userName: currentUser?.username },
+        {
+          $addToSet: {
+            rss: {
+              $each: rss,
             },
-          }
-        );
-        return await RSSFeed.findOneAndUpdate(
-          { userName: currentUser?.username },
-          {
-            $push: {
-              rss: {
-                //for $each takes an array of items to "add" in the $push operation,
-                // which in this case we leave empty since we do not actually want to add anything
-                $each: [],
-                $slice: -100, //get the last 100, which means to exclude anything greater than 100 at first n element (the oldest data)
-              },
-              rssLastSeen: {
-                $each: [],
-                $slice: -100,
-              },
+            lastSeen: {
+              //cannot be lastSeen as it will complain: "cannot index parallel" since it has similar rss name on it
+              $each: lastSeen,
             },
           },
-          { new: true } //return new document
-        );
-      } else {
-        await new RSSFeed({
-          userName: currentUser?.username,
-          rss,
-        }).save();
-        return Rss;
-      }
+        },
+        {
+          $set: {
+            userName: currentUser?.username,
+          },
+        },
+        { upsert: true }
+      );
+      // return await RSSFeed.findOneAndUpdate(
+      //   { userName: currentUser?.username },
+      //   {
+      //     $push: {
+      //       rss: {
+      //         //for $each takes an array of items to "add" in the $push operation,
+      //         // which in this case we leave empty since we do not actually want to add anything
+      //         $each: [],
+      //         $slice: -100, //get the last 100, which means to exclude anything greater than 100 at first n element (the oldest data)
+      //       },
+      //       lastSeen: {
+      //         $each: [],
+      //         $slice: -100,
+      //       },
+      //     },
+      //   },
+      //   { new: true } //return new document
+      // );
     },
     seenAdded: async (
       root,
       { seenCards },
-      { models: { Seen, User }, currentUser }
+      { models: { Seen }, currentUser }
     ) => {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const user = await User.findOne({ userName: currentUser?.username });
-      if (user !== null) {
-        return await Seen.findOneAndUpdate(
-          { userName: currentUser?.username },
-          {
-            $addToSet: {
-              seenCards: seenCards,
-            },
+      return await Seen.findOneAndUpdate(
+        { userName: currentUser?.username },
+        {
+          $addToSet: {
+            seenCards: seenCards,
           },
-          { upsert: true }
-        );
-      }
+        },
+        {
+          $set: {
+            userName: currentUser?.username,
+          },
+        },
+        { upsert: true }
+      );
     },
     searchHistoryAdded: async (
       root,
       { search },
-      { models: { Search, User }, currentUser }
+      { models: { Search }, currentUser }
     ) => {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const user = await User.findOne({ userName: currentUser?.username });
-      if (user !== null && search[0].search.length > 0) {
+      if (search[0].search.length > 0) {
         const searchDB = await Search.find({
           "searches.search": search[0].search,
         });
@@ -286,7 +274,8 @@ const Mutation = {
               $inc: {
                 "searches.$.count": 1,
               },
-            }
+            },
+            { upsert: true }
           );
         } else {
           return await Search.findOneAndUpdate(
@@ -294,6 +283,11 @@ const Mutation = {
             {
               $addToSet: {
                 searches: search,
+              },
+            },
+            {
+              $set: {
+                userName: currentUser?.username,
               },
             },
             { upsert: true }
@@ -304,21 +298,25 @@ const Mutation = {
     clickedAdded: async (
       root,
       { clickedInfo },
-      { models: { Clicked, User, Seen }, currentUser }
+      { models: { Clicked, Seen }, currentUser }
     ) => {
       if (currentUser?.username === undefined) {
         return null;
       }
-      const user = await User.findOne({ userName: currentUser?.username });
       const clicked = await Clicked.findOne({
         userName: currentUser?.username,
       });
-      if (user !== null && clicked === null) {
+      if (clicked === null) {
         return await Clicked.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $addToSet: {
               clicked: clickedInfo,
+            },
+          },
+          {
+            $set: {
+              userName: currentUser?.username,
             },
           },
           { upsert: true }
@@ -344,12 +342,17 @@ const Mutation = {
         },
       ]);
       //if seenCards has been queried by the github-api-static, don't append the Clicked database to prevent being queried again
-      if (user !== null && clicked !== null && hasSeen.length === 0) {
+      if (hasSeen.length === 0) {
         return await Clicked.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $addToSet: {
               clicked: clickedInfo,
+            },
+          },
+          {
+            $set: {
+              userName: currentUser?.username,
             },
           },
           { upsert: true }

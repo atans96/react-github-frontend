@@ -37,10 +37,10 @@ export const STARRED_ME_REMOVED = gql`
   }
 `;
 export const RSS_FEED_ADDED = gql`
-  mutation($rss: [String!], $rssLastSeen: [String!]) {
-    rssFeedAdded(rss: $rss, rssLastSeen: $rssLastSeen) {
+  mutation($rss: [String!], $lastSeen: [String!]) {
+    rssFeedAdded(rss: $rss, lastSeen: $lastSeen) {
       rss
-      rssLastSeen
+      lastSeen
     }
   }
 `;
