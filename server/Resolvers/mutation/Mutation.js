@@ -7,6 +7,7 @@ const createToken = (username, expiresIn) => {
     }
   );
 };
+//addToSet and set cannot be the same operation
 const Mutation = {
   Mutation: {
     signUp: async (
@@ -141,12 +142,7 @@ const Mutation = {
       }
       return await UserStarred.findOneAndUpdate(
         { userName: currentUser?.username },
-        { $addToSet: { starred: starred } },
-        {
-          $set: {
-            userName: currentUser?.username,
-          },
-        },
+        { $addToSet: { starred: { $each: starred } } },
         { upsert: true }
       );
     },
@@ -233,7 +229,9 @@ const Mutation = {
         { userName: currentUser?.username },
         {
           $addToSet: {
-            seenCards: seenCards,
+            seenCards: {
+              $each: seenCards,
+            },
           },
         },
         { upsert: true }
@@ -271,8 +269,8 @@ const Mutation = {
           return await Search.findOneAndUpdate(
             { userName: currentUser?.username },
             {
-              $set: {
-                userName: currentUser?.username,
+              $addToSet: {
+                searches: { $each: search },
               },
             },
             { upsert: true }
@@ -313,7 +311,9 @@ const Mutation = {
           { userName: currentUser?.username },
           {
             $addToSet: {
-              clicked: clickedInfo,
+              clicked: {
+                $each: clickedInfo,
+              },
             },
           },
           { upsert: true }
