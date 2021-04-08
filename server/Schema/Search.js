@@ -16,10 +16,10 @@ const Search = gql`
     searches: [Searches]
   }
   extend type Mutation {
-    searchHistoryAdded(search: [SearchesInput]!): Search
+    searchHistoryAdded(search: [SearchesInput]!): Search @auth
   }
   extend type Query {
-    getSearches: [Searches]
+    getSearches: [Searches] @auth
   }
 `;
 module.exports = Search;

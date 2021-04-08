@@ -18,8 +18,7 @@ import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stat
 import idx from 'idx';
 import { useDeepMemo } from './hooks/useDeepMemo';
 import PaginationBarDiscover from './DiscoverBody/PaginationBarDiscover';
-import { IStateDiscover, IStateShared, StaticState } from './typing/interface';
-import { ActionResolvePromiseOutput } from './index';
+import { ActionResolvePromiseOutput, IStateDiscover, IStateShared, StaticState } from './typing/interface';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -55,7 +54,7 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
 
-const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) => {
+const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResolvePromise }) => {
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
   const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
@@ -75,8 +74,8 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
     if (!isFetchFinish.current && stateDiscover.pageDiscover > 1 && sortedDataRef?.current?.length > 0) {
       setLoading(true); // spawn loading spinner at bottom page
       paginationRef.current += stateShared.perPage;
-      if (sortedDataRef.current.slice(0, paginationRef.current + stateShared.perPage).length === 0) {
-        isFetchFinish.current = actionResolvedPromise(
+      if (sortedDataRef.current.slice(paginationRef.current + stateShared.perPage).length === 0) {
+        isFetchFinish.current = actionResolvePromise(
           ActionResolvedPromise.noData,
           setLoading,
           setNotification,
@@ -84,13 +83,13 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
           displayName!
         ).isFetchFinish;
       } else {
-        actionResolvedPromise(
+        actionResolvePromise(
           ActionResolvedPromise.append,
           setLoading,
           setNotification,
           isFetchFinish.current,
           displayName!,
-          sortedDataRef.current.slice(0, paginationRef.current + stateShared.perPage)
+          sortedDataRef.current.slice(paginationRef.current, paginationRef.current + stateShared.perPage)
         );
       }
     }
@@ -111,8 +110,8 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
         ),
       },
     });
-    if (sortedDataRef.current.slice(0, stateShared.perPage).length === 0) {
-      isFetchFinish.current = actionResolvedPromise(
+    if (sortedDataRef.current.slice(stateShared.perPage).length === 0) {
+      isFetchFinish.current = actionResolvePromise(
         ActionResolvedPromise.noData,
         setLoading,
         setNotification,
@@ -120,18 +119,17 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
         displayName!
       ).isFetchFinish;
     } else {
-      actionResolvedPromise(
+      actionResolvePromise(
         ActionResolvedPromise.append,
         setLoading,
         setNotification,
         isFetchFinish.current,
         displayName!,
-        sortedDataRef.current.slice(0, stateShared.perPage)
+        sortedDataRef.current.slice(0, paginationRef.current)
       );
     }
   };
 
-  const mergedDataRef = useRef<any[]>([]);
   const suggestedDataImages = useSelector((data: StaticState) => data.SuggestedRepoImages);
   const imagesDataDiscover:
     | { mapData: Map<number, RenderImages>; arrayData: [RenderImages] | any[] }
@@ -155,7 +153,9 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
   }, [suggestedDataImages]);
 
   const isLoadingRef = useRef<boolean>(true);
+  const mergedDataRef = useRef<any[]>([]);
   const notificationRef = useRef<string>('');
+  const imagesDataDiscoverRef = useRef<any>();
 
   useEffect(() => {
     let isFinished = false;
@@ -190,6 +190,17 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notification]);
 
+  useEffect(() => {
+    let isFinished = false;
+    if (location.pathname === '/discover' && !isFinished) {
+      imagesDataDiscoverRef.current = imagesDataDiscover;
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imagesDataDiscover]);
+
   const handleBottomHit = useCallback(
     () => {
       if (
@@ -218,7 +229,9 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
               html_url: obj.html_url,
               id: obj.id,
               imagesData:
-                imagesDataDiscover.arrayData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] ?? [],
+                imagesDataDiscoverRef.current.arrayData
+                  .filter((xx: RenderImages) => xx.id === obj.id)
+                  .map((obj: RenderImages) => [...obj.value])[0] ?? [],
               name: obj.name,
               is_queried: false,
             }
@@ -226,7 +239,7 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
           acc.push(temp);
           return acc;
         }, [] as SeenProps[]);
-        if (result.length > 0 && imagesDataDiscover.mapData.size > 0) {
+        if (result.length > 0 && imagesDataDiscoverRef.current.mapData.size > 0) {
           //don't add to database yet when imagesData still loading.
           seenAdded({
             variables: {
@@ -236,7 +249,7 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
         }
       }
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isFetchFinish.current, mergedDataRef.current, isLoadingRef.current, imagesDataDiscover, notificationRef.current]
+    []
   );
 
   useBottomHit(
@@ -255,6 +268,9 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
   }
 
   useResizeHandler(windowScreenRef, handleResize);
+  useEffect(() => {
+    dispatchDiscover({ type: 'MERGED_DATA_APPEND_DISCOVER_EMPTY' });
+  }, [sortedClicked]);
   useEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
@@ -412,7 +428,7 @@ const Discover = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise
                 return useDeepMemo(() => {
                   return Object.keys(whichToUse()).map((key, idx) => (
                     <CardDiscover
-                      key={idx}
+                      key={whichToUse()[idx].id}
                       sorted={sortedClicked}
                       imagesMapDataDiscover={imagesDataDiscover.mapData}
                       columnCount={columnCount}

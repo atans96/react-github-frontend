@@ -19,7 +19,7 @@ const SuggestedRepo = gql`
     repoInfo: [RepoInfo]
   }
   extend type Query {
-    getSuggestedRepo: SuggestedRepo
+    getSuggestedRepo: SuggestedRepo @auth
   }
 `;
 module.exports = SuggestedRepo;

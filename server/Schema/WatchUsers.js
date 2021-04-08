@@ -20,16 +20,16 @@ const WatchUsers = gql`
     login: [Login!]!
   }
   extend type Mutation {
-    watchUsersAdded(login: WatchUsersInput!): WatchUsers
+    watchUsersAdded(login: WatchUsersInput!): WatchUsers @auth
     watchUsersFeedsAdded(
       login: String!
       feeds: [String]!
       lastSeenFeeds: [String]!
-    ): WatchUsers
-    watchUsersRemoved(login: String!): Boolean
+    ): WatchUsers @auth
+    watchUsersRemoved(login: String!): Boolean @auth
   }
   extend type Query {
-    getWatchUsers: WatchUsers
+    getWatchUsers: WatchUsers @auth
   }
 `;
 module.exports = WatchUsers;

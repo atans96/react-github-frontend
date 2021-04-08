@@ -28,7 +28,7 @@ const StarRanking = gql`
     starRanking: [StarRankingArray]
   }
   extend type Query {
-    getStarRanking: StarRanking
+    getStarRanking: StarRanking @auth
   }
 `;
 module.exports = StarRanking;

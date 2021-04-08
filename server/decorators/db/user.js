@@ -2,7 +2,6 @@ class UserDbController {
   constructor({ db }) {
     this.db = db;
   }
-
   async getByUserName({ username }) {
     const user = await this.db
       .collection("users")

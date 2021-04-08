@@ -11,7 +11,7 @@ export function useClickOutside(ref, handler, exception = []) {
         ref?.current.contains(event.target) ||
         exception.some((substring) => {
           //at least there's one true for this regex pattern
-          return new RegExp(substring).test(event.target.parentElement.className);
+          return new RegExp(substring).test(event?.target?.parentElement?.className);
         })
       ) {
         return;

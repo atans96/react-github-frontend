@@ -7,7 +7,6 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import { CircularProgress } from '@material-ui/core';
 import { TrendsCard } from './DetailsBody/TrendsCard';
-import { Helmet } from 'react-helmet';
 import { useHistory } from 'react-router-dom';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
@@ -40,7 +39,6 @@ const Details: React.FC = () => {
     starRankingData,
     (_) => !starRankingDataLoading && !starRankingDataError && _.getStarRanking
   );
-  const fullName = idx(data, (_) => _.data.full_name) ?? '';
 
   useEffect(() => {
     let isFinished = false;
@@ -65,16 +63,19 @@ const Details: React.FC = () => {
         setData(JSON.parse(localStorage.getItem('detailsData') || ''));
         localStorage.removeItem('detailsData');
       }
-      return () => {};
+      return () => {
+        setData(null);
+        setReadme('');
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.pathname]);
 
   useEffect(
     () => {
       let isFinished = false;
       if (!isFinished && /detail/.test(location.pathname) && !!data) {
-        markdownParsing(fullName, data.data.default_branch).then((dataStarRanking) => {
+        markdownParsing(data.data.full_name, data.data.default_branch).then((dataStarRanking) => {
           if (_isMounted.current) {
             setReadme(dataStarRanking.readme);
           }
@@ -90,10 +91,6 @@ const Details: React.FC = () => {
   const history = useHistory();
   return (
     <React.Fragment>
-      <Helmet>
-        <title>{fullName}</title>
-        <meta name="description" content={`Github Readme for ${fullName}`} />
-      </Helmet>
       <div
         className={'background-readme-details'}
         onClick={(e) => {

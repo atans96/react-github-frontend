@@ -41,7 +41,6 @@ export const RSS_FEED_ADDED = gql`
     rssFeedAdded(rss: $rss, lastSeen: $lastSeen) {
       rss
       lastSeen
-      userName
     }
   }
 `;

@@ -55,7 +55,10 @@ const file = fs.createWriteStream(
 file.end();
 const extendSchemaArrays = gql`
   scalar Date
-  directive @length(max: Int!) on FIELD_DEFINITION
+  directive @length(
+    max: Int!
+  ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+  directive @auth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
 `;
 schemaArrays = schemaArrays.concat(extendSchemaArrays);
 module.exports = schemaArrays;

@@ -36,19 +36,19 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
     const GQL_variables = {
       reponame: data.name,
       owner: data.owner.login,
-      stargazersCount: stateStargazers.stargazersUsers || 2,
-      starredRepoCount: stateStargazers.stargazersUsersStarredRepositories || 2,
+      stargazersCount: stateStargazers.stargazersUsers,
+      starredRepoCount: stateStargazers.stargazersUsersStarredRepositories,
     };
 
     const GQL_pagination_variables = {
       reponame: data.name,
       owner: data.owner.login,
-      stargazersCount: stateStargazers.stargazersUsers || 2, // localStorage.getItem("users) cannot be updated to stargazersCount
+      stargazersCount: stateStargazers.stargazersUsers, // localStorage.getItem("users) cannot be updated to stargazersCount
       // when localStorage changes as a result of FilterResult of localStorage.setItem()
       // but to update this stargazersCount variable, StargazersCard component need to re-render
       // but there is no way to re-render StargazersCard as a result of FilterResult changes other than
       // clicks event in StargazersCard.js. Thus, you need to use React.context to sync with FilterResult.js
-      starredRepoCount: stateStargazers.stargazersUsersStarredRepositories || 2,
+      starredRepoCount: stateStargazers.stargazersUsersStarredRepositories,
       after: stateStargazers.hasNextPage.endCursor,
     };
     const onClickCb = useCallback(
@@ -181,7 +181,14 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
       // isLoading need to be in dependency array, otherwise we can't send isLoading state to StargazersInfo inside
       // returnPortal callback here
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateShared.tokenGQL.length, visible, isLoading, stateShared.isLoggedIn]);
+    }, [
+      stateShared.tokenGQL.length,
+      visible,
+      isLoading,
+      stateShared.isLoggedIn,
+      GQL_variables,
+      GQL_pagination_variables,
+    ]);
 
     const handleClickStargazers = (event: React.MouseEvent<HTMLElement>) => {
       setVisible(true); // spawn modal of StargazersInfo
@@ -266,7 +273,7 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
             className="star-counts-container"
             {...getRootProps({
               onClick: handleClickStargazers,
-              params: { query: SEARCH_FOR_REPOS, variables: { GQL_variables, GQL_pagination_variables } },
+              params: { query: SEARCH_FOR_REPOS, variables: { ...GQL_variables } },
               firstCallback: () => {
                 setIsLoading(false);
               },

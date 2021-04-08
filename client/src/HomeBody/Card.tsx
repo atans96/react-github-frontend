@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { NavLink, useLocation, useHistory } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
 import Stargazers from './CardBody/Stargazers';
@@ -69,11 +69,9 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
       }
     }
   };
-  const history = useHistory();
   const handleDetailsClicked = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      history.push(`/detail/${githubData.id}`);
       if (stateShared.isLoggedIn) {
         clickedAdded({
           variables: {

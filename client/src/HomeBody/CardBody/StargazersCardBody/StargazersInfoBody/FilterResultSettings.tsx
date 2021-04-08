@@ -17,12 +17,20 @@ export interface FilterResultSettings {
 
 const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props }) => {
   const classes = useStyles();
-  const [, dispatch] = useTrackedStateStargazers();
+  const [state, dispatch] = useTrackedStateStargazers();
   const dispatchStargazersUsers = (stargazersUsers: number) => {
     dispatch({
       type: 'STARGAZERS_USERS',
       payload: {
         stargazersUsers: stargazersUsers,
+      },
+    });
+  };
+  const dispatchStargazersUsersRepo = (stargazersUsersStarredRepositories: number) => {
+    dispatch({
+      type: 'STARGAZERS_USERS_REPOS',
+      payload: {
+        stargazersUsersStarredRepositories: stargazersUsersStarredRepositories,
       },
     });
   };
@@ -37,7 +45,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props
             type={'users'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={parseInt(localStorage.getItem('users') as string) || 2}
+            defaultValue={state.stargazersUsers}
             dispatch={dispatchStargazersUsers}
             icon={<PeopleIcon />}
           />
@@ -50,8 +58,8 @@ const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props
             type={'repos'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={parseInt(localStorage.getItem('repos') as string) || 2}
-            dispatch={dispatchStargazersUsers}
+            defaultValue={state.stargazersUsersStarredRepositories}
+            dispatch={dispatchStargazersUsersRepo}
             icon={<ReposIcon />}
           />
         </details>

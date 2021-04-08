@@ -14,21 +14,18 @@ import { useApolloFactory } from '../../../../hooks/useApolloFactory';
 import { noop } from '../../../../util/util';
 import { useLocation } from 'react-router-dom';
 import idx from 'idx';
-import {
-  useTrackedState,
-  useTrackedStateShared,
-  useTrackedStateStargazers,
-} from '../../../../selectors/stateContextSelector';
+import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
+import { IStateStargazers } from '../../../../typing/interface';
 
 export interface Result {
   getRootPropsCard: any;
   stargazer: StargazerProps;
+  stateStargazers: IStateStargazers;
 }
 
-const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
+const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard }) => {
   const [, dispatchShared] = useTrackedStateShared();
-  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
-  const [, dispatch] = useTrackedState();
+  const [, dispatchStargazers] = useTrackedStateStargazers();
   const [hovered, setHovered] = useState('');
   const classes = useUserCardStyles();
   const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
@@ -152,12 +149,6 @@ const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
     }
   };
   const onClick = () => {
-    dispatch({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_ALL',
-    });
     dispatchShared({
       type: 'USERNAME_ADDED',
       payload: {
@@ -224,7 +215,7 @@ const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
                       .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
                       .map((x: { name: string }) => x && x.name)
                       .filter((language: string) => language === stateStargazers.language).length
-                ) ?? 'No Language'
+                ) ?? 0
               }
             </Typography>
           </div>

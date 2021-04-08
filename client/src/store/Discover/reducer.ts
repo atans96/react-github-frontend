@@ -1,4 +1,5 @@
 import { IAction, IStateDiscover } from '../../typing/interface';
+import _ from 'lodash';
 
 export type ActionDiscover =
   | 'LAST_PAGE_DISCOVER'
@@ -9,6 +10,7 @@ export type ActionDiscover =
   | 'ADVANCE_PAGE_DISCOVER'
   | 'VISIBLE'
   | 'REMOVE_ALL'
+  | 'MERGED_DATA_APPEND_DISCOVER_EMPTY'
   | 'SET_DRAWER_WIDTH';
 
 export const initialStateDiscover: IStateDiscover = {
@@ -34,10 +36,17 @@ export const reducerDiscover = (state = initialStateDiscover, action: IAction<Ac
         lastPageDiscover: action.payload.lastPageDiscover,
       };
     }
+    case 'MERGED_DATA_APPEND_DISCOVER_EMPTY': {
+      return {
+        ...state,
+        mergedDataDiscover: [],
+        pageDiscover: 1,
+      };
+    }
     case 'MERGED_DATA_APPEND_DISCOVER': {
       return {
         ...state,
-        mergedDataDiscover: action.payload.data,
+        mergedDataDiscover: _.uniqBy([...state.mergedDataDiscover, ...action.payload.data], 'id'),
       };
     }
     case 'MERGED_DATA_ADDED_DISCOVER': {
