@@ -9,7 +9,7 @@ const SuggestedRepoImages = gql`
     renderImages: [Images]
   }
   extend type Query {
-    getSuggestedRepoImages: SuggestedRepoImages
+    getSuggestedRepoImages: SuggestedRepoImages @auth
   }
 `;
 module.exports = SuggestedRepoImages;

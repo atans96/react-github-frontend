@@ -28,11 +28,12 @@ const User = gql`
       code: String!
       languagePreference: [LanguagePreferenceInput]
     ): Token
-    tokenRSSAdded(tokenRSS: String!): Boolean
+    tokenRSSAdded(tokenRSS: String!): Boolean @auth
     setLanguagePreference(languagePreference: [LanguagePreferenceInput]): User
+      @auth
   }
   extend type Query {
-    getUserData: User
+    getUserData: User @auth
   }
 `;
 module.exports = User;

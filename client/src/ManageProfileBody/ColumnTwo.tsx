@@ -111,7 +111,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
                     return render().map((obj: RepoInfoProps, idx) => {
                       return <RepoInfo active={active} obj={obj} key={idx} onClickRepoInfo={onClickRepoInfo} />;
                     });
-                  }, [state.repoInfo, checkedItems])}
+                  }, [state.repoInfo, checkedItems, languageFilter])}
                 </div>
               </td>
               <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>

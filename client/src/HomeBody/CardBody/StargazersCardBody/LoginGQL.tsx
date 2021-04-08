@@ -39,6 +39,15 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, style 
 
   useClickOutside(loginLayoutRef, () => setVisible(false));
 
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setData({ ...data, isLoading: true });
+    verifyTokenGQL().then(noop);
+    setRef(null);
+    setNotification("Please wait we're verifying the token");
+  };
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -66,7 +75,7 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, style 
             </a>
           </div>
           <div>
-            <form action="#" method="get" className="input-group">
+            <form action="#" method="post" className="input-group" onSubmit={handleSubmit}>
               <input
                 autoCorrect="off"
                 autoComplete="off"

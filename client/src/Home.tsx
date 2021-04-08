@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { IDataOne, IState, IStateShared } from './typing/interface';
+import { ActionResolvePromiseOutput, IDataOne, IState, IStateShared } from './typing/interface';
 import CardSkeleton from './HomeBody/CardSkeleton';
 import { getOrg, getRepoImages, getSearchTopics, getUser } from './services';
 import MasonryLayout from './Layout/MasonryLayout';
 import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
-import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, Seen, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
@@ -23,7 +23,6 @@ import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from './selectors/stateContextSelector';
 import { useDeepMemo } from './hooks/useDeepMemo';
 import idx from 'idx';
-import { ActionResolvePromiseOutput } from './index';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -65,7 +64,7 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
 
-const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) => {
+const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) => {
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchStargazers] = useTrackedStateStargazers();
@@ -133,7 +132,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
           repoStat: repoStat,
         },
       });
-      actionResolvedPromise(
+      actionResolvePromise(
         ActionResolvedPromise.append,
         setLoading,
         setNotification,
@@ -144,7 +143,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
     } else if (res !== undefined && (res.error_404 || res.error_403)) {
       callback
         ? promiseOrNot()
-        : actionResolvedPromise(
+        : actionResolvePromise(
             ActionResolvedPromise.error,
             setLoading,
             setNotification,
@@ -153,7 +152,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
             res
           );
     } else {
-      isFetchFinish.current = actionResolvedPromise(
+      isFetchFinish.current = actionResolvePromise(
         ActionResolvedPromise.noData,
         setLoading,
         setNotification,
@@ -181,7 +180,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
             actionController(res);
           })
           .catch((error) => {
-            actionResolvedPromise(
+            actionResolvePromise(
               ActionResolvedPromise.error,
               setLoading,
               setNotification,
@@ -207,7 +206,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
                       actionController(data);
                     })
                     .catch((err) => {
-                      actionResolvedPromise(
+                      actionResolvePromise(
                         ActionResolvedPromise.error,
                         setLoading,
                         setNotification,
@@ -219,7 +218,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
                 actionController(data, callback);
               })
               .catch((error) => {
-                actionResolvedPromise(
+                actionResolvePromise(
                   ActionResolvedPromise.error,
                   setLoading,
                   setNotification,
@@ -270,7 +269,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
                   actionController(data);
                 })
                 .catch((err) => {
-                  actionResolvedPromise(
+                  actionResolvePromise(
                     ActionResolvedPromise.error,
                     setLoading,
                     setNotification,
@@ -296,7 +295,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
             actionController(data, callback);
           })
           .catch((err) => {
-            actionResolvedPromise(
+            actionResolvePromise(
               ActionResolvedPromise.error,
               setLoading,
               setNotification,
@@ -413,15 +412,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    isFetchFinish.current,
-    mergedDataRef.current,
-    isLoadingRef.current,
-    imagesDataRef.current,
-    notificationRef.current,
-    filterBySeenRef.current,
-    stateShared.isLoggedIn,
-  ]);
+  }, [stateShared.isLoggedIn]);
 
   useBottomHit(
     windowScreenRef,
@@ -490,52 +481,26 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
 
   useEffect(() => {
     let isFinished = false;
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished) {
-      if (!state.filterBySeen) {
-        const images = state.undisplayMergedData.reduce((acc: any[], obj: SeenProps) => {
-          acc.push(
-            Object.assign(
-              {},
-              {
-                id: obj.id,
-                value: [...obj.imagesData],
-              }
-            )
-          );
-          return acc;
-        }, [] as SeenProps[]);
-        dispatch({
-          type: 'IMAGES_DATA_ADDED',
-          payload: {
-            images: images,
-          },
-        });
-        dispatch({
-          type: 'MERGED_DATA_ADDED',
-          payload: {
-            data: state.undisplayMergedData,
-          },
-        });
-      } else {
-        const ids = state.undisplayMergedData.reduce((acc, obj) => {
-          acc.push(obj.id);
-          return acc;
-        }, [] as number[]);
-        const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
-        const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), state.imagesData);
-        dispatch({
-          type: 'IMAGES_DATA_REPLACE',
-          payload: {
-            imagesData: images,
-          },
-        });
-        dispatch({
-          type: 'MERGED_DATA_ADDED',
-          payload: {
-            data: temp,
-          },
-        });
-      }
+    setNotification('');
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
+      const ids = state.undisplayMergedData.reduce((acc, obj) => {
+        acc.push(obj.id);
+        return acc;
+      }, [] as number[]);
+      const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
+      const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), state.imagesData);
+      dispatch({
+        type: 'IMAGES_DATA_REPLACE',
+        payload: {
+          imagesData: images,
+        },
+      });
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: temp,
+        },
+      });
       return () => {
         isFinished = true;
       };
@@ -545,11 +510,36 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
 
   useEffect(() => {
     let isFinished = false;
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished) {
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
       dispatch({
         type: 'UNDISPLAY_MERGED_DATA',
         payload: {
           undisplayMergedData: seenData.getSeen.seenCards,
+        },
+      });
+      const temp = seenData.getSeen.seenCards ?? [];
+      const images = temp!.reduce((acc: any[], obj: Seen) => {
+        acc.push(
+          Object.assign(
+            {},
+            {
+              id: obj.id,
+              value: [...obj.imagesData],
+            }
+          )
+        );
+        return acc;
+      }, [] as SeenProps[]);
+      dispatch({
+        type: 'IMAGES_DATA_ADDED',
+        payload: {
+          images: images,
+        },
+      });
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: seenData.getSeen.seenCards,
         },
       });
       return () => {
@@ -557,7 +547,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seenDataLoading, seenDataError, seenData]);
+  }, [seenDataLoading, seenDataError, seenData, location.pathname, state.filterBySeen]);
 
   useEffect(
     () => {
@@ -602,7 +592,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
             }
           })
           .catch((err) => {
-            actionResolvedPromise(
+            actionResolvePromise(
               ActionResolvedPromise.error,
               setLoading,
               setNotification,
@@ -629,6 +619,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const onClickTopic = useCallback(
@@ -669,7 +660,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
             setRenderSkeleton(true);
           })
           .catch((err) => {
-            actionResolvedPromise(
+            actionResolvePromise(
               ActionResolvedPromise.error,
               setLoading,
               setNotification,
@@ -705,6 +696,8 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvedPromise }) 
   // it should show effect: https://codyhouse.co/ds/components/app/looping-tabs
 
   //TODO: handle the case where the user revoke his token
+
+  //TODO: disable inspect element when in production
   return (
     <React.Fragment>
       <Helmet>

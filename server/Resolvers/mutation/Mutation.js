@@ -36,9 +36,6 @@ const Mutation = {
       { login },
       { models: { WatchUsers }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       const watchUsers = await WatchUsers.findOne({
         userName: currentUser?.username,
       });
@@ -60,10 +57,7 @@ const Mutation = {
       { languagePreference },
       { models: { User }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
-      return await User.findOneAndUpdate(
+      await User.findOneAndUpdate(
         { userName: currentUser?.username },
         {
           $set: {
@@ -72,16 +66,14 @@ const Mutation = {
         },
         { upsert: true }
       );
+      return await User.findOne({ userName: currentUser?.username });
     },
     watchUsersFeedsAdded: async (
       root,
       { login, feeds, lastSeenFeeds },
       { models: { WatchUsers }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
-      return await WatchUsers.findOneAndUpdate(
+      await WatchUsers.findOneAndUpdate(
         { userName: currentUser?.username, "login.login": login },
         {
           $addToSet: {
@@ -95,6 +87,7 @@ const Mutation = {
         },
         { upsert: true }
       );
+      return await WatchUsers.findOne({ userName: currentUser?.username });
       // return await WatchUsers.findOneAndUpdate(
       //   { userName: currentUser?.username, "login.login": login },
       //   {
@@ -119,10 +112,7 @@ const Mutation = {
       { login },
       { models: { WatchUsers }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
-      return await WatchUsers.findOneAndUpdate(
+      await WatchUsers.findOneAndUpdate(
         { userName: currentUser?.username }, //no limit at how many subscribe user you can
         {
           $push: {
@@ -131,43 +121,37 @@ const Mutation = {
         },
         { upsert: true }
       );
+      return await WatchUsers.findOne({ userName: currentUser?.username });
     },
     starredMeAdded: async (
       root,
       { starred },
       { models: { UserStarred }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
-      return await UserStarred.findOneAndUpdate(
+      await UserStarred.findOneAndUpdate(
         { userName: currentUser?.username },
         { $addToSet: { starred: { $each: starred } } },
         { upsert: true }
       );
+      return await UserStarred.findOne({ userName: currentUser?.username });
     },
     starredMeRemoved: async (
       root,
       { removeStarred },
       { models: { UserStarred }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
-      return await UserStarred.findOneAndUpdate(
+      await UserStarred.findOneAndUpdate(
         { userName: currentUser?.username },
         { $pull: { starred: removeStarred } },
         { upsert: true }
       );
+      return await UserStarred.findOne({ userName: currentUser?.username });
     },
     tokenRSSAdded: async (
       root,
       { tokenRSS },
       { models: { User }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       await User.updateOne(
         { userName: currentUser?.username },
         { $set: { tokenRSS: tokenRSS } },
@@ -180,10 +164,7 @@ const Mutation = {
       { rss, lastSeen },
       { models: { RSSFeed }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
-      return await RSSFeed.findOneAndUpdate(
+      await RSSFeed.findOneAndUpdate(
         { userName: currentUser?.username },
         {
           $addToSet: {
@@ -198,6 +179,7 @@ const Mutation = {
         },
         { upsert: true }
       );
+      return await RSSFeed.findOne({ userName: currentUser?.username });
       // return await RSSFeed.findOneAndUpdate(
       //   { userName: currentUser?.username },
       //   {
@@ -222,10 +204,7 @@ const Mutation = {
       { seenCards },
       { models: { Seen }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
-      return await Seen.findOneAndUpdate(
+      await Seen.findOneAndUpdate(
         { userName: currentUser?.username },
         {
           $addToSet: {
@@ -236,21 +215,19 @@ const Mutation = {
         },
         { upsert: true }
       );
+      return await Seen.findOne({ userName: currentUser?.username });
     },
     searchHistoryAdded: async (
       root,
       { search },
       { models: { Search }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       if (search[0].search.length > 0) {
         const searchDB = await Search.find({
           "searches.search": search[0].search,
         });
         if (searchDB !== null && searchDB.length > 0) {
-          return await Search.findOneAndUpdate(
+          await Search.findOneAndUpdate(
             {
               userName: currentUser?.username,
               "searches.search": search[0].search,
@@ -265,8 +242,9 @@ const Mutation = {
             },
             { upsert: true }
           );
+          return await Search.findOne({ userName: currentUser?.username });
         } else {
-          return await Search.findOneAndUpdate(
+          await Search.findOneAndUpdate(
             { userName: currentUser?.username },
             {
               $addToSet: {
@@ -275,6 +253,7 @@ const Mutation = {
             },
             { upsert: true }
           );
+          return await Search.findOne({ userName: currentUser?.username });
         }
       }
     },
@@ -283,9 +262,6 @@ const Mutation = {
       { clickedInfo },
       { models: { Clicked, Seen }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       const hasSeen = await Seen.aggregate([
         {
           $match: {
@@ -306,8 +282,9 @@ const Mutation = {
         },
       ]);
       //if seenCards has been queried by the github-api-static, don't append the Clicked database to prevent being queried again
-      if (hasSeen.length === 0) {
-        return await Clicked.findOneAndUpdate(
+      if (hasSeen.length === 0 || hasSeen[0].is_queried.length === 0) {
+        //always take the first element in array since we're querying for 1 full_name ("seenCards.full_name": clickedInfo[0].full_name) above
+        await Clicked.findOneAndUpdate(
           { userName: currentUser?.username },
           {
             $addToSet: {
@@ -318,6 +295,7 @@ const Mutation = {
           },
           { upsert: true }
         );
+        return Clicked.findOne({ userName: currentUser?.username });
       }
     },
   },

@@ -201,12 +201,12 @@ export type Seen = {
   owner: OwnerProps;
   description: string;
   language: string;
-  topics: string[];
+  topics: string[] | [];
   html_url: string;
   name: string;
   id: number;
   default_branch: string;
-  imagesData: Nullable<string[] | []>;
+  imagesData: string[] | [];
   is_queried: boolean;
 };
 export type SeenData = {

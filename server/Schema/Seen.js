@@ -44,10 +44,10 @@ const Seen = gql`
     seenCards: [SeenCards]
   }
   extend type Mutation {
-    seenAdded(seenCards: [SeenCardsInput]!): Seen
+    seenAdded(seenCards: [SeenCardsInput]!): Seen @auth
   }
   extend type Query {
-    getSeen: Seen
+    getSeen: Seen @auth
   }
 `;
 module.exports = Seen;

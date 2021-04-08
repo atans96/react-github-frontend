@@ -1,6 +1,7 @@
 import React, { ReactNode, CSSProperties, TransitionEvent, MouseEvent, MutableRefObject, Dispatch } from 'react';
 
 import {
+  ActionResolvedPromise,
   ContributorsProps,
   HasNextPage,
   ImagesDataProps,
@@ -27,7 +28,21 @@ import { ActionStargazers } from '../store/Staargazers/reducer';
 import { ActionDiscover } from '../store/Discover/reducer';
 import { ActionManageProfile } from '../store/ManageProfile/reducer';
 import { ActionRateLimit } from '../store/RateLimit/reducer';
+interface Output {
+  isFetchFinish: boolean;
+}
 
+export interface ActionResolvePromiseOutput {
+  actionResolvePromise: (
+    action: ActionResolvedPromise,
+    setLoading: any,
+    setNotification: any,
+    isFetchFinish: boolean,
+    displayName: string,
+    data?: Nullable<IDataOne | any>,
+    error?: string
+  ) => Output;
+}
 export interface IAction<T> {
   type: T;
   payload?: any;
@@ -129,17 +144,6 @@ export interface RepoRenderImages {
 }
 export interface SearchUser {
   users: { [x: string]: any };
-}
-export interface SelectorReducerProps {
-  stateShared: { dispatch: React.Dispatch<IAction<ActionShared>>; state: IStateShared };
-  state: { dispatch: React.Dispatch<IAction<Action>>; state: IState };
-  stateStargazers: { dispatch: React.Dispatch<IAction<ActionStargazers>>; state: IStateStargazers };
-  stateDiscover: { dispatch: React.Dispatch<IAction<ActionDiscover>>; state: IStateDiscover };
-  stateManageProfile: {
-    dispatch: React.Dispatch<IAction<ActionManageProfile>>;
-    state: IStateManageProfile;
-  };
-  stateRateLimit: { dispatch: React.Dispatch<IAction<ActionRateLimit>>; state: IStateRateLimit };
 }
 export interface IContext {
   state: IState;

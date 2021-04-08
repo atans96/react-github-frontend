@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { NavLink, useHistory, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { MergedDataProps } from '../typing/type';
 import VisibilitySensor from '../Layout/VisibilitySensor';
 import clsx from 'clsx';
@@ -61,10 +61,8 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
         }).then(noop);
       }
     };
-    const history = useHistory();
     const handleDetailsClicked = (e: React.MouseEvent) => {
       e.preventDefault();
-      history.push(`/detail/${githubData.id}`);
       clickedAdded({
         variables: {
           clickedInfo: [

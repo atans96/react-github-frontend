@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useReducer, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { BrowserRouter as Router, Redirect, Route, Switch, useLocation, useHistory } from 'react-router-dom';
+import { BrowserRouter as Router, Redirect, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
-import { ApolloClient, ApolloLink, ApolloProvider, HttpLink, InMemoryCache } from '@apollo/client';
+import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
@@ -17,7 +17,6 @@ import {
   SuggestedRepoContainer,
   SuggestedRepoImagesContainer,
 } from './selectors/stateSelector';
-import { initialStateShared, reducerShared } from './store/Shared/reducer';
 import Login from './Login';
 import ManageProfile from './ManageProfile';
 import SearchBarDiscover from './SearchBarDiscover';
@@ -41,23 +40,11 @@ import { useApolloFactory } from './hooks/useApolloFactory';
 import idx from 'idx';
 import { ActionResolvedPromise, LanguagePreference, MergedDataProps, Nullable } from './typing/type';
 import { IDataOne } from './typing/interface';
+import { If } from './util/react-if/If';
+import eye from './new_16-2.gif';
+import { Then } from './util/react-if/Then';
 
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
-
-interface Output {
-  isFetchFinish: boolean;
-}
-export interface ActionResolvePromiseOutput {
-  actionResolvedPromise: (
-    action: ActionResolvedPromise,
-    setLoading: any,
-    setNotification: any,
-    isFetchFinish: boolean,
-    displayName: string,
-    data?: Nullable<IDataOne | any>,
-    error?: string
-  ) => Output;
-}
 
 const App = () => {
   const location = useLocation();
@@ -90,12 +77,15 @@ const App = () => {
   }, [verifiedLoading, username, stateShared.isLoggedIn, stateShared.tokenGQL]);
 
   const { userData } = useApolloFactory(Function.name).query.getUserData();
-  const { userStarred, loadingUserStarred } = useApolloFactory(Function.name).query.getUserInfoStarred();
-  const { seenData } = useApolloFactory(Function.name).query.getSeen();
+  const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
+    Function.name
+  ).query.getUserInfoStarred();
+  const { seenData, seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
   const alreadySeenCards: number[] = React.useMemo(() => {
     //Every time Global re-renders and nothing is memoized because each render re creates the selector.
     // To solve this we can use React.useMemo. Here is the correct way to use createSelectItemById.
     return alreadySeenCardSelector(seenData?.getSeen?.seenCards ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenData?.getSeen?.seenCards]);
 
   const languagePreference = React.useMemo(() => {
@@ -105,16 +95,20 @@ const App = () => {
   }, [idx(userData, (_) => _.getUserData.languagePreference)]);
 
   const languagePreferenceRef = useRef(languagePreference);
-  const alreadySeenCardsRef = useRef(alreadySeenCards);
+  const userStarredRef = useRef(userStarred?.getUserInfoStarred?.starred);
+  const alreadySeenCardsRef = useRef<number[]>([]);
   useEffect(() => {
-    alreadySeenCardsRef.current = alreadySeenCards;
+    alreadySeenCardsRef.current = [...alreadySeenCards];
   });
   useEffect(() => {
     languagePreferenceRef.current = languagePreference;
   });
+  useEffect(() => {
+    userStarredRef.current = userStarred?.getUserInfoStarred?.starred;
+  });
 
   const actionAppend = (data: IDataOne | any, displayName: string) => {
-    if (state.filterBySeen) {
+    if (state.filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
       switch (displayName) {
         case displayName.match(/^discover/gi) && displayName!.match(/^discover/gi)![0].length > 0
           ? displayName
@@ -123,14 +117,11 @@ const App = () => {
             (obj: MergedDataProps) =>
               filterActionResolvedPromiseData(
                 obj,
-                !alreadySeenCardsRef.current.includes(obj.id),
-                languagePreferenceRef.current.get(obj.language),
-                userStarred?.getUserInfoStarred?.starred?.includes(obj.id) === false
+                !alreadySeenCardsRef?.current?.includes(obj.id) && !userStarredRef?.current?.includes(obj.id),
+                !!languagePreferenceRef?.current?.get(obj.language)?.checked
               ),
             data
           );
-
-          let inputForImagesData = [];
           if (filter1.length > 0) {
             dispatchDiscover({
               type: 'MERGED_DATA_APPEND_DISCOVER',
@@ -138,21 +129,6 @@ const App = () => {
                 data: filter1,
               },
             });
-            inputForImagesData = filter1.reduce((acc: any[], object: MergedDataProps) => {
-              acc.push(
-                Object.assign(
-                  {},
-                  {
-                    id: object.id,
-                    value: {
-                      full_name: object.full_name,
-                      branch: object.default_branch,
-                    },
-                  }
-                )
-              );
-              return acc;
-            }, []);
           } else if (filter1.length === 0) {
             dispatchDiscover({
               type: 'ADVANCE_PAGE_DISCOVER',
@@ -165,13 +141,13 @@ const App = () => {
             (obj: MergedDataProps) =>
               filterActionResolvedPromiseData(
                 obj,
-                !alreadySeenCardsRef.current.includes(obj.id),
-                languagePreferenceRef.current.get(obj.language)
+                !alreadySeenCardsRef?.current?.includes(obj.id),
+                !!languagePreferenceRef?.current?.get(obj.language)
               ),
             data.dataOne
           );
           const tempImages = fastFilter(
-            (obj: MergedDataProps) => !alreadySeenCardsRef.current.includes(obj.id),
+            (obj: MergedDataProps) => !alreadySeenCardsRef?.current?.includes(obj.id),
             data.renderImages
           );
           if (tempImages.length === 0) {
@@ -235,13 +211,6 @@ const App = () => {
       }
     }
   };
-
-  const actionNonAppend = (data: IDataOne | any, displayName: string) => {
-    switch (displayName) {
-      case (displayName.match(/^discover/gi) || {}).input: {
-      }
-    }
-  };
   const actionResolvePromise = useCallback(
     (
       action: ActionResolvedPromise,
@@ -252,31 +221,30 @@ const App = () => {
       data?: Nullable<IDataOne | any>,
       error?: string
     ) => {
-      setLoading(false);
-      if (data && action === 'nonAppend') {
-        actionNonAppend(data, displayName);
-      }
-      if (data && action === 'append') {
-        actionAppend(data, displayName);
-      }
-      if (action === 'noData') {
-        isFetchFinish = true;
-        setNotification(`Sorry, no more data found for ${stateShared.username}`);
-      }
-      if (action === 'error' && error) {
-        throw new Error(`Something wrong at ${displayName} ${error}`);
-      }
-      if (data && data.error_404) {
-        setNotification(`Sorry, no data found for ${stateShared.username}`);
-      } else if (data && data.error_403) {
-        isFetchFinish = true;
-        setNotification('Sorry, API rate limit exceeded.');
-      } else if (data && data.error_message) {
-        throw new Error(`Something wrong at ${displayName} ${data.error_message}`);
+      if (!loadingUserStarred && !errorUserStarred && !seenDataLoading && !seenDataError) {
+        setLoading(false);
+        if (data && action === 'append') {
+          actionAppend(data, displayName);
+        }
+        if (action === 'noData') {
+          isFetchFinish = true;
+          setNotification(`Sorry, no more data found for ${stateShared.username}`);
+        }
+        if (action === 'error' && error) {
+          throw new Error(`Something wrong at ${displayName} ${error}`);
+        }
+        if (data && data.error_404) {
+          setNotification(`Sorry, no data found for ${stateShared.username}`);
+        } else if (data && data.error_403) {
+          isFetchFinish = true;
+          setNotification('Sorry, API rate limit exceeded.');
+        } else if (data && data.error_message) {
+          throw new Error(`Something wrong at ${displayName} ${data.error_message}`);
+        }
       }
       return { isFetchFinish };
     },
-    [stateShared.username, userStarred, loadingUserStarred]
+    [stateShared.username, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
   );
 
   return (
@@ -287,75 +255,95 @@ const App = () => {
           return <NavBar />;
         }}
       />
-      <KeepMountedLayout
-        mountedCondition={location.pathname === '/profile'}
-        render={() => {
-          if (stateShared.isLoggedIn) {
-            return <ManageProfile />;
-          } else {
-            return <Redirect to={'/login'} from={'/profile'} />;
-          }
-        }}
-      />
-      <KeepMountedLayout
-        mountedCondition={location.pathname === '/'}
-        render={() => {
-          return (
-            <StateStargazersProvider>
-              <SearchBar />
-              <Home actionResolvedPromise={actionResolvePromise} />
-            </StateStargazersProvider>
-          );
-        }}
-      />
-      <KeepMountedLayout
-        mountedCondition={/detail/.test(location.pathname)}
-        render={() => {
-          if (stateShared.isLoggedIn) {
-            return <Details />;
-          } else {
-            return <Redirect to={'/login'} from={'/detail/:id'} />;
-          }
-        }}
-      />
-      <KeepMountedLayout
-        mountedCondition={location.pathname === '/discover'}
-        render={() => {
-          if (stateShared.isLoggedIn) {
-            return (
-              <React.Fragment>
-                <SearchBarDiscover />
-                <Discover actionResolvedPromise={actionResolvePromise} />
-              </React.Fragment>
-            );
-          } else {
-            return <Redirect to={'/login'} from={'/discover'} />;
-          }
-        }}
-      />
-      <KeepMountedLayout
-        mountedCondition={location.pathname === '/login'}
-        render={() => {
-          if (!stateShared.isLoggedIn) {
-            return (
-              <StateRateLimitProvider>
-                <Login />
-              </StateRateLimitProvider>
-            );
-          } else {
-            return <Redirect to={'/'} from={'/login'} />;
-          }
-        }}
-      />
+      <If condition={loadingUserStarred && seenDataLoading}>
+        <Then>
+          <div style={{ textAlign: 'center' }}>
+            <img src={eye} style={{ width: '100px' }} />
+            <div style={{ textAlign: 'center' }}>
+              <h3>Please wait while fetching your data</h3>
+            </div>
+          </div>
+        </Then>
+      </If>
+      <If condition={!loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError}>
+        <Then>
+          <KeepMountedLayout
+            mountedCondition={location.pathname === '/profile'}
+            render={() => {
+              if (stateShared.isLoggedIn) {
+                return <ManageProfile />;
+              } else {
+                return <Redirect to={'/login'} from={'/profile'} />;
+              }
+            }}
+          />
+          <KeepMountedLayout
+            mountedCondition={location.pathname === '/'}
+            render={() => {
+              return (
+                <StateStargazersProvider>
+                  <SearchBar />
+                  <Home actionResolvePromise={actionResolvePromise} />
+                </StateStargazersProvider>
+              );
+            }}
+          />
+          <KeepMountedLayout
+            mountedCondition={/detail/.test(location.pathname)}
+            render={() => {
+              if (stateShared.isLoggedIn) {
+                return <Details />;
+              } else {
+                return <Redirect to={'/login'} from={'/detail/:id'} />;
+              }
+            }}
+          />
+          <KeepMountedLayout
+            mountedCondition={location.pathname === '/discover'}
+            render={() => {
+              if (stateShared.isLoggedIn) {
+                return (
+                  <React.Fragment>
+                    <SearchBarDiscover />
+                    <Discover actionResolvePromise={actionResolvePromise} />
+                  </React.Fragment>
+                );
+              } else {
+                return <Redirect to={'/login'} from={'/discover'} />;
+              }
+            }}
+          />
+          <KeepMountedLayout
+            mountedCondition={location.pathname === '/login'}
+            render={() => {
+              if (!stateShared.isLoggedIn) {
+                return (
+                  <StateRateLimitProvider>
+                    <Login />
+                  </StateRateLimitProvider>
+                );
+              } else {
+                return <Redirect to={'/'} from={'/login'} />;
+              }
+            }}
+          />
+        </Then>
+      </If>
       {/*<Switch>*/}
       {/*  <Route path={'/detail/:id'} exact component={Details} />*/}
       {/*</Switch>*/}
     </div>
   );
 };
-const Main = () => {
+const CustomApolloProvider = ({ children }: any) => {
   const history = useHistory();
-  const [stateShared, dispatchShared] = useReducer(reducerShared, initialStateShared);
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const unAuthorizedAction = () => {
+    localStorage.removeItem('sess');
+    logoutAction(history, dispatchShared);
+    window.alert('Your token has expired. We will logout you out.');
+  };
+
   const isLoggedInRef = useRef(stateShared.isLoggedIn);
   useEffect(() => {
     isLoggedInRef.current = stateShared.isLoggedIn;
@@ -370,10 +358,26 @@ const Main = () => {
     });
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
-      uri: 'http://localhost:5000/graphql',
+      uri: `http://localhost:${process.env.SERVER_PORT || 5000}/graphql`,
       fetchOptions: {
         credentials: 'include',
       },
+    });
+    const authLink = setContext((_, { headers, query, ...context }) => {
+      return {
+        headers: {
+          ...headers,
+          ...(localStorage.getItem('sess') ? { authorization: localStorage.getItem('sess') } : {}),
+        },
+        query: {
+          ...query,
+          username: CryptoJS.TripleDES.decrypt(
+            localStorage.getItem('jbb') || '',
+            readEnvironmentVariable('CRYPTO_SECRET')!
+          ).toString(CryptoJS.enc.Latin1),
+        },
+        ...context,
+      };
     });
     const cache = new InMemoryCache({
       addTypename: false,
@@ -395,6 +399,11 @@ const Main = () => {
               },
             },
             getUserData: {
+              merge(existing, incoming) {
+                return incoming;
+              },
+            },
+            repository: {
               merge(existing, incoming) {
                 return incoming;
               },
@@ -439,40 +448,22 @@ const Main = () => {
                 });
               }
             } else if (message.includes('Unauthorized')) {
-              logoutAction(history, dispatchShared);
+              unAuthorizedAction();
             }
           });
         }
         if (networkError) {
           console.log('Network Error: ', networkError);
           if ('result' in networkError && networkError.result.message === 'TokenExpiredError') {
-            localStorage.removeItem('sess');
-            logoutAction(history, dispatchShared);
-            window.alert('Your token has expired. We will logout you out.');
+            unAuthorizedAction();
           }
         }
-      }),
-      setContext((_, { headers, query, ...context }) => {
-        return {
-          headers: {
-            ...headers,
-            ...(localStorage.getItem('sess') ? { authorization: localStorage.getItem('sess') } : {}),
-          },
-          query: {
-            ...query,
-            username: CryptoJS.TripleDES.decrypt(
-              localStorage.getItem('jbb') || '',
-              readEnvironmentVariable('CRYPTO_SECRET')!
-            ).toString(CryptoJS.enc.Latin1),
-          },
-          ...context,
-        };
       }),
       ApolloLink.split(
         //returns true for the first link and false for the second link
         (operation) => operation.getContext().clientName === 'github',
         githubGateway,
-        mongoGateway
+        authLink.concat(mongoGateway)
       ),
     ]);
     return new ApolloClient({
@@ -481,23 +472,34 @@ const Main = () => {
     });
   }, [stateShared.tokenGQL, localStorage.getItem('sess')]);
 
+  const ApolloContext = getApolloContext();
+  const value = React.useMemo(
+    () => ({ client: clientWrapped() }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stateShared.tokenGQL, localStorage.getItem('sess')]
+  );
+  return <ApolloContext.Provider value={value}>{children}</ApolloContext.Provider>;
+};
+
+const Main = () => {
+  //make sure that SuggestedRepoImagesContainer.Provider is below CustomApolloProvider since it's using ApolloContext.Provider in order to use useQuery hook
   return (
     <Router>
-      <ApolloProvider client={clientWrapped()}>
-        <SuggestedRepoImagesContainer.Provider>
-          <SuggestedRepoContainer.Provider>
-            <StarRankingContainer.Provider>
-              <StateSharedProvider>
-                <StateProvider>
-                  <StateDiscoverProvider>
+      <StateProvider>
+        <StateDiscoverProvider>
+          <StateSharedProvider>
+            <CustomApolloProvider>
+              <SuggestedRepoImagesContainer.Provider>
+                <SuggestedRepoContainer.Provider>
+                  <StarRankingContainer.Provider>
                     <App />
-                  </StateDiscoverProvider>
-                </StateProvider>
-              </StateSharedProvider>
-            </StarRankingContainer.Provider>
-          </SuggestedRepoContainer.Provider>
-        </SuggestedRepoImagesContainer.Provider>
-      </ApolloProvider>
+                  </StarRankingContainer.Provider>
+                </SuggestedRepoContainer.Provider>
+              </SuggestedRepoImagesContainer.Provider>
+            </CustomApolloProvider>
+          </StateSharedProvider>
+        </StateDiscoverProvider>
+      </StateProvider>
     </Router>
   );
 };
