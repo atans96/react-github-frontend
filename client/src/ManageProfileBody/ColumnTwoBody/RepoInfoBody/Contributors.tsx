@@ -14,19 +14,10 @@ import { useLocation } from 'react-router-dom';
 
 interface Props {
   fullName: string;
+  openContributors: boolean;
 }
-
-const useStyles = makeStyles<Theme>(() => ({
-  typography: {
-    '& .MuiTypography-root': {
-      fontSize: '1.5rem',
-    },
-  },
-}));
 const Contributors = React.memo<Props>(
-  ({ fullName }) => {
-    const classes = useStyles();
-    const [openContributors, setOpenContributors] = useState(false);
+  ({ fullName, openContributors }) => {
     const [contributionRepo, setContributionRepo] = useState<ContributorProps[]>([]);
     const [stateManageProfile] = useTrackedStateManageProfile();
     const location = useLocation();
@@ -43,29 +34,10 @@ const Contributors = React.memo<Props>(
       }
     }, [stateManageProfile.contributors]);
 
-    const handleOpenContributors = (e: React.MouseEvent) => {
-      e.preventDefault();
-      setOpenContributors(!openContributors);
-    };
-
     return (
       <React.Fragment>
         <If condition={contributionRepo.length > 0}>
           <Then>
-            <ListItem
-              button
-              key={`${openContributors ? 'Hide' : 'Show'} Top Contributors`}
-              onClick={handleOpenContributors}
-            >
-              <ListItemIcon>
-                <PeopleOutlineIcon style={{ transform: 'scale(1.5)' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary={`${openContributors ? 'Hide' : 'Show'} Top Contributors`}
-                className={classes.typography}
-              />
-              {openContributors ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
             <Collapse in={openContributors} timeout={0.1} unmountOnExit>
               <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
                 {contributionRepo.map((obj, idx) => {
