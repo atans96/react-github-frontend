@@ -12,10 +12,11 @@ import { useHistory } from 'react-router-dom';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
+import { act } from 'react-dom/test-utils';
 
 const NavBar = React.memo(() => {
   const [state, dispatch] = useTrackedStateShared();
-  const [active, setActiveBar] = useState('home');
+  const [active, setActiveBar] = useState<any>();
   const navBarRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
@@ -27,27 +28,40 @@ const NavBar = React.memo(() => {
   const Active = location.pathname.split('/');
   const displayName: string | undefined = (NavBar as React.ComponentType<any>).displayName;
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
-  // console.log(userData?.getUserData?.avatar);
-  useEffect(() => {
-    setActiveBar(Active[1] !== '' ? Active[1] : 'home');
-    return () => {};
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
 
   const history = useHistory();
+  useEffect(() => {
+    setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     setActiveBar(event.currentTarget.id);
-    if (event.currentTarget.id === 'home') {
-      history.push('/');
-    } else if (event.currentTarget.id === 'logout') {
-      logoutAction(history, dispatch);
-    } else {
-      history.push(`/${event.currentTarget.id.toLowerCase()}`);
+    if (!state.isLoggedIn) {
+      if (event.currentTarget.id === 'home') {
+        history.push('/');
+      } else if (event.currentTarget.id === 'logout') {
+        logoutAction(history, dispatch);
+      } else {
+        history.push(`/${event.currentTarget.id.toLowerCase()}`);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (state.isLoggedIn && active) {
+      if (active === 'home') {
+        history.push('/');
+      } else if (active === 'logout') {
+        logoutAction(history, dispatch);
+      } else {
+        history.push(`/${active.toLowerCase()}`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   return (
     <div
