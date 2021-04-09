@@ -17,14 +17,9 @@ import {
   SuggestedRepoContainer,
   SuggestedRepoImagesContainer,
 } from './selectors/stateSelector';
-import Login from './Login';
-import ManageProfile from './ManageProfile';
-import SearchBarDiscover from './SearchBarDiscover';
-import Discover from './Discover';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
 import SearchBar from './SearchBar';
 import Home from './Home';
-import Details from './Details';
 import {
   StateDiscoverProvider,
   StateProvider,
@@ -43,6 +38,12 @@ import { IDataOne } from './typing/interface';
 import { If } from './util/react-if/If';
 import eye from './new_16-2.gif';
 import { Then } from './util/react-if/Then';
+import loadable from '@loadable/component';
+const Discover = loadable(() => import('./Discover'));
+const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
+const Login = loadable(() => import('./Login'));
+const ManageProfile = loadable(() => import('./ManageProfile'));
+const Details = loadable(() => import('./Details'));
 
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
 
@@ -92,19 +93,38 @@ const App = () => {
     return new Map(
       idx(userData, (_) => _.getUserData.languagePreference.map((obj: LanguagePreference) => [obj.language, obj])) || []
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx(userData, (_) => _.getUserData.languagePreference)]);
 
   const languagePreferenceRef = useRef(languagePreference);
   const userStarredRef = useRef(userStarred?.getUserInfoStarred?.starred);
   const alreadySeenCardsRef = useRef<number[]>([]);
   useEffect(() => {
-    alreadySeenCardsRef.current = [...alreadySeenCards];
+    let isFinished = false;
+    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
+      alreadySeenCardsRef.current = [...alreadySeenCards];
+      return () => {
+        isFinished = true;
+      };
+    }
   });
   useEffect(() => {
-    languagePreferenceRef.current = languagePreference;
+    let isFinished = false;
+    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
+      languagePreferenceRef.current = languagePreference;
+      return () => {
+        isFinished = true;
+      };
+    }
   });
   useEffect(() => {
-    userStarredRef.current = userStarred?.getUserInfoStarred?.starred;
+    let isFinished = false;
+    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
+      userStarredRef.current = userStarred?.getUserInfoStarred?.starred;
+      return () => {
+        isFinished = true;
+      };
+    }
   });
 
   const actionAppend = (data: IDataOne | any, displayName: string) => {
@@ -244,6 +264,7 @@ const App = () => {
       }
       return { isFetchFinish };
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [stateShared.username, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
   );
 
