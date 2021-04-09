@@ -39,11 +39,11 @@ interface MasonryLayoutMemo {
 // LoginGQL component from StargazersCard. We want to memoize masonry since it involves expensive DOM manipulation
 const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   ({ children, data, state, stateShared }) => {
-    let columnCount = stateShared.width < 760 ? 1 : 2;
+    let columnCount = 1 ;
     let increment = 300;
     const baseWidth = 760;
     if (stateShared.width > 760) {
-      while (baseWidth + increment < stateShared.width) {
+      while (baseWidth + increment < stateShared.width ) {
         columnCount += 1;
         increment += 300;
       }
@@ -715,7 +715,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         className={clsx('', {
           header: isMergedDataExist,
         })}
-        style={{ marginLeft: `${stateShared.drawerWidth + 5}px`, zIndex: state.visible ? -1 : 0 }}
+        style={{ marginLeft: `${stateShared.drawerWidth > 0 ? 170 : 50}px`, zIndex: state.visible ? -1 : 0 }}
       >
         {
           // we want to render Card first and ImagesCard later because it requires more bandwith
@@ -788,7 +788,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       </div>
       <If condition={stateShared.width > 1100}>
         <Then>
-          <BottomNavigationBar />
+          {BottomNavigationBar()}
         </Then>
       </If>
     </React.Fragment>

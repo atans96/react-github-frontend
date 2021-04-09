@@ -24,7 +24,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
       overflowX: 'hidden',
       boxShadow: '3px 0 5px -2px #888',
       background: 'var(--background-theme-color)',
-      zIndex: 1,
+      zIndex: 10,
     },
     width: (props) => props.drawerWidth,
     flexShrink: 0,
@@ -87,7 +87,6 @@ const DrawerBar = () => {
       };
     }
   }, [open]);
-
   return (
     <React.Fragment>
       <div style={{ bottom: '-5px', left: '-10px', zIndex: 9999, position: 'fixed' }}>
@@ -114,19 +113,20 @@ const DrawerBar = () => {
         <div className={classes.toolbar}>
           <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
         </div>
-        <RSSFeed />
-        <SubscribeFeed />
-        <SubscribeFeedSetting />
+        {RSSFeed()}
+        {SubscribeFeed()}
+        {SubscribeFeedSetting()}
+        {open && (
+            <DraggableCore key="drawerBar" {...dragHandlers}>
+              <div style={{ height: '100vh', width: '0px', position: 'fixed' }}>
+                <div className={'dragger'} style={{ top: '40%', left: `${drawerWidth}px` }}>
+                  <span />
+                </div>
+              </div>
+            </DraggableCore>
+        )}
+
       </Drawer>
-      {open && (
-        <DraggableCore key="drawerBar" {...dragHandlers}>
-          <div style={{ height: '100vh', width: '0px' }}>
-            <div className={'dragger'} style={{ top: '40%', left: `${drawerWidth}px` }}>
-              <span />
-            </div>
-          </div>
-        </DraggableCore>
-      )}
     </React.Fragment>
   );
 };

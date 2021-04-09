@@ -28,6 +28,9 @@ class AuthDirective extends SchemaDirectiveVisitor {
     const { resolve = defaultFieldResolver } = field;
 
     field.resolve = (root, args, context, info) => {
+      if(!context.currentUser){
+        return null
+      }
       authenticate(context.currentUser);
       return resolve.call(this, root, args, context, info);
     };

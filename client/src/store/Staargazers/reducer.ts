@@ -19,8 +19,8 @@ export const initialStateStargazers: IStateStargazers = {
   stargazersData: [], // graphql request
   hasNextPage: {} as HasNextPage, // graphql request
   stargazersQueueData: [],
-  stargazersUsers: parseInt(localStorage.getItem('users')!) ?? 2, //setting
-  stargazersUsersStarredRepositories: parseInt(localStorage.getItem('repos')!) ?? 2, //setting
+  stargazersUsers: parseInt(localStorage.getItem('users')!) || 2, //setting
+  stargazersUsersStarredRepositories: parseInt(localStorage.getItem('repos')!) || 2, //setting
 };
 export const reducerStargazers = (
   state = initialStateStargazers,

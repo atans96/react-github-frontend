@@ -11,7 +11,6 @@ export type ActionDiscover =
   | 'VISIBLE'
   | 'REMOVE_ALL'
   | 'MERGED_DATA_APPEND_DISCOVER_EMPTY'
-  | 'SET_DRAWER_WIDTH';
 
 export const initialStateDiscover: IStateDiscover = {
   mergedDataDiscover: [],

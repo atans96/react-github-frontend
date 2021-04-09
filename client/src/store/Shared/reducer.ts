@@ -14,8 +14,8 @@ export type ActionShared =
   | 'SET_WIDTH'
   | 'LANGUAGES_INFO'
   | 'USERNAME_ADDED'
-  | 'SET_DRAWER_WIDTH'
   | 'TOKEN_RSS_ADDED'
+    | 'SET_DRAWER_WIDTH'
   | 'NO_DATA_FETCH';
 
 export const initialStateShared: IStateShared = {
@@ -46,6 +46,12 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateRateLimit,
       };
     }
+    case 'SET_DRAWER_WIDTH': {
+      return {
+        ...state,
+        drawerWidth: action.payload.drawerWidth,
+      };
+    }
     case 'LANGUAGES_INFO': {
       return {
         ...state,
@@ -56,12 +62,6 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
       return {
         ...state,
         fetchDataPath: action.payload.path,
-      };
-    }
-    case 'SET_DRAWER_WIDTH': {
-      return {
-        ...state,
-        drawerWidth: action.payload.drawerWidth,
       };
     }
     case 'TOKEN_RSS_ADDED': {

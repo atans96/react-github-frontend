@@ -306,8 +306,7 @@ i.special {
   //overflow: auto;
   //overflow-x: hidden;
   position: relative;
-  margin-left: 10px;
-  margin-right: 10px;
+  margin: 5rem;
   margin-bottom: 120px;
 }
 .title-horizontal-center {
@@ -329,6 +328,7 @@ i.special {
   flex-wrap: wrap;
   word-wrap: break-word;
   justify-content: center;
+  padding: 5rem;
   .masonry {
     display: flex;
     flex-wrap: wrap;
@@ -408,7 +408,7 @@ i.special {
   padding: 0;
   height: 100%;
   /*TODO: make width to be flexible and resizable*/
-  width: 350px;
+  width: 370px;
   max-width: 500px;
   border: 3px solid var(--border-theme-color);
   opacity: 1;

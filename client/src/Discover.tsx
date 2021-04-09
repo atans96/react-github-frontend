@@ -30,7 +30,7 @@ interface MasonryLayoutMemo {
 
 const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   ({ children, data, stateDiscover, stateShared }) => {
-    let columnCount = 1;
+    let columnCount = 0;
     let increment = 300;
     const baseWidth = 760;
     if (stateShared.width > 760) {
@@ -333,7 +333,6 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
           header: whichToUse()?.length > 0,
         })}
         style={{
-          marginLeft: `${stateShared.drawerWidth + 5}px`,
           zIndex: stateDiscover.visibleDiscover ? -1 : 0,
         }}
       >
