@@ -1,19 +1,36 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import UpdateIcon from '@material-ui/icons/Update';
 import { ForkIcon } from '../../util/icons';
 import { isEqualObjects } from '../../util';
 import Contributors from './RepoInfoBody/Contributors';
 import { RepoInfoProps } from '../../typing/type';
+import KeepMountedLayout from '../../Layout/KeepMountedLayout';
+import { ListItem, ListItemIcon, ListItemText, Theme } from '@material-ui/core';
+import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
+import { ExpandLess, ExpandMore } from '@material-ui/icons';
+import { makeStyles } from '@material-ui/core/styles';
 
 interface Props {
   obj: RepoInfoProps;
   onClickRepoInfo: any;
   active: string;
 }
-
+const useStyles = makeStyles<Theme>(() => ({
+  typography: {
+    '& .MuiTypography-root': {
+      fontSize: '1.5rem',
+    },
+  },
+}));
 const RepoInfo = React.memo<Props>(
   ({ obj, onClickRepoInfo, active }) => {
+    const [openContributors, setOpen] = useState(false);
+    const handleClick = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      setOpen((prevState) => !prevState);
+    }, []);
+    const classes = useStyles();
     return (
       <div style={{ borderBottom: 'solid' }}>
         <div style={active === obj.fullName ? { borderLeft: '5px solid', backgroundColor: '#f8fafc' } : {}}>
@@ -54,7 +71,24 @@ const RepoInfo = React.memo<Props>(
               </div>
             </div>
           </div>
-          <Contributors fullName={obj.fullName} />
+          <React.Fragment>
+            <ListItem button key={`${openContributors ? 'Hide' : 'Show'} Top Contributors`} onClick={handleClick}>
+              <ListItemIcon>
+                <PeopleOutlineIcon style={{ transform: 'scale(1.5)' }} />
+              </ListItemIcon>
+              <ListItemText
+                primary={`${openContributors ? 'Hide' : 'Show'} Top Contributors`}
+                className={classes.typography}
+              />
+              {openContributors ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+            <KeepMountedLayout
+              mountedCondition={openContributors}
+              render={() => {
+                return <Contributors fullName={obj.fullName} openContributors={openContributors} />;
+              }}
+            />
+          </React.Fragment>
         </div>
       </div>
     );
