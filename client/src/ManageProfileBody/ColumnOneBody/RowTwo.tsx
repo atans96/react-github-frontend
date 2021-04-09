@@ -1,6 +1,6 @@
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
-import { CircularProgress, List } from '@material-ui/core';
+import { Checkbox, CircularProgress, FormControlLabel, List } from '@material-ui/core';
 import React, { useEffect, useRef, useState } from 'react';
 import LanguageStarsInfo from './RowTwoBody/LanguageStarsInfo';
 import { Counter, fastFilter, readEnvironmentVariable } from '../../util';
@@ -9,10 +9,11 @@ import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { getTopContributors, getUser } from '../../services';
 import moment from 'moment';
 import { epochToJsDate } from '../../util/util';
-import { MergedDataProps } from '../../typing/type';
+import { LanguagePreference, MergedDataProps } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 import idx from 'idx';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
+import { useDeepMemo } from '../../hooks/useDeepMemo';
 
 interface RowTwoProps {
   handleLanguageFilter: (...args: any) => void;
@@ -228,15 +229,17 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
               }}
             >
               <thead>
-                {languageStarsInfo.map((languageStar, idx) => {
-                  return (
-                    <LanguageStarsInfo
-                      languageStar={languageStar}
-                      key={idx}
-                      onClickLanguageStarInfo={onClickLanguageStarInfo}
-                    />
-                  );
-                })}
+                {useDeepMemo(() => {
+                  return languageStarsInfo.map((languageStar) => {
+                    return (
+                      <LanguageStarsInfo
+                        languageStar={languageStar}
+                        key={languageStar[0]}
+                        onClickLanguageStarInfo={onClickLanguageStarInfo}
+                      />
+                    );
+                  });
+                }, [languageStarsInfo.length])}
               </thead>
             </table>
             <div style={{ textAlign: 'center' }}>
