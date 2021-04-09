@@ -34,10 +34,10 @@ const SearchBarDiscover = () => {
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
     <div
-      style={{
-        marginLeft: `${stateShared.drawerWidth > 60 ? stateShared.drawerWidth : 0}px`,
-        display: 'grid',
-      }}
+        style={{
+          marginLeft: `0px`,
+          display: 'grid',
+        }}
     >
       <PureSearchBarDiscover stateShared={PureSearchBarDataMemoized()} />
     </div>

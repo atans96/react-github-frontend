@@ -66,10 +66,10 @@ export interface IStateShared {
   width: number;
   perPage: number;
   fetchDataPath: string;
+  drawerWidth: number;
   username: string[];
   tokenRSS: string;
   tokenGQL: string;
-  drawerWidth: number;
   isLoggedIn: boolean;
   languagesInfo: [];
   client_id: Nullable<string>;

@@ -12,7 +12,6 @@ import { useHistory } from 'react-router-dom';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
-import { act } from 'react-dom/test-utils';
 
 const NavBar = React.memo(() => {
   const [state, dispatch] = useTrackedStateShared();
@@ -68,7 +67,7 @@ const NavBar = React.memo(() => {
       className="navbar"
       ref={navBarRef}
       style={{
-        marginLeft: `${state.drawerWidth > 60 && location.pathname === '/' ? state.drawerWidth : 0}px`,
+          marginLeft: `${state.drawerWidth > 60 && location.pathname === '/' ? state.drawerWidth : 0}px`,
       }}
     >
       <ul>

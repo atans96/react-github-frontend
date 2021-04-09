@@ -10,7 +10,7 @@ const SearchBar = () => {
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
     <div
       style={{
-        marginLeft: `${stateShared.drawerWidth > 60 ? stateShared.drawerWidth : 0}px`,
+        marginLeft: `${stateShared.drawerWidth > 60 ? `${stateShared.drawerWidth}px` : `${5}rem`}`,
         display: 'grid',
       }}
     >
@@ -21,7 +21,7 @@ const SearchBar = () => {
       <div
         className="portal-expandable"
         ref={portalExpandable}
-        style={{ width: `${stateShared.width}px`, marginLeft: `${stateShared.drawerWidth + 5}px` }}
+        style={stateShared.drawerWidth === 0 ? { width: `${stateShared.width-100}px`, marginLeft: `5px` } : { width: `${stateShared.width-100}px`, marginLeft: `5px`, paddingRight: '120px' }}
       />
     </div>
   );

@@ -181,6 +181,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
 
   const handleClickFilterSeenCards = (event: React.MouseEvent): void => {
     event.preventDefault();
+    if(!state.filterBySeen && renderTopicTags){
+      setExpandableTopicTags(false)
+    }
     dispatch({
       type: 'FILTER_CARDS_BY_SEEN',
       payload: {

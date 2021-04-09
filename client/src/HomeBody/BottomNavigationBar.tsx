@@ -15,7 +15,7 @@ const useStyles = makeStyles<Theme>((theme) => ({
     },
   },
   appBar: {
-    zIndex: 2,
+    zIndex: 20,
     top: 'auto',
     bottom: 0,
     height: '50px',
@@ -37,13 +37,13 @@ const BottomNavigationBar = () => {
   return (
     <React.Fragment>
       <AppBar position="fixed" color="primary" className={classes.appBar}>
-        <ToolBar />
-        <RepoStat />
+        {ToolBar()}
+        {RepoStat()}
         <StateRateLimitProvider>
           <RateLimit />
         </StateRateLimitProvider>
       </AppBar>
-      <DrawerBar />
+      {DrawerBar()}
     </React.Fragment>
   );
 };
