@@ -180,9 +180,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   };
 
   const handleClickFilterSeenCards = (event: React.MouseEvent): void => {
+    //TODO: when click this, there will be a delay so need to show loading spinner
     event.preventDefault();
-    if(!state.filterBySeen && renderTopicTags){
-      setExpandableTopicTags(false)
+    if (!state.filterBySeen && renderTopicTags) {
+      setExpandableTopicTags(false);
     }
     dispatch({
       type: 'FILTER_CARDS_BY_SEEN',

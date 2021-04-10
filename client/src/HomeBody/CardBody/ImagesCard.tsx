@@ -6,7 +6,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
-import { isEqualObjects, Loading } from '../../util';
+import { isEqualObjects } from '../../util';
 import useCollapse from '../../hooks/useCollapse';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
@@ -101,7 +101,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
         >
           <Then>
             <div style={{ textAlign: 'center' }}>
-              <Loading />
+              Loading Images...
             </div>
           </Then>
         </If>

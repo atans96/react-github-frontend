@@ -89,7 +89,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
           <thead>
             <tr>
               <th>
-                <Search handleInputChange={handleInputChange} width={350} />
+                {Search({ handleInputChange, width: 350 })}
                 <p>Search in:</p>
                 <Checkboxes checkedItems={checkedItems} handleCheckboxClick={handleCheckboxClick} />
               </th>
