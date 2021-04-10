@@ -4,7 +4,6 @@ import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
 import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
-import VisibilitySensor from '../Layout/VisibilitySensor';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import clsx from 'clsx';
@@ -12,6 +11,7 @@ import ImagesCard from './CardBody/ImagesCard';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
+import { useViewportSpy } from '../hooks/use-viewport-spy';
 
 export interface Card {
   index: number;
@@ -104,60 +104,52 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
 
   // when isVisible props changes, children will gets re-render
   // so wrap the component that is not subscribed to isVisible by using React Memo
-  const isVisibleRef = useRef(false);
+  const isVisibleRef = useRef<HTMLDivElement>(null);
+  const isVisible = useViewportSpy(isVisibleRef);
   if (!githubData) return <p>No githubData, sorry</p>;
   return (
-    <VisibilitySensor>
-      {({ isVisible }: any) => {
-        if (!isVisibleRef.current && isVisible) {
-          isVisibleRef.current = isVisible;
-        }
-        return (
-          <div
-            className={clsx('card bg-light fade-in', {
-              'card-width-mobile': columnCount === 1,
-            })}
-            style={!isVisibleRef.current ? { contentVisibility: 'auto' } : {}}
-          >
-            <UserCard data={userCardMemoizedData()} />
-            <h3 style={{ textAlign: 'center' }}>
-              <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
-            </h3>
-            <ImagesCard index={index} visible={isVisibleRef.current} />
-            <div className="trunctuatedTexts">
-              <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
-            </div>
-            <Stargazers data={stargazersMemoizedGithubData()} />
-            <div className={'language-github-color'}>
-              <ul className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}>
-                <li className={'language-list'}>
-                  <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
-                </li>
-              </ul>
-            </div>
-            <If condition={!!githubData.topics}>
-              <Then>
-                <TopicsCard data={topicsCardMemoizedData()} getRootProps={getRootProps} />
-              </Then>
-            </If>
-            <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
-              <a href={githubData.html_url}>{githubData.html_url}</a>
-            </div>
-            <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
-              <NavLink
-                to={{
-                  pathname: `/detail/${githubData.id}`,
-                  state: JSON.stringify({ data: githubData, path: location.pathname }),
-                }}
-                className="btn-clear nav-link"
-              >
-                <p>MORE DETAILS</p>
-              </NavLink>
-            </div>
-          </div>
-        );
-      }}
-    </VisibilitySensor>
+    <div
+      className={clsx('card bg-light fade-in', {
+        'card-width-mobile': columnCount === 1,
+      })}
+      ref={isVisibleRef}
+    >
+      <UserCard data={userCardMemoizedData()} />
+      <h3 style={{ textAlign: 'center' }}>
+        <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
+      </h3>
+      <ImagesCard index={index} visible={isVisible || false} />
+      <div className="trunctuatedTexts">
+        <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
+      </div>
+      <Stargazers data={stargazersMemoizedGithubData()} />
+      <div className={'language-github-color'}>
+        <ul className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}>
+          <li className={'language-list'}>
+            <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
+          </li>
+        </ul>
+      </div>
+      <If condition={!!githubData.topics}>
+        <Then>
+          <TopicsCard data={topicsCardMemoizedData()} getRootProps={getRootProps} />
+        </Then>
+      </If>
+      <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
+        <a href={githubData.html_url}>{githubData.html_url}</a>
+      </div>
+      <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
+        <NavLink
+          to={{
+            pathname: `/detail/${githubData.id}`,
+            state: JSON.stringify({ data: githubData, path: location.pathname }),
+          }}
+          className="btn-clear nav-link"
+        >
+          <p>MORE DETAILS</p>
+        </NavLink>
+      </div>
+    </div>
   );
 };
 Card.displayName = 'Card';

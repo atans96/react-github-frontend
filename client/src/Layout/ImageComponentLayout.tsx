@@ -20,7 +20,7 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, v
     <React.Fragment>
       <If condition={isLoading}>
         <Then>
-          <Loading />
+          <div style={{ textAlign: 'center' }}>Loading Images...</div>
         </Then>
       </If>
       <If condition={!isLoading && !error && visible}>

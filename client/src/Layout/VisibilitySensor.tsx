@@ -26,34 +26,34 @@ function isVisibleWithOffset(offset: Offset, rect: Direction, containmentRect: D
   switch (offsetDir) {
     case 'top':
       return (
-          containmentRect.top + offsetVal < rect.top &&
-          containmentRect.bottom > rect.bottom &&
-          containmentRect.left < rect.left &&
-          containmentRect.right > rect.right
+        containmentRect.top + offsetVal < rect.top &&
+        containmentRect.bottom > rect.bottom &&
+        containmentRect.left < rect.left &&
+        containmentRect.right > rect.right
       );
 
     case 'left':
       return (
-          containmentRect.left + offsetVal < rect.left &&
-          containmentRect.bottom > rect.bottom &&
-          containmentRect.top < rect.top &&
-          containmentRect.right > rect.right
+        containmentRect.left + offsetVal < rect.left &&
+        containmentRect.bottom > rect.bottom &&
+        containmentRect.top < rect.top &&
+        containmentRect.right > rect.right
       );
 
     case 'bottom':
       return (
-          containmentRect.bottom - offsetVal > rect.bottom &&
-          containmentRect.left < rect.left &&
-          containmentRect.right > rect.right &&
-          containmentRect.top < rect.top
+        containmentRect.bottom - offsetVal > rect.bottom &&
+        containmentRect.left < rect.left &&
+        containmentRect.right > rect.right &&
+        containmentRect.top < rect.top
       );
 
     case 'right':
       return (
-          containmentRect.right - offsetVal > rect.right &&
-          containmentRect.left < rect.left &&
-          containmentRect.top < rect.top &&
-          containmentRect.bottom > rect.bottom
+        containmentRect.right - offsetVal > rect.right &&
+        containmentRect.left < rect.left &&
+        containmentRect.top < rect.top &&
+        containmentRect.bottom > rect.bottom
       );
   }
 }
@@ -185,10 +185,10 @@ export default class VisibilitySensor extends React.Component<VisibilitySensorPr
   };
 
   addEventListener = (
-      target: { addEventListener: (arg0: any, arg1: () => void) => void },
-      event: string | number,
-      delay: any,
-      throttle?: number
+    target: { addEventListener: (arg0: any, arg1: () => void) => void },
+    event: string | number,
+    delay: any,
+    throttle?: number
   ): void => {
     if (!this.debounceCheck) {
       this.debounceCheck = {};
@@ -333,15 +333,15 @@ export default class VisibilitySensor extends React.Component<VisibilitySensorPr
     const hasSize = rect.height && rect.height > 0 && rect.width && rect.width > 0;
 
     let isVisible =
-        hasSize && visibilityRect.top && visibilityRect.left && visibilityRect.bottom && visibilityRect.right;
+      hasSize && visibilityRect.top && visibilityRect.left && visibilityRect.bottom && visibilityRect.right;
 
     // check for partial visibility
     if (hasSize && this.props.partialVisibility) {
       let partialVisible =
-          rect.top <= containmentRect.bottom &&
-          rect.bottom >= containmentRect.top &&
-          rect.left <= containmentRect.right &&
-          rect.right >= containmentRect.left;
+        rect.top <= containmentRect.bottom &&
+        rect.bottom >= containmentRect.top &&
+        rect.left <= containmentRect.right &&
+        rect.right >= containmentRect.left;
 
       // account for partial visibility on a single edge
       if (typeof this.props.partialVisibility === 'string') {
@@ -351,16 +351,16 @@ export default class VisibilitySensor extends React.Component<VisibilitySensorPr
       // if we have minimum top visibility set by props, lets check, if it meets the passed value
       // so if for instance element is at least 200px in viewport, then show it.
       isVisible = this.props.minTopValue
-          ? partialVisible && rect.top <= containmentRect.bottom - this.props.minTopValue
-          : partialVisible;
+        ? partialVisible && rect.top <= containmentRect.bottom - this.props.minTopValue
+        : partialVisible;
     }
 
     // Deprecated options for calculating offset.
     if (typeof offset.direction === 'string' && typeof offset.value === 'number') {
       console.warn(
-          '[notice] offset.direction and offset.value have been deprecated. They still work for now, but will be removed in next major version. Please upgrade to the new syntax: { %s: %d }',
-          offset.direction,
-          offset.value
+        '[notice] offset.direction and offset.value have been deprecated. They still work for now, but will be removed in next major version. Please upgrade to the new syntax: { %s: %d }',
+        offset.direction,
+        offset.value
       );
 
       isVisible = isVisibleWithOffset(offset, rect, containmentRect);

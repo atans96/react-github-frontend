@@ -6,7 +6,7 @@ import ListItemText from '@material-ui/core/ListItemText';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
-import { isEqualObjects, Loading } from '../../util';
+import { isEqualObjects } from '../../util';
 import useCollapse from '../../hooks/useCollapse';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
@@ -59,9 +59,7 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
       <React.Fragment>
         <If condition={imagesMapDataDiscover.size === 0 && renderImages.length === 0}>
           <Then>
-            <div style={{ textAlign: 'center' }}>
-              <Loading />
-            </div>
+            <div style={{ textAlign: 'center' }}>Loading Images...</div>
           </Then>
         </If>
         <If condition={imagesMapDataDiscover.size > 0}>
