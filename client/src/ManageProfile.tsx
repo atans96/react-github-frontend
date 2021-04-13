@@ -5,6 +5,7 @@ import { useResizeHandler } from './hooks/hooks';
 import ColumnTwo from './ManageProfileBody/ColumnTwo';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { StateManageProfileProvider } from './selectors/stateContextSelector';
+import { createRenderElement } from './Layout/MasonryLayout';
 
 const ManageProfile = () => {
   const [, dispatch] = useTrackedStateShared();
@@ -36,8 +37,8 @@ const ManageProfile = () => {
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <StateManageProfileProvider>
-        <ColumnOne handleLanguageFilter={handleLanguageFilter} />
-        <ColumnTwo languageFilter={languageFilter} />
+        {createRenderElement(ColumnOne, { handleLanguageFilter })}
+        {createRenderElement(ColumnTwo, { languageFilter })}
       </StateManageProfileProvider>
     </div>
   );

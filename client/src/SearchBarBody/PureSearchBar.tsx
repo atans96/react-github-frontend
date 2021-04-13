@@ -22,6 +22,7 @@ import { fastFilter, Loading } from '../util';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
+import { createRenderElement } from '../Layout/MasonryLayout';
 
 const defaultTheme = createMuiTheme();
 const theme = createMuiTheme({
@@ -373,14 +374,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           {/* we separate this as new component since UI need to be updated as soon as possible
             thus causing heavy rendering. To prevent setState takes effect of rendering the children component
             to Home.tsx, we put it in new component */}
-          <PureInput
-            setVisible={setVisible}
-            visibleSearchesHistory={visibleSearchesHistory}
-            setVisibleSearchesHistory={setVisibleSearchesHistory}
-            style={style}
-            handleChange={handleChange}
-            ref={username}
-          />
+          {createRenderElement(PureInput, {
+            setVisible,
+            visibleSearchesHistory,
+            setVisibleSearchesHistory,
+            style,
+            handleChange,
+            ref: username,
+          })}
 
           <If
             condition={
@@ -452,13 +453,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
 
           <If condition={visible && filter(searchesData?.getSearches, valueRef).length === 0}>
             <Then>
-              <Results
-                ref={resultsRef}
-                getRootProps={getRootProps}
-                data={state.searchUsers}
-                isLoading={state.isLoading}
-                style={style}
-              />
+              {createRenderElement(Results, {
+                getRootProps,
+                data: state.searchUsers,
+                isLoading: state.isLoading,
+                style,
+                ref: resultsRef,
+              })}
             </Then>
           </If>
 

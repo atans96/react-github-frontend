@@ -22,6 +22,7 @@ import { NavLink } from 'react-router-dom';
 import LoginGQL from './StargazersCardBody/LoginGQL';
 import { removeStarredMe, setStarredMe } from '../../services';
 import { isEqualObjects } from '../../util';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface StargazersProps {
   data: MergedDataProps;
@@ -127,15 +128,15 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
                 position: 'absolute',
               }}
             >
-              <StargazersInfo
-                setVisible={setVisible}
-                modalWidth={modalWidth.current}
-                stargazers_count={data.stargazers_count}
-                isLoading={isLoading}
-                GQL_VARIABLES={{ GQL_variables, GQL_pagination_variables }}
-                getRootProps={getRootProps}
-                getRootPropsCard={getRootPropsCard}
-              />
+              {createRenderElement(StargazersInfo, {
+                setVisible,
+                getRootProps,
+                getRootPropsCard,
+                modalWidth: modalWidth.current,
+                stargazers_count: data.stargazers_count,
+                isLoading,
+                GQL_VARIABLES: { GQL_variables, GQL_pagination_variables },
+              })}
             </div>,
             document.body
           );
@@ -170,7 +171,10 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
               }}
               ref={notLoggedInRef}
             >
-              <LoginGQL setVisible={setVisible} style={{ display: 'absolute', width: 'fit-content' }} />
+              {createRenderElement(LoginGQL, {
+                setVisible,
+                style: { display: 'absolute', width: 'fit-content' },
+              })}
             </div>,
             document.body
           );

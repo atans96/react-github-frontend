@@ -10,6 +10,7 @@ import { ListItem, ListItemIcon, ListItemText, Theme } from '@material-ui/core';
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface Props {
   obj: RepoInfoProps;
@@ -85,7 +86,10 @@ const RepoInfo = React.memo<Props>(
             <KeepMountedLayout
               mountedCondition={openContributors}
               render={() => {
-                return <Contributors fullName={obj.fullName} openContributors={openContributors} />;
+                return createRenderElement(Contributors, {
+                  fullName: obj.fullName,
+                  openContributors,
+                });
               }}
             />
           </React.Fragment>

@@ -1,6 +1,7 @@
 import React from 'react';
 import Topic from './TopicsCardBody/Topic';
 import { isEqualObjects } from '../../util';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface TopicsCard {
   data: string[];
@@ -10,10 +11,8 @@ interface TopicsCard {
 const TopicsCard = React.memo<TopicsCard>(
   ({ data, getRootProps }) => {
     return (
-      <ul className="masonry space-center">
-        {data?.map((topic, idx) => (
-          <Topic key={idx} idx={idx} topic={topic} getRootProps={getRootProps} />
-        ))}
+      <ul className="topic space-center">
+        {data?.map((topic, idx) => createRenderElement(Topic, { key: idx, idx, topic, getRootProps }))}
       </ul>
     );
   },

@@ -14,6 +14,8 @@ import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState } from '../../selectors/stateContextSelector';
+import {createRenderElement} from "../../Layout/MasonryLayout";
+import TopicsCard from "./TopicsCard";
 
 interface ImagesCardProps {
   index: number;
@@ -111,7 +113,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
               {renderImages.length > 0 &&
                 renderImages.slice(0, 2).map((image: string) => {
                   return (
-                    <ImageComponentLayout handleClick={handleClick} visible={visible} key={image} urlLink={image} />
+                      createRenderElement(ImageComponentLayout, {handleClick: handleClick, visible: visible, key: image, urlLink: image})
                   );
                 })}
             </div>
@@ -120,7 +122,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
                 renderImages.length > 0 &&
                 renderImages.slice(2).map((image: string) => {
                   return (
-                    <ImageComponentLayout handleClick={handleClick} visible={visible} key={image} urlLink={image} />
+                      createRenderElement(ImageComponentLayout, {handleClick: handleClick, visible: visible, key: image, urlLink: image})
                   );
                 })}
             </div>
@@ -133,7 +135,11 @@ const ImagesCard = React.memo<ImagesCardProps>(
             </ListItem>
           </Then>
         </If>
-        <ImagesModalLayout clicked={clicked} renderImages={renderImages} handleClick={handleClick} />
+          {createRenderElement(ImagesModalLayout, {
+              clicked: clicked,
+              renderImages: renderImages,
+              handleClick: handleClick
+          })}
       </React.Fragment>
     );
   },

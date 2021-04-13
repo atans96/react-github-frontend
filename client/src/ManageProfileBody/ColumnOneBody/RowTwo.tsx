@@ -14,6 +14,7 @@ import { useLocation } from 'react-router-dom';
 import idx from 'idx';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useDeepMemo } from '../../hooks/useDeepMemo';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface RowTwoProps {
   handleLanguageFilter: (...args: any) => void;
@@ -231,13 +232,11 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
               <thead>
                 {useDeepMemo(() => {
                   return languageStarsInfo.map((languageStar) => {
-                    return (
-                      <LanguageStarsInfo
-                        languageStar={languageStar}
-                        key={languageStar[0]}
-                        onClickLanguageStarInfo={onClickLanguageStarInfo}
-                      />
-                    );
+                    return createRenderElement(LanguageStarsInfo, {
+                      languageStar,
+                      key: languageStar[0],
+                      onClickLanguageStarInfo,
+                    });
                   });
                 }, [languageStarsInfo.length])}
               </thead>

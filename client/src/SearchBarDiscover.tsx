@@ -3,6 +3,7 @@ import PureSearchBarDiscover from './SearchBarBody/PureSearchBarDiscover';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
+import { createRenderElement } from './Layout/MasonryLayout';
 
 const SearchBarDiscover = () => {
   const [stateShared] = useTrackedStateShared();
@@ -34,12 +35,12 @@ const SearchBarDiscover = () => {
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
     <div
-        style={{
-          marginLeft: `0px`,
-          display: 'grid',
-        }}
+      style={{
+        marginLeft: `0px`,
+        display: 'grid',
+      }}
     >
-      <PureSearchBarDiscover stateShared={PureSearchBarDataMemoized()} />
+      {createRenderElement(PureSearchBarDiscover, { stateShared: PureSearchBarDataMemoized() })}
     </div>
   );
 };

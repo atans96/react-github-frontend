@@ -14,6 +14,7 @@ import clsx from 'clsx';
 import { useClickOutside } from '../../hooks/hooks';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import idx from 'idx';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface StargazerDiscover {
   data: MergedDataProps;
@@ -52,7 +53,10 @@ const StargazerDiscover = React.memo<StargazerDiscover>(
               }}
               ref={notLoggedInRef}
             >
-              <LoginGQL setVisible={setVisible} style={{ display: 'absolute', width: 'fit-content' }} />
+              {createRenderElement(LoginGQL, {
+                setVisible,
+                style: { display: 'absolute', width: 'fit-content' },
+              })}
             </div>,
             document.body
           );

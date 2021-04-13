@@ -10,6 +10,9 @@ import Details from './ColumnTwoBody/Details';
 import RepoInfo from './ColumnTwoBody/RepoInfo';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useDeepMemo } from '../hooks/useDeepMemo';
+import { createRenderElement } from '../Layout/MasonryLayout';
+import RowOne from './ColumnOneBody/RowOne';
+import Contributor from './ColumnTwoBody/RepoInfoBody/ContributorsBody/Contributor';
 
 interface ColumnTwoProps {
   languageFilter: string[];
@@ -89,9 +92,15 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
           <thead>
             <tr>
               <th>
-                {Search({ handleInputChange, width: 350 })}
+                {createRenderElement(Search, {
+                  handleInputChange,
+                  width: 350,
+                })}
                 <p>Search in:</p>
-                <Checkboxes checkedItems={checkedItems} handleCheckboxClick={handleCheckboxClick} />
+                {createRenderElement(Checkboxes, {
+                  checkedItems,
+                  handleCheckboxClick,
+                })}
               </th>
             </tr>
           </thead>
@@ -109,7 +118,12 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
                 >
                   {useDeepMemo(() => {
                     return render().map((obj: RepoInfoProps, idx) => {
-                      return <RepoInfo active={active} obj={obj} key={idx} onClickRepoInfo={onClickRepoInfo} />;
+                      return createRenderElement(RepoInfo, {
+                        active,
+                        obj,
+                        key: idx,
+                        onClickRepoInfo,
+                      });
                     });
                   }, [state.repoInfo, checkedItems, languageFilter])}
                 </div>
@@ -117,13 +131,13 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
               <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
                 <If condition={fullName !== '' && stateShared.width > 850}>
                   <Then>
-                    <Details
-                      fullName={fullName}
-                      width={stateShared.width}
-                      branch={branch}
-                      html_url={htmlUrl}
-                      handleHeightChange={handleHeightChange}
-                    />
+                    {createRenderElement(Details, {
+                      fullName,
+                      branch,
+                      html_url: htmlUrl,
+                      handleHeightChange,
+                      width: stateShared.width,
+                    })}
                   </Then>
                 </If>
               </td>

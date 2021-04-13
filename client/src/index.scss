@@ -329,12 +329,6 @@ i.special {
   word-wrap: break-word;
   justify-content: center;
   padding: 5rem;
-  .masonry {
-    display: flex;
-    flex-wrap: wrap;
-    word-wrap: break-word;
-    margin-left: 10px;
-  }
   .masonry-column {
     flex: 1 0;
   }
@@ -368,7 +362,8 @@ i.special {
   color: black;
 }
 .navbar {
-  position: relative;
+  position: fixed;
+  width: 100%;
   vertical-align: middle;
   z-index: 10;
   margin-bottom: 0;
@@ -414,6 +409,18 @@ i.special {
   opacity: 1;
   visibility: visible;
   margin-top: 0;
+  &:hover {
+    position: relative;
+    transform: scale(1.125);
+    z-index: 1000;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  .topic {
+    display: flex;
+    flex-wrap: wrap;
+    word-wrap: break-word;
+    margin-left: 10px;
+  }
   &.card-width-mobile {
     width: 100%;
     max-width: 100%;

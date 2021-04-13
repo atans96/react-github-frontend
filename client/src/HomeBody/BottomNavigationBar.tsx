@@ -7,6 +7,7 @@ import RepoStat from './BottomNavigationBarBody/PaginationBarBody/RepoStat';
 import RateLimit from './BottomNavigationBarBody/PaginationBarBody/RateLimit';
 import AppBar from '@material-ui/core/AppBar';
 import { StateRateLimitProvider } from '../selectors/stateContextSelector';
+import { createRenderElement } from '../Layout/MasonryLayout';
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
     '& .MuiPaginationItem-root': {
@@ -37,13 +38,11 @@ const BottomNavigationBar = () => {
   return (
     <React.Fragment>
       <AppBar position="fixed" color="primary" className={classes.appBar}>
-        {ToolBar()}
-        {RepoStat()}
-        <StateRateLimitProvider>
-          <RateLimit />
-        </StateRateLimitProvider>
+        {createRenderElement(ToolBar, {})}
+        {createRenderElement(RepoStat, {})}
+        <StateRateLimitProvider>{createRenderElement(RateLimit, {})}</StateRateLimitProvider>
       </AppBar>
-      {DrawerBar()}
+      {createRenderElement(DrawerBar, {})}
     </React.Fragment>
   );
 };

@@ -9,6 +9,7 @@ import UserCardDiscover from './CardDiscoverBody/UserCardDiscover';
 import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
 import { StateStargazersProvider } from '../selectors/stateContextSelector';
 import { useViewportSpy } from '../hooks/use-viewport-spy';
+import { createRenderElement } from '../Layout/MasonryLayout';
 
 export interface Card {
   index: number;
@@ -92,16 +93,16 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
         ref={isVisibleRef}
       >
         <StateStargazersProvider>
-          <UserCardDiscover data={userCardMemoizedData()} sorted={sorted} />
+          {createRenderElement(UserCardDiscover, { data: userCardMemoizedData(), sorted })}
         </StateStargazersProvider>
         <h3 style={{ textAlign: 'center' }}>
           <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
         </h3>
-        <ImagesCardDiscover index={index} visible={isVisible || false} imagesMapDataDiscover={imagesMapDataDiscover} />
+        {createRenderElement(ImagesCardDiscover, { index: index, visible: isVisible || false, imagesMapDataDiscover })}
         <div className="trunctuatedTexts">
           <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
         </div>
-        <StargazersDiscover data={stargazersMemoizedGithubData()} />
+        {createRenderElement(StargazersDiscover, { data: stargazersMemoizedGithubData() })}
         <div className={'language-github-color'}>
           <ul
             className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}

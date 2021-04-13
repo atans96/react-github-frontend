@@ -4,7 +4,6 @@ import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
 import { removeTokenGQL } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
-
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
@@ -267,7 +266,6 @@ export function getElementHeight(el: RefObject<HTMLElement> | { current?: { scro
 
 // Helper function for render props. Sets a function to be called, plus any additional functions passed in
 export const callAll = (...fns: AnyFunction[]) => (...args: any[]): void => fns.forEach((fn) => fn && fn(...args));
-
 // https://github.com/mui-org/material-ui/blob/da362266f7c137bf671d7e8c44c84ad5cfc0e9e2/packages/material-ui/src/styles/transitions.js#L89-L98
 export function getAutoHeightDuration(height: number | string): number {
   if (!height || typeof height === 'string') {
