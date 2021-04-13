@@ -5,6 +5,7 @@ import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateRateLimit } from '../../../selectors/stateContextSelector';
 import idx from 'idx';
+import { createRenderElement } from '../../../Layout/MasonryLayout';
 
 const RateLimit = () => {
   const [state] = useTrackedState();
@@ -63,7 +64,7 @@ const RateLimit = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [refetch, state.mergedData.length, state.searchUsers.length, userDataError, userDataLoading, userData]
   );
-  return <RateLimitInfo setRefetch={setRefetch} />;
+  return createRenderElement(RateLimitInfo, { setRefetch });
 };
 RateLimit.displayName = 'RateLimit';
 export default RateLimit;

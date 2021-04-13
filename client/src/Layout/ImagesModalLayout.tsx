@@ -8,6 +8,8 @@ import { If } from '../util/react-if/If';
 import useImage from '../hooks/useImage';
 import SliderImage from './SliderImage';
 import { useClickOutside } from '../hooks/hooks';
+import {createRenderElement} from "./MasonryLayout";
+import {ImageComponentLayout} from "./ImageComponentLayout";
 
 interface ImagesModalLayoutProps {
   clicked: boolean;
@@ -88,7 +90,7 @@ const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = React.forwardRef(
               >
                 <div className={'slides-inner'} ref={sliderInner}>
                   {renderImages.map((image: string, idx: number) => {
-                    return <ImageModal urlLink={image} key={idx} loader={<Loading />} />;
+                      return createRenderElement(ImageModal, {urlLink: image, loader: <Loading />, key: idx})
                   })}
                 </div>
               </div>

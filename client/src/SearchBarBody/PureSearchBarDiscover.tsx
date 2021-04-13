@@ -5,6 +5,7 @@ import { isEqualObjects } from '../util';
 import { getElasticSearchBert } from '../services';
 import { IStateShared } from '../typing/interface';
 import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
+import { createRenderElement } from '../Layout/MasonryLayout';
 
 export interface SearchBarProps {
   stateShared: IStateShared;
@@ -47,7 +48,7 @@ const SearchBarDiscover = React.memo<SearchBarProps>(
       <SearchBarLayout style={{ width: `${stateShared.width}px` }} onSubmit={handleSubmit}>
         {() => (
           <React.Fragment>
-            <PureInputDiscover style={style} dispatchDiscover={dispatchDiscover} ref={query} />
+            {createRenderElement(PureInputDiscover, { style, dispatchDiscover, ref: query })}
           </React.Fragment>
         )}
       </SearchBarLayout>

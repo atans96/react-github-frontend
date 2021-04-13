@@ -39,6 +39,7 @@ import { If } from './util/react-if/If';
 import eye from './new_16-2.gif';
 import { Then } from './util/react-if/Then';
 import loadable from '@loadable/component';
+import { createRenderElement } from './Layout/MasonryLayout';
 const Discover = loadable(() => import('./Discover'));
 const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
 const Login = loadable(() => import('./Login'));
@@ -273,7 +274,7 @@ const App = () => {
       <KeepMountedLayout
         mountedCondition={true}
         render={() => {
-          return <NavBar />;
+          return createRenderElement(NavBar, {});
         }}
       />
       <If condition={loadingUserStarred && seenDataLoading}>
@@ -292,7 +293,7 @@ const App = () => {
             mountedCondition={location.pathname === '/profile'}
             render={() => {
               if (stateShared.isLoggedIn) {
-                return <ManageProfile />;
+                return createRenderElement(ManageProfile, {});
               } else {
                 return <Redirect to={'/login'} from={'/profile'} />;
               }
@@ -303,8 +304,8 @@ const App = () => {
             render={() => {
               return (
                 <StateStargazersProvider>
-                  <SearchBar />
-                  <Home actionResolvePromise={actionResolvePromise} />
+                  {createRenderElement(SearchBar, {})}
+                  {createRenderElement(Home, { actionResolvePromise })}
                 </StateStargazersProvider>
               );
             }}
@@ -313,7 +314,7 @@ const App = () => {
             mountedCondition={/detail/.test(location.pathname)}
             render={() => {
               if (stateShared.isLoggedIn) {
-                return <Details />;
+                return createRenderElement(Details, {});
               } else {
                 return <Redirect to={'/login'} from={'/detail/:id'} />;
               }
@@ -325,8 +326,8 @@ const App = () => {
               if (stateShared.isLoggedIn) {
                 return (
                   <React.Fragment>
-                    <SearchBarDiscover />
-                    <Discover actionResolvePromise={actionResolvePromise} />
+                    {createRenderElement(SearchBarDiscover, {})}
+                    {createRenderElement(Discover, { actionResolvePromise })}
                   </React.Fragment>
                 );
               } else {
@@ -338,11 +339,7 @@ const App = () => {
             mountedCondition={location.pathname === '/login'}
             render={() => {
               if (!stateShared.isLoggedIn) {
-                return (
-                  <StateRateLimitProvider>
-                    <Login />
-                  </StateRateLimitProvider>
-                );
+                return <StateRateLimitProvider>{createRenderElement(Login, {})}</StateRateLimitProvider>;
               } else {
                 return <Redirect to={'/'} from={'/login'} />;
               }

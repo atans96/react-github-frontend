@@ -13,6 +13,7 @@ import { If } from '../../util/react-if/If';
 import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
 import { useLocation } from 'react-router-dom';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface ImagesCardProps {
   index: number;
@@ -67,18 +68,24 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
             <div style={{ textAlign: 'center' }}>
               {renderImages.length > 0 &&
                 renderImages.slice(0, 2).map((image: string) => {
-                  return (
-                    <ImageComponentLayout handleClick={handleClick} visible={visible} key={image} urlLink={image} />
-                  );
+                  return createRenderElement(ImageComponentLayout, {
+                    handleClick: handleClick,
+                    visible: visible,
+                    key: image,
+                    urlLink: image,
+                  });
                 })}
             </div>
             <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
               {renderChildren &&
                 renderImages.length > 0 &&
                 renderImages.slice(2).map((image: string) => {
-                  return (
-                    <ImageComponentLayout handleClick={handleClick} visible={visible} key={image} urlLink={image} />
-                  );
+                  return createRenderElement(ImageComponentLayout, {
+                    handleClick: handleClick,
+                    visible: visible,
+                    key: image,
+                    urlLink: image,
+                  });
                 })}
             </div>
             <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
@@ -90,7 +97,11 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
             </ListItem>
           </Then>
         </If>
-        <ImagesModalLayout clicked={clicked} renderImages={renderImages} handleClick={handleClick} />
+        {createRenderElement(ImagesModalLayout, {
+          clicked: clicked,
+          renderImages: renderImages,
+          handleClick: handleClick,
+        })}
       </React.Fragment>
     );
   },

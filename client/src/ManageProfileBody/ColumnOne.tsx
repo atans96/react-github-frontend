@@ -3,6 +3,7 @@ import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import RowOne from './ColumnOneBody/RowOne';
 import RowTwo from './ColumnOneBody/RowTwo';
+import { createRenderElement } from '../Layout/MasonryLayout';
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
@@ -47,9 +48,9 @@ const ColumnOne: React.FC<ColumnOneProps> = React.memo(({ handleLanguageFilter }
     <React.Fragment>
       <Drawer variant="permanent" className={classes.drawer} open={true}>
         <div className={classes.toolbar} />
-        <RowOne />
+        {createRenderElement(RowOne, {})}
         <Divider />
-        <RowTwo handleLanguageFilter={handleLanguageFilter} />
+        {createRenderElement(RowTwo, { handleLanguageFilter })}
       </Drawer>
     </React.Fragment>
   );

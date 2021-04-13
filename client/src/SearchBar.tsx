@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import PureSearchBar from './SearchBarBody/PureSearchBar';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
+import { createRenderElement } from './Layout/MasonryLayout';
 
 const SearchBar = () => {
   const [stateShared] = useTrackedStateShared();
@@ -12,16 +13,21 @@ const SearchBar = () => {
       style={{
         marginLeft: `${stateShared.drawerWidth > 60 ? `${stateShared.drawerWidth}px` : `${5}rem`}`,
         display: 'grid',
+        marginTop: '10rem',
       }}
     >
       <div className="title-horizontal-center" style={{ width: `${stateShared.width}px` }}>
         <h1>Github Fetcher Dashboard</h1>
       </div>
-      <PureSearchBar portalExpandable={portalExpandable} />
+      {createRenderElement(PureSearchBar, { portalExpandable })}
       <div
         className="portal-expandable"
         ref={portalExpandable}
-        style={stateShared.drawerWidth === 0 ? { width: `${stateShared.width-100}px`, marginLeft: `5px` } : { width: `${stateShared.width-100}px`, marginLeft: `5px`, paddingRight: '120px' }}
+        style={
+          stateShared.drawerWidth === 0
+            ? { width: `${stateShared.width - 100}px`, marginLeft: `5px` }
+            : { width: `${stateShared.width - 100}px`, marginLeft: `5px`, paddingRight: '120px' }
+        }
       />
     </div>
   );

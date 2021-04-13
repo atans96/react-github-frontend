@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActionResolvePromiseOutput, IDataOne, IState, IStateShared } from './typing/interface';
 import CardSkeleton from './HomeBody/CardSkeleton';
 import { getOrg, getRepoImages, getSearchTopics, getUser } from './services';
-import MasonryLayout from './Layout/MasonryLayout';
+import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
 import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, Seen, SeenProps } from './typing/type';
@@ -21,8 +21,10 @@ import { noop } from './util/util';
 import eye from './new_16-2.gif';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from './selectors/stateContextSelector';
-import { useDeepMemo } from './hooks/useDeepMemo';
 import idx from 'idx';
+import { Fab } from '@material-ui/core';
+import { ScrollTop } from './Layout/ScrollToTop';
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -32,22 +34,16 @@ interface MasonryLayoutMemo {
   data: MergedDataProps[];
   state: IState;
   stateShared: IStateShared;
+  cardWidth?: number;
+  gutter?: number;
 }
 
 // if you only include isEqualObjects(prevProps.mergedData.length, nextProps.mergedData.length) as
 // propsAreEqual condition checker, the child of Masonry's Card won't get updated state like new tokenGQL when the user logged in using
 // LoginGQL component from StargazersCard. We want to memoize masonry since it involves expensive DOM manipulation
 const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
-  ({ children, data, state, stateShared }) => {
-    let columnCount = 1 ;
-    let increment = 300;
-    const baseWidth = 760;
-    if (stateShared.width > 760) {
-      while (baseWidth + increment < stateShared.width ) {
-        columnCount += 1;
-        increment += 300;
-      }
-    }
+  ({ children, data, state, stateShared, cardWidth = 370, gutter = 8 }) => {
+    const columnCount = Math.floor(stateShared.width / (cardWidth + gutter)) || 1;
     return <MasonryLayout columns={columnCount}>{children(columnCount)}</MasonryLayout>;
   },
   (prevProps: any, nextProps: any) => {
@@ -710,6 +706,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
        when unmounted*/}
       <ScrollPositionManager scrollKey="home" />
+      <div className={'top'} />
       <div
         ref={windowScreenRef}
         className={clsx('', {
@@ -733,17 +730,15 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           <Then>
             <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
               {(columnCount: number) => {
-                return useDeepMemo(() => {
-                  return Object.keys(whichToUse()).map((key, idx) => (
-                    <Card
-                      key={whichToUse()[idx].id}
-                      columnCount={columnCount}
-                      getRootProps={getRootProps}
-                      index={whichToUse()[idx].id}
-                      githubData={whichToUse()[idx]}
-                    />
-                  ));
-                }, [columnCount, state.mergedData, state.filteredMergedData]);
+                return Object.keys(whichToUse()).map((key, idx) =>
+                  createRenderElement(Card, {
+                    key: whichToUse()[idx].id,
+                    columnCount,
+                    getRootProps,
+                    index: whichToUse()[idx].id,
+                    githubData: whichToUse()[idx],
+                  })
+                );
               }}
             </MasonryLayoutMemo>
           </Then>
@@ -752,7 +747,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           <Then>
             <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
               {() => {
-                return Object.keys(state.mergedData).map((_, idx) => <CardSkeleton key={idx} />);
+                return Object.keys(state.mergedData).map((_, idx) => createRenderElement(CardSkeleton, { key: idx }));
               }}
             </MasonryLayoutMemo>
           </Then>
@@ -786,10 +781,13 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           </Then>
         </If>
       </div>
+      <ScrollTop>
+        <Fab color="secondary" size="small" aria-label="scroll back to top">
+          <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
+        </Fab>
+      </ScrollTop>
       <If condition={stateShared.width > 1100}>
-        <Then>
-          {BottomNavigationBar()}
-        </Then>
+        <Then>{createRenderElement(BottomNavigationBar, {})}</Then>
       </If>
     </React.Fragment>
   );

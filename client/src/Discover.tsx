@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import MasonryLayout from './Layout/MasonryLayout';
+import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import { useResizeHandler } from './hooks/hooks';
 import { ActionResolvedPromise, MergedDataProps, RenderImages, SeenProps } from './typing/type';
 import ScrollPositionManager from './util/scrollPositionSaver';
@@ -16,9 +16,11 @@ import { noop } from './util/util';
 import eye from './new_16-2.gif';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import idx from 'idx';
-import { useDeepMemo } from './hooks/useDeepMemo';
 import PaginationBarDiscover from './DiscoverBody/PaginationBarDiscover';
 import { ActionResolvePromiseOutput, IStateDiscover, IStateShared, StaticState } from './typing/interface';
+import {Fab} from "@material-ui/core";
+import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
+import {ScrollTop} from "./Layout/ScrollToTop";
 
 interface MasonryLayoutMemo {
   children: any;
@@ -327,6 +329,7 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
        when unmounted*/}
       <ScrollPositionManager scrollKey="discover" />
+      <div className={'top'} />
       <div
         ref={windowScreenRef}
         className={clsx('', {
@@ -424,18 +427,15 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
               stateShared={stateShared}
             >
               {(columnCount: number) => {
-                return useDeepMemo(() => {
-                  return Object.keys(whichToUse()).map((key, idx) => (
-                    <CardDiscover
-                      key={whichToUse()[idx].id}
-                      sorted={sortedClicked}
-                      imagesMapDataDiscover={imagesDataDiscover.mapData}
-                      columnCount={columnCount}
-                      index={whichToUse()[idx].id}
-                      githubData={whichToUse()[idx]}
-                    />
-                  ));
-                }, [columnCount, stateDiscover.filterMergedDataDiscover, stateDiscover.mergedDataDiscover]);
+                return Object.keys(whichToUse()).map((key, idx) =>
+                  createRenderElement(CardDiscover, {
+                    key: whichToUse()[idx].id,
+                    columnCount,
+                    imagesMapDataDiscover: imagesDataDiscover.mapData,
+                    index: whichToUse()[idx].id,
+                    githubData: whichToUse()[idx],
+                  })
+                );
               }}
             </MasonryLayoutMemo>
           </Then>
@@ -478,10 +478,13 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
           </Then>
         </If>
       </div>
+      <ScrollTop>
+        <Fab color="secondary" size="small" aria-label="scroll back to top">
+          <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
+        </Fab>
+      </ScrollTop>
       <If condition={stateShared.width > 1100}>
-        <Then>
-          <PaginationBarDiscover />
-        </Then>
+        <Then>{createRenderElement(PaginationBarDiscover, {})}</Then>
       </If>
     </React.Fragment>
   );

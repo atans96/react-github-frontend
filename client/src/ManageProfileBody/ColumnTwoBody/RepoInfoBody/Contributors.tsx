@@ -11,6 +11,7 @@ import Contributor from './ContributorsBody/Contributor';
 import { useTrackedStateManageProfile } from '../../../selectors/stateContextSelector';
 import { ContributorProps, ContributorsProps } from '../../../typing/type';
 import { useLocation } from 'react-router-dom';
+import { createRenderElement } from '../../../Layout/MasonryLayout';
 
 interface Props {
   fullName: string;
@@ -41,7 +42,10 @@ const Contributors = React.memo<Props>(
             <Collapse in={openContributors} timeout={0.1} unmountOnExit>
               <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
                 {contributionRepo.map((obj, idx) => {
-                  return <Contributor key={idx} obj={obj} />;
+                  return createRenderElement(Contributor, {
+                    key: idx,
+                    obj,
+                  });
                 })}
               </div>
             </Collapse>
