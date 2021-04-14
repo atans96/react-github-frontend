@@ -11,7 +11,7 @@ class Profile extends React.Component<any> {
             color: this.props.componentProps.active === 'profile' ? 'white' : 'black',
           }}
         >
-          <strong>Manage Profile</strong>
+          <strong>Profile</strong>
         </small>
       </li>
     );

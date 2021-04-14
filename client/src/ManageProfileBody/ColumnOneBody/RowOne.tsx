@@ -21,7 +21,6 @@ import { LanguagePreference } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 import idx from 'idx';
 import { useDeepMemo } from '../../hooks/useDeepMemo';
-import CardDiscover from '../../DiscoverBody/CardDiscover';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 

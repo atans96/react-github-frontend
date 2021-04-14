@@ -1,6 +1,5 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import '../Login.scss';
-import { Nullable } from '../typing/type';
 
 interface DataProps {
   errorMessage: string;
