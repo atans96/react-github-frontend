@@ -24,17 +24,6 @@ const Schema = require("../fastifySchema");
 
 async function routes(fastify, opts, done) {
   fastify.get(
-    "/api/graphqlUserData",
-    {
-      logLevel: "error",
-      preValidation: fastify.csrfProtection,
-      preHandler: (req, res, done) => verifyUsername(req, res, fastify, done),
-    },
-    (req, res) => {
-      getGQLData(req, res, fastify);
-    }
-  );
-  fastify.get(
     "/api/users",
     {
       logLevel: "error",
@@ -60,7 +49,18 @@ async function routes(fastify, opts, done) {
       });
     }
   );
-
+  fastify.get(
+    "/api/graphqlUserData",
+    {
+      logLevel: "error",
+      schema: Schema.graphql.GetGQLData,
+      preValidation: fastify.csrfProtection,
+      preHandler: (req, res, done) => verifyUsername(req, res, fastify, done),
+    },
+    (req, res) => {
+      getGQLData(req, res, fastify);
+    }
+  );
   fastify.get(
     "/api/verifyJWTToken",
     {

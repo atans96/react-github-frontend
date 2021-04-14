@@ -39,7 +39,7 @@ class UserDbController {
       userName: username,
     })
       .populate(["repoContributions", "repoInfo"])
-      .exec();
+      .exec(); //to call populate method, you need model, not collection from mongoose
     if (!output)
       return Object.assign(
         {},
