@@ -16,12 +16,24 @@ const destroyTokenGQL = require("../api/auth/remove-token-graphql");
 const githubAccessToken = require("../api/auth/github-access-token");
 const verifyJWTToken = require("../api/auth/verify-jwt-token");
 const testTokenGQL = require("../api/auth/github-graphql-test-token");
+const getGQLData = require("../api/graphql/get-data");
 const getGQLFile = require("../api/readFile/get-gql-properties-file");
 
 const verifyUsername = require("../middleware/username");
 const Schema = require("../fastifySchema");
 
 async function routes(fastify, opts, done) {
+  fastify.get(
+    "/api/graphqlUserData",
+    {
+      logLevel: "error",
+      preValidation: fastify.csrfProtection,
+      preHandler: (req, res, done) => verifyUsername(req, res, fastify, done),
+    },
+    (req, res) => {
+      getGQLData(req, res, fastify);
+    }
+  );
   fastify.get(
     "/api/users",
     {

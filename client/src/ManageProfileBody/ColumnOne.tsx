@@ -4,9 +4,12 @@ import { makeStyles } from '@material-ui/core/styles';
 import RowOne from './ColumnOneBody/RowOne';
 import RowTwo from './ColumnOneBody/RowTwo';
 import { createRenderElement } from '../Layout/MasonryLayout';
+import { GraphQLUserData, GraphQLUserInfoData } from '../typing/interface';
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
+  userData: GraphQLUserData;
+  userInfoData: GraphQLUserInfoData;
 }
 
 interface StyleProps {
@@ -24,6 +27,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     width: (props) => props.drawerWidth,
     flexShrink: 0,
     zIndex: 1,
+    marginTop: '10rem',
     whiteSpace: 'nowrap',
     '& .MuiDrawer-paper': {
       width: (props) => props.drawerWidth,
@@ -43,7 +47,6 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 }));
 const ColumnOne: React.FC<ColumnOneProps> = React.memo(({ handleLanguageFilter }) => {
   const classes = useStyles({ drawerWidth: `250px` });
-
   return (
     <React.Fragment>
       <Drawer variant="permanent" className={classes.drawer} open={true}>

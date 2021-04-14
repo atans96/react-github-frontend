@@ -22,7 +22,14 @@ import {
   UserInfoData,
   WatchUsersData,
 } from './type';
-
+export interface LocationGraphQL {
+  //follow NavBar.tsx at getAllGraphQLData
+  data: {
+    userData: GraphQLUserData;
+    userInfoData: GraphQLUserInfoData;
+  };
+  previousPath: string;
+}
 interface Output {
   isFetchFinish: boolean;
 }

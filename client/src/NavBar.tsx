@@ -13,20 +13,23 @@ import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { ProgressNavBar } from './Layout/ProgressNavBar';
+import { getAllGraphQLNavBar } from './services';
+import CryptoJS from 'crypto-js';
+import { readEnvironmentVariable } from './util';
 
 const directionLogin = new Map(
   [
-    { path: 'home', index: 1 },
-    { path: 'discover', index: 2 },
-    { path: 'profile', index: 3 },
-    { path: 'logout', index: 4 },
-  ].map((i) => [i.path, i.index])
+    { path: 'home', index: 1, explored: false },
+    { path: 'discover', index: 2, explored: false },
+    { path: 'profile', index: 3, explored: false },
+    { path: 'logout', index: 4, explored: false },
+  ].map((i) => [i.path, { index: i.index, explored: i.explored }])
 );
 const directionNotLogin = new Map(
   [
-    { path: 'home', index: 1 },
-    { path: 'login', index: 2 },
-  ].map((i) => [i.path, i.index])
+    { path: 'home', index: 1, explored: false },
+    { path: 'login', index: 2, explored: false },
+  ].map((i) => [i.path, { index: i.index, explored: i.explored }])
 );
 
 const NavBar = React.memo(() => {
@@ -45,7 +48,7 @@ const NavBar = React.memo(() => {
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
 
   const te = Active[1] !== '' ? Active[1] : 'home';
-  const number = state.isLoggedIn ? directionLogin.get(te) : directionNotLogin.get(te);
+  const number = state.isLoggedIn ? directionLogin?.get(te)?.index : directionNotLogin?.get(te)?.index;
   const [nextClickedId, setNextClickedId] = useState<number>(number || 0);
   const previousClickedId = useRef<number>(number || 0);
   const previousActive = useRef<string>('');
@@ -54,22 +57,33 @@ const NavBar = React.memo(() => {
   const history = useHistory();
   useEffect(() => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
-    if (previousActive.current.length > 0) {
-      setIsFinished(previousActive.current.length > 0);
+    if (state.isLoggedIn) {
+      directionLogin.set(
+        Active[1] !== '' ? Active[1] : 'home',
+        Object.assign({}, directionLogin.get(active.toLowerCase()), {
+          explored: true,
+        })
+      );
+    } else {
+      directionNotLogin.set(
+        Active[1] !== '' ? Active[1] : 'home',
+        Object.assign({}, directionNotLogin.get(active.toLowerCase()), {
+          explored: true,
+        })
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const handleClickHistory = useCallback((event: React.MouseEvent<HTMLElement>) => {
+  const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     const res = event.currentTarget.id;
-    setIsFinished(false);
     setActiveBar((prevState: string) => {
       previousActive.current = prevState;
       return res;
     });
     if (!state.isLoggedIn) {
-      const res = directionNotLogin.get(event.currentTarget.id) || -1;
+      const res = directionNotLogin?.get(event.currentTarget.id)?.index || -1;
       setNextClickedId((prevState) => {
         previousClickedId.current = prevState;
         return res;
@@ -82,7 +96,8 @@ const NavBar = React.memo(() => {
         history.push(`/${event.currentTarget.id.toLowerCase()}`);
       }
     } else {
-      const res = directionLogin.get(event.currentTarget.id) || -1;
+      setIsFinished(false);
+      const res = directionLogin?.get(event.currentTarget.id)?.index || -1;
       setNextClickedId((prevState) => {
         previousClickedId.current = prevState;
         return res;
@@ -92,23 +107,41 @@ const NavBar = React.memo(() => {
   }, []);
 
   useEffect(() => {
-    if (state.isLoggedIn && active) {
-      // setTimeout(() => {
-      //   //because it takes time to render, we need to setTimeout to wait a little bit to determine the full height
-      //   if (active === 'home') {
-      //     history.push('/');
-      //   } else if (active === 'logout') {
-      //     logoutAction(history, dispatch);
-      //   } else {
-      //     history.push(`/${active.toLowerCase()}`);
-      //   }
-      // }, 1500);
+    if (
+      state.isLoggedIn &&
+      active &&
+      previousActive.current.length > 0 &&
+      !directionLogin?.get(active.toLowerCase())?.explored
+    ) {
+      getAllGraphQLNavBar(
+        CryptoJS.TripleDES.decrypt(
+          localStorage.getItem('jbb') || '',
+          readEnvironmentVariable('CRYPTO_SECRET')!
+        ).toString(CryptoJS.enc.Latin1)
+      ).then((data) => {
+        setIsFinished(true);
+        directionLogin.set(
+          active.toLowerCase(),
+          Object.assign({}, directionLogin.get(active.toLowerCase()), {
+            explored: true,
+          })
+        );
+        if (active === 'home') {
+          history.push('/');
+        } else if (active === 'logout') {
+          logoutAction(history, dispatch);
+        } else {
+          history.push({ pathname: `/${active.toLowerCase()}`, state: { data, previousPath: location.pathname } });
+        }
+      });
+    } else if (directionLogin?.get(active.toLowerCase())?.explored) {
+      setIsFinished(true);
       if (active === 'home') {
         history.push('/');
       } else if (active === 'logout') {
         logoutAction(history, dispatch);
       } else {
-        history.push(`/${active.toLowerCase()}`);
+        history.push({ pathname: `/${active.toLowerCase()}` });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,7 +161,6 @@ const NavBar = React.memo(() => {
             width: '100px',
             borderBottom: `${(previousActive.current === '' || isFinished) && active === 'home' ? '4px solid' : '0px'}`,
           }}
-          id={'1'}
         >
           <NavLink
             to={{
@@ -140,7 +172,7 @@ const NavBar = React.memo(() => {
               componentProps={{
                 id: 'home',
                 className: active === 'home' && isFinished ? 'active' : '',
-                onClick: handleClickHistory,
+                onClick: handleClick,
                 active: active,
                 binder: bindHome,
                 style:
@@ -167,7 +199,6 @@ const NavBar = React.memo(() => {
                   (previousActive.current === '' || isFinished) && active === 'discover' ? '4px solid' : '0px'
                 }`,
               }}
-              id={'2'}
             >
               <NavLink
                 to={{
@@ -179,7 +210,7 @@ const NavBar = React.memo(() => {
                   componentProps={{
                     id: 'discover',
                     className: active === 'discover' && isFinished ? 'active' : '',
-                    onClick: handleClickHistory,
+                    onClick: handleClick,
                     active: active,
                     binder: bindDiscover,
                     style:
@@ -212,7 +243,6 @@ const NavBar = React.memo(() => {
                   (previousActive.current === '' || isFinished) && active === 'profile' ? '4px solid' : '0px'
                 }`,
               }}
-              id={'3'}
             >
               <NavLink
                 to={{
@@ -224,7 +254,7 @@ const NavBar = React.memo(() => {
                   componentProps={{
                     id: 'profile',
                     className: active === 'profile' && isFinished ? 'active' : '',
-                    onClick: handleClickHistory,
+                    onClick: handleClick,
                     active: active,
                     binder: bindProfile,
                     avatar:
@@ -261,7 +291,6 @@ const NavBar = React.memo(() => {
                   (previousActive.current === '' || isFinished) && active === 'logout' ? '4px solid' : '0px'
                 }`,
               }}
-              id={'4'}
             >
               <NavLink
                 to={{
@@ -273,7 +302,7 @@ const NavBar = React.memo(() => {
                   componentProps={{
                     id: 'logout',
                     className: active === 'logout' && isFinished ? 'active' : '',
-                    onClick: handleClickHistory,
+                    onClick: handleClick,
                     active: active,
                     binder: bindLogout,
                     style:
@@ -299,7 +328,6 @@ const NavBar = React.memo(() => {
                   (previousActive.current === '' || isFinished) && active === 'login' ? '4px solid' : '0px'
                 }`,
               }}
-              id={'2'}
             >
               <NavLink
                 to={{
@@ -311,7 +339,7 @@ const NavBar = React.memo(() => {
                   componentProps={{
                     id: 'login',
                     className: active === 'login' && isFinished ? 'active' : '',
-                    onClick: handleClickHistory,
+                    onClick: handleClick,
                     active: active,
                     binder: bindLogin,
                     style:

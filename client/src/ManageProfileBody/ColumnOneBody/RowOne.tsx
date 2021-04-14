@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Checkbox,
-  CircularProgress,
   Collapse,
   FormControl,
   FormControlLabel,
@@ -21,8 +20,7 @@ import { LanguagePreference } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 import idx from 'idx';
 import { useDeepMemo } from '../../hooks/useDeepMemo';
-import { Then } from '../../util/react-if/Then';
-import { If } from '../../util/react-if/If';
+import { LocationGraphQL } from '../../typing/interface';
 
 interface StyleProps {
   drawerWidth: string;
@@ -58,25 +56,24 @@ const RowOne = React.memo(() => {
     e.preventDefault();
     setOpenLanguages(!openLanguages);
   };
-  const location = useLocation();
+  const location = useLocation<LocationGraphQL>();
   const displayName: string | undefined = (RowOne as React.ComponentType<any>).displayName;
-  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
   useEffect(() => {
     let isFinished = false;
     if (
-      idx(userData, (_) => !userDataLoading && !userDataError && _.getUserData.languagePreference.length > 0) &&
+      idx(location?.state?.data?.userData, (_) => _.getUserData.languagePreference.length > 0) &&
       location.pathname === '/profile' &&
       !isFinished
     ) {
-      setLanguagePreferences(userData.getUserData.languagePreference);
+      setLanguagePreferences(location.state.data.userData.getUserData.languagePreference);
       return () => {
         isFinished = true;
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userDataLoading, userDataError, userData]);
+  }, [location?.state?.data?.userData]);
 
   useDeepCompareEffect(() => {
     let isFinished = false;
@@ -129,20 +126,6 @@ const RowOne = React.memo(() => {
 
   return (
     <List>
-      <If condition={userDataLoading}>
-        <Then>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <CircularProgress />
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <p>
-              Fetching user data<span className="one">.</span>
-              <span className="two">.</span>
-              <span className="three">.</span>
-            </p>
-          </div>
-        </Then>
-      </If>
       <ListItem button key={'Languages Preference'} onClick={handleOpenLanguages}>
         <ListItemIcon>
           <SettingsIcon style={{ transform: 'scale(1.5)' }} />
