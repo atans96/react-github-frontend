@@ -2,6 +2,7 @@ const fastifyPlugin = require("fastify-plugin");
 const { MongoClient, ObjectId } = require("mongodb");
 
 const UserDb = require("./user");
+const models = require("../../models");
 
 class Db {
   constructor({ config }) {
@@ -17,7 +18,7 @@ class Db {
     this.client = await this.mongoClient.connect();
     this.db = this.client.db("github");
 
-    this.user = new UserDb({ db: this.db });
+    this.user = new UserDb({ db: this.db, models });
   }
 }
 

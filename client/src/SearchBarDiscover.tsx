@@ -38,6 +38,7 @@ const SearchBarDiscover = () => {
       style={{
         marginLeft: `0px`,
         display: 'grid',
+        marginTop: '10rem',
       }}
     >
       {createRenderElement(PureSearchBarDiscover, { stateShared: PureSearchBarDataMemoized() })}

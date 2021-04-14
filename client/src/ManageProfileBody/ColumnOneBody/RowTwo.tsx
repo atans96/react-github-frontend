@@ -1,6 +1,6 @@
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
-import { Checkbox, CircularProgress, FormControlLabel, List } from '@material-ui/core';
+import { CircularProgress, List } from '@material-ui/core';
 import React, { useEffect, useRef, useState } from 'react';
 import LanguageStarsInfo from './RowTwoBody/LanguageStarsInfo';
 import { Counter, fastFilter, readEnvironmentVariable } from '../../util';
@@ -9,12 +9,13 @@ import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { getTopContributors, getUser } from '../../services';
 import moment from 'moment';
 import { epochToJsDate } from '../../util/util';
-import { LanguagePreference, MergedDataProps } from '../../typing/type';
+import { MergedDataProps } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 import idx from 'idx';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useDeepMemo } from '../../hooks/useDeepMemo';
 import { createRenderElement } from '../../Layout/MasonryLayout';
+import { LocationGraphQL } from '../../typing/interface';
 
 interface RowTwoProps {
   handleLanguageFilter: (...args: any) => void;
@@ -23,15 +24,12 @@ interface RowTwoProps {
 const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
   const [, dispatchManageProfile] = useTrackedStateManageProfile();
   const [stateShared, dispatchStateShared] = useTrackedStateShared();
-  const location = useLocation();
+  const location = useLocation<LocationGraphQL>();
   const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
   const displayName: string | undefined = (RowTwo as React.ComponentType<any>).displayName;
   const { userData } = useApolloFactory(displayName!).query.getUserData();
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState('');
-  const { userInfoData, userInfoDataLoading, userInfoDataError } = useApolloFactory(
-    displayName!
-  ).query.getUserInfoData();
 
   const onClickLanguageStarInfo = (e: React.MouseEvent) => (language: string, clicked: boolean) => {
     e.preventDefault();
@@ -46,32 +44,30 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
     let isFinished = false;
     if (
       !isFinished &&
-      idx(
-        userInfoData,
-        (_) => !userInfoDataLoading && !userInfoDataError && _.getUserInfoData.repoContributions.length > 0
-      ) &&
+      idx(location?.state?.data?.userInfoData, (_) => _.getUserInfoData.repoContributions.length > 0) &&
       location.pathname === '/profile'
     ) {
       dispatchManageProfile({
         type: 'REPO_INFO_ADDED',
         payload: {
-          repoInfo: userInfoData.getUserInfoData.repoInfo,
+          repoInfo: location.state.data.userInfoData.getUserInfoData.repoInfo,
         },
       });
       dispatchManageProfile({
         type: 'CONTRIBUTORS_ADDED',
         payload: {
-          contributors: userInfoData.getUserInfoData.repoContributions,
+          contributors: location.state.data.userInfoData.getUserInfoData.repoContributions,
         },
       });
       setIsLoading(false);
-      const languages = Object.entries(Counter(userInfoData?.getUserInfoData?.languages ?? []));
+      const languages = Object.entries(Counter(location.state.data.userInfoData?.getUserInfoData?.languages ?? []));
       setLanguageStarsInfo(languages);
       return () => {
         isFinished = true;
       };
     }
-  }, [userInfoData, userInfoDataLoading, userInfoDataError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location?.state?.data?.userInfoData]);
 
   const consumers = useApolloFactory(displayName!).consumers().consumers;
   const alreadyFetch = useRef(false);

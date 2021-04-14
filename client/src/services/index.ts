@@ -28,6 +28,13 @@ async function rotateTokens() {
   return validToken;
 }
 
+export const getAllGraphQLNavBar = async (username: string) => {
+  const response = await fetch(`/api/graphqlUserData?username=${username}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  return await response.json();
+};
 export const getTopContributors = async (fullName: string, token: string | null | undefined) => {
   const toke = await rotateTokens();
   const validToken = toke.length === 0 ? token : toke;

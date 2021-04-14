@@ -40,10 +40,11 @@ import eye from './new_16-2.gif';
 import { Then } from './util/react-if/Then';
 import loadable from '@loadable/component';
 import { createRenderElement } from './Layout/MasonryLayout';
+// const ManageProfile = React.lazy(() => import('./ManageProfile'));
 const Discover = loadable(() => import('./Discover'));
+const ManageProfile = loadable(() => import('./ManageProfile'));
 const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
 const Login = loadable(() => import('./Login'));
-const ManageProfile = loadable(() => import('./ManageProfile'));
 const Details = loadable(() => import('./Details'));
 
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
