@@ -322,6 +322,16 @@ i.special {
   background: rgb(36, 40, 42);
   border-radius: 3px;
 }
+.selection-tabs {
+  height: 0;
+  left: 0;
+  z-index: 2000;
+  right: 0;
+  border-bottom: 4px solid;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform;
+}
 /*word-wrap: break-word to make sure to wrap text that is very long so that it won't go outside of card*/
 .masonry-parent-container {
   display: flex;
@@ -393,7 +403,6 @@ i.special {
     }
     li.active {
       padding: 10px;
-      border-bottom: 3px solid black;
       background: var(--instagram-theme-color);
       filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f09433', endColorstr='#bc1888',GradientType=1 );
     }

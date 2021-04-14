@@ -32,7 +32,6 @@ const ManageProfile = () => {
       },
     });
   }
-
   useResizeHandler(manageProfileRef, handleResize);
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>

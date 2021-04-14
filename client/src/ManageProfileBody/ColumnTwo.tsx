@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Search from './ColumnTwoBody/Search';
 import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../typing/type';
@@ -87,7 +87,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
     };
 
     return (
-      <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
+      <div style={{ display: 'inline-flex', marginLeft: '2px', marginTop: '10rem' }}>
         <table>
           <thead>
             <tr>

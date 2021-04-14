@@ -15,7 +15,7 @@ export type ActionShared =
   | 'LANGUAGES_INFO'
   | 'USERNAME_ADDED'
   | 'TOKEN_RSS_ADDED'
-    | 'SET_DRAWER_WIDTH'
+  | 'SET_DRAWER_WIDTH'
   | 'NO_DATA_FETCH';
 
 export const initialStateShared: IStateShared = {
