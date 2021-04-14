@@ -38,7 +38,7 @@ export const ProgressNavBar: React.FC<ProgressNavBarProps> = ({
   );
 
   return (
-    <div style={{ position: 'relative', bottom: '4px' }}>
+    <div style={{ position: 'relative' }}>
       <div className={'selection-tabs'} style={{ transform: `scaleX(1)`, position: 'absolute' }} />
       <div
         className={'selection-tabs'}
