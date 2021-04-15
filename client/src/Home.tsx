@@ -159,8 +159,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       }).isFetchFinish;
     }
   };
-  const dataPrefetch = useRef<IDataOne>();
-  const sizePrefetch = useRef(0);
+  const dataPrefetch = useRef<IDataOne | undefined>();
   const prefetch = (name: string) => () => {
     getUser(undefined, name, stateShared.perPage, state.page + 1, token)
       .then((data: IDataOne) => {
@@ -168,7 +167,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           getOrg(undefined, name, stateShared.perPage, state.page + 1, token)
             .then((data: IDataOne) => {
               dataPrefetch.current = data;
-              sizePrefetch.current = data.dataOne.length;
             })
             .catch((error) => {
               actionResolvePromise({
@@ -182,7 +180,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             });
         } else {
           dataPrefetch.current = data;
-          sizePrefetch.current = data.dataOne.length;
         }
       })
       .catch((error) => {
@@ -234,7 +231,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           const clone = JSON.parse(JSON.stringify(dataPrefetch.current));
           actionController(clone, temp);
         });
-        dataPrefetch.current.dataOne = [];
+        dataPrefetch.current = undefined;
       } else {
         let userNameTransformed: string[];
         if (!Array.isArray(stateShared.username)) {
