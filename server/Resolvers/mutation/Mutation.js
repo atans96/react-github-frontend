@@ -179,25 +179,25 @@ const Mutation = {
         },
         { upsert: true }
       );
+      await RSSFeed.findOneAndUpdate(
+        { userName: currentUser?.username },
+        {
+          $push: {
+            rss: {
+              //for $each takes an array of items to "add" in the $push operation,
+              // which in this case we leave empty since we do not actually want to add anything
+              $each: [],
+              $slice: -300, //get the last 300, which means to exclude anything greater than 300 at first n element (the oldest data)
+            },
+            lastSeen: {
+              $each: [],
+              $slice: -300,
+            },
+          },
+        },
+        { new: true } //return new document
+      );
       return await RSSFeed.findOne({ userName: currentUser?.username });
-      // return await RSSFeed.findOneAndUpdate(
-      //   { userName: currentUser?.username },
-      //   {
-      //     $push: {
-      //       rss: {
-      //         //for $each takes an array of items to "add" in the $push operation,
-      //         // which in this case we leave empty since we do not actually want to add anything
-      //         $each: [],
-      //         $slice: -100, //get the last 100, which means to exclude anything greater than 100 at first n element (the oldest data)
-      //       },
-      //       lastSeen: {
-      //         $each: [],
-      //         $slice: -100,
-      //       },
-      //     },
-      //   },
-      //   { new: true } //return new document
-      // );
     },
     seenAdded: async (
       root,
