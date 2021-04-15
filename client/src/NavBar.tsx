@@ -12,7 +12,7 @@ import { useHistory } from 'react-router-dom';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
-import { ProgressNavBar } from './Layout/ProgressNavBar';
+import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { getAllGraphQLNavBar } from './services';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from './util';
@@ -186,7 +186,11 @@ const NavBar = React.memo(() => {
             />
           </NavLink>
           {!isFinished && previousActive.current === 'home' && nextClickedId > 0 && (
-            <ProgressNavBar nextClickedId={nextClickedId} previousClickedId={previousClickedId.current} isLeft={1} />
+            <ProgressNavBarLayout
+              nextClickedId={nextClickedId}
+              previousClickedId={previousClickedId.current}
+              isLeft={1}
+            />
           )}
         </div>
 
@@ -224,7 +228,7 @@ const NavBar = React.memo(() => {
                 />
               </NavLink>
               {!isFinished && previousActive.current === 'discover' && nextClickedId > 0 && (
-                <ProgressNavBar
+                <ProgressNavBarLayout
                   nextClickedId={nextClickedId}
                   previousClickedId={previousClickedId.current}
                   isLeft={nextClickedId < previousClickedId.current ? -1 : 1}
@@ -272,7 +276,7 @@ const NavBar = React.memo(() => {
                 />
               </NavLink>
               {!isFinished && previousActive.current === 'profile' && nextClickedId > 0 && (
-                <ProgressNavBar
+                <ProgressNavBarLayout
                   nextClickedId={nextClickedId}
                   previousClickedId={previousClickedId.current}
                   isLeft={nextClickedId < previousClickedId.current ? -1 : 1}
@@ -353,7 +357,7 @@ const NavBar = React.memo(() => {
                 />
               </NavLink>
               {!isFinished && previousActive.current === 'login' && nextClickedId > 0 && (
-                <ProgressNavBar
+                <ProgressNavBarLayout
                   nextClickedId={nextClickedId}
                   previousClickedId={previousClickedId.current}
                   isLeft={nextClickedId < previousClickedId.current ? -1 : 1}
