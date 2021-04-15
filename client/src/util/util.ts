@@ -1,13 +1,13 @@
 import React, { RefObject, useCallback, useDebugValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import warning from 'tiny-warning';
-import { AssignableRef } from '../typing/interface';
+import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
-import { getRateLimitInfo, removeTokenGQL } from '../services';
-import { dispatchRateLimit, dispatchRateLimitAnimation } from '../store/dispatcher';
-
+import { removeTokenGQL } from '../services';
+import { ActionShared } from '../store/Shared/reducer';
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
+
 class SinglyLinkedListNode<T> {
   data: T | any;
   next: SinglyLinkedListNode<T> | null;
@@ -23,10 +23,12 @@ class SinglyLinkedListNode<T> {
 export class SinglyLinkedList<T> {
   public head: SinglyLinkedListNode<T> | null;
   public tail: SinglyLinkedListNode<T> | null;
+
   constructor() {
     this.head = null;
     this.tail = null;
   }
+
   public fromArrayLeftToRight<T>(items: T[]) {
     items.reduce((acc: any, item) => {
       const node = new SinglyLinkedListNode<T>({ data: item, prev: this.tail, next: null });
@@ -43,6 +45,7 @@ export class SinglyLinkedList<T> {
 
     return this;
   }
+
   /**
    * The map() method creates a new list with the results of
    * calling a provided function on every node in the calling list.
@@ -57,6 +60,7 @@ export class SinglyLinkedList<T> {
     this.forEach((data, index) => list.fromArrayLeftToRight(f(data, index, this)), reverse);
     return list;
   }
+
   /**
    * The forEach() method executes a provided function once for each list node.
    * ```ts
@@ -76,6 +80,7 @@ export class SinglyLinkedList<T> {
       currentIndex += modifier;
     }
   }
+
   /**
    * Return the first node and its index in the list that
    * satisfies the testing function
@@ -107,6 +112,7 @@ export class SinglyLinkedList<T> {
     }
     return undefined;
   }
+
   /**
    * The iterator implementation
    * ```ts
@@ -122,6 +128,7 @@ export class SinglyLinkedList<T> {
       element = element.next;
     }
   }
+
   public getAt(list: SinglyLinkedList<T>, index: number) {
     let counter = 0;
     let node = list.head;
@@ -134,6 +141,7 @@ export class SinglyLinkedList<T> {
     }
     return null;
   }
+
   /**
    * Merge the current list with another. Both lists will be
    * equal after merging.
@@ -157,6 +165,7 @@ export class SinglyLinkedList<T> {
     list.head = this.head;
     list.tail = this.tail;
   }
+
   public fromArrayRightToLeft<T>(items: T[]) {
     items.reduceRight((acc: any, item) => {
       const node = new SinglyLinkedListNode<T>({ data: item, prev: null, next: this.head });
@@ -186,13 +195,14 @@ export class SinglyLinkedList<T> {
     return str;
   }
 }
+
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
-export const filterActionResolvedPromiseData = (input: any, filter1: any, ...args: any) => {
+export const filterActionResolvedPromiseData = (input: any, filter1: boolean, filter2: boolean) => {
   if (!!input.language && filter1) {
     //sometimes the language can be null but we've already seen it
     return input;
-  } else if (filter1 && args) {
+  } else if (filter1 && filter2) {
     return input;
   }
 };
@@ -214,6 +224,7 @@ export function epochToJsDate(ts: any) {
   }
   return 0;
 }
+
 export const useMergedCallbackRef = (...callbacks: Function[]) => {
   // Storing callbacks in a ref, so that we don't need to memoise them in
   // renders when using this hook.
@@ -227,6 +238,7 @@ export const useMergedCallbackRef = (...callbacks: Function[]) => {
     callbacksRegistry.current.forEach((callback) => callback(element));
   }, []);
 };
+
 export function useIsMounted(): () => boolean {
   const ref = useRef(false);
 
@@ -239,6 +251,7 @@ export function useIsMounted(): () => boolean {
 
   return () => ref.current;
 }
+
 export function getElementHeight(el: RefObject<HTMLElement> | { current?: { scrollHeight: number } }): string | number {
   if (!el?.current) {
     warning(
@@ -253,7 +266,6 @@ export function getElementHeight(el: RefObject<HTMLElement> | { current?: { scro
 
 // Helper function for render props. Sets a function to be called, plus any additional functions passed in
 export const callAll = (...fns: AnyFunction[]) => (...args: any[]): void => fns.forEach((fn) => fn && fn(...args));
-
 // https://github.com/mui-org/material-ui/blob/da362266f7c137bf671d7e8c44c84ad5cfc0e9e2/packages/material-ui/src/styles/transitions.js#L89-L98
 export function getAutoHeightDuration(height: number | string): number {
   if (!height || typeof height === 'string') {
@@ -296,6 +308,7 @@ export function mergeRefs<RefValueType = any>(...refs: (AssignableRef<RefValueTy
     });
   };
 }
+
 export function useControlledState(
   isExpanded?: boolean,
   defaultExpanded?: boolean
@@ -405,25 +418,16 @@ export function useStateWithLabel(initialValue: any, name: string) {
 export async function addRSSFeed(url: string) {
   const source = new RSSSource(url);
   try {
-    const feed = await RSSSource.fetchMetaData(source);
-    return feed;
+    return await RSSSource.fetchMetaData(source);
   } catch (e) {
     console.log('error');
     throw e;
   }
 }
 
-export function logoutAction(history: any, dispatch: any, dispatchStargazers: any) {
+export function logoutAction(history: any, dispatch: React.Dispatch<IAction<ActionShared>>) {
   history.push('/');
   removeTokenGQL().then(noop);
   dispatch({ type: 'LOGOUT' });
-  dispatchStargazers({ type: 'LOGOUT' });
-  dispatchRateLimitAnimation(false, dispatch);
-  getRateLimitInfo(null).then((data) => {
-    if (data.rateLimit && data.rateLimitGQL) {
-      dispatchRateLimitAnimation(true, dispatch);
-      dispatchRateLimit(data.rateLimit, data.rateLimitGQL, dispatch);
-    }
-  });
   window.location.reload(false); // full refresh to reset everything at all components
 }

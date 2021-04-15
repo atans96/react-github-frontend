@@ -11,6 +11,12 @@ export type RepoInfoProps = {
   html_url: string;
   readme: string;
 };
+export enum ActionResolvedPromise {
+  append = 'append',
+  noData = 'noData',
+  error = 'error',
+  nonAppend = 'nonAppend',
+}
 export type RepoInfoSuggested = {
   from: string;
   is_seen: boolean;
@@ -74,16 +80,14 @@ export type SuggestedDataImages = {
   suggestedDataImagesLoading: any;
   suggestedDataImagesError: any;
 };
-export enum Action {
-  append = 'append',
-  noData = 'noData',
-  error = 'error',
-  nonAppend = 'nonAppend',
-}
-export type ContributorsProps = {
+export type ContributorProps = {
   login: string;
   avatar_url: string;
   contributions: number;
+};
+export type ContributorsProps = {
+  fullName: string;
+  contributors: ContributorProps[];
 };
 export type RenderImagesProps = {
   id: string;
@@ -131,6 +135,10 @@ export type OwnerProps = {
   login: string;
   avatar_url: string;
   html_url: string;
+};
+export type ImagesDataProps = {
+  id: number;
+  value: string[];
 };
 export type MergedDataProps = {
   id: number;
@@ -193,12 +201,12 @@ export type Seen = {
   owner: OwnerProps;
   description: string;
   language: string;
-  topics: string[];
+  topics: string[] | [];
   html_url: string;
   name: string;
   id: number;
   default_branch: string;
-  imagesData: Nullable<string[] | []>;
+  imagesData: string[] | [];
   is_queried: boolean;
 };
 export type SeenData = {

@@ -11,7 +11,7 @@ import {
   TOKEN_RSS_ADDED,
   WATCH_USER_FEEDS_ADDED,
   WATCH_USERS_ADDED,
-} from '../mutations';
+} from '../graphql/mutations';
 import {
   GET_SEARCHES,
   GET_SEEN,
@@ -19,7 +19,7 @@ import {
   GET_USER_INFO_DATA,
   GET_USER_STARRED,
   GET_WATCH_USERS,
-} from '../queries';
+} from '../graphql/queries';
 import {
   GraphQLSearchesData,
   GraphQLSeenData,

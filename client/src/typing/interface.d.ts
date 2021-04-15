@@ -1,8 +1,10 @@
-import React, { ReactNode, CSSProperties, TransitionEvent, MouseEvent, MutableRefObject, Dispatch } from 'react';
+import { CSSProperties, Dispatch, MouseEvent, MutableRefObject, ReactNode, TransitionEvent } from 'react';
 
 import {
+  ActionResolvedPromise,
   ContributorsProps,
   HasNextPage,
+  ImagesDataProps,
   MergedDataProps,
   Nullable,
   RateLimit,
@@ -20,11 +22,36 @@ import {
   UserInfoData,
   WatchUsersData,
 } from './type';
+export interface LocationGraphQL {
+  //follow NavBar.tsx at getAllGraphQLData
+  data: {
+    userData: GraphQLUserData;
+    userInfoData: GraphQLUserInfoData;
+  };
+  previousPath: string;
+}
+interface Output {
+  isFetchFinish: boolean;
+}
+export interface ActionResolvePromise {
+  action: ActionResolvedPromise;
+  setLoading: any;
+  setNotification: any;
+  isFetchFinish: boolean;
+  displayName: string;
+  data?: Nullable<IDataOne | any>;
+  error?: string;
+  prefetch?: (x: string) => void;
+}
+export interface ActionResolvePromiseOutput {
+  actionResolvePromise: ({ args }: ActionResolvePromise) => Output;
+}
 
 export interface IAction<T> {
   type: T;
   payload?: any;
 }
+
 export interface IDataOne {
   dataOne: MergedDataProps[];
   error_404: string;
@@ -32,6 +59,7 @@ export interface IDataOne {
   paginationInfoData: number;
   renderImages: RenderImagesProps[];
 }
+
 export interface IStateStargazers {
   stargazersData: StargazerProps[];
   stargazersQueueData: StargazerProps[];
@@ -40,75 +68,101 @@ export interface IStateStargazers {
   stargazersUsers: number;
   stargazersUsersStarredRepositories: number;
 }
-export interface IState {
-  isLoadingDiscover: boolean;
-  notificationDiscover: string;
-  fetchDataPath: string;
-  repoInfo: RepoInfoProps[];
-  contributors: ContributorsProps[];
-  imagesMapData: Map<number, any>;
-  isLoggedIn: boolean;
-  tokenGQL: string;
-  filterBySeen: boolean;
-  shouldFetchImages: boolean;
-  drawerWidth: number;
-  topics: TopicsProps[];
-  filteredTopics: string[];
+
+export interface IStateShared {
   width: number;
+  perPage: number;
+  fetchDataPath: string;
+  drawerWidth: number;
+  username: string[];
+  tokenRSS: string;
+  tokenGQL: string;
+  isLoggedIn: boolean;
+  languagesInfo: [];
   client_id: Nullable<string>;
   redirect_uri: Nullable<string>;
   client_secret: Nullable<string>;
   proxy_url: string;
+}
+
+export interface IStateDiscover {
+  visibleDiscover: boolean;
+  isLoadingDiscover: boolean;
+  notificationDiscover: string;
+  mergedDataDiscover: MergedDataProps[]; // assign object of MergedData to your array
+  filterMergedDataDiscover: MergedDataProps[];
+  pageDiscover: number;
+  lastPageDiscover: number;
+}
+
+export interface IStateRateLimit {
   rateLimit: Partial<RateLimit>; // can be initialized with empty object in initialState
   rateLimitGQL: Partial<RateLimit>; // can be initialized with empty object in initialState
   rateLimitAnimationAdded: boolean;
-  mergedDataDiscover: MergedDataProps[]; // assign object of MergedData to your array
+}
+
+export interface IStateManageProfile {
+  contributors: ContributorsProps[];
+  repoInfo: RepoInfoProps[];
+}
+
+export interface IState {
+  repoStat: [];
+  imagesMapData: Map<number, any>;
+  filterBySeen: boolean;
+  shouldFetchImages: boolean;
+  topics: TopicsProps[];
+  filteredTopics: string[];
   mergedData: MergedDataProps[];
-  filterMergedDataDiscover: MergedDataProps[];
   undisplayMergedData: SeenProps[];
   filteredMergedData: MergedDataProps[];
-  imagesData: any[];
-  searchUsers: [];
+  imagesData: ImagesDataProps[];
+  searchUsers: Array<{ [x: string]: string }>;
   visible: boolean;
   isLoading: boolean;
   page: number;
-  pageDiscover: number;
-  perPage: number;
-  username: string[];
-  tokenRSS: string;
   lastPage: number;
-  lastPageDiscover: number;
 }
+
 export interface GraphQLUserData {
   getUserData: UserData;
 }
+
 export interface GraphQLUserStarred {
   getUserInfoStarred: { starred: number[] };
 }
+
 export interface GraphQLUserInfoData {
   getUserInfoData: UserInfoData;
 }
+
 export interface GraphQLSeenData {
   getSeen: SeenData;
 }
+
 export interface GraphQLWatchUsersData {
   getWatchUsers: WatchUsersData;
 }
+
 export interface GraphQLSearchesData {
   getSearches: SearchesData[];
 }
+
 export interface StaticState {
   StarRanking: StarRankingData;
   SuggestedRepo: SuggestedData;
   SuggestedRepoImages: SuggestedDataImages;
 }
+
 export interface RenderImages {
   id: number;
   value: string[];
 }
+
 export interface RepoRenderImages {
   renderImages: RenderImages[];
 }
+
 export interface SearchUser {
   users: { [x: string]: any };
 }
@@ -117,6 +171,7 @@ export interface IContext {
   state: IState;
   dispatch: Dispatch<IAction<any>>;
 }
+
 export interface IContextStargazers {
   stateStargazers: IStateStargazers;
   dispatchStargazers: Dispatch<IAction<any>>;
@@ -149,9 +204,10 @@ export interface GetTogglePropsOutput {
 }
 
 export interface GetTogglePropsInput {
-  [key: string]: unknown;
   disabled?: boolean;
   onClick?: (e: MouseEvent) => void;
+
+  [key: string]: unknown;
 }
 
 export interface GetCollapsePropsOutput {
@@ -162,11 +218,12 @@ export interface GetCollapsePropsOutput {
 }
 
 export interface GetCollapsePropsInput {
-  [key: string]: unknown;
   style?: CSSProperties;
   onTransitionEnd?: (e: TransitionEvent) => void;
   refKey?: string;
   ref?: (node: ReactNode) => void | null | undefined;
+
+  [key: string]: unknown;
 }
 
 export interface UseCollapseInput {
@@ -187,12 +244,13 @@ export interface UseCollapseOutput {
   getCollapseProps: (config?: GetCollapsePropsInput) => GetCollapsePropsOutput;
   getToggleProps: (config?: GetTogglePropsInput) => GetTogglePropsOutput;
   isExpanded: boolean;
-  setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
+  setExpanded: any;
 }
 
 export type NullOrUndefined = null | undefined;
 
 export type Maybe<T> = T | NullOrUndefined;
+
 export interface CancelablePromiseType<T> {
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -226,6 +284,7 @@ export interface CancelablePromiseType<T> {
 
   isCanceled(): boolean;
 }
+
 export interface CancelablePromiseConstructor {
   /**
    * Creates a new Promise.
@@ -234,6 +293,7 @@ export interface CancelablePromiseConstructor {
    * and a reject callback used to reject the promise with a provided reason or error.
    */
   new <T1>(executor: CancelablePromiseExecutor<T1>): CancelablePromiseType<T1>;
+
   <T1>(executor: CancelablePromiseExecutor<T1>): CancelablePromiseType<T1>;
 
   /**
@@ -443,5 +503,7 @@ export interface CancelablePromiseConstructor {
     values: Iterable<T1>
   ): CancelablePromiseType<PromiseSettledResult<T1 extends PromiseLike<infer U> ? U : T1>[]>;
 }
+
 export function cancelable<T>(promise: PromiseLike<T>): CancelablePromiseType<T>;
+
 export const CancelablePromise: CancelablePromiseConstructor;

@@ -3,7 +3,7 @@ import InputSlider from '../../../../Layout/SliderLayout';
 import { CheckIcon, PeopleIcon, ReposIcon } from '../../../../util/icons';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import Button from '@material-ui/core/Button';
-import { dispatchStargazersUsers, dispatchStargazersUsersRepos } from '../../../../store/dispatcher';
+import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -13,11 +13,27 @@ const useStyles = makeStyles((theme) => ({
 
 export interface FilterResultSettings {
   props: any;
-  dispatch: any;
 }
 
-const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch }) => {
+const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props }) => {
   const classes = useStyles();
+  const [state, dispatch] = useTrackedStateStargazers();
+  const dispatchStargazersUsers = (stargazersUsers: number) => {
+    dispatch({
+      type: 'STARGAZERS_USERS',
+      payload: {
+        stargazersUsers: stargazersUsers,
+      },
+    });
+  };
+  const dispatchStargazersUsersRepo = (stargazersUsersStarredRepositories: number) => {
+    dispatch({
+      type: 'STARGAZERS_USERS_REPOS',
+      payload: {
+        stargazersUsersStarredRepositories: stargazersUsersStarredRepositories,
+      },
+    });
+  };
   return (
     <div style={{ borderBottom: '1px solid #eaecef' }}>
       <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -29,9 +45,8 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
             type={'users'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={parseInt(localStorage.getItem('users') as string) || 2}
-            dispatcher={dispatchStargazersUsers}
-            dispatch={dispatch}
+            defaultValue={state.stargazersUsers}
+            dispatch={dispatchStargazersUsers}
             icon={<PeopleIcon />}
           />
         </details>
@@ -43,9 +58,8 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
             type={'repos'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={parseInt(localStorage.getItem('repos') as string) || 2}
-            dispatcher={dispatchStargazersUsersRepos}
-            dispatch={dispatch}
+            defaultValue={state.stargazersUsersStarredRepositories}
+            dispatch={dispatchStargazersUsersRepo}
             icon={<ReposIcon />}
           />
         </details>
@@ -64,6 +78,6 @@ const FilterResultSettings: React.FC<FilterResultSettings> = ({ props, dispatch 
       </div>
     </div>
   );
-};
+});
 FilterResultSettings.displayName = 'FilterResultSettings';
 export default FilterResultSettings;

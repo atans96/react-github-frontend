@@ -6,11 +6,11 @@ const UserStarred = gql`
     starred: [Int]
   }
   extend type Mutation {
-    starredMeAdded(starred: [Int]!): UserStarred
-    starredMeRemoved(removeStarred: Int!): UserStarred
+    starredMeAdded(starred: [Int]!): UserStarred @auth
+    starredMeRemoved(removeStarred: Int!): UserStarred @auth
   }
   extend type Query {
-    getUserInfoStarred: UserStarred
+    getUserInfoStarred: UserStarred @auth
   }
 `;
 module.exports = UserStarred;

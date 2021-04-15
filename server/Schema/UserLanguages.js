@@ -28,7 +28,7 @@ const UserLanguages = gql`
     repoContributions: [Contributors]
   }
   extend type Query {
-    getUserInfoData: UserLanguages
+    getUserInfoData: UserLanguages @auth
   }
 `;
 module.exports = UserLanguages;

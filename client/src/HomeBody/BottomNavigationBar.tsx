@@ -1,19 +1,48 @@
 import React from 'react';
-import { IState } from '../typing/interface';
-import PaginationBar from '../BottomNavigationBarBody/PaginationBar';
-import DrawerBar from '../BottomNavigationBarBody/DrawerBar';
-
-interface BottomNavigationBarProps {
-  state: IState;
-  dispatch: any;
-  dispatchStargazersUser: any;
-}
-
-const BottomNavigationBar: React.FC<BottomNavigationBarProps> = ({ dispatchStargazersUser, state, dispatch }) => {
+import DrawerBar from '../DiscoverBody/DrawerBar';
+import { makeStyles } from '@material-ui/core/styles';
+import { Theme } from '@material-ui/core';
+import ToolBar from './BottomNavigationBarBody/PaginationBarBody/ToolBar';
+import RepoStat from './BottomNavigationBarBody/PaginationBarBody/RepoStat';
+import RateLimit from './BottomNavigationBarBody/PaginationBarBody/RateLimit';
+import AppBar from '@material-ui/core/AppBar';
+import { StateRateLimitProvider } from '../selectors/stateContextSelector';
+import { createRenderElement } from '../Layout/MasonryLayout';
+const useStyles = makeStyles<Theme>((theme) => ({
+  buttonPagination: {
+    '& .MuiPaginationItem-root': {
+      color: '#ffffff',
+      fontSize: '13px',
+    },
+  },
+  appBar: {
+    zIndex: 20,
+    top: 'auto',
+    bottom: 0,
+    height: '50px',
+    backgroundColor: '#000000',
+  },
+  grow: {
+    flexGrow: 1,
+  },
+  paginationInfo: {
+    position: 'fixed',
+    left: '50%',
+    bottom: '-10px',
+    transform: 'translate(-50%, -50%)',
+    margin: '0 auto',
+  },
+}));
+const BottomNavigationBar = () => {
+  const classes = useStyles();
   return (
     <React.Fragment>
-      <PaginationBar state={state} dispatch={dispatch} />
-      <DrawerBar dispatch={dispatch} state={state} dispatchStargazersUser={dispatchStargazersUser} />
+      <AppBar position="fixed" color="primary" className={classes.appBar}>
+        {createRenderElement(ToolBar, {})}
+        {createRenderElement(RepoStat, {})}
+        <StateRateLimitProvider>{createRenderElement(RateLimit, {})}</StateRateLimitProvider>
+      </AppBar>
+      {createRenderElement(DrawerBar, {})}
     </React.Fragment>
   );
 };

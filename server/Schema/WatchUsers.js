@@ -1,7 +1,5 @@
 const { gql } = require("apollo-server-fastify");
 const WatchUsers = gql`
-  scalar Date
-  directive @length(max: Int!) on FIELD_DEFINITION
   input WatchUsersInput {
     id: String
     login: String!
@@ -11,8 +9,8 @@ const WatchUsers = gql`
   type Login {
     id: String!
     login: String!
-    feeds: [String]! @length(max: 300)
-    lastSeenFeeds: [String]! @length(max: 300)
+    feeds: [String] @length(max: 300)
+    lastSeenFeeds: [String] @length(max: 300)
     createdAt: Date
     avatarUrl: String!
   }
@@ -22,16 +20,16 @@ const WatchUsers = gql`
     login: [Login!]!
   }
   extend type Mutation {
-    watchUsersAdded(login: WatchUsersInput!): WatchUsers
+    watchUsersAdded(login: WatchUsersInput!): WatchUsers @auth
     watchUsersFeedsAdded(
       login: String!
       feeds: [String]!
       lastSeenFeeds: [String]!
-    ): WatchUsers
-    watchUsersRemoved(login: String!): Boolean
+    ): WatchUsers @auth
+    watchUsersRemoved(login: String!): Boolean @auth
   }
   extend type Query {
-    getWatchUsers: WatchUsers
+    getWatchUsers: WatchUsers @auth
   }
 `;
 module.exports = WatchUsers;

@@ -1,14 +1,14 @@
 import React from 'react';
-import { IState } from '../../typing/interface';
+import { TopicsProps } from '../../typing/type';
+import { useTrackedState } from '../../selectors/stateContextSelector';
 
 interface TagsProps {
-  obj: any;
+  obj: TopicsProps;
   clicked: boolean;
-  state: IState;
-  dispatch: any;
 }
 
-export const Tags: React.FC<TagsProps> = ({ obj, clicked, state, dispatch }) => {
+export const Tags: React.FC<TagsProps> = ({ obj, clicked }) => {
+  const [state, dispatch] = useTrackedState();
   const index = state.topics.findIndex((x) => x.topic === obj.topic);
   const handleClick = (event: React.MouseEvent) => {
     event.preventDefault();

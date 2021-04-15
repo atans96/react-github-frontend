@@ -2,16 +2,12 @@ import React, { useRef, useState } from 'react';
 import { If } from '../../../../util/react-if/If';
 import { Then } from '../../../../util/react-if/Then';
 import './LanguageListStyle.scss';
-import { IStateStargazers } from '../../../../typing/interface';
 import { StargazerProps } from '../../../../typing/type';
 import { fastFilter, languageList } from '../../../../util';
+import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 
-export interface LanguagesList {
-  stateStargazers: IStateStargazers;
-  dispatchStargazers: any;
-}
-
-const LanguagesList: React.FC<LanguagesList> = ({ stateStargazers, dispatchStargazers }) => {
+const LanguagesList: React.FC = React.memo(() => {
+  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [selectedLanguage, setSelectedLanguage] = useState(stateStargazers.language);
   const evenOdd = useRef(0);
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -102,5 +98,6 @@ const LanguagesList: React.FC<LanguagesList> = ({ stateStargazers, dispatchStarg
       </ul>
     </div>
   );
-};
+});
+LanguagesList.displayName = 'LanguagesList';
 export default LanguagesList;

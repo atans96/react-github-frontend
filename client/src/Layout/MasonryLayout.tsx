@@ -1,4 +1,6 @@
 import React from 'react';
+import trieMemoize from 'trie-memoize'
+import OneKeyMap from '@essentials/one-key-map'
 
 interface MasonryLayout {
   children: any;
@@ -6,6 +8,12 @@ interface MasonryLayout {
   style?: React.CSSProperties;
   gap?: number | null;
 }
+export const createRenderElement = trieMemoize(
+    [OneKeyMap, WeakMap],
+    (RenderComponent, args) => (
+        <RenderComponent {...args} />
+    )
+)
 const MasonryLayout = (props: MasonryLayout) => {
   const columnWrapper: any = {};
   const result = [];

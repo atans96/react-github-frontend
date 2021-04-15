@@ -33,6 +33,7 @@
     "fluent-schema": "^1.1.0",
     "form-data": "^3.0.0",
     "graphql": "^15.4.0",
+    "graphql-tools": "^7.0.4",
     "http-errors": "^1.8.0",
     "js-base64": "^3.6.0",
     "jsonwebtoken": "^8.5.1",

@@ -8,61 +8,44 @@ import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 import { If } from '../../../util/react-if/If';
 import { Then } from '../../../util/react-if/Then';
 import Contributor from './ContributorsBody/Contributor';
+import { useTrackedStateManageProfile } from '../../../selectors/stateContextSelector';
+import { ContributorProps, ContributorsProps } from '../../../typing/type';
+import { useLocation } from 'react-router-dom';
+import { createRenderElement } from '../../../Layout/MasonryLayout';
 
-interface ContributorsProps {
+interface Props {
   fullName: string;
-  contributions: any;
-  dispatch: any;
+  openContributors: boolean;
 }
-
-const useStyles = makeStyles<Theme>(() => ({
-  typography: {
-    '& .MuiTypography-root': {
-      fontSize: '1.5rem',
-    },
-  },
-}));
-const Contributors = React.memo<ContributorsProps>(
-  ({ contributions, fullName, dispatch }) => {
-    const classes = useStyles();
-    const [openContributors, setOpenContributors] = useState(false);
-    const [contributionRepo, setContributionRepo] = useState<any[]>([]);
+const Contributors = React.memo<Props>(
+  ({ fullName, openContributors }) => {
+    const [contributionRepo, setContributionRepo] = useState<ContributorProps[]>([]);
+    const [stateManageProfile] = useTrackedStateManageProfile();
+    const location = useLocation();
     useDeepCompareEffect(() => {
-      if (contributions.length > 0) {
-        const contribution = contributions.find((xx: any) => fullName === xx.fullName);
-        if (contribution.data) {
-          setContributionRepo(contribution.data);
-        } else {
+      let isFinished = false;
+      if (stateManageProfile.contributors.length > 0 && location.pathname === '/profile' && !isFinished) {
+        const contribution = stateManageProfile.contributors.find((xx: ContributorsProps) => fullName === xx.fullName);
+        if (contribution) {
           setContributionRepo(contribution.contributors);
         }
+        return () => {
+          isFinished = true;
+        };
       }
-    }, [contributions]);
-    const handleOpenContributors = (e: React.MouseEvent) => {
-      e.preventDefault();
-      setOpenContributors(!openContributors);
-    };
+    }, [stateManageProfile.contributors]);
+
     return (
       <React.Fragment>
         <If condition={contributionRepo.length > 0}>
           <Then>
-            <ListItem
-              button
-              key={`${openContributors ? 'Hide' : 'Show'} Top Contributors`}
-              onClick={handleOpenContributors}
-            >
-              <ListItemIcon>
-                <PeopleOutlineIcon style={{ transform: 'scale(1.5)' }} />
-              </ListItemIcon>
-              <ListItemText
-                primary={`${openContributors ? 'Hide' : 'Show'} Top Contributors`}
-                className={classes.typography}
-              />
-              {openContributors ? <ExpandLess /> : <ExpandMore />}
-            </ListItem>
             <Collapse in={openContributors} timeout={0.1} unmountOnExit>
               <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
                 {contributionRepo.map((obj, idx) => {
-                  return <Contributor key={idx} dispatch={dispatch} obj={obj} />;
+                  return createRenderElement(Contributor, {
+                    key: idx,
+                    obj,
+                  });
                 })}
               </div>
             </Collapse>
@@ -83,10 +66,7 @@ const Contributors = React.memo<ContributorsProps>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.fullName, nextProps.fullName) &&
-      isEqualObjects(prevProps.contributions, nextProps.contributions)
-    );
+    return isEqualObjects(prevProps.fullName, nextProps.fullName);
   }
 );
 Contributors.displayName = 'Contributors';

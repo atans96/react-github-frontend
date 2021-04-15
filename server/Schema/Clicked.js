@@ -22,7 +22,7 @@ const Clicked = gql`
     clicked: [ClickedInfo]
   }
   extend type Mutation {
-    clickedAdded(clickedInfo: [ClickedInfoInput]!): Clicked
+    clickedAdded(clickedInfo: [ClickedInfoInput]!): Clicked @auth
   }
 `;
 module.exports = Clicked;

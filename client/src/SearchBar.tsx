@@ -1,59 +1,33 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import PureSearchBar from './SearchBarBody/PureSearchBar';
-import { IState, IStateStargazers } from './typing/interface';
+import { useTrackedStateShared } from './selectors/stateContextSelector';
+import { createRenderElement } from './Layout/MasonryLayout';
 
-interface SearchBarProps {
-  state: IState;
-  dispatch: any;
-  stateStargazers: IStateStargazers;
-  dispatchStargazers: any;
-}
-
-const SearchBar: React.FC<SearchBarProps> = ({ state, stateStargazers, dispatchStargazers, dispatch }) => {
-  const PureSearchBarDataMemoized = useCallback(() => {
-    return state;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    state.width,
-    state.perPage,
-    state.filteredTopics,
-    state.mergedData,
-    state.filteredMergedData,
-    state.topics,
-    state.searchUsers,
-    state.isLoading,
-    state.filterBySeen,
-    state.visible,
-    state.isLoggedIn,
-  ]);
-  const PureSearchBarDataMemoizedd = useCallback(() => {
-    return stateStargazers;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateStargazers.stargazersQueueData]);
+const SearchBar = () => {
+  const [stateShared] = useTrackedStateShared();
   const portalExpandable = useRef<any>();
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
     <div
       style={{
-        marginLeft: `${state.drawerWidth > 60 && document.location.pathname === '/' ? state.drawerWidth : 0}px`,
+        marginLeft: `${stateShared.drawerWidth > 60 ? `${stateShared.drawerWidth}px` : `${5}rem`}`,
         display: 'grid',
+        marginTop: '10rem',
       }}
     >
-      <div className="title-horizontal-center" style={{ width: `${state.width}px` }}>
+      <div className="title-horizontal-center" style={{ width: `${stateShared.width}px` }}>
         <h1>Github Fetcher Dashboard</h1>
       </div>
-      <PureSearchBar
-        portalExpandable={portalExpandable}
-        dispatch={dispatch}
-        state={PureSearchBarDataMemoized()}
-        stateStargazers={PureSearchBarDataMemoizedd()}
-        dispatchStargazersUser={dispatchStargazers}
-      />
+      {createRenderElement(PureSearchBar, { portalExpandable })}
       <div
         className="portal-expandable"
         ref={portalExpandable}
-        style={{ width: `${state.width}px`, marginLeft: `${state.drawerWidth + 5}px` }}
+        style={
+          stateShared.drawerWidth === 0
+            ? { width: `${stateShared.width - 100}px`, marginLeft: `5px` }
+            : { width: `${stateShared.width - 100}px`, marginLeft: `5px`, paddingRight: '120px' }
+        }
       />
     </div>
   );

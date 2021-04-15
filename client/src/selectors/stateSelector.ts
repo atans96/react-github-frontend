@@ -1,7 +1,7 @@
 import { createSelector } from 'reselect';
 import { createContainer } from 'unstated-next';
 import { useQuery } from '@apollo/client';
-import { GET_STAR_RANKING, GET_SUGGESTED_REPO, GET_SUGGESTED_REPO_IMAGES } from '../queries';
+import { GET_STAR_RANKING, GET_SUGGESTED_REPO, GET_SUGGESTED_REPO_IMAGES } from '../graphql/queries';
 import { StaticState } from '../typing/interface';
 import {
   RepoInfoSuggested,
@@ -59,12 +59,12 @@ export function useSelector(selector: any) {
 //don't import createSelector to React component as it will re-create selector (not memoize) when the component gets rerender
 export const alreadySeenCardSelector = createSelector<Seen[] | [], any, any[]>(
   [(seenCards: Seen[]) => seenCards],
-  (seenCard: any) => {
+  (seenCard: Seen[]) => {
     return (
       seenCard?.reduce((acc: any[], obj: Seen) => {
         acc.push(obj.id);
         return acc;
-      }, []) || []
+      }, []) ?? []
     );
   }
 );
@@ -101,7 +101,7 @@ export const starRankingFilteredSelector = (sorted: string) =>
           ?.slice()
           .sort(
             (a: starRanking, b: starRanking) => b['trends'][sorted.toLowerCase()] - a['trends'][sorted.toLowerCase()]
-          ) || []
+          ) ?? []
       );
     }
   );
