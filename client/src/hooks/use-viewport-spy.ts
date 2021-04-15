@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import { noop } from '../util/util';
 
 const defaultOptions = {
   root: undefined,
@@ -19,7 +20,7 @@ export const useViewportSpy = (elementRef: any, options = defaultOptions) => {
       if (!disconnected.current) {
         if (!supportsObserverAPI()) {
           setIsVisible(true);
-          return () => {};
+          return noop;
         }
         const observer = new IntersectionObserver(
           (entries) =>

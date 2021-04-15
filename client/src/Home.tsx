@@ -763,7 +763,11 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 <h3>
                   Please wait while fetching your query of:{' '}
                   <p>
-                    <a className={'underlining'}>{stateShared.username}</a>
+                    <a className={'underlining'}>
+                      {Array.isArray(stateShared.username) && stateShared.username.length > 0
+                        ? stateShared.username.join(', ')
+                        : stateShared.username}
+                    </a>
                   </p>
                 </h3>
               </div>
