@@ -99,6 +99,7 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
     const [visible, setVisible] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+    const starCountsContainerRef = useRef<HTMLDivElement>(null);
 
     const onClicked = useCallback(() => {
       setVisible(false);
@@ -132,6 +133,7 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
                 setVisible,
                 getRootProps,
                 getRootPropsCard,
+                boundingRect: starCountsContainerRef?.current?.getBoundingClientRect(),
                 modalWidth: modalWidth.current,
                 stargazers_count: data.stargazers_count,
                 isLoading,
@@ -237,7 +239,7 @@ const Stargazers: React.FC<StargazersProps> = React.memo(
 
     return (
       <React.Fragment>
-        <div className={`stargazer-card-container`}>
+        <div className={`stargazer-card-container`} ref={starCountsContainerRef}>
           <div
             className={clsx('star-container', {
               confetti: starClicked && clicked && stateShared.tokenGQL !== '',

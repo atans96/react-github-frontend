@@ -747,7 +747,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: disable inspect element when in production
 
-  //TODO: when you hover user avatar, show their bio and clickable location to find other users of same location
   return (
     <React.Fragment>
       <Helmet>

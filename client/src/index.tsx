@@ -33,7 +33,7 @@ import {
 import useUserVerification from './hooks/useUserVerification';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import idx from 'idx';
-import { ActionResolvedPromise, LanguagePreference, MergedDataProps, Nullable } from './typing/type';
+import { LanguagePreference, MergedDataProps } from './typing/type';
 import { IDataOne } from './typing/interface';
 import { If } from './util/react-if/If';
 import eye from './new_16-2.gif';
