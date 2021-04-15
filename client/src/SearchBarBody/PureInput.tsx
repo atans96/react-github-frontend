@@ -203,7 +203,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             className="input-multi"
             name="query"
             placeholder={'Search...'}
-            required
+            required={stateStargazers.stargazersQueueData.length <= 0}
           />
         </div>
       </div>

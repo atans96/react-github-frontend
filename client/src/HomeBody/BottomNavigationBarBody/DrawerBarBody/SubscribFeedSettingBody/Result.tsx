@@ -15,6 +15,7 @@ import {
   useTrackedStateStargazers,
 } from '../../../../selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
+import { noop } from '../../../../util/util';
 
 interface ResultProps {
   subscribedUsers: Login;
@@ -76,7 +77,7 @@ const Result: React.FC<ResultProps> = ({ subscribedUsers }) => {
       variables: {
         login: subscribedUsers.login,
       },
-    }).then(() => {});
+    }).then(noop);
   };
 
   const location = useLocation();

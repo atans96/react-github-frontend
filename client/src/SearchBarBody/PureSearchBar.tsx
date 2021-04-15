@@ -19,6 +19,7 @@ import { createRenderElement } from '../Layout/MasonryLayout';
 import ButtonQuestion from './PureSearchBarBody/ButtonQuestion';
 import ButtonPageSetting from './PureSearchBarBody/ButtonPageSetting';
 import ButtonTags from './PureSearchBarBody/ButtonTags';
+import { noop } from '../util/util';
 
 interface SearchBarProps {
   portalExpandable: any;
@@ -85,21 +86,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       acc.push(stargazer.login);
       return acc;
     }, []);
-    if (username.current.getState() !== '') {
-      dispatchShared({
-        type: 'USERNAME_ADDED',
-        payload: {
-          username: [...usernameList, username.current.getState()],
-        },
-      });
-    } else {
-      dispatchShared({
-        type: 'USERNAME_ADDED',
-        payload: {
-          username: usernameList,
-        },
-      });
-    }
+    dispatchShared({
+      type: 'USERNAME_ADDED',
+      payload: {
+        username: [...usernameList, username.current.getState()].filter((e) => !!e),
+      },
+    });
     dispatch({
       type: 'REMOVE_ALL',
     });
@@ -112,20 +104,24 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     setVisible(false);
     setVisibleSearchesHistory(false);
     if (stateShared.isLoggedIn) {
-      searchesAdded({
-        variables: {
-          search: [
-            Object.assign(
-              {},
-              {
-                search: username.current.getState(),
-                updatedAt: new Date(),
-                count: 1,
-              }
-            ),
-          ],
-        },
-      }).then(() => {});
+      [...usernameList, username.current.getState()]
+        .filter((e) => !!e)
+        .forEach((char) => {
+          searchesAdded({
+            variables: {
+              search: [
+                Object.assign(
+                  {},
+                  {
+                    search: char,
+                    updatedAt: new Date(),
+                    count: 1,
+                  }
+                ),
+              ],
+            },
+          }).then(noop);
+        });
     }
     username.current.clearState();
   };

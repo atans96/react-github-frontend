@@ -5,6 +5,7 @@ import {
   useTrackedStateShared,
   useTrackedStateStargazers,
 } from '../../../selectors/stateContextSelector';
+import { noop } from '../../../util/util';
 
 interface Result {
   children: React.ReactNode;
@@ -44,7 +45,7 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
         variables: {
           search: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })],
         },
-      }).then(() => {});
+      }).then(noop);
     }
   };
   return (
