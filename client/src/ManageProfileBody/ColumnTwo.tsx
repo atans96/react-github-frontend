@@ -25,13 +25,9 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
     const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
     const [typedFilter, setTypedFilter] = useState('');
     const [active, setActive] = useState('');
-    const [height, setHeight] = useState('100vh');
     const [fullName, setFullName] = useState('');
     const [branch, setBranch] = useState('');
     const [htmlUrl, setHtmlUrl] = useState('');
-    const handleHeightChange = (readmeHeight: string) => {
-      setHeight(readmeHeight);
-    };
     const onClickRepoInfo = useCallback(
       (e: React.MouseEvent) => (fullName: string, branch: string, html: string) => {
         e.preventDefault();
@@ -59,7 +55,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
       // eslint-disable-next-line react-hooks/exhaustive-deps
       []
     );
-
+    //TODO: below ColumnTwo, show infinite scroll sliding window to show trending users/gists
     const render = () => {
       const filter1 = fastFilter((obj: RepoInfoProps) => {
         if (languageFilter.length > 0 && languageFilter.includes(obj.language)) {
@@ -112,7 +108,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
                     width: `350px`,
                     background: 'var(--background-theme-color)',
                     overflowY: 'auto',
-                    height: height,
+                    height: '80vh',
                     display: 'inline-block',
                   }}
                 >
@@ -135,7 +131,6 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
                       fullName,
                       branch,
                       html_url: htmlUrl,
-                      handleHeightChange,
                       width: stateShared.width,
                     })}
                   </Then>

@@ -17,18 +17,19 @@ import { getAllGraphQLNavBar } from './services';
 import CryptoJS from 'crypto-js';
 import { readEnvironmentVariable } from './util';
 
+//why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
 const directionLogin = new Map(
   [
-    { path: 'home', index: 1, explored: false },
-    { path: 'discover', index: 2, explored: false },
+    { path: 'home', index: 1, explored: true },
+    { path: 'discover', index: 2, explored: true },
     { path: 'profile', index: 3, explored: false },
-    { path: 'logout', index: 4, explored: false },
+    { path: 'logout', index: 4, explored: true },
   ].map((i) => [i.path, { index: i.index, explored: i.explored }])
 );
 const directionNotLogin = new Map(
   [
-    { path: 'home', index: 1, explored: false },
-    { path: 'login', index: 2, explored: false },
+    { path: 'home', index: 1, explored: true },
+    { path: 'login', index: 2, explored: true },
   ].map((i) => [i.path, { index: i.index, explored: i.explored }])
 );
 
@@ -57,21 +58,6 @@ const NavBar = React.memo(() => {
   const history = useHistory();
   useEffect(() => {
     setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
-    if (state.isLoggedIn) {
-      directionLogin.set(
-        Active[1] !== '' ? Active[1] : 'home',
-        Object.assign({}, directionLogin.get(active.toLowerCase()), {
-          explored: true,
-        })
-      );
-    } else {
-      directionNotLogin.set(
-        Active[1] !== '' ? Active[1] : 'home',
-        Object.assign({}, directionNotLogin.get(active.toLowerCase()), {
-          explored: true,
-        })
-      );
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
@@ -107,12 +93,7 @@ const NavBar = React.memo(() => {
   }, []);
 
   useEffect(() => {
-    if (
-      state.isLoggedIn &&
-      active &&
-      previousActive.current.length > 0 &&
-      !directionLogin?.get(active.toLowerCase())?.explored
-    ) {
+    if (state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
       getAllGraphQLNavBar(
         CryptoJS.TripleDES.decrypt(
           localStorage.getItem('jbb') || '',

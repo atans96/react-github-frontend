@@ -6,8 +6,6 @@ import ColumnTwo from './ManageProfileBody/ColumnTwo';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { StateManageProfileProvider } from './selectors/stateContextSelector';
 import { createRenderElement } from './Layout/MasonryLayout';
-import { useSuspendableQuery } from './hooks/useSuspendableQuery';
-import { GET_USER_DATA, GET_USER_INFO_DATA } from './graphql/queries';
 
 const ManageProfile = () => {
   const [, dispatch] = useTrackedStateShared();
