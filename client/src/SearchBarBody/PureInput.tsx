@@ -3,7 +3,7 @@ import { getSearchUsers } from '../services';
 import _ from 'lodash';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
-import { Result } from './PureInputBody/Result';
+import { MultiValueSearch } from './PureInputBody/MultiValueSearch';
 import { StargazerProps } from '../typing/type';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
@@ -178,7 +178,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         <If condition={stateStargazers.stargazersQueueData.length > 0}>
           <Then>
             {stateStargazers.stargazersQueueData.map((obj: StargazerProps, idx) => {
-              return <Result key={idx} stargazer={obj} />;
+              return <MultiValueSearch key={idx} stargazer={obj} />;
             })}
           </Then>
         </If>
