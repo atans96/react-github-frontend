@@ -27,7 +27,6 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
   const location = useLocation<LocationGraphQL>();
   const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
   const displayName: string | undefined = (RowTwo as React.ComponentType<any>).displayName;
-  const { userData } = useApolloFactory(displayName!).query.getUserData();
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState('');
 
@@ -72,7 +71,6 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
   const consumers = useApolloFactory(displayName!).consumers().consumers;
   const alreadyFetch = useRef(false);
   const abortController = new AbortController();
-
   useDeepCompareEffect(() => {
     if (
       stateShared.fetchDataPath !== '' &&
@@ -87,10 +85,12 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
         const promises: Promise<any>[] = [];
         await getUser(
           abortController.signal,
-          userData?.getUserData?.userName,
+          location?.state?.data?.userData?.getUserData?.userName,
           +readEnvironmentVariable('QUERY_GITHUB_API')!,
           1,
-          userData && userData.getUserData ? userData.getUserData.token : '',
+          location?.state?.data?.userData && location?.state?.data?.userData?.getUserData
+            ? location?.state?.data?.userData?.getUserData.token
+            : '',
           true
         ).then((data) => {
           if (data && data.error_403) {
@@ -136,7 +136,7 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
                       if (timeout > 0) {
                         timeout = 0; //clear the timeout
                       }
-                      await getTopContributors(obj.fullName, userData.getUserData.token)
+                      await getTopContributors(obj.fullName, location?.state?.data?.userData?.getUserData.token)
                         .then((res) => {
                           if (res.error_403) {
                             timeout = epochToJsDate(res.rateLimit.reset);
