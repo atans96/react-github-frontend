@@ -9,7 +9,7 @@ import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
 import { fastFilter, readEnvironmentVariable } from './util';
-import { filterActionResolvedPromiseData, logoutAction } from './util/util';
+import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
 import { getTokenGQL, getValidGQLProperties } from './services';
 import {
   alreadySeenCardSelector,
@@ -131,74 +131,50 @@ const App = () => {
 
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (state.filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
-      switch (displayName) {
-        case displayName.match(/^discover/gi) && displayName!.match(/^discover/gi)![0].length > 0
-          ? displayName
-          : undefined: {
-          let filter1 = fastFilter(
-            (obj: MergedDataProps) =>
-              filterActionResolvedPromiseData(
-                obj,
-                !alreadySeenCardsRef?.current?.includes(obj.id) && !userStarredRef?.current?.includes(obj.id),
-                !!languagePreferenceRef?.current?.get(obj.language)?.checked
-              ),
-            data
-          );
-          if (filter1.length > 0) {
-            dispatchDiscover({
-              type: 'MERGED_DATA_APPEND_DISCOVER',
-              payload: {
-                data: filter1,
-              },
-            });
-          } else if (filter1.length === 0) {
-            dispatchDiscover({
-              type: 'ADVANCE_PAGE_DISCOVER',
-            });
+      return new Promise(function (resolve, reject) {
+        switch (displayName) {
+          case displayName.match(/^discover/gi) && displayName!.match(/^discover/gi)![0].length > 0
+            ? displayName
+            : undefined: {
+            let filter1 = fastFilter(
+              (obj: MergedDataProps) =>
+                filterActionResolvedPromiseData(
+                  obj,
+                  !alreadySeenCardsRef?.current?.includes(obj.id) && !userStarredRef?.current?.includes(obj.id),
+                  !!languagePreferenceRef?.current?.get(obj.language)?.checked
+                ),
+              data
+            );
+            if (filter1.length > 0) {
+              dispatchDiscover({
+                type: 'MERGED_DATA_APPEND_DISCOVER',
+                payload: {
+                  data: filter1,
+                },
+              });
+            } else if (filter1.length === 0) {
+              dispatchDiscover({
+                type: 'ADVANCE_PAGE_DISCOVER',
+              });
+            }
+            resolve();
+            break;
           }
-          break;
-        }
-        case 'Home': {
-          const filter1 = fastFilter(
-            (obj: MergedDataProps) =>
-              filterActionResolvedPromiseData(
-                obj,
-                !alreadySeenCardsRef?.current?.includes(obj.id),
-                !!languagePreferenceRef?.current?.get(obj.language)
-              ),
-            data.dataOne
-          );
-          const tempImages = fastFilter(
-            (obj: MergedDataProps) => !alreadySeenCardsRef?.current?.includes(obj.id),
-            data.renderImages
-          );
-          if (tempImages.length === 0) {
-            dispatch({
-              type: 'IMAGES_DATA_ADDED',
-              payload: {
-                images: [],
-              },
-            });
-          } else {
-            dispatch({
-              type: 'IMAGES_DATA_ADDED',
-              payload: {
-                images: tempImages,
-              },
-            });
-          }
-          dispatch({
-            type: 'MERGED_DATA_APPEND',
-            payload: {
-              data: filter1,
-            },
-          });
-          if (filter1.length === 0) {
-            dispatch({
-              type: 'ADVANCE_PAGE',
-            });
-          } else {
-            if (data.renderImages.length === 0) {
+          case 'Home': {
+            const filter1 = fastFilter(
+              (obj: MergedDataProps) =>
+                filterActionResolvedPromiseData(
+                  obj,
+                  !alreadySeenCardsRef?.current?.includes(obj.id),
+                  !!languagePreferenceRef?.current?.get(obj.language)
+                ),
+              data.dataOne
+            );
+            const tempImages = fastFilter(
+              (obj: MergedDataProps) => !alreadySeenCardsRef?.current?.includes(obj.id),
+              data.renderImages
+            );
+            if (tempImages.length === 0) {
               dispatch({
                 type: 'IMAGES_DATA_ADDED',
                 payload: {
@@ -209,44 +185,73 @@ const App = () => {
               dispatch({
                 type: 'IMAGES_DATA_ADDED',
                 payload: {
-                  images: data.renderImages,
+                  images: tempImages,
                 },
               });
             }
-            const temp = data.dataOne || data;
-            temp.map((obj: MergedDataProps) => {
-              obj['isQueue'] = false;
-              return obj;
-            });
             dispatch({
               type: 'MERGED_DATA_APPEND',
               payload: {
-                data: temp,
+                data: filter1,
               },
             });
+            if (filter1.length === 0) {
+              dispatch({
+                type: 'ADVANCE_PAGE',
+              });
+            } else {
+              if (data.renderImages.length === 0) {
+                dispatch({
+                  type: 'IMAGES_DATA_ADDED',
+                  payload: {
+                    images: [],
+                  },
+                });
+              } else {
+                dispatch({
+                  type: 'IMAGES_DATA_ADDED',
+                  payload: {
+                    images: data.renderImages,
+                  },
+                });
+              }
+              const temp = data.dataOne || data;
+              temp.map((obj: MergedDataProps) => {
+                obj['isQueue'] = false;
+                return obj;
+              });
+              dispatch({
+                type: 'MERGED_DATA_APPEND',
+                payload: {
+                  data: temp,
+                },
+              });
+            }
+            resolve();
+            break;
           }
-          break;
+          default: {
+            throw new Error('No valid component found!');
+          }
         }
-        default: {
-          throw new Error('No valid component found!');
-        }
-      }
+      });
     }
   };
   const actionResolvePromise = useCallback(
-    (
-      action: ActionResolvedPromise,
-      setLoading: any,
-      setNotification: any,
-      isFetchFinish: boolean,
-      displayName: string,
-      data?: Nullable<IDataOne | any>,
-      error?: string
-    ) => {
+    ({
+      action,
+      data = undefined,
+      setLoading,
+      isFetchFinish,
+      displayName,
+      setNotification,
+      error = undefined,
+      prefetch = noop,
+    }) => {
       if (!loadingUserStarred && !errorUserStarred && !seenDataLoading && !seenDataError) {
         setLoading(false);
         if (data && action === 'append') {
-          actionAppend(data, displayName);
+          actionAppend(data, displayName)!.then(() => prefetch());
         }
         if (action === 'noData') {
           isFetchFinish = true;

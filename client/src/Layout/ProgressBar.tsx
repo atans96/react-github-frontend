@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useInterval } from '../hooks/useBottomHit';
 import { useUpdateEffect } from '../hooks/useUpdatedEffect';
+import { useInterval } from '../hooks/useInterval';
 
 export const ProgressBar = ({ progress }: any) => (
   <div style={{ width: '100%', height: '5px' }}>

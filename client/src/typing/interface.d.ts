@@ -33,17 +33,18 @@ export interface LocationGraphQL {
 interface Output {
   isFetchFinish: boolean;
 }
-
+export interface ActionResolvePromise {
+  action: ActionResolvedPromise;
+  setLoading: any;
+  setNotification: any;
+  isFetchFinish: boolean;
+  displayName: string;
+  data?: Nullable<IDataOne | any>;
+  error?: string;
+  prefetch?: (x: string) => void;
+}
 export interface ActionResolvePromiseOutput {
-  actionResolvePromise: (
-    action: ActionResolvedPromise,
-    setLoading: any,
-    setNotification: any,
-    isFetchFinish: boolean,
-    displayName: string,
-    data?: Nullable<IDataOne | any>,
-    error?: string
-  ) => Output;
+  actionResolvePromise: ({ args }: ActionResolvePromise) => Output;
 }
 
 export interface IAction<T> {
