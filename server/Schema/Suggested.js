@@ -9,7 +9,7 @@ const Suggested = gql`
     loginUsers: [LoginUsers]
   }
   extend type Query {
-    getSuggested(username: String!): Suggested
+    getSuggested(username: String!): Suggested @auth
   }
 `;
 module.exports = Suggested;

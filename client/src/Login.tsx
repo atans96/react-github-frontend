@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getRateLimitInfo, requestGithubLogin } from './services';
-import { dispatchRateLimit, dispatchRateLimitAnimation } from './store/dispatcher';
 import LoginLayout from './Layout/LoginLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import './Login.scss';
@@ -8,92 +7,117 @@ import CryptoJS from 'crypto-js';
 import { languageList, readEnvironmentVariable } from './util';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { IState } from './typing/interface';
-import { useHistory } from 'react-router';
+import { useLocation, useHistory } from 'react-router-dom';
+import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
 
-interface LoginProps {
-  state: IState;
-  dispatch: any;
-}
-
-const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
+const Login = () => {
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const displayName: string | undefined = (Login as React.ComponentType<any>).displayName;
   const signUpAdded = useApolloFactory(displayName!).mutation.signUpAdded;
   const history = useHistory();
+  const location = useLocation();
   useEffect(() => {
-    // After requesting Github access by logging using user account's Github
-    // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
-    const url = window.location.href;
-    const hasCode = url.includes('?code=');
+    if (location.pathname === '/login') {
+      // After requesting Github access by logging using user account's Github
+      // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
+      const url = window.location.href;
+      const hasCode = url.includes('?code=');
 
-    // If Github API returns the code parameter
-    if (hasCode) {
-      const newUrl = url.split('?code=');
-      // needed to prevent maximum depth exceed when the redirect URL from github is hit
-      window.history.pushState({}, '', newUrl[0]);
-      setData({ ...data, isLoading: true }); // re-render the html tag below to show the loader spinner
+      // If Github API returns the code parameter
+      if (hasCode) {
+        const newUrl = url.split('?code=');
+        // needed to prevent maximum depth exceed when the redirect URL from github is hit
+        window.history.pushState({}, '', newUrl[0]);
+        setData({ ...data, isLoading: true }); // re-render the html tag below to show the loader spinner
 
-      const proxy_url = state.proxy_url;
-      const requestData = {
-        client_id: state.client_id,
-        redirect_uri: state.redirect_uri,
-        client_secret: state.client_secret,
-        code: newUrl[1],
-      };
+        const proxy_url = stateShared.proxy_url;
+        const requestData = {
+          client_id: stateShared.client_id,
+          redirect_uri: stateShared.redirect_uri,
+          client_secret: stateShared.client_secret,
+          code: newUrl[1],
+        };
 
-      // Use code parameter and other parameters to make POST request to proxy_server
-      requestGithubLogin(proxy_url, requestData)
-        .then((response) => {
-          if (response.data) {
-            signUpAdded({
-              variables: {
-                username: response.data.login,
-                avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
-                token: response.token,
-                code: newUrl[1],
-                languagePreference: languageList.reduce((acc, language: string) => {
-                  acc.push(Object.assign({}, { language, checked: true }));
-                  return acc;
-                }, [] as any[]),
-              },
-            }).then(({ data }: any) => {
-              localStorage.setItem('sess', data.signUp.token);
-              localStorage.setItem(
-                'jbb',
-                CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
-              );
-            });
-            dispatch({
-              type: 'LOGIN',
-              payload: { isLoggedIn: true },
-            });
-            dispatchRateLimitAnimation(false, dispatch);
-            getRateLimitInfo(response.token).then((data) => {
-              if (data.rateLimit && data.rateLimitGQL) {
-                dispatchRateLimitAnimation(true, dispatch);
-                dispatchRateLimit(data.rateLimit, data.rateLimitGQL, dispatch);
-              }
-            });
-          } else {
+        // Use code parameter and other parameters to make POST request to proxy_server
+        requestGithubLogin(proxy_url, requestData)
+          .then((response) => {
+            if (response.data) {
+              signUpAdded({
+                variables: {
+                  username: response.data.login,
+                  avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
+                  token: response.token,
+                  code: newUrl[1],
+                  languagePreference: languageList.reduce((acc, language: string) => {
+                    acc.push(Object.assign({}, { language, checked: true }));
+                    return acc;
+                  }, [] as any[]),
+                },
+              }).then(({ data }: any) => {
+                localStorage.setItem('sess', data.signUp.token);
+                localStorage.setItem(
+                  'jbb',
+                  CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
+                );
+                dispatchShared({
+                  type: 'LOGIN',
+                  payload: { isLoggedIn: true },
+                });
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT_ADDED',
+                  payload: {
+                    rateLimitAnimationAdded: false,
+                  },
+                });
+                getRateLimitInfo(response.token).then((data) => {
+                  if (data.rateLimit && data.rateLimitGQL) {
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT_ADDED',
+                      payload: {
+                        rateLimitAnimationAdded: true,
+                      },
+                    });
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT',
+                      payload: {
+                        limit: data.rateLimit.limit,
+                        used: data.rateLimit.used,
+                        reset: data.rateLimit.reset,
+                      },
+                    });
+
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT_GQL',
+                      payload: {
+                        limit: data.rateLimitGQL.limit,
+                        used: data.rateLimitGQL.used,
+                        reset: data.rateLimitGQL.reset,
+                      },
+                    });
+                  }
+                });
+                history.push('/');
+                window.location.reload(false);
+              });
+            } else {
+              setData({
+                isLoading: false,
+                errorMessage: 'Sorry! Login failed',
+              });
+            }
+          })
+          .catch(() => {
             setData({
               isLoading: false,
               errorMessage: 'Sorry! Login failed',
             });
-          }
-        })
-        .then(() => {
-          history.push('/');
-        })
-        .catch(() => {
-          setData({
-            isLoading: false,
-            errorMessage: 'Sorry! Login failed',
           });
-        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, dispatch, data, history]);
+  }, [data]);
 
   return (
     <React.Fragment>
@@ -103,16 +127,18 @@ const Login: React.FC<LoginProps> = ({ state, dispatch }) => {
       </Helmet>
       <LoginLayout data={data} apiType={'API'} notification="">
         {() => (
-          <a
-            className="login-link"
-            href={`https://github.com/login/oauth/authorize?scope=user&client_id=${state.client_id}&redirect_uri=${state.redirect_uri}`}
-            onClick={() => {
-              setData({ ...data, errorMessage: '' });
-            }}
-          >
-            <GitHubIcon />
-            <span>Login with GitHub</span>
-          </a>
+          <div className={'login-link-container'}>
+            <a
+              className="login-link"
+              href={`https://github.com/login/oauth/authorize?scope=user&client_id=${stateShared.client_id}&redirect_uri=${stateShared.redirect_uri}`}
+              onClick={() => {
+                setData({ ...data, errorMessage: '' });
+              }}
+            >
+              <GitHubIcon />
+              <span>Login with GitHub</span>
+            </a>
+          </div>
         )}
       </LoginLayout>
     </React.Fragment>

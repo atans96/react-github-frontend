@@ -1,709 +1,853 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ActionResolvePromiseOutput, IDataOne, IState, IStateShared } from './typing/interface';
 import CardSkeleton from './HomeBody/CardSkeleton';
 import { getOrg, getRepoImages, getSearchTopics, getUser } from './services';
-import MasonryLayout from './Layout/MasonryLayout';
+import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import _ from 'lodash';
-import {
-  dispatchImagesData,
-  dispatchLastPage,
-  dispatchMergedData,
-  dispatchPage,
-  dispatchShouldFetchImagesData,
-  dispatchUsername,
-} from './store/dispatcher';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
-import { IDataOne, IState, IStateStargazers } from './typing/interface';
-import { Action, MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, Seen, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { debounce, fastFilter, isEqualObjects } from './util';
+import { Counter, fastFilter, isEqualObjects } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
+import { useLocation } from 'react-router-dom';
+import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from './selectors/stateContextSelector';
+import idx from 'idx';
+import { Fab } from '@material-ui/core';
+import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
 // A common situation that makes a component render with the same props is being forced to render by a parent component.
 interface MasonryLayoutMemo {
   children: any;
-  data: IState['mergedData'];
+  data: MergedDataProps[];
   state: IState;
+  stateShared: IStateShared;
+  cardWidth?: number;
+  gutter?: number;
 }
 
-// const screenWidth = (width) => {
-//   if (1)
-// }
 // if you only include isEqualObjects(prevProps.mergedData.length, nextProps.mergedData.length) as
 // propsAreEqual condition checker, the child of Masonry's Card won't get updated state like new tokenGQL when the user logged in using
 // LoginGQL component from StargazersCard. We want to memoize masonry since it involves expensive DOM manipulation
 const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
-  ({ children, data, state }) => {
-    let columnCount = state.width < 760 ? 1 : 2;
-    let increment = 300;
-    const baseWidth = 760;
-    if (state.width > 760) {
-      while (baseWidth + increment < state.width) {
-        columnCount += 1;
-        increment += 300;
-      }
-    }
+  ({ children, data, state, stateShared, cardWidth = 370, gutter = 8 }) => {
+    const columnCount = Math.floor(stateShared.width / (cardWidth + gutter)) || 1;
     return <MasonryLayout columns={columnCount}>{children(columnCount)}</MasonryLayout>;
   },
   (prevProps: any, nextProps: any) => {
     return (
       isEqualObjects(prevProps.data.length, nextProps.data.length) &&
-      isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL) &&
-      isEqualObjects(prevProps.state.isLoggedIn, nextProps.state.isLoggedIn) &&
+      isEqualObjects(prevProps.stateShared.tokenGQL, nextProps.stateShared.tokenGQL) &&
+      isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn) &&
       isEqualObjects(prevProps.state.imagesData, nextProps.state.imagesData) &&
-      isEqualObjects(prevProps.state.perPage, nextProps.state.perPage) &&
-      isEqualObjects(prevProps.state.width, nextProps.state.width)
+      isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
+      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width)
     ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
     // it needs to get re-render to get new data.
   }
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
 
-interface Output {
-  isFetchFinish: boolean;
-}
+const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) => {
+  const [state, dispatch] = useTrackedState();
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [, dispatchStargazers] = useTrackedStateStargazers();
+  const location = useLocation();
+  const abortController = new AbortController();
+  const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
 
-interface HomeProps {
-  state: IState;
-  stateStargazers: IStateStargazers;
-  dispatch: any;
-  dispatchStargazers: any;
-  actionResolvedPromise: (
-    action: Action,
-    setLoading: any,
-    setNotification: any,
-    isFetchFinish: boolean,
-    displayName: string,
-    data?: Nullable<IDataOne | any>,
-    error?: string
-  ) => Output;
-}
+  const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
+  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
+  const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
+  // useState is used when the HTML depends on it directly to render something
+  const [shouldRenderSkeleton, setRenderSkeleton] = useState(false);
+  const [isLoading, setLoading] = useState(false);
+  const [notification, setNotification] = useState('');
+  const [clickedGQLTopic, setGQLTopic] = useState({
+    variables: '',
+  } as any);
+  // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
+  // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
+  // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
+  const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
+  const windowScreenRef = useRef<HTMLDivElement>(null);
+  const token = idx(userData, (_) => _.getUserData.token) || '';
+  const isDataExists = (data: Nullable<IDataOne>) => {
+    if (data === undefined || data?.dataOne === undefined) {
+      return [[], []];
+    }
+    const oldID: number[] = [];
+    const newID: number[] = [];
+    state.mergedData.map((obj) => {
+      return oldID.push(obj.id);
+    });
+    data.dataOne.map((obj: MergedDataProps) => {
+      return newID.push(obj.id);
+    });
 
-const Home = React.memo<HomeProps>(
-  ({ state, dispatch, dispatchStargazers, stateStargazers, actionResolvedPromise }) => {
-    const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
-    const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
-    const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
-    const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
-    // useState is used when the HTML depends on it directly to render something
-    const [shouldRenderSkeleton, setRenderSkeleton] = useState(false);
-    const [isLoading, setLoading] = useState(false);
-    const [notification, setNotification] = useState('');
-    const [clickedGQLTopic, setGQLTopic] = useState({
-      variables: '',
-    } as any);
-    // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
-    // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
-    // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
-    const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
-    const windowScreenRef = useRef<HTMLDivElement>(null);
-    const _isMounted = useRef(true);
+    return newID.length > 0 && !(_.uniq([...oldID, ...newID]).length === oldID.length);
+  };
+  const isMergedDataExist = idx(state, (_) => _.mergedData.length > 0);
+  const isSeenCardsExist = idx(seenData, (_) => _.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError);
+  const isTokenRSSExist = idx(userData, (_) => _.getUserData.tokenRSS.length > 0 && !userDataLoading && !userDataError);
+  const isFunction = (value: () => void) =>
+    value && (Object.prototype.toString.call(value) === '[object Function]' || 'function' === typeof value || true)
+      ? value()
+      : new Error('Not valid function!');
 
-    const isDataExists = (data: Nullable<IDataOne>) => {
-      if (data === undefined || data?.dataOne === undefined) {
-        return [[], []];
-      }
-      const oldID: any[] = [];
-      const newID: any[] = [];
-      state.mergedData.map((obj) => {
-        return oldID.push(obj.id);
-      });
-      data.dataOne.map((obj: MergedDataProps) => {
-        return newID.push(obj.id);
-      });
-
-      return newID.length > 0 && _isMounted.current && !(_.uniq([...oldID, ...newID]).length === oldID.length);
+  const actionController = (res: IDataOne, prefetch = noop, callback?: Promise<any> | any) => {
+    // compare new with old data, if they differ, that means it still has data to fetch
+    const promiseOrNot = () => {
+      callback() instanceof Promise && res !== undefined && (res.error_404 || res.error_403)
+        ? callback()
+        : isFunction(callback);
     };
-    const isFunction = (value: () => void) =>
-      value && (Object.prototype.toString.call(value) === '[object Function]' || 'function' === typeof value || true)
-        ? value()
-        : new Error('Not valid function!');
-
-    const actionController = (res: IDataOne, callback?: Promise<any> | any) => {
-      // compare new with old data, if they differ, that means it still has data to fetch
-      const promiseOrNot = () => {
-        callback() instanceof Promise && res !== undefined && (res.error_404 || res.error_403)
-          ? callback()
-          : isFunction(callback);
-      };
-      if (isDataExists(res)) {
-        actionResolvedPromise(Action.append, setLoading, setNotification, isFetchFinish.current, displayName!, res);
-      } else if (res !== undefined && (res.error_404 || res.error_403)) {
-        callback
-          ? promiseOrNot()
-          : actionResolvedPromise(Action.error, setLoading, setNotification, isFetchFinish.current, displayName!, res);
-      } else {
-        isFetchFinish.current = actionResolvedPromise(
-          Action.noData,
-          setLoading,
-          setNotification,
-          isFetchFinish.current,
-          displayName!,
-          res
-        ).isFetchFinish;
-      }
-    };
-
-    const fetchUserMore = () => {
-      // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
-      // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
-      // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
-      // to prevent that, we need to reset the Home.js is unmounted.
-      if (!isFetchFinish.current && state.page > 1) {
-        // it's possible the user click Details.js and go back to Home.js again and find out that
-        // that the previous page.current is already 2, but when he/she navigates aways from Home.js, it go back to page.current=1 again
-        // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
-        setLoading(true); // spawn loading spinner at bottom page
-        setNotification('');
-        if (clickedGQLTopic.queryTopic !== undefined) {
-          getSearchTopics(clickedGQLTopic.queryTopic, userDataRef.current!)
-            .then((res: IDataOne) => {
-              actionController(res);
-            })
-            .catch((error) => {
-              actionResolvedPromise(Action.error, setLoading, setNotification, isFetchFinish.current, error);
-            });
-        } else {
-          let userNameTransformed: string[];
-          if (!Array.isArray(state.username)) {
-            userNameTransformed = [state.username];
-          } else {
-            userNameTransformed = state.username;
-          }
-          const promises: Promise<void>[] = [];
-          userNameTransformed.forEach((name) => {
-            promises.push(
-              getUser(
-                name,
-                state.perPage,
-                state.page,
-                userData && userData.getUserData ? userData.getUserData.token : ''
-              )
-                .then((data: IDataOne) => {
-                  const callback = () =>
-                    getOrg(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
-                      .then((data: IDataOne) => {
-                        actionController(data);
-                      })
-                      .catch((err) => {
-                        actionResolvedPromise(
-                          Action.error,
-                          setLoading,
-                          setNotification,
-                          isFetchFinish.current,
-                          displayName!,
-                          err
-                        );
-                      });
-                  actionController(data, callback);
-                })
-                .catch((error) => {
-                  actionResolvedPromise(
-                    Action.error,
-                    setLoading,
-                    setNotification,
-                    isFetchFinish.current,
-                    displayName!,
-                    error
-                  );
-                })
-            );
-          });
-          Promise.all(promises).then(noop);
-        }
-      }
-    };
-    const fetchUser = () => {
-      setLoading(true);
-      isFetchFinish.current = false;
-      setNotification('');
-      let userNameTransformed: string[];
-      if (!Array.isArray(state.username)) {
-        userNameTransformed = [state.username];
-      } else {
-        userNameTransformed = state.username;
-      }
-      const promises: Promise<void>[] = [];
-      let paginationInfo = 0;
-      userNameTransformed.forEach((name) => {
-        promises.push(
-          getUser(name, state.perPage, 1, userData ? userData.getUserData.token : '')
-            .then((data: IDataOne) => {
-              const callback = () =>
-                getOrg(name, state.perPage, 1, userData && userData.getUserData ? userData.getUserData.token : '')
-                  .then((data: IDataOne) => {
-                    paginationInfo += data.paginationInfoData;
-                    dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
-                    setTimeout(() => {
-                      // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-                      // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-                      // changing state to false
-                      setRenderSkeleton(false);
-                    }, 1000);
-                    setRenderSkeleton(true);
-                    actionController(data);
-                  })
-                  .catch((err) => {
-                    actionResolvedPromise(
-                      Action.error,
-                      setLoading,
-                      setNotification,
-                      isFetchFinish.current,
-                      displayName!,
-                      err
-                    );
-                  });
-              paginationInfo += data.paginationInfoData;
-              dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
-              setTimeout(() => {
-                // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-                // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-                // changing state to false
-                setRenderSkeleton(false);
-              }, 1000);
-              setRenderSkeleton(true);
-              actionController(data, callback);
-            })
-            .catch((err) => {
-              actionResolvedPromise(
-                Action.error,
-                setLoading,
-                setNotification,
-                isFetchFinish.current,
-                displayName!,
-                err
-              );
-            })
-        );
-      });
-      Promise.all(promises).then(noop);
-    };
-    const mergedDataRef = useRef<MergedDataProps[]>([]);
-    const isLoadingRef = useRef<boolean>(false);
-    const imagesDataRef = useRef<any[]>([]);
-    const filterBySeenRef = useRef<boolean>(state.filterBySeen);
-    const notificationRef = useRef<string>('');
-    useEffect(() => {
-      mergedDataRef.current = state.mergedData;
-    });
-    useEffect(() => {
-      isLoadingRef.current = isLoading;
-    });
-    useEffect(() => {
-      notificationRef.current = notification;
-    });
-    useEffect(() => {
-      imagesDataRef.current = state.imagesData;
-    });
-    useEffect(() => {
-      filterBySeenRef.current = state.filterBySeen;
-    });
-    const handleBottomHit = useCallback(() => {
-      if (
-        !isFetchFinish.current &&
-        mergedDataRef.current.length > 0 &&
-        !isLoadingRef.current &&
-        window.location.pathname === '/' &&
-        notificationRef.current === '' &&
-        filterBySeenRef.current
-      ) {
-        dispatchPage(dispatch);
-        const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
-          const temp = Object.assign(
-            {},
-            {
-              stargazers_count: obj.stargazers_count,
-              full_name: obj.full_name,
-              default_branch: obj.default_branch,
-              owner: {
-                login: obj.owner.login,
-                avatar_url: obj.owner.avatar_url,
-                html_url: obj.owner.html_url,
-              },
-              description: obj.description,
-              language: obj.language,
-              topics: obj.topics,
-              html_url: obj.html_url,
-              id: obj.id,
-              imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
-              name: obj.name,
-              is_queried: false,
-            }
-          );
-          acc.push(temp);
-          return acc;
-        }, [] as MergedDataProps[]);
-        if (result.length > 0 && imagesDataRef.current.length > 0 && state.isLoggedIn) {
-          seenAdded({
-            variables: {
-              seenCards: result,
-            },
-          }).then(noop);
-        }
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-      isFetchFinish.current,
-      mergedDataRef.current,
-      isLoadingRef.current,
-      imagesDataRef.current,
-      notificationRef.current,
-      window.location.pathname,
-      filterBySeenRef.current,
-      state.isLoggedIn,
-    ]);
-
-    useBottomHit(
-      windowScreenRef,
-      handleBottomHit,
-      isLoading || shouldRenderSkeleton || isFetchFinish.current // include isFetchFinish to indicate not to listen anymore
-    );
-
-    function handleResize() {
+    if (isDataExists(res)) {
+      const ja = Counter(res.dataOne, 'language');
+      const repoStat = Object.entries(ja)
+        .slice(0, 5)
+        .map((arr: any) => {
+          const ja = idx(state, (_) => _.repoStat.find((xx) => xx[0] === arr[0])) ?? [0, 0];
+          return [arr[0], ja[1] + arr[1]];
+        });
       dispatch({
-        type: 'SET_WIDTH',
+        type: 'REPO_STAT',
         payload: {
-          width: window.innerWidth,
+          repoStat: repoStat,
         },
       });
+      actionResolvePromise({
+        action: ActionResolvedPromise.append,
+        setLoading,
+        setNotification,
+        isFetchFinish: isFetchFinish.current,
+        displayName: displayName!,
+        data: res,
+        prefetch,
+      });
+    } else if (res !== undefined && (res.error_404 || res.error_403)) {
+      callback
+        ? promiseOrNot()
+        : actionResolvePromise({
+            action: ActionResolvedPromise.error,
+            setLoading,
+            setNotification,
+            isFetchFinish: isFetchFinish.current,
+            displayName: displayName!,
+            data: res,
+          });
+    } else {
+      isFetchFinish.current = actionResolvePromise({
+        action: ActionResolvedPromise.noData,
+        setLoading,
+        setNotification,
+        isFetchFinish: isFetchFinish.current,
+        displayName: displayName!,
+        data: res,
+      }).isFetchFinish;
     }
-    useResizeHandler(windowScreenRef, handleResize);
-
-    useDeepCompareEffect(() => {
-      // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-      if (state.username.length > 0 && state.mergedData.length === 0) {
-        // we want to preserve state.username so that when the user navigate away from Home, then go back again, and do the scroll again,
-        // we still want to retain the memory of username so that's why we use reducer of state.username.
-        // However, as the component unmount, state.username is not "", thus causing fetchUser to fire in useEffect
-        // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
-        // otherwise, don't re-fetch. in this way, state.username and state.mergedData are still preserved
-        fetchUser();
-      }
-      // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
-      // it cannot fetch because if the dependency array of fetchUser() is only [state.username] so state.username not change so not execute
-      // so you need another dependency of state.perPage
-      // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.username, state.perPage, state.mergedData]);
-    useEffect(() => {
-      if (state.username.length > 0 && document.location.pathname === '/') {
-        fetchUserMore();
-      } else if (
-        state.username.length === 0 &&
-        clickedGQLTopic.queryTopic !== '' &&
-        document.location.pathname === '/' &&
-        state.filterBySeen
-      ) {
-        fetchUserMore();
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.page]);
-    useEffect(() => {
-      if (
-        !userDataLoading &&
-        !userDataError &&
-        userData?.getUserData?.tokenRSS &&
-        userData?.getUserData?.tokenRSS !== '' &&
-        state.tokenRSS === ''
-      ) {
-        dispatch({
-          type: 'TOKEN_RSS_ADDED',
-          payload: {
-            tokenRSS: userData?.getUserData?.tokenRSS,
-          },
-        });
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userDataLoading, userDataError]);
-
-    useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData && seenData.getSeen !== null) {
-        if (!state.filterBySeen) {
-          const images = state.undisplayMergedData.reduce((acc: any[], obj: SeenProps) => {
-            acc.push(
-              Object.assign(
-                {},
-                {
-                  id: obj.id,
-                  value: [...obj.imagesData],
-                }
-              )
-            );
-            return acc;
-          }, [] as SeenProps[]);
-          dispatchImagesData(images, dispatch);
-          dispatchMergedData(state.undisplayMergedData, dispatch);
+  };
+  const dataPrefetch = useRef<IDataOne | undefined>();
+  const prefetch = (name: string) => () => {
+    getUser(undefined, name, stateShared.perPage, state.page + 1, token)
+      .then((data: IDataOne) => {
+        if (!!data && (data.error_404 || data.error_403)) {
+          getOrg(undefined, name, stateShared.perPage, state.page + 1, token)
+            .then((data: IDataOne) => {
+              dataPrefetch.current = data;
+            })
+            .catch((error) => {
+              actionResolvePromise({
+                action: ActionResolvedPromise.error,
+                setLoading,
+                setNotification,
+                isFetchFinish: isFetchFinish.current,
+                displayName: displayName!,
+                error,
+              });
+            });
         } else {
-          const ids = state.undisplayMergedData.reduce((acc, obj) => {
-            acc.push(obj.id);
-            return acc;
-          }, [] as number[]);
-          const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
-          const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), state.imagesData);
-          dispatch({
-            type: 'IMAGES_DATA_REPLACE',
-            payload: {
-              imagesData: images,
-            },
-          });
-          dispatchMergedData(temp, dispatch);
+          dataPrefetch.current = data;
         }
+      })
+      .catch((error) => {
+        actionResolvePromise({
+          action: ActionResolvedPromise.error,
+          setLoading,
+          setNotification,
+          isFetchFinish: isFetchFinish.current,
+          displayName: displayName!,
+          error,
+        });
+      });
+  };
+  const fetchUserMore = (signal: any) => {
+    // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
+    // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
+    // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
+    // to prevent that, we need to reset the Home.js is unmounted.
+    if (!isFetchFinish.current && state.page > 1) {
+      // it's possible the user click Details.js and go back to Home.js again and find out that
+      // that the previous page.current is already 2, but when he/she navigates aways from Home.js, it go back to page.current=1 again
+      // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
+      setLoading(true); // spawn loading spinner at bottom page
+      setNotification('');
+      if (clickedGQLTopic.queryTopic !== undefined) {
+        getSearchTopics(abortController.signal, clickedGQLTopic.queryTopic, userDataRef.current!)
+          .then((res: IDataOne) => {
+            actionController(res);
+          })
+          .catch((error) => {
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
+              setLoading,
+              setNotification,
+              isFetchFinish: isFetchFinish.current,
+              error: error,
+              displayName: displayName!,
+            });
+          });
+      } else if (dataPrefetch.current && dataPrefetch.current.dataOne.length > 0) {
+        let userNameTransformed: string[];
+        if (!Array.isArray(stateShared.username)) {
+          userNameTransformed = [stateShared.username];
+        } else {
+          userNameTransformed = stateShared.username;
+        }
+        userNameTransformed.forEach((user) => {
+          const temp = prefetch(user);
+          const clone = JSON.parse(JSON.stringify(dataPrefetch.current));
+          actionController(clone, temp);
+        });
+        dataPrefetch.current = undefined;
+      } else {
+        let userNameTransformed: string[];
+        if (!Array.isArray(stateShared.username)) {
+          userNameTransformed = [stateShared.username];
+        } else {
+          userNameTransformed = stateShared.username;
+        }
+        const promises: Promise<void>[] = [];
+        userNameTransformed.forEach((name) => {
+          promises.push(
+            getUser(signal.signal, name, stateShared.perPage, state.page, token)
+              .then((data: IDataOne) => {
+                const callback = () =>
+                  getOrg(signal.signal, name, stateShared.perPage, 1, token)
+                    .then((data: IDataOne) => {
+                      const temp = prefetch(name);
+                      actionController(data, temp);
+                    })
+                    .catch((error) => {
+                      actionResolvePromise({
+                        action: ActionResolvedPromise.error,
+                        setLoading,
+                        setNotification,
+                        isFetchFinish: isFetchFinish.current,
+                        displayName: displayName!,
+                        error,
+                      });
+                    });
+                const temp = prefetch(name);
+                actionController(data, temp, callback);
+              })
+              .catch((error) => {
+                actionResolvePromise({
+                  action: ActionResolvedPromise.error,
+                  setLoading,
+                  setNotification,
+                  isFetchFinish: isFetchFinish.current,
+                  displayName: displayName!,
+                  error,
+                });
+              })
+          );
+        });
+        Promise.all(promises).then(noop);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.filterBySeen]);
-    useEffect(() => {
-      if (!seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0) {
+    }
+  };
+  const fetchUser = (signal: any) => {
+    setLoading(true);
+    isFetchFinish.current = false;
+    setNotification('');
+    let userNameTransformed: string[];
+    if (!Array.isArray(stateShared.username)) {
+      userNameTransformed = [stateShared.username];
+    } else {
+      userNameTransformed = stateShared.username;
+    }
+    const promises: Promise<void>[] = [];
+    let paginationInfo = 0;
+    userNameTransformed.forEach((name) => {
+      promises.push(
+        getUser(signal.signal, name, stateShared.perPage, 1, token)
+          .then((data: IDataOne) => {
+            const callback = () =>
+              getOrg(signal.signal, name, stateShared.perPage, 1, token)
+                .then((data: IDataOne) => {
+                  paginationInfo += data.paginationInfoData;
+                  dispatch({
+                    type: 'LAST_PAGE',
+                    payload: {
+                      lastPage: paginationInfo,
+                    },
+                  });
+                  setTimeout(() => {
+                    // setTimeout is not sync function so it will execute setRenderSkeleton(true);
+                    // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
+                    // changing state to false
+                    setRenderSkeleton(false);
+                  }, 1000);
+                  setRenderSkeleton(true);
+                  const temp = prefetch(name);
+                  actionController(data, temp);
+                })
+                .catch((error) => {
+                  actionResolvePromise({
+                    action: ActionResolvedPromise.error,
+                    setLoading,
+                    setNotification,
+                    isFetchFinish: isFetchFinish.current,
+                    displayName: displayName!,
+                    error,
+                  });
+                });
+            paginationInfo += data.paginationInfoData;
+            dispatch({
+              type: 'LAST_PAGE',
+              payload: {
+                lastPage: paginationInfo,
+              },
+            });
+            setTimeout(() => {
+              // setTimeout is not sync function so it will execute setRenderSkeleton(true);
+              // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
+              // changing state to false
+              setRenderSkeleton(false);
+            }, 1000);
+            setRenderSkeleton(true);
+            const temp = prefetch(name);
+            actionController(data, temp, callback);
+          })
+          .catch((error) => {
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
+              setLoading,
+              setNotification,
+              isFetchFinish: isFetchFinish.current,
+              displayName: displayName!,
+              error,
+            });
+          })
+      );
+    });
+    Promise.all(promises).then(noop);
+  };
+  const mergedDataRef = useRef<MergedDataProps[]>([]);
+  const isLoadingRef = useRef<boolean>(false);
+  const imagesDataRef = useRef<ImagesDataProps[]>([]);
+  const filterBySeenRef = useRef<boolean>(state.filterBySeen);
+  const notificationRef = useRef<string>('');
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location.pathname === '/' && !isFinished) {
+      mergedDataRef.current = state.mergedData;
+      return () => {
+        isFinished = true;
+      };
+    }
+  }, [state.mergedData]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location.pathname === '/' && !isFinished) {
+      isLoadingRef.current = isLoading;
+      return () => {
+        isFinished = true;
+      };
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location.pathname === '/' && !isFinished) {
+      notificationRef.current = notification;
+      return () => {
+        isFinished = true;
+      };
+    }
+  }, [notification]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location.pathname === '/' && !isFinished) {
+      imagesDataRef.current = state.imagesData;
+      return () => {
+        isFinished = true;
+      };
+    }
+  }, [state.imagesData]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location.pathname === '/' && !isFinished) {
+      filterBySeenRef.current = state.filterBySeen;
+      return () => {
+        isFinished = true;
+      };
+    }
+  }, [state.filterBySeen]);
+
+  const handleBottomHit = useCallback(() => {
+    if (
+      !isFetchFinish.current &&
+      mergedDataRef.current.length > 0 &&
+      !isLoadingRef.current &&
+      location.pathname === '/' &&
+      notificationRef.current === '' &&
+      filterBySeenRef.current
+    ) {
+      dispatch({
+        type: 'ADVANCE_PAGE',
+      });
+      const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
+        const temp = Object.assign(
+          {},
+          {
+            stargazers_count: obj.stargazers_count,
+            full_name: obj.full_name,
+            default_branch: obj.default_branch,
+            owner: {
+              login: obj.owner.login,
+              avatar_url: obj.owner.avatar_url,
+              html_url: obj.owner.html_url,
+            },
+            description: obj.description,
+            language: obj.language,
+            topics: obj.topics,
+            html_url: obj.html_url,
+            id: obj.id,
+            imagesData:
+              idx(imagesDataRef.current, (_) => _.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0]) ??
+              [],
+            name: obj.name,
+            is_queried: false,
+          }
+        );
+        acc.push(temp);
+        return acc;
+      }, [] as MergedDataProps[]);
+      if (result.length > 0 && imagesDataRef.current.length > 0 && stateShared.isLoggedIn) {
+        seenAdded({
+          variables: {
+            seenCards: result,
+          },
+        }).then(noop);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateShared.isLoggedIn]);
+
+  useBottomHit(
+    windowScreenRef,
+    handleBottomHit,
+    isLoading || shouldRenderSkeleton || isFetchFinish.current // include isFetchFinish to indicate not to listen anymore
+  );
+
+  function handleResize() {
+    dispatchShared({
+      type: 'SET_WIDTH',
+      payload: {
+        width: window.innerWidth,
+      },
+    });
+  }
+
+  useResizeHandler(windowScreenRef, handleResize);
+
+  useDeepCompareEffect(() => {
+    // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
+    if (stateShared.username.length > 0 && state.mergedData.length === 0 && location.pathname === '/') {
+      // we want to preserve stateShared.username so that when the user navigate away from Home, then go back again, and do the scroll again,
+      // we still want to retain the memory of username so that's why we use reducer of stateShared.username.
+      // However, as the component unmount, stateShared.username is not "", thus causing fetchUser to fire in useEffect
+      // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
+      // otherwise, don't re-fetch. in this way, stateShared.username and state.mergedData are still preserved
+      fetchUser(abortController);
+      return () => {
+        abortController.abort();
+      };
+    }
+    // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
+    // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.username] so stateShared.username not change so not execute
+    // so you need another dependency of stateShared.perPage
+    // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateShared.username, stateShared.perPage, state.mergedData]);
+
+  useEffect(() => {
+    if (location.pathname === '/') {
+      if (stateShared.username.length > 0) {
+        fetchUserMore(abortController);
+      } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
+        fetchUserMore(abortController);
+      }
+      return () => abortController.abort();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.page]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (isTokenRSSExist && location.pathname === '/') {
+      dispatchShared({
+        type: 'TOKEN_RSS_ADDED',
+        payload: {
+          tokenRSS: userData.getUserData.tokenRSS,
+        },
+      });
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTokenRSSExist]);
+
+  useEffect(() => {
+    let isFinished = false;
+    setNotification('');
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
+      const ids = state.undisplayMergedData.reduce((acc, obj) => {
+        acc.push(obj.id);
+        return acc;
+      }, [] as number[]);
+      const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
+      const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), state.imagesData);
+      dispatch({
+        type: 'IMAGES_DATA_REPLACE',
+        payload: {
+          imagesData: images,
+        },
+      });
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: temp,
+        },
+      });
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.filterBySeen]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
+      dispatch({
+        type: 'UNDISPLAY_MERGED_DATA',
+        payload: {
+          undisplayMergedData: seenData.getSeen.seenCards,
+        },
+      });
+      const temp = seenData.getSeen.seenCards ?? [];
+      const images = temp!.reduce((acc: any[], obj: Seen) => {
+        acc.push(
+          Object.assign(
+            {},
+            {
+              id: obj.id,
+              value: [...obj.imagesData],
+            }
+          )
+        );
+        return acc;
+      }, [] as SeenProps[]);
+      dispatch({
+        type: 'IMAGES_DATA_ADDED',
+        payload: {
+          images: images,
+        },
+      });
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: seenData.getSeen.seenCards,
+        },
+      });
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seenDataLoading, seenDataError, seenData, location.pathname, state.filterBySeen]);
+
+  useEffect(
+    () => {
+      if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/') {
+        // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
+        const data = state.mergedData.reduce((acc, object) => {
+          acc.push(
+            Object.assign(
+              {},
+              {
+                id: object.id,
+                value: {
+                  full_name: object.full_name,
+                  branch: object.default_branch,
+                },
+              }
+            )
+          );
+          return acc;
+        }, [] as any[]);
+        getRepoImages(
+          abortController.signal,
+          data,
+          Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+          state.page,
+          token
+        )
+          .then((repoImage) => {
+            if (repoImage.renderImages.length > 0) {
+              dispatch({
+                type: 'SHOULD_IMAGES_DATA_ADDED',
+                payload: {
+                  shouldFetchImages: false,
+                },
+              });
+              dispatch({
+                type: 'IMAGES_DATA_ADDED',
+                payload: {
+                  images: repoImage.renderImages,
+                },
+              });
+            }
+          })
+          .catch((error) => {
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
+              setLoading,
+              setNotification,
+              isFetchFinish: isFetchFinish.current,
+              displayName: displayName!,
+              error,
+            });
+          });
+        return () => {
+          abortController.abort();
+        };
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state.mergedData, state.shouldFetchImages]
+  );
+
+  const userDataRef = useRef<string>();
+  useEffect(() => {
+    let isFinished = false;
+    if (location.pathname === '/') {
+      userDataRef.current = token;
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  const onClickTopic = useCallback(
+    async ({ variables }) => {
+      if (stateShared.tokenGQL !== '' && userDataRef.current && state.filterBySeen) {
+        setLoading(true);
         dispatch({
-          type: 'UNDISPLAY_MERGED_DATA',
+          type: 'REMOVE_ALL',
+        });
+        dispatchStargazers({
+          type: 'REMOVE_ALL',
+        });
+        dispatchShared({
+          type: 'USERNAME_ADDED',
           payload: {
-            undisplayMergedData: seenData.getSeen.seenCards,
+            username: '',
           },
         });
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [seenDataLoading, seenDataError, seenData]);
-    useEffect(
-      () => {
-        _isMounted.current = true;
-        if (_isMounted.current && state.mergedData.length > 0 && state.shouldFetchImages) {
-          // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
-          const data = state.mergedData.reduce((acc, object) => {
-            acc.push(
-              Object.assign(
-                {},
-                {
-                  id: object.id,
-                  value: {
-                    full_name: object.full_name,
-                    branch: object.default_branch,
-                  },
-                }
-              )
-            );
-            return acc;
-          }, [] as any[]);
-          const token = userData && userData.getUserData ? userData.getUserData.token : '';
-          getRepoImages(data, Array.isArray(state.username) ? state.username[0] : state.username, state.page, token)
-            .then((repoImage) => {
-              if (repoImage.renderImages.length > 0) {
-                dispatchShouldFetchImagesData(false, dispatch);
-                dispatchImagesData(repoImage.renderImages, dispatch);
-              }
-            })
-            .catch((err) => {
-              actionResolvedPromise(
-                Action.error,
-                setLoading,
-                setNotification,
-                isFetchFinish.current,
-                displayName!,
-                err
-              );
+        isFetchFinish.current = false;
+        setNotification('');
+        setGQLTopic({
+          variables,
+        });
+        let paginationInfo = 0;
+        return getSearchTopics(abortController.signal, variables.queryTopic, userDataRef.current!)
+          .then((result: IDataOne) => {
+            paginationInfo += result.paginationInfoData;
+            dispatch({
+              type: 'LAST_PAGE',
+              payload: {
+                lastPage: paginationInfo,
+              },
             });
-        }
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [state.mergedData, state.shouldFetchImages]
-    );
-    const userDataRef = useRef<string>();
-    useEffect(() => {
-      userDataRef.current = userData?.getUserData?.token || '';
-    });
-    const onClickTopic = useCallback(
-      async ({ variables }) => {
-        if (state.tokenGQL !== '' && userDataRef.current && state.filterBySeen) {
-          setLoading(true);
-          dispatch({
-            type: 'REMOVE_ALL',
-          });
-          dispatchStargazers({
-            type: 'REMOVE_ALL',
-          });
-          dispatchUsername('', dispatch);
-          isFetchFinish.current = false;
-          setNotification('');
-          setGQLTopic({
-            variables,
-          });
-          let paginationInfo = 0;
-          return await getSearchTopics(variables.queryTopic, userDataRef.current!)
-            .then((result: IDataOne) => {
-              paginationInfo += result.paginationInfoData;
-              dispatchLastPage(paginationInfo, dispatch); // for displaying the last page from the pagination
-              actionController(result);
-              setTimeout(() => {
-                setRenderSkeleton(false);
-              }, 1000);
-              setRenderSkeleton(true);
-            })
-            .catch((err) => {
-              actionResolvedPromise(
-                Action.error,
-                setLoading,
-                setNotification,
-                isFetchFinish.current,
-                displayName!,
-                err
-              );
+            actionController(result);
+            setTimeout(() => {
+              setRenderSkeleton(false);
+            }, 1000);
+            setRenderSkeleton(true);
+          })
+          .catch((error) => {
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
+              setLoading,
+              setNotification,
+              isFetchFinish: isFetchFinish.current,
+              displayName: displayName!,
+              error,
             });
-        }
-      },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [state.tokenGQL, userDataRef.current, state.filterBySeen] // if not specified, state.tokenGQL !== '' will always true when you click it again, even though state.tokenGQL already updated
-    );
-    const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
-
-    const stateMemoize = useCallback(() => {
-      return state;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state]);
-
-    const stateStargazersMemoize = useCallback(() => {
-      return stateStargazers;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [stateStargazers]);
-
-    const whichToUse = useCallback(() => {
-      // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
-      // is not part of the dependencies for the callback.
-      if (state.filteredMergedData.length > 0) {
-        return state.filteredMergedData;
+          });
       }
-      return state.mergedData; // return this if filteredTopics.length === 0
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.mergedData, state.filteredMergedData]);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stateShared.tokenGQL, userDataRef.current, state.filterBySeen] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
+  );
+  const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
-    // TODO: change the styling like: https://gatsby.pizza/ or maybe styling like nested menu (NOT SURE YET)
+  const whichToUse = () => {
+    // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
+    // is not part of the dependencies for the callback.
+    if (state.filteredMergedData.length > 0) {
+      return state.filteredMergedData;
+    }
+    return state.mergedData; // return this if filteredTopics.length === 0
+  };
 
-    // TODO: put the color of each card to change as the user scroll to the bottom to see it: https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
-    // and put delay at each Card so that as if the animation is at random
+  // TODO: change the styling like: https://gatsby.pizza/ or maybe styling like nested menu (NOT SURE YET)
 
-    // TODO: show related topics that you get from queries.ts
+  // TODO: put the color of each card to change as the user scroll to the bottom to see it: https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
+  // and put delay at each Card so that as if the animation is at random
 
-    // TODO: sortable cards based on topics, and when clicked to the topic section
-    // it should show effect: https://codyhouse.co/ds/components/app/looping-tabs
+  // TODO: show related topics that you get from queries.ts
 
-    //TODO: handle the case where the user revoke his token
+  // TODO: sortable cards based on topics, and when clicked to the topic section
+  // it should show effect: https://codyhouse.co/ds/components/app/looping-tabs
 
-    return (
-      <React.Fragment>
-        <Helmet>
-          <title>Github Fetcher Dashboard</title>
-          <meta
-            name="description"
-            content="Improving Github search and discover experience with an enhanced user-interface and functionalities"
-          />
-        </Helmet>
-        {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
+  //TODO: handle the case where the user revoke his token
+
+  //TODO: disable inspect element when in production
+
+  return (
+    <React.Fragment>
+      <Helmet>
+        <title>Github Fetcher Dashboard</title>
+        <meta
+          name="description"
+          content="Improving Github search and discover experience with an enhanced user-interface and functionalities"
+        />
+      </Helmet>
+      {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
        when unmounted*/}
-        <ScrollPositionManager scrollKey="home" />
-        <div
-          ref={windowScreenRef}
-          className={clsx('', {
-            header: state.mergedData?.length > 0,
-          })}
-          style={{ marginLeft: `${state.drawerWidth + 5}px`, zIndex: state.visible ? -1 : 0 }}
-        >
-          {
-            // we want to render Card first and ImagesCard later because it requires more bandwith
-            // so no need to use state.imagesData condition on top of state.mergedData?.length > 0 && !shouldRenderSkeleton
-            // below, otherwise it's going to slow to wait for ImagesCard as the Card won't get re-render instantly consequently
-          }
-          <If
-            condition={!state.filterBySeen && seenData?.getSeen?.seenCards && seenData?.getSeen?.seenCards?.length > 0}
-          >
-            <Then>
-              <div style={{ textAlign: 'center' }}>
-                <h3>
-                  Your{' '}
-                  {seenData?.getSeen?.seenCards && seenData?.getSeen?.seenCards?.length > 0
-                    ? seenData.getSeen.seenCards.length
-                    : ''}{' '}
-                  Card History:
-                </h3>
-              </div>
-            </Then>
-          </If>
-          <If condition={state.mergedData?.length > 0 && !shouldRenderSkeleton}>
-            <Then>
-              <MasonryLayoutMemo data={whichToUse()} state={state}>
-                {(columnCount: number) => {
-                  return Object.keys(whichToUse()).map((key, idx) => (
-                    <Card
-                      key={idx}
-                      columnCount={columnCount}
-                      stateStargazersMemoize={stateStargazersMemoize()}
-                      getRootProps={getRootProps}
-                      index={whichToUse()[idx].id}
-                      githubData={whichToUse()[idx]}
-                      state={stateMemoize()}
-                      dispatchStargazersUser={dispatchStargazers}
-                      dispatch={dispatch}
-                    />
-                  ));
-                }}
-              </MasonryLayoutMemo>
-            </Then>
-          </If>
-          <If condition={shouldRenderSkeleton}>
-            <Then>
-              <MasonryLayoutMemo data={whichToUse()} state={state}>
-                {() => {
-                  return Object.keys(state.mergedData).map((_, idx) => <CardSkeleton key={idx} />);
-                }}
-              </MasonryLayoutMemo>
-            </Then>
-          </If>
-
-          <If condition={isLoading}>
-            <Then>
-              <div style={{ textAlign: 'center' }}>
-                <img src={eye} style={{ width: '100px' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <h3>Please wait while fetching your data</h3>
-                </div>
-              </div>
-            </Then>
-          </If>
-
-          <If condition={notification}>
-            <Then>
-              <div style={{ textAlign: 'center' }}>
-                <p>
-                  <a className={'underlining'} style={{ fontSize: '30px', color: 'black' }}>
-                    {notification}
-                  </a>
-                </p>
-              </div>
-            </Then>
-          </If>
-        </div>
-        <If condition={state.width > 1100}>
+      <ScrollPositionManager scrollKey="home" />
+      <div className={'top'} />
+      <div
+        ref={windowScreenRef}
+        className={clsx('', {
+          header: isMergedDataExist,
+        })}
+        style={{ marginLeft: `${stateShared.drawerWidth > 0 ? 170 : 50}px`, zIndex: state.visible ? -1 : 0 }}
+      >
+        {
+          // we want to render Card first and ImagesCard later because it requires more bandwith
+          // so no need to use state.imagesData condition on top of state.mergedData?.length > 0 && !shouldRenderSkeleton
+          // below, otherwise it's going to slow to wait for ImagesCard as the Card won't get re-render instantly consequently
+        }
+        <If condition={!state.filterBySeen && isSeenCardsExist}>
           <Then>
-            <BottomNavigationBar state={state} dispatch={dispatch} dispatchStargazersUser={dispatchStargazers} />
+            <div style={{ textAlign: 'center' }}>
+              <h3>Your {idx(seenData, (_) => _.getSeen.seenCards.length)} Card History:</h3>
+            </div>
           </Then>
         </If>
-      </React.Fragment>
-    );
-  },
-  (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.path, nextProps.path) &&
-      isEqualObjects(prevProps.state, nextProps.state) &&
-      isEqualObjects(prevProps.stateStargazers, nextProps.stateStargazers)
-    );
-  }
-);
+        <If condition={isMergedDataExist && !shouldRenderSkeleton}>
+          <Then>
+            <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
+              {(columnCount: number) => {
+                return Object.keys(whichToUse()).map((key, idx) =>
+                  createRenderElement(Card, {
+                    key: whichToUse()[idx].id,
+                    columnCount,
+                    getRootProps,
+                    index: whichToUse()[idx].id,
+                    githubData: whichToUse()[idx],
+                  })
+                );
+              }}
+            </MasonryLayoutMemo>
+          </Then>
+        </If>
+        <If condition={shouldRenderSkeleton}>
+          <Then>
+            <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
+              {() => {
+                return Object.keys(state.mergedData).map((_, idx) => createRenderElement(CardSkeleton, { key: idx }));
+              }}
+            </MasonryLayoutMemo>
+          </Then>
+        </If>
+
+        <If condition={isLoading}>
+          <Then>
+            <div style={{ textAlign: 'center' }}>
+              <img src={eye} style={{ width: '100px' }} />
+              <div style={{ textAlign: 'center' }}>
+                <h3>
+                  Please wait while fetching your query of:{' '}
+                  <p>
+                    <a className={'underlining'}>
+                      {Array.isArray(stateShared.username) && stateShared.username.length > 0
+                        ? stateShared.username.join(', ')
+                        : stateShared.username}
+                    </a>
+                  </p>
+                </h3>
+              </div>
+            </div>
+          </Then>
+        </If>
+
+        <If condition={notification}>
+          <Then>
+            <div style={{ textAlign: 'center' }}>
+              <p>
+                <a className={'underlining'} style={{ fontSize: '30px', color: 'black' }}>
+                  {notification}
+                </a>
+              </p>
+            </div>
+          </Then>
+        </If>
+      </div>
+      <ScrollTopLayout>
+        <Fab color="secondary" size="small" aria-label="scroll back to top">
+          <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
+        </Fab>
+      </ScrollTopLayout>
+      <If condition={stateShared.width > 1100}>
+        <Then>{createRenderElement(BottomNavigationBar, {})}</Then>
+      </If>
+    </React.Fragment>
+  );
+});
 Home.displayName = 'Home';
 export default Home;

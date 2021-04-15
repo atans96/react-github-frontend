@@ -7,9 +7,6 @@ const Query = {
       {},
       { models: { StarRanking }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       return await StarRanking.findOne({
         userName: currentUser?.username,
       });
@@ -19,9 +16,6 @@ const Query = {
       {},
       { models: { SuggestedRepoImages }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       return await SuggestedRepoImages.findOne({
         userName: currentUser?.username,
       });
@@ -31,9 +25,6 @@ const Query = {
       {},
       { models: { SuggestedRepo }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       return await SuggestedRepo.findOne({
         userName: currentUser?.username,
       });
@@ -43,9 +34,6 @@ const Query = {
       {},
       { models: { UserLanguages }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       const user = await UserLanguages.findOne({
         userName: currentUser?.username,
       })
@@ -66,34 +54,18 @@ const Query = {
       {},
       { models: { UserStarred }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       return await UserStarred.findOne({
         userName: currentUser?.username,
       });
     },
     getUserData: async (root, {}, { models: { User }, currentUser }) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       return await User.findOne({ userName: currentUser?.username });
     },
-    getWatchUsers: async (
-      root,
-      {},
-      { models: { WatchUsers }, currentUser }
-    ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
+    getWatchUsers: async (root, {}, { models: { WatchUsers } }) => {
       //get all data from one field without returning _id
       return await WatchUsers.findOne({}, { login: 1, _id: 0 });
     },
     getSeen: async (root, {}, { models: { Seen }, currentUser }) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       //get all data from one field without returning _id
       return await Seen.findOne({ userName: currentUser?.username });
     },
@@ -102,9 +74,6 @@ const Query = {
       {},
       { models: { Search, User }, currentUser }
     ) => {
-      if (currentUser?.username === undefined) {
-        return null;
-      }
       const user = await User.findOne({ userName: currentUser?.username });
       if (user !== null) {
         const searches = await Search.aggregate([

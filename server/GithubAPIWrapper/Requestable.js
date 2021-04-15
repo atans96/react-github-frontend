@@ -240,7 +240,7 @@ class Requestable {
    * @deprecated This will be folded into {@link Requestable#_request} in the 2.0 release.
    */
   _requestAllPages(path, options, cb, results, last) {
-    results = results || [];
+    results = results ?? [];
     last = last || "";
     return this._request("GET", path, options)
       .then((response) => {
@@ -328,7 +328,7 @@ function getNextURL(linksHeader = "") {
   const links = linksHeader.split(/\s*,\s*/); // splits and strips the urls
   return links.reduce(function (nextUrl, link) {
     if (link.search(/rel="next"/) !== -1) {
-      return (link.match(/<(.*)>/) || [])[1];
+      return (link.match(/<(.*)>/) ?? [])[1];
     }
 
     return nextUrl;

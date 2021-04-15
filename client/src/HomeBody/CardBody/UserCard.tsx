@@ -1,38 +1,40 @@
 import React from 'react';
-import { useUserCardStyles } from './UserCardStyle';
-import { Typography } from '@material-ui/core';
-import { dispatchUsername } from '../../store/dispatcher';
+import { useUserCardStyles } from '../../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import { isEqualObjects } from '../../util';
-import { RouteComponentProps } from 'react-router-dom';
-import { If } from '../../util/react-if/If';
-import { Then } from '../../util/react-if/Then';
+import { OwnerProps } from '../../typing/type';
+import {
+  useTrackedState,
+  useTrackedStateShared,
+  useTrackedStateStargazers,
+} from '../../selectors/stateContextSelector';
 
 interface UserCard {
-  data: any;
-  dispatch: any;
-  dispatchStargazers: any;
-  sorted?: string;
-  routerProps?: RouteComponentProps<Record<string, any>, Record<string, any>, Record<string, any>>;
+  data: OwnerProps;
 }
 
 const UserCard = React.memo<UserCard>(
-  ({ data, sorted, dispatch, dispatchStargazers, routerProps }) => {
+  ({ data }) => {
     const classes = useUserCardStyles();
-    const { login, avatar_url, html_url } = data.owner;
+    const { login, avatar_url, html_url } = data;
+    const [, dispatch] = useTrackedState();
+    const [, dispatchShared] = useTrackedStateShared();
+    const [, dispatchStargazers] = useTrackedStateStargazers();
 
     function onClick(e: React.MouseEvent) {
       e.preventDefault();
       e.stopPropagation();
-      if (routerProps) {
-        routerProps.history.push('/');
-      }
       dispatch({
         type: 'REMOVE_ALL',
       });
       dispatchStargazers({
         type: 'REMOVE_ALL',
       });
-      dispatchUsername(login, dispatch);
+      dispatchShared({
+        type: 'USERNAME_ADDED',
+        payload: {
+          username: login,
+        },
+      });
     }
 
     return (
@@ -45,29 +47,13 @@ const UserCard = React.memo<UserCard>(
             <a href={html_url} onClick={onClick}>
               <strong>{login}</strong>
             </a>
-            <If condition={data.trends}>
-              <Then>
-                <Typography
-                  style={{ fontSize: '14px' }}
-                  color="textSecondary"
-                  variant="body2"
-                  className={classes.typographySmall}
-                >
-                  Star added {sorted}: + <strong style={{ color: 'green' }}>{data.trends}</strong>
-                </Typography>
-              </Then>
-            </If>
           </div>
         </div>
       </div>
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.data, nextProps.data) &&
-      isEqualObjects(prevProps.routerProps, nextProps.routerProps) &&
-      isEqualObjects(prevProps.sorted, nextProps.sorted)
-    );
+    return isEqualObjects(prevProps.data, nextProps.data);
   }
 );
 UserCard.displayName = 'UserCard';

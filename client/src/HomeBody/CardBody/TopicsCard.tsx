@@ -1,22 +1,18 @@
 import React from 'react';
 import Topic from './TopicsCardBody/Topic';
 import { isEqualObjects } from '../../util';
-import { IState } from '../../typing/interface';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface TopicsCard {
   data: string[];
   getRootProps: any;
-  perPage: number;
-  state: IState;
 }
 
 const TopicsCard = React.memo<TopicsCard>(
-  ({ data, getRootProps, state, perPage }) => {
+  ({ data, getRootProps }) => {
     return (
-      <ul className="masonry space-center">
-        {data?.map((topic, idx) => (
-          <Topic key={idx} idx={idx} topic={topic} getRootProps={getRootProps} />
-        ))}
+      <ul className="topic space-center">
+        {data?.map((topic, idx) => createRenderElement(Topic, { key: idx, idx, topic, getRootProps }))}
       </ul>
     );
   },
@@ -25,11 +21,7 @@ const TopicsCard = React.memo<TopicsCard>(
     // by getRootProps to re-declare since it's using tokenGQL as its dependency, so you need to
     // include to dependency array for this TopicCard to re-declare getRootProps with updated tokenGQL
     // otherwise it will use stale state in the callback
-    return (
-      isEqualObjects(prevProps.data, nextProps.data) &&
-      isEqualObjects(prevProps.state.tokenGQL, nextProps.state.tokenGQL) &&
-      isEqualObjects(prevProps.perPage, nextProps.perPage)
-    );
+    return isEqualObjects(prevProps.data, nextProps.data);
   }
 );
 TopicsCard.displayName = 'TopicsCard';

@@ -23,7 +23,7 @@ module.exports = async function buildFastify(deps) {
     githubAPIWrapper,
     elastic,
     logger = true,
-    bodyLimit = 600000000,
+    bodyLimit = 6000000000,
   } = deps;
   const fastify = Fastify({ logger, bodyLimit });
   const allowedOrigins = ["https://allan.com", "https://allantanaka.com"];

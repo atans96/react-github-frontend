@@ -1,21 +1,37 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import UpdateIcon from '@material-ui/icons/Update';
 import { ForkIcon } from '../../util/icons';
 import { isEqualObjects } from '../../util';
 import Contributors from './RepoInfoBody/Contributors';
-import { IState } from '../../typing/interface';
+import { RepoInfoProps } from '../../typing/type';
+import KeepMountedLayout from '../../Layout/KeepMountedLayout';
+import { ListItem, ListItemIcon, ListItemText, Theme } from '@material-ui/core';
+import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
+import { ExpandLess, ExpandMore } from '@material-ui/icons';
+import { makeStyles } from '@material-ui/core/styles';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
-interface RepoInfoProps {
-  obj: any;
+interface Props {
+  obj: RepoInfoProps;
   onClickRepoInfo: any;
-  dispatch: any;
   active: string;
-  state: IState;
 }
-
-const RepoInfo = React.memo<RepoInfoProps>(
-  ({ obj, onClickRepoInfo, dispatch, active, state }) => {
+const useStyles = makeStyles<Theme>(() => ({
+  typography: {
+    '& .MuiTypography-root': {
+      fontSize: '1.5rem',
+    },
+  },
+}));
+const RepoInfo = React.memo<Props>(
+  ({ obj, onClickRepoInfo, active }) => {
+    const [openContributors, setOpen] = useState(false);
+    const handleClick = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      setOpen((prevState) => !prevState);
+    }, []);
+    const classes = useStyles();
     return (
       <div style={{ borderBottom: 'solid' }}>
         <div style={active === obj.fullName ? { borderLeft: '5px solid', backgroundColor: '#f8fafc' } : {}}>
@@ -56,18 +72,33 @@ const RepoInfo = React.memo<RepoInfoProps>(
               </div>
             </div>
           </div>
-          <Contributors contributions={state.contributors} fullName={obj.fullName} dispatch={dispatch} />
+          <React.Fragment>
+            <ListItem button key={`${openContributors ? 'Hide' : 'Show'} Top Contributors`} onClick={handleClick}>
+              <ListItemIcon>
+                <PeopleOutlineIcon style={{ transform: 'scale(1.5)' }} />
+              </ListItemIcon>
+              <ListItemText
+                primary={`${openContributors ? 'Hide' : 'Show'} Top Contributors`}
+                className={classes.typography}
+              />
+              {openContributors ? <ExpandLess /> : <ExpandMore />}
+            </ListItem>
+            <KeepMountedLayout
+              mountedCondition={openContributors}
+              render={() => {
+                return createRenderElement(Contributors, {
+                  fullName: obj.fullName,
+                  openContributors,
+                });
+              }}
+            />
+          </React.Fragment>
         </div>
       </div>
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.obj, nextProps.obj) &&
-      isEqualObjects(prevProps.contributions, nextProps.contributions) &&
-      isEqualObjects(prevProps.active, nextProps.active) &&
-      isEqualObjects(prevProps.state.contributors, nextProps.state.contributors)
-    );
+    return isEqualObjects(prevProps.obj, nextProps.obj) && isEqualObjects(prevProps.active, nextProps.active);
   }
 );
 RepoInfo.displayName = 'RepoInfo';

@@ -6,6 +6,9 @@ module.exports = {
     ImagesReadmeRepoInfo: require("./api/repo/images-repo-info"),
     ReadmeRepoInfo: require("./api/repo/readme-repo-info"),
   },
+  graphql: {
+    GetGQLData: require("./api/graphql/get-data"),
+  },
   search: {
     UsersSearchInfo: require("./api/search/users-search-info"),
     TopicsSearchInfo: require("./api/search/topics-search-info"),

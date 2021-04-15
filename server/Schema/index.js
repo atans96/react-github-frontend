@@ -14,7 +14,8 @@ const Suggested = require("./Suggested");
 const SuggestedRepo = require("./SuggestedRepo");
 const SuggestedRepoImages = require("./SuggestedRepoImages");
 const StarRanking = require("./StarRanking");
-const schemaArrays = [
+const { gql } = require("apollo-server-fastify");
+let schemaArrays = [
   Root,
   User,
   UserLanguages,
@@ -52,4 +53,12 @@ const file = fs.createWriteStream(
   file.write(v + "\n");
 });
 file.end();
+const extendSchemaArrays = gql`
+  scalar Date
+  directive @length(
+    max: Int!
+  ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+  directive @auth on FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION
+`;
+schemaArrays = schemaArrays.concat(extendSchemaArrays);
 module.exports = schemaArrays;

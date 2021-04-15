@@ -4,24 +4,26 @@ import { getElasticSearchBertAutocomplete } from '../services';
 import { Then } from '../util/react-if/Then';
 import { Typography } from '@material-ui/core';
 import { If } from '../util/react-if/If';
-import { useUserCardStyles } from '../HomeBody/CardBody/UserCardStyle';
-import { dispatchVisible } from '../store/dispatcher';
+import { useUserCardStyles } from '../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import { useClickOutside } from '../hooks/hooks';
 import { useSelector } from '../selectors/stateSelector';
-import { StaticState } from '../typing/interface';
+import { IAction, StaticState } from '../typing/interface';
 import { RepoInfoSuggested } from '../typing/type';
+import { ActionDiscover } from '../store/Discover/reducer';
+import idx from 'idx';
 
 interface SearchBarProps {
   style: React.CSSProperties;
-  dispatch: any;
+  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
   ref: any;
 }
+
 type SearchesData = {
   isSuggested: boolean;
   result: Array<{ full_name: string }>;
 };
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
-export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatch }, ref) => {
+export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatchDiscover }, ref) => {
   const [query, setQuery] = useState('');
   const [visible, setVisible] = useState(false);
   const [searchesData, setSearches] = useState<SearchesData>();
@@ -42,7 +44,10 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
   );
   useClickOutside(resultsRef, () => {
     setVisible(false);
-    dispatchVisible(false, dispatch);
+    dispatchDiscover({
+      type: 'VISIBLE',
+      payload: { visible: false },
+    });
   });
   const handler = useCallback(
     _.debounce(function (query) {
@@ -55,7 +60,10 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
           }
           setSearches(data);
           setVisible(true);
-          dispatchVisible(true, dispatch);
+          dispatchDiscover({
+            type: 'VISIBLE',
+            payload: { visible: true },
+          });
         });
       }
     }, 200),
@@ -69,13 +77,15 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
     setQuery(e.currentTarget.value);
     handler(e.currentTarget.value);
   };
-  const repoInfo = useSelector((state: StaticState) => state?.SuggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfo);
+  const repoInfo = useSelector((state: StaticState) =>
+    idx(state, (_) => _.SuggestedRepo.suggestedData.getSuggestedRepo.repoInfo)
+  );
   const handleClick = (event: React.FormEvent) => (query: string) => {
     event.preventDefault();
     event.stopPropagation();
     if (!query.includes('Did you mean')) {
       const res = repoInfo.filter((obj: RepoInfoSuggested) => obj.full_name === query);
-      dispatch({
+      dispatchDiscover({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
           data: res,
@@ -84,7 +94,10 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
       });
       setQuery('');
       setVisible(false);
-      dispatchVisible(false, dispatch);
+      dispatchDiscover({
+        type: 'VISIBLE',
+        payload: { visible: false },
+      });
     }
   };
   const classes = useUserCardStyles({ avatarSize: 20 });
