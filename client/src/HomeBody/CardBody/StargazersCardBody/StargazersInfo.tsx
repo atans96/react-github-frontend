@@ -9,7 +9,7 @@ import './StargazersInfoStyle.scss';
 import LanguagesList from './StargazersInfoBody/LanguagesList';
 import { StargazerProps } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
-import { dragMove, isEqualObjects } from '../../../util';
+import { dragMove } from '../../../util';
 import { useLocation } from 'react-router-dom';
 import { useTrackedStateStargazers } from '../../../selectors/stateContextSelector';
 import { useDeepMemo } from '../../../hooks/useDeepMemo';
