@@ -107,7 +107,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       ? value()
       : new Error('Not valid function!');
 
-  const actionController = (res: IDataOne, callback?: Promise<any> | any) => {
+  const actionController = (res: IDataOne, prefetch = noop, callback?: Promise<any> | any) => {
     // compare new with old data, if they differ, that means it still has data to fetch
     const promiseOrNot = () => {
       callback() instanceof Promise && res !== undefined && (res.error_404 || res.error_403)
@@ -128,37 +128,74 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           repoStat: repoStat,
         },
       });
-      actionResolvePromise(
-        ActionResolvedPromise.append,
+      actionResolvePromise({
+        action: ActionResolvedPromise.append,
         setLoading,
         setNotification,
-        isFetchFinish.current,
-        displayName!,
-        res
-      );
+        isFetchFinish: isFetchFinish.current,
+        displayName: displayName!,
+        data: res,
+        prefetch,
+      });
     } else if (res !== undefined && (res.error_404 || res.error_403)) {
       callback
         ? promiseOrNot()
-        : actionResolvePromise(
-            ActionResolvedPromise.error,
+        : actionResolvePromise({
+            action: ActionResolvedPromise.error,
             setLoading,
             setNotification,
-            isFetchFinish.current,
-            displayName!,
-            res
-          );
+            isFetchFinish: isFetchFinish.current,
+            displayName: displayName!,
+            data: res,
+          });
     } else {
-      isFetchFinish.current = actionResolvePromise(
-        ActionResolvedPromise.noData,
+      isFetchFinish.current = actionResolvePromise({
+        action: ActionResolvedPromise.noData,
         setLoading,
         setNotification,
-        isFetchFinish.current,
-        displayName!,
-        res
-      ).isFetchFinish;
+        isFetchFinish: isFetchFinish.current,
+        displayName: displayName!,
+        data: res,
+      }).isFetchFinish;
     }
   };
-
+  const dataPrefetch = useRef<IDataOne>();
+  const sizePrefetch = useRef(0);
+  const prefetch = (name: string) => () => {
+    getUser(undefined, name, stateShared.perPage, state.page + 1, token)
+      .then((data: IDataOne) => {
+        if (!!data && (data.error_404 || data.error_403)) {
+          getOrg(undefined, name, stateShared.perPage, state.page + 1, token)
+            .then((data: IDataOne) => {
+              dataPrefetch.current = data;
+              sizePrefetch.current = data.dataOne.length;
+            })
+            .catch((error) => {
+              actionResolvePromise({
+                action: ActionResolvedPromise.error,
+                setLoading,
+                setNotification,
+                isFetchFinish: isFetchFinish.current,
+                displayName: displayName!,
+                error,
+              });
+            });
+        } else {
+          dataPrefetch.current = data;
+          sizePrefetch.current = data.dataOne.length;
+        }
+      })
+      .catch((error) => {
+        actionResolvePromise({
+          action: ActionResolvedPromise.error,
+          setLoading,
+          setNotification,
+          isFetchFinish: isFetchFinish.current,
+          displayName: displayName!,
+          error,
+        });
+      });
+  };
   const fetchUserMore = (signal: any) => {
     // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
     // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
@@ -176,14 +213,28 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             actionController(res);
           })
           .catch((error) => {
-            actionResolvePromise(
-              ActionResolvedPromise.error,
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
               setLoading,
               setNotification,
-              isFetchFinish.current,
-              error
-            );
+              isFetchFinish: isFetchFinish.current,
+              error: error,
+              displayName: displayName!,
+            });
           });
+      } else if (dataPrefetch.current && dataPrefetch.current.dataOne.length > 0) {
+        let userNameTransformed: string[];
+        if (!Array.isArray(stateShared.username)) {
+          userNameTransformed = [stateShared.username];
+        } else {
+          userNameTransformed = stateShared.username;
+        }
+        userNameTransformed.forEach((user) => {
+          const temp = prefetch(user);
+          const clone = JSON.parse(JSON.stringify(dataPrefetch.current));
+          actionController(clone, temp);
+        });
+        dataPrefetch.current.dataOne = [];
       } else {
         let userNameTransformed: string[];
         if (!Array.isArray(stateShared.username)) {
@@ -199,29 +250,31 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 const callback = () =>
                   getOrg(signal.signal, name, stateShared.perPage, 1, token)
                     .then((data: IDataOne) => {
-                      actionController(data);
+                      const temp = prefetch(name);
+                      actionController(data, temp);
                     })
-                    .catch((err) => {
-                      actionResolvePromise(
-                        ActionResolvedPromise.error,
+                    .catch((error) => {
+                      actionResolvePromise({
+                        action: ActionResolvedPromise.error,
                         setLoading,
                         setNotification,
-                        isFetchFinish.current,
-                        displayName!,
-                        err
-                      );
+                        isFetchFinish: isFetchFinish.current,
+                        displayName: displayName!,
+                        error,
+                      });
                     });
-                actionController(data, callback);
+                const temp = prefetch(name);
+                actionController(data, temp, callback);
               })
               .catch((error) => {
-                actionResolvePromise(
-                  ActionResolvedPromise.error,
+                actionResolvePromise({
+                  action: ActionResolvedPromise.error,
                   setLoading,
                   setNotification,
-                  isFetchFinish.current,
-                  displayName!,
-                  error
-                );
+                  isFetchFinish: isFetchFinish.current,
+                  displayName: displayName!,
+                  error,
+                });
               })
           );
         });
@@ -262,17 +315,18 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                     setRenderSkeleton(false);
                   }, 1000);
                   setRenderSkeleton(true);
-                  actionController(data);
+                  const temp = prefetch(name);
+                  actionController(data, temp);
                 })
-                .catch((err) => {
-                  actionResolvePromise(
-                    ActionResolvedPromise.error,
+                .catch((error) => {
+                  actionResolvePromise({
+                    action: ActionResolvedPromise.error,
                     setLoading,
                     setNotification,
-                    isFetchFinish.current,
-                    displayName!,
-                    err
-                  );
+                    isFetchFinish: isFetchFinish.current,
+                    displayName: displayName!,
+                    error,
+                  });
                 });
             paginationInfo += data.paginationInfoData;
             dispatch({
@@ -288,17 +342,18 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
               setRenderSkeleton(false);
             }, 1000);
             setRenderSkeleton(true);
-            actionController(data, callback);
+            const temp = prefetch(name);
+            actionController(data, temp, callback);
           })
-          .catch((err) => {
-            actionResolvePromise(
-              ActionResolvedPromise.error,
+          .catch((error) => {
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
               setLoading,
               setNotification,
-              isFetchFinish.current,
-              displayName!,
-              err
-            );
+              isFetchFinish: isFetchFinish.current,
+              displayName: displayName!,
+              error,
+            });
           })
       );
     });
@@ -587,15 +642,15 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
               });
             }
           })
-          .catch((err) => {
-            actionResolvePromise(
-              ActionResolvedPromise.error,
+          .catch((error) => {
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
               setLoading,
               setNotification,
-              isFetchFinish.current,
-              displayName!,
-              err
-            );
+              isFetchFinish: isFetchFinish.current,
+              displayName: displayName!,
+              error,
+            });
           });
         return () => {
           abortController.abort();
@@ -655,15 +710,15 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             }, 1000);
             setRenderSkeleton(true);
           })
-          .catch((err) => {
-            actionResolvePromise(
-              ActionResolvedPromise.error,
+          .catch((error) => {
+            actionResolvePromise({
+              action: ActionResolvedPromise.error,
               setLoading,
               setNotification,
-              isFetchFinish.current,
-              displayName!,
-              err
-            );
+              isFetchFinish: isFetchFinish.current,
+              displayName: displayName!,
+              error,
+            });
           });
       }
     },

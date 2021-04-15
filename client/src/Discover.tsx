@@ -77,22 +77,22 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
       setLoading(true); // spawn loading spinner at bottom page
       paginationRef.current += stateShared.perPage;
       if (sortedDataRef.current.slice(paginationRef.current + stateShared.perPage).length === 0) {
-        isFetchFinish.current = actionResolvePromise(
-          ActionResolvedPromise.noData,
+        isFetchFinish.current = actionResolvePromise({
+          action: ActionResolvedPromise.noData,
           setLoading,
           setNotification,
-          isFetchFinish.current,
-          displayName!
-        ).isFetchFinish;
+          isFetchFinish: isFetchFinish.current,
+          displayName: displayName!,
+        }).isFetchFinish;
       } else {
-        actionResolvePromise(
-          ActionResolvedPromise.append,
+        actionResolvePromise({
+          action: ActionResolvedPromise.append,
           setLoading,
           setNotification,
-          isFetchFinish.current,
-          displayName!,
-          sortedDataRef.current.slice(paginationRef.current, paginationRef.current + stateShared.perPage)
-        );
+          isFetchFinish: isFetchFinish.current,
+          displayName: displayName!,
+          data: sortedDataRef.current.slice(paginationRef.current, paginationRef.current + stateShared.perPage),
+        });
       }
     }
   };
@@ -113,22 +113,22 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
       },
     });
     if (sortedDataRef.current.slice(stateShared.perPage).length === 0) {
-      isFetchFinish.current = actionResolvePromise(
-        ActionResolvedPromise.noData,
+      isFetchFinish.current = actionResolvePromise({
+        action: ActionResolvedPromise.noData,
         setLoading,
         setNotification,
-        isFetchFinish.current,
-        displayName!
-      ).isFetchFinish;
+        isFetchFinish: isFetchFinish.current,
+        displayName: displayName!,
+      }).isFetchFinish;
     } else {
-      actionResolvePromise(
-        ActionResolvedPromise.append,
+      actionResolvePromise({
+        action: ActionResolvedPromise.append,
         setLoading,
         setNotification,
-        isFetchFinish.current,
-        displayName!,
-        sortedDataRef.current.slice(0, paginationRef.current)
-      );
+        isFetchFinish: isFetchFinish.current,
+        displayName: displayName!,
+        data: sortedDataRef.current.slice(0, paginationRef.current),
+      });
     }
   };
 

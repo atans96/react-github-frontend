@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useInterval } from '../hooks/useBottomHit';
+import { useInterval } from '../hooks/useInterval';
 interface ProgressNavBarProps {
   nextClickedId: number;
   previousClickedId: number;

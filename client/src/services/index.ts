@@ -88,7 +88,7 @@ export const subscribeUser = async (username: string, signal: any) => {
   }
 };
 export const getUser = async (
-  signal: any,
+  signal: any | undefined,
   username: string,
   perPage: number,
   page: number,
@@ -111,7 +111,7 @@ export const getUser = async (
   }
 };
 export const getOrg = async (
-  signal: any,
+  signal: any | undefined,
   org: string,
   perPage: number,
   page: number,
