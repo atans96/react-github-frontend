@@ -51,7 +51,7 @@ const StargazersInfo = ({
       setIsLoadingFetchMore(true);
     }
   };
-  //don't close modal if the click is multivalue-cross from PureInputBody\Result.tsx or when you open drawerbar (hamburger)
+  //don't close modal if the click is multivalue-cross from PureInputBody\MultiValueSearch.tsx or when you open drawerbar (hamburger)
   useClickOutside(stargazerModalRef, () => setVisible(false), ['multivalue-cross', 'hamburger']);
   const dragRef = useRef<HTMLDivElement>(null);
   const appendAlready = useRef<boolean>(false); //prevent re-execute dragMove
