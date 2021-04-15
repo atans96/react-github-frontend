@@ -23,7 +23,7 @@ import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from './selectors/stateContextSelector';
 import idx from 'idx';
 import { Fab } from '@material-ui/core';
-import { ScrollTop } from './Layout/ScrollToTop';
+import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 
 // only re-render Card component when mergedData and idx changes
@@ -783,11 +783,11 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           </Then>
         </If>
       </div>
-      <ScrollTop>
+      <ScrollTopLayout>
         <Fab color="secondary" size="small" aria-label="scroll back to top">
           <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
         </Fab>
-      </ScrollTop>
+      </ScrollTopLayout>
       <If condition={stateShared.width > 1100}>
         <Then>{createRenderElement(BottomNavigationBar, {})}</Then>
       </If>

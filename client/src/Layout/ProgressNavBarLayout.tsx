@@ -8,12 +8,11 @@ interface ProgressNavBarProps {
   steps?: number;
   direction?: string;
 }
-export const ProgressNavBar: React.FC<ProgressNavBarProps> = ({
+export const ProgressNavBarLayout: React.FC<ProgressNavBarProps> = ({
   nextClickedId,
   previousClickedId,
   isLeft,
   initialProgress = 1,
-  duration = 4000,
   steps = 0.03,
 }: any) => {
   let size = Math.max(nextClickedId, previousClickedId) - Math.min(nextClickedId, previousClickedId);
@@ -34,7 +33,7 @@ export const ProgressNavBar: React.FC<ProgressNavBarProps> = ({
         );
       }
     },
-    duration && Math.abs(progressRef.current) < size ? interval : 0
+    Math.abs(progressRef.current) < size ? interval : 0
   );
 
   return (

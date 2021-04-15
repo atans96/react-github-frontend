@@ -11,7 +11,7 @@ const useStyles = makeStyles((theme) => ({
     right: theme.spacing(2),
   },
 }));
-export const ScrollTop: React.FC<ScrollTopProps> = React.forwardRef<React.Ref<HTMLDivElement>, ScrollTopProps>(
+export const ScrollTopLayout: React.FC<ScrollTopProps> = React.forwardRef<React.Ref<HTMLDivElement>, ScrollTopProps>(
   ({ children }, ref) => {
     const classes = useStyles();
     const trigger = useScrollTrigger({
@@ -20,7 +20,7 @@ export const ScrollTop: React.FC<ScrollTopProps> = React.forwardRef<React.Ref<HT
     });
 
     const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-        event.preventDefault()
+      event.preventDefault();
       const anchor = (event.currentTarget.ownerDocument || document).querySelector('.top');
       if (anchor) {
         anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });

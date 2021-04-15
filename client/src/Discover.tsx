@@ -18,9 +18,9 @@ import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stat
 import idx from 'idx';
 import PaginationBarDiscover from './DiscoverBody/PaginationBarDiscover';
 import { ActionResolvePromiseOutput, IStateDiscover, IStateShared, StaticState } from './typing/interface';
-import {Fab} from "@material-ui/core";
-import KeyboardArrowUpIcon from "@material-ui/icons/KeyboardArrowUp";
-import {ScrollTop} from "./Layout/ScrollToTop";
+import { Fab } from '@material-ui/core';
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -478,11 +478,11 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
           </Then>
         </If>
       </div>
-      <ScrollTop>
+      <ScrollTopLayout>
         <Fab color="secondary" size="small" aria-label="scroll back to top">
           <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
         </Fab>
-      </ScrollTop>
+      </ScrollTopLayout>
       <If condition={stateShared.width > 1100}>
         <Then>{createRenderElement(PaginationBarDiscover, {})}</Then>
       </If>

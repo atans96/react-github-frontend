@@ -8,7 +8,7 @@ interface SearchBarProps {
 }
 
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
-export const Result: React.FC<SearchBarProps> = ({ stargazer }) => {
+export const MultiValueSearch: React.FC<SearchBarProps> = ({ stargazer }) => {
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const handleClickDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -62,4 +62,4 @@ export const Result: React.FC<SearchBarProps> = ({ stargazer }) => {
     </div>
   );
 };
-Result.displayName = 'Result';
+MultiValueSearch.displayName = 'MultiValueSearch';
