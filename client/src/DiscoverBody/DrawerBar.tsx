@@ -117,15 +117,14 @@ const DrawerBar = () => {
         {SubscribeFeed()}
         {SubscribeFeedSetting()}
         {open && (
-            <DraggableCore key="drawerBar" {...dragHandlers}>
-              <div style={{ height: '100vh', width: '0px', position: 'fixed' }}>
-                <div className={'dragger'} style={{ top: '40%', left: `${drawerWidth}px` }}>
-                  <span />
-                </div>
+          <DraggableCore key="drawerBar" {...dragHandlers}>
+            <div style={{ height: '100vh', width: '0px', position: 'fixed' }}>
+              <div className={'dragger'} style={{ top: '40%', left: `${drawerWidth}px` }}>
+                <span />
               </div>
-            </DraggableCore>
+            </div>
+          </DraggableCore>
         )}
-
       </Drawer>
     </React.Fragment>
   );

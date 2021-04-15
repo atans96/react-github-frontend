@@ -4,6 +4,7 @@ const { GraphQLInt } = require("graphql");
 const { DirectiveLocation } = require("graphql");
 const { GraphQLList } = require("graphql");
 const { GraphQLScalarType } = require("graphql");
+const _ = require("lodash");
 
 class LengthDirective extends SchemaDirectiveVisitor {
   visitInputFieldDefinition(field) {
