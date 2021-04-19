@@ -189,12 +189,15 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
         console.log(err);
         throw new Error(`Something wrong at ${displayName}`);
       });
-      return () => {
-        abortController.abort();
-      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.fetchDataPath, consumers, alreadyFetch.current]);
+
+  useEffect(() => {
+    if (location.pathname !== '/profile') {
+      abortController.abort(); //cancel the fetch when the user go away from current page
+    }
+  }, [location.pathname]);
 
   return (
     <List>

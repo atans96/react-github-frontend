@@ -486,8 +486,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   useResizeHandler(windowScreenRef, handleResize);
 
   useDeepCompareEffect(() => {
+    let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-    if (stateShared.username.length > 0 && state.mergedData.length === 0 && location.pathname === '/') {
+    if (stateShared.username.length > 0 && state.mergedData.length === 0 && location.pathname === '/' && !isFinished) {
       // we want to preserve stateShared.username so that when the user navigate away from Home, then go back again, and do the scroll again,
       // we still want to retain the memory of username so that's why we use reducer of stateShared.username.
       // However, as the component unmount, stateShared.username is not "", thus causing fetchUser to fire in useEffect
@@ -495,7 +496,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       // otherwise, don't re-fetch. in this way, stateShared.username and state.mergedData are still preserved
       fetchUser(abortController);
       return () => {
-        abortController.abort();
+        isFinished = true;
       };
     }
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
@@ -506,16 +507,25 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   }, [stateShared.username, stateShared.perPage, state.mergedData]);
 
   useEffect(() => {
-    if (location.pathname === '/') {
+    let isFinished = false;
+    if (location.pathname === '/' && !isFinished) {
       if (stateShared.username.length > 0) {
         fetchUserMore(abortController);
       } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         fetchUserMore(abortController);
       }
-      return () => abortController.abort();
+      return () => {
+        isFinished = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.page]);
+
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      abortController.abort(); //cancel the fetch when the user go away from current page
+    }
+  }, [location.pathname]);
 
   useEffect(() => {
     let isFinished = false;
@@ -605,7 +615,8 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   useEffect(
     () => {
-      if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/') {
+      let isFinished = false;
+      if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/' && !isFinished) {
         // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
         const data = state.mergedData.reduce((acc, object) => {
           acc.push(
@@ -656,12 +667,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             });
           });
         return () => {
-          abortController.abort();
+          isFinished = true;
         };
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.mergedData, state.shouldFetchImages]
+    [state.shouldFetchImages, isMergedDataExist]
   );
 
   const userDataRef = useRef<string>();

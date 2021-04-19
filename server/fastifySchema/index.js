@@ -3,6 +3,7 @@ module.exports = {
     UserRepoInfo: require("./api/repo/user-repo-info"),
     OrgRepoInfo: require("./api/repo/org-repo-info"),
     ContributorsRepoInfo: require("./api/repo/contributors-repo-info"),
+    ImagesReadmeRepoInfo: require("./api/repo/images-repo-info"),
     ReadmeRepoInfo: require("./api/repo/readme-repo-info"),
   },
   graphql: {

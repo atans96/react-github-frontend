@@ -127,7 +127,6 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
         if (val) {

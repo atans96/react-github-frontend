@@ -95,8 +95,14 @@ const markdownImagesExtractor = (result, object, renderImages) => {
     image1
   );
   let filteredImage = [];
+
   for (let i = 0; i < totalImages.length; i++) {
     let img, imgResult;
+    if (/blob/.test(totalImages[i])) {
+      totalImages[i] = totalImages[i]
+        .replace("blob/", "")
+        .replace("https://github.com", "https://raw.githubusercontent.com");
+    }
     try {
       if (
         totalImages[i].match(/\(.*?\)/) !== null &&
