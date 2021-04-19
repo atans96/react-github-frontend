@@ -324,6 +324,8 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
     isFetchFinish.current = false;
     return stateDiscover.mergedDataDiscover; // return this if filteredTopics.length === 0
   };
+  //TODO: only show image if size is....https://github.com/ShogunPanda/fastimage at backend
+
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position

@@ -33,7 +33,7 @@ const ManageProfile = () => {
     });
   }
   useResizeHandler(manageProfileRef, handleResize);
-
+  //TODO: highlight the search word in markdown using: https://github.com/jonschlinkert/remarkable (highlight.js)
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <StateManageProfileProvider>

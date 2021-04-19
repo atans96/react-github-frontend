@@ -92,16 +92,13 @@ export const getUser = async (
   username: string,
   perPage: number,
   page: number,
-  token: string | null | undefined,
-  noImageQuery = false
+  token: string | null | undefined
 ) => {
   if (username !== '') {
     const toke = await rotateTokens();
     const validToken = toke.length === 0 ? token : toke;
     const response = await fetch(
-      `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${
-        token === null ? '' : validToken
-      }&noImageQuery=${noImageQuery}`,
+      `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${token === null ? '' : validToken}`,
       {
         method: 'GET',
         signal,
@@ -136,8 +133,12 @@ export const getValidGQLProperties = async () => {
   });
   return await response.json();
 };
-export const markdownParsing = async (full_name: string, branch: string) => {
-  const response = await fetch(`/api/markdown?full_name=${full_name}&branch=${branch}`);
+export const markdownParsing = async (full_name: string, branch: string, token: string | null | undefined) => {
+  const toke = await rotateTokens();
+  const validToken = toke.length === 0 ? token : toke;
+  const response = await fetch(
+    `/api/markdown?full_name=${full_name}&branch=${branch}&token=${token === null ? '' : validToken}`
+  );
   return await response.json();
 };
 export const getRateLimitInfo = async (token: string | null | undefined) => {

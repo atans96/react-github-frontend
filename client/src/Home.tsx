@@ -123,6 +123,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           return [arr[0], ja[1] + arr[1]];
         });
       dispatch({
+        type: 'SHOULD_IMAGES_DATA_ADDED',
+        payload: {
+          shouldFetchImages: true,
+        },
+      });
+      dispatch({
         type: 'REPO_STAT',
         payload: {
           repoStat: repoStat,
@@ -747,6 +753,15 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: disable inspect element when in production
 
+  //TODO: show the history of the user + statistic of what languages they browse
+
+  //TODO: test brutal requests the reslience of handling requests
+
+  //TODO: disable searchbar while still loading
+
+  //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
+
+  //TODO: show all function in code base and where it uses the function. need to differentiate between returning jsx and not returning jsx
   return (
     <React.Fragment>
       <Helmet>

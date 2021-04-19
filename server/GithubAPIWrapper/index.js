@@ -2,7 +2,7 @@ const Gist = require("./Gist");
 const Github = require("./GitHub");
 const Issue = require("./Issue");
 const Markdown = require("./Markdown");
-const doQuery = require("./markdownParser");
+const MarkdownParser = require("./markdownParser");
 const Organization = require("./Organization");
 const Project = require("./Project");
 const RateLimit = require("./RateLimit");
@@ -16,7 +16,7 @@ module.exports = {
   Github,
   Issue,
   Markdown,
-  doQuery,
+  MarkdownParser,
   Organization,
   Project,
   RateLimit,

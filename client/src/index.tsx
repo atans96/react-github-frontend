@@ -170,25 +170,6 @@ const App = () => {
                 ),
               data.dataOne
             );
-            const tempImages = fastFilter(
-              (obj: MergedDataProps) => !alreadySeenCardsRef?.current?.includes(obj.id),
-              data.renderImages
-            );
-            if (tempImages.length === 0) {
-              dispatch({
-                type: 'IMAGES_DATA_ADDED',
-                payload: {
-                  images: [],
-                },
-              });
-            } else {
-              dispatch({
-                type: 'IMAGES_DATA_ADDED',
-                payload: {
-                  images: tempImages,
-                },
-              });
-            }
             dispatch({
               type: 'MERGED_DATA_APPEND',
               payload: {
@@ -200,21 +181,6 @@ const App = () => {
                 type: 'ADVANCE_PAGE',
               });
             } else {
-              if (data.renderImages.length === 0) {
-                dispatch({
-                  type: 'IMAGES_DATA_ADDED',
-                  payload: {
-                    images: [],
-                  },
-                });
-              } else {
-                dispatch({
-                  type: 'IMAGES_DATA_ADDED',
-                  payload: {
-                    images: data.renderImages,
-                  },
-                });
-              }
               const temp = data.dataOne || data;
               temp.map((obj: MergedDataProps) => {
                 obj['isQueue'] = false;

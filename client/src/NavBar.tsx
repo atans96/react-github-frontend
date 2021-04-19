@@ -57,7 +57,9 @@ const NavBar = React.memo(() => {
 
   const history = useHistory();
   useEffect(() => {
-    setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
+    if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active[1] !== '' ? Active[1] : 'home')) {
+      setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 

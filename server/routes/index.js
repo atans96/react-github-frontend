@@ -154,9 +154,6 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const urlReadMe = `${opts.config.getBestOfJS()}?fullName=${
-        req.query.full_name
-      }&branch=${req.query.branch}`;
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
@@ -165,9 +162,7 @@ async function routes(fastify, opts, done) {
           res.send(val);
         } else if (!err && !val) {
           readmeRepoInfo(req, res, fastify, {
-            urlReadMe,
             url,
-            axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
         } else {

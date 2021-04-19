@@ -1,7 +1,9 @@
 const axios = require("axios");
 const urlExist = require("url-exist");
 const util = require("../api/util");
-var base64 = require("js-base64").Base64;
+const { Remarkable } = require("remarkable");
+const hljs = require("highlight.js");
+const base64 = require("js-base64").Base64;
 
 axios.defaults.withCredentials = true;
 function processHtml({ html, repo, branch }) {
@@ -49,13 +51,12 @@ function processHtml({ html, repo, branch }) {
   // <a id="user-content-react-toolbox" class="anchor" href="#react-toolbox" aria-hidden="true">
   //   <span class="octicon octicon-link"></span>
   // </a>
-  readme = readme.replace(
+  return readme.replace(
     /<a id="user-content(.*)" class="anchor" (.*?)>(.*?)<\/a>/gi,
     function () {
       return "";
     }
   );
-  return readme;
 }
 
 // Replace relative URL by absolute URL
@@ -76,10 +77,7 @@ function getImagePath({ repo, url, branch }) {
   // example: images in "You-Dont-Know-JS" repo.
   return `${root}/${branch}/${path}${queryString}`;
 }
-const markdownImagesExtractor = (result, object, images) => {
-  // if (object.value.full_name.includes("elementor")) {
-  //   console.log("");
-  // }
+const markdownImagesExtractor = (result, object, renderImages) => {
   const imageWithHTMLTag = result.match(/<img[^>]+src="([^">]+)"/g);
   const imageWithHTMLTag1 = result.match(/<image[^>]+src="([^">]+)"/g);
   const image = result.match(
@@ -127,7 +125,7 @@ const markdownImagesExtractor = (result, object, images) => {
     }
   }
   if (filteredImage.length > 0) {
-    images.push(
+    renderImages.push(
       Object.assign(
         {},
         {
@@ -137,7 +135,7 @@ const markdownImagesExtractor = (result, object, images) => {
       )
     );
   }
-  return images;
+  return renderImages;
 };
 // function getValidReadmeUrl(object) {
 //   return new Promise(function (resolve, reject) {
@@ -168,89 +166,155 @@ const markdownImagesExtractor = (result, object, images) => {
 //     })();
 //   });
 // }
-const doQuery = async (data, promises, images, token, ...args) => {
-  for (const [index, object] of data.entries()) {
-    try {
-      promises.push(
-        new Promise((resolve, reject) => {
-          const url = `https://api.github.com/repos/${object.value.full_name}/readme`;
-          axios
-            .get(url, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/vnd.github.VERSION.html",
-              },
-            })
-            .then((result) => {
-              let contents = result.data || result.content || undefined;
-              if (contents === undefined) {
-                throw new Error(`No readme data for ${object.value.full_name}`);
-              }
-              if (result.content) {
-                contents = base64.decode(contents);
-              }
-              const readme = processHtml({
-                html: contents,
-                repo: object.value.full_name,
-                branch: object.value.branch,
-              });
-              const extractedImages = markdownImagesExtractor(
-                readme,
-                object,
-                images
-              );
-              resolve(extractedImages);
-            })
-            .catch((err) => {
-              if (err.message.includes("API")) {
-                reject(err.message);
-              } else if (err.response.status === 404) {
-                resolve([]);
-                console.log(`ERROR ${url}, message: ${err.message}`);
-              } else {
-                util.sendErrorMessageToClient(err, args.res);
-              }
-            });
+function getRemarkableParser() {
+  return new Remarkable({
+    breaks: true,
+    html: true,
+    highlight: function (str, lang) {
+      if (lang && hljs.getLanguage(lang)) {
+        try {
+          return hljs.highlight(lang, str).value;
+        } catch (err) {}
+      }
+
+      try {
+        return hljs.highlightAuto(str).value;
+      } catch (err) {}
+
+      return "";
+    },
+  });
+}
+const mdParser = getRemarkableParser();
+function firstTrue(promises) {
+  const newPromises = promises.map(
+    (p) =>
+      new Promise((resolve, reject) => p.then((v) => v && resolve(v), reject))
+  );
+  newPromises.push(Promise.all(promises).then(() => "")); //handle the case when all promises return false
+  return Promise.race(newPromises);
+}
+class MarkdownParserClass {
+  async doQueryWithoutImages(data, token, ...args) {
+    return new Promise((resolve, reject) => {
+      const url = `https://api.github.com/repos/${data.full_name}/readme`;
+      axios
+        .get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.VERSION.html",
+          },
         })
-      );
-    } catch (err) {
-      throw new Error(err);
-    }
+        .then((result) => {
+          let contents = result.data || result.content || undefined;
+          if (contents === undefined) {
+            throw new Error(`No readme data for ${data.full_name}`);
+          }
+          if (result.content) {
+            contents = base64.decode(contents);
+          }
+          contents = mdParser.render(contents);
+          resolve(contents);
+        })
+        .catch((err) => {
+          if (err.message.includes("API")) {
+            reject(err.message);
+          } else if (err.response.status === 404) {
+            resolve([]);
+            console.log(`ERROR ${url}, message: ${err.message}`);
+          } else {
+            util.sendErrorMessageToClient(err, args.res);
+          }
+        });
+    });
   }
-  return promises;
-};
-// const doQuery = async (data, promises, images) => {
-//   for (const [index, object] of data.entries()) {
-//     try {
-//       const url = await getValidReadmeUrl(object);
-//       if (url) {
-//         promises.push(
-//             new Promise((resolve, reject) => {
-//               axios
-//                   .get(url)
-//                   .then((result) => {
-//                     const readme = processHtml({
-//                       html: result.data,
-//                       repo: object.value.full_name,
-//                       branch: object.value.branch,
-//                     });
-//                     const extractedImages = markdownImagesExtractor(
-//                         readme,
-//                         object,
-//                         images
-//                     );
-//                     resolve(extractedImages);
-//                   })
-//                   .catch((err) => {
-//                     console.log(`ERROR ${url}, message: ${err.message}`);
-//                   });
-//             })
-//         );
-//       }
-//     } catch (err) {
-//       console.log(err);
-//     }
-//   }
-//   return promises;
-// };
-module.exports = doQuery;
+  async doQuery(data, promises, renderImages, token, ...args) {
+    for (const [, object] of data.entries()) {
+      const readme = ["README", "Readme", "readme", "ReadMe"];
+      const fileExtension = ["md", "rst", "adoc"];
+      let listReadme = readme.flatMap((d) =>
+        fileExtension.map(
+          (v) =>
+            `https://raw.githubusercontent.com/${object.value.full_name}/${object.value.branch}/` +
+            d +
+            "." +
+            v
+        )
+      );
+      listReadme = listReadme.concat(
+        readme.map(
+          (v) =>
+            `https://raw.githubusercontent.com/${object.value.full_name}/${object.value.branch}/${v}`
+        )
+      );
+      const promisesUrlExist = [];
+      for (const url of listReadme) {
+        promisesUrlExist.push(
+          new Promise((resolve, reject) => {
+            (async () => {
+              const URL = url;
+              const exists = await urlExist(URL);
+              if (exists) {
+                resolve(URL);
+              }
+            })();
+          })
+        );
+      }
+      try {
+        const validUrl = await firstTrue(promisesUrlExist);
+        if (validUrl.length > 0) {
+          promises.push(
+            new Promise((resolve, reject) => {
+              axios
+                .get(validUrl, {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/vnd.github.VERSION.html",
+                  },
+                })
+                .then((result) => {
+                  let contents = result.data || result.content || undefined;
+                  if (contents === undefined) {
+                    throw new Error(
+                      `No readme data for ${object.value.full_name}`
+                    );
+                  }
+                  if (result.content) {
+                    contents = base64.decode(contents);
+                  }
+                  contents = mdParser.render(contents);
+                  const readme = processHtml({
+                    html: contents,
+                    repo: object.value.full_name,
+                    branch: object.value.branch,
+                  });
+                  const extractedImages = markdownImagesExtractor(
+                    readme,
+                    object,
+                    renderImages
+                  );
+                  resolve(extractedImages);
+                })
+                .catch((err) => {
+                  if (err.message.includes("API")) {
+                    reject(err.message);
+                  } else if (err.response.status === 404) {
+                    resolve([]);
+                    console.log(`ERROR ${validUrl}, message: ${err.message}`);
+                  } else {
+                    util.sendErrorMessageToClient(err, args.res);
+                  }
+                });
+            })
+          );
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    return promises;
+  }
+}
+const MarkdownParser = new MarkdownParserClass();
+module.exports = MarkdownParser;

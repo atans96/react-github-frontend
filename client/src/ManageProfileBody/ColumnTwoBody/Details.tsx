@@ -6,6 +6,8 @@ import { markdownParsing } from '../../services';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { useLocation } from 'react-router-dom';
+import { useApolloFactory } from '../../hooks/useApolloFactory';
+import idx from 'idx';
 
 interface DetailsProps {
   branch: string;
@@ -15,6 +17,10 @@ interface DetailsProps {
 }
 
 const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) => {
+  const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
+  const { userData } = useApolloFactory(displayName!).query.getUserData();
+  const token = idx(userData, (_) => _.getUserData.token) || '';
+
   const _isMounted = useRef(true);
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
@@ -24,7 +30,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
     () => {
       if (location.pathname === '/profile' || location.pathname === '/detail') {
         _isMounted.current = true;
-        markdownParsing(fullName, branch).then((data) => {
+        markdownParsing(fullName, branch, token).then((data) => {
           if (_isMounted.current) {
             setReadme(data.readme);
           }
@@ -48,7 +54,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
       }
     >
       <div className={'readme background-readme'} style={readme === '' ? { width: '100vw' } : {}}>
-        <div className={'header'}>
+        <div className={'header-details'}>
           <GoBook className="icon" size={20} />
           README
         </div>
