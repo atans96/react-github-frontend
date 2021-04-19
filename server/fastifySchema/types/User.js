@@ -13,7 +13,6 @@ const UserRepoInfo = S.object()
       .required()
       .description("Query per_page for github API pagination")
   )
-  .prop("noImageQuery", S.boolean().required())
   .prop("username", S.string().required());
 
 const OrgRepoInfo = S.object()
@@ -48,6 +47,7 @@ const ReadmeRepoInfo = S.object()
   .title("Readme Data")
   .description("Attributes to readme")
   .prop("full_name", S.string().minLength(1).maxLength(1000).required())
+  .prop("token", S.string().minLength(1).maxLength(1000).required())
   .prop("branch", S.string().required());
 
 const ContributorsRepoInfo = S.object()

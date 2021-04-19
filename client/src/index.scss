@@ -789,7 +789,8 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
 
 .background-readme {
   margin-bottom: 2rem;
-  padding: 0;
+  margin-top: 10rem;
+  padding: 1rem;
   background-color: #fff;
   vertical-align: top;
   border: 1px solid var(--boxBorderColor);
@@ -809,7 +810,7 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
     background-color: #fff7eb;
     color: #000;
   }
-  .header {
+  .header-details {
     padding: 1rem;
     font-size: 1rem;
     border-bottom: 1px solid var(--boxBorderColor);

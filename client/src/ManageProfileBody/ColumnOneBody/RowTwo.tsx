@@ -90,8 +90,7 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
           1,
           location?.state?.data?.userData && location?.state?.data?.userData?.getUserData
             ? location?.state?.data?.userData?.getUserData.token
-            : '',
-          true
+            : ''
         ).then((data) => {
           if (data && data.error_403) {
             isApiExceeded = true;

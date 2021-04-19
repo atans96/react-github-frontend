@@ -12,6 +12,7 @@ import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
 import idx from 'idx';
+import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface StateProps {
   data: {
@@ -27,6 +28,10 @@ interface StateProps {
   path: string;
 }
 const Details: React.FC = () => {
+  const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
+  const { userData } = useApolloFactory(displayName!).query.getUserData();
+  const token = idx(userData, (_) => _.getUserData.token) || '';
+
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
   const [data, setData] = useState<Nullable<StateProps>>(null);
@@ -75,7 +80,7 @@ const Details: React.FC = () => {
     () => {
       let isFinished = false;
       if (!isFinished && /detail/.test(location.pathname) && !!data) {
-        markdownParsing(data.data.full_name, data.data.default_branch).then((dataStarRanking) => {
+        markdownParsing(data.data.full_name, data.data.default_branch, token).then((dataStarRanking) => {
           if (_isMounted.current) {
             setReadme(dataStarRanking.readme);
           }
@@ -110,7 +115,7 @@ const Details: React.FC = () => {
             </Then>
           </If>
           <div className={'readme background-readme'}>
-            <div className={'header'}>
+            <div className={'header-details'}>
               <GoBook className="icon" size={20} />
               README
             </div>

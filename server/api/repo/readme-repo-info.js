@@ -2,6 +2,7 @@ const axios = require("axios");
 const util = require("../util");
 const fastJson = require("fast-json-stringify");
 axios.defaults.withCredentials = true;
+
 module.exports = async (req, res, ctx, ...args) => {
   const stringify = fastJson({
     title: "Readme Repo Info Schema",
@@ -12,20 +13,20 @@ module.exports = async (req, res, ctx, ...args) => {
       },
     },
   });
-  args[0].axios
-    .get(args[0].urlReadMe)
-    .then((response) => {
-      ctx.redis.setex(
-        args[0].url,
-        300 * 1000,
-        stringify({
-          readme: response.data,
-        })
-      );
-      res.send({ readme: response.data });
+  const token = util.convertJWTToken(req.query.token);
+  const readme = await args[0].github.MarkdownParser.doQueryWithoutImages(
+    {
+      full_name: req.query.full_name,
+      branch: req.query.branch,
+    },
+    token
+  );
+  ctx.redis.setex(
+    args[0].url,
+    300 * 1000,
+    stringify({
+      readme,
     })
-    .catch((errors) => {
-      util.sendErrorMessageToClient(errors, res);
-      ctx.log.error(errors);
-    });
+  );
+  res.send({ readme });
 };

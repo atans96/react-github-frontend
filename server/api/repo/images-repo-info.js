@@ -6,7 +6,7 @@ module.exports = async (req, res, ctx, ...args) => {
   let promises = [];
   let renderImages = [];
   const token = util.convertJWTToken(req.body.token);
-  promises = await args[0].github.doQuery(
+  promises = await args[0].github.MarkdownParser.doQuery(
     req.body.data,
     promises,
     renderImages,
