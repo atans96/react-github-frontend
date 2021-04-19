@@ -14,8 +14,7 @@ import ImagesModalLayout from '../../Layout/ImagesModalLayout';
 import { ImageComponentLayout } from '../../Layout/ImageComponentLayout';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState } from '../../selectors/stateContextSelector';
-import {createRenderElement} from "../../Layout/MasonryLayout";
-import TopicsCard from "./TopicsCard";
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface ImagesCardProps {
   index: number;
@@ -102,9 +101,7 @@ const ImagesCard = React.memo<ImagesCardProps>(
           }
         >
           <Then>
-            <div style={{ textAlign: 'center' }}>
-              Loading Images...
-            </div>
+            <div style={{ textAlign: 'center' }}>Loading Images...</div>
           </Then>
         </If>
         <If condition={Array.isArray(state.imagesData) && state.imagesData.length > 0}>
@@ -112,18 +109,24 @@ const ImagesCard = React.memo<ImagesCardProps>(
             <div style={{ textAlign: 'center' }}>
               {renderImages.length > 0 &&
                 renderImages.slice(0, 2).map((image: string) => {
-                  return (
-                      createRenderElement(ImageComponentLayout, {handleClick: handleClick, visible: visible, key: image, urlLink: image})
-                  );
+                  return createRenderElement(ImageComponentLayout, {
+                    handleClick: handleClick,
+                    visible: visible,
+                    key: image,
+                    urlLink: image,
+                  });
                 })}
             </div>
             <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
               {renderChildren &&
                 renderImages.length > 0 &&
                 renderImages.slice(2).map((image: string) => {
-                  return (
-                      createRenderElement(ImageComponentLayout, {handleClick: handleClick, visible: visible, key: image, urlLink: image})
-                  );
+                  return createRenderElement(ImageComponentLayout, {
+                    handleClick: handleClick,
+                    visible: visible,
+                    key: image,
+                    urlLink: image,
+                  });
                 })}
             </div>
             <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
@@ -135,11 +138,11 @@ const ImagesCard = React.memo<ImagesCardProps>(
             </ListItem>
           </Then>
         </If>
-          {createRenderElement(ImagesModalLayout, {
-              clicked: clicked,
-              renderImages: renderImages,
-              handleClick: handleClick
-          })}
+        {createRenderElement(ImagesModalLayout, {
+          clicked: clicked,
+          renderImages: renderImages,
+          handleClick: handleClick,
+        })}
       </React.Fragment>
     );
   },
