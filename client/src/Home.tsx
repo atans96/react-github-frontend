@@ -770,6 +770,8 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: disable searchbar while still loading
 
+  //TODO: icon of website when there's URL in the description
+
   //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
 
   //TODO: show all function in code base and where it uses the function. need to differentiate between returning jsx and not returning jsx

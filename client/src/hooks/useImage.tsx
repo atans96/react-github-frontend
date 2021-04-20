@@ -17,7 +17,14 @@ const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<
     const queueNext = (src: Nullable<string>) => {
       return promiseFactory(src).then((data: any) => {
         done = true;
-        resolve({ src, width: data.width, height: data.height });
+        resolve({
+          src: {
+            original: data.src.original.length > 0 ? `data:image/webp;base64, ${data.src.original}` : '',
+            blurHash: data.src.blurHash,
+          },
+          width: data.width,
+          height: data.height,
+        });
       });
     };
     arr
@@ -36,7 +43,7 @@ export default function useImage({
   imgPromise = imagePromiseFactory({ decode: true }),
   useSuspense = true,
 }: useImageProps): {
-  src: string | undefined;
+  src: { original: string; blurHash: string } | undefined;
   isLoading: boolean;
   error: any;
   width: number | undefined;

@@ -81,6 +81,10 @@ const UserName = S.object()
   .title("Username")
   .prop("username", S.string().minLength(1).required());
 
+const ConvertToWebp = S.object()
+  .title("Converting image to webp")
+  .prop("imgUrl", S.string().minLength(1).required());
+
 const JWTVerify = S.object()
   .title("JWT Verification")
   .prop("username", S.string().minLength(1).required())
@@ -97,6 +101,7 @@ module.exports = {
   UserRepoInfo,
   OrgRepoInfo,
   ContributorsRepoInfo,
+  ConvertToWebp,
   ObjectData,
   JWTVerify,
   UsersSearchInfo,

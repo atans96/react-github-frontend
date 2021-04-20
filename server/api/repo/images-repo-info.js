@@ -2,6 +2,7 @@ const axios = require("axios");
 const util = require("../util");
 const fastJson = require("fast-json-stringify");
 axios.defaults.withCredentials = true;
+
 module.exports = async (req, res, ctx, ...args) => {
   let promises = [];
   let renderImages = [];
@@ -22,6 +23,7 @@ module.exports = async (req, res, ctx, ...args) => {
       },
     },
   });
+
   Promise.allSettled(promises)
     .then((result) => {
       let isError = false;
