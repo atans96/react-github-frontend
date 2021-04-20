@@ -2,13 +2,13 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { BrowserRouter as Router, Redirect, useHistory, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Redirect, useHistory, useLocation, Route } from 'react-router-dom';
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
-import { fastFilter, readEnvironmentVariable } from './util';
+import { allowedRoutes, fastFilter, readEnvironmentVariable } from './util';
 import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
 import { getTokenGQL, getValidGQLProperties } from './services';
 import {
@@ -40,6 +40,7 @@ import eye from './new_16-2.gif';
 import { Then } from './util/react-if/Then';
 import loadable from '@loadable/component';
 import { createRenderElement } from './Layout/MasonryLayout';
+import NotFound from './NotFound';
 // const ManageProfile = React.lazy(() => import('./ManageProfile'));
 const Discover = loadable(() => import('./Discover'));
 const ManageProfile = loadable(() => import('./ManageProfile'));
@@ -317,11 +318,14 @@ const App = () => {
               }
             }}
           />
+          <KeepMountedLayout
+            mountedCondition={!allowedRoutes.includes(location.pathname)}
+            render={() => {
+              return <NotFound />;
+            }}
+          />
         </Then>
       </If>
-      {/*<Switch>*/}
-      {/*  <Route path={'/detail/:id'} exact component={Details} />*/}
-      {/*</Switch>*/}
     </div>
   );
 };

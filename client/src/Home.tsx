@@ -523,9 +523,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   useEffect(() => {
     if (location.pathname !== '/') {
-      abortController.abort(); //cancel the fetch when the user go away from current page
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     }
-  }, [location.pathname]);
+  }, [location.pathname, stateShared.username]);
 
   useEffect(() => {
     let isFinished = false;
