@@ -27,8 +27,8 @@ export default class BlurHashLayout extends React.PureComponent<Props> {
   static defaultProps = {
     height: 128,
     width: 128,
-    resolutionX: 64,
-    resolutionY: 64,
+    resolutionX: 32,
+    resolutionY: 32,
   };
 
   render() {
