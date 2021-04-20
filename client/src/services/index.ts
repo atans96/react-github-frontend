@@ -203,6 +203,12 @@ export const requestGithubGraphQLLogin = async (token: string) => {
   });
   return await response.json();
 };
+export const convertToWebP = async (imgUrl: string) => {
+  const response = await fetch(`/api/convert_to_webp?imgUrl=${imgUrl}`, {
+    method: 'GET',
+  });
+  return await response.json();
+};
 export const getRepoImages = async (signal: any, data: any[], topic: string, page: number, token: string) => {
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
