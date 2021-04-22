@@ -770,11 +770,22 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: disable searchbar while still loading
 
-  //TODO: icon of website when there's URL in the description
+  //TODO: icon of website when there's URL in the description scrapped using https://github.com/danielmiessler/GitHubRating/blob/master/GitHubRating.sh (curl)
 
   //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
 
   //TODO: show all function in code base and where it uses the function. need to differentiate between returning jsx and not returning jsx
+
+  //TODO: https://github.com/developit/redaxios https://github.com/asilvas/node-image-steam,
+  // https://github.com/robb0wen/tornis, https://github.com/postlight/mercury-parser/blob/master/src/extractors/custom/github.com/index.js,
+  // https://swc.rs/docs/usage-swc-loader
+
+  //TODO: after Details is rendered, show related repo from author and contributors sorted based on stargazers.
+
+  //TODO: if not on the viewport (already seen), render fake card of no contents but the width and height must be similar to what's previously render/seen so that it won't affect
+  // the layout at the bottom
+
+  //TODO: if the user is new, guide them using https://shepherdjs.dev/
   return (
     <React.Fragment>
       <Helmet>
