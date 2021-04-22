@@ -12,8 +12,7 @@ import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useViewportSpy } from '../hooks/use-viewport-spy';
-import {createRenderElement} from "../Layout/MasonryLayout";
-import BottomNavigationBar from "./BottomNavigationBar";
+import { createRenderElement } from '../Layout/MasonryLayout';
 
 export interface Card {
   index: number;
@@ -116,15 +115,15 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
       })}
       ref={isVisibleRef}
     >
-      {createRenderElement(UserCard, {data: userCardMemoizedData()})}
+      {createRenderElement(UserCard, { data: userCardMemoizedData() })}
       <h3 style={{ textAlign: 'center' }}>
         <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
       </h3>
-      {createRenderElement(ImagesCard, {index: index, visible: isVisible || false})}
+      {createRenderElement(ImagesCard, { index: index, visible: isVisible || false })}
       <div className="trunctuatedTexts">
         <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
       </div>
-      {createRenderElement(Stargazers, {data: stargazersMemoizedGithubData()})}
+      {createRenderElement(Stargazers, { data: stargazersMemoizedGithubData() })}
       <div className={'language-github-color'}>
         <ul className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}>
           <li className={'language-list'}>
@@ -133,9 +132,7 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
         </ul>
       </div>
       <If condition={!!githubData.topics}>
-        <Then>
-          {createRenderElement(TopicsCard, {data: topicsCardMemoizedData(), getRootProps: getRootProps})}
-        </Then>
+        <Then>{createRenderElement(TopicsCard, { data: topicsCardMemoizedData(), getRootProps: getRootProps })}</Then>
       </If>
       <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
         <a href={githubData.html_url}>{githubData.html_url}</a>
