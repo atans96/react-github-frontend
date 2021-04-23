@@ -1,5 +1,4 @@
 const sharp = require("sharp");
-const { encode } = require("blurhash");
 module.exports = async (req, res, ctx, ...args) => {
   try {
     const imageResponse = await args[0].axios({
@@ -11,19 +10,8 @@ module.exports = async (req, res, ctx, ...args) => {
     const webp = await sharp(data)
       .webp({ quality: 50, lossless: true })
       .toBuffer();
-    const { data: pixels, info: metadata } = await sharp(data)
-      .raw()
-      .ensureAlpha()
-      .toBuffer({ resolveWithObject: true });
-    const blurHash = encode(
-      new Uint8ClampedArray(pixels),
-      metadata.width,
-      metadata.height,
-      4,
-      4
-    );
-    res.send({ original: webp.toString("base64"), blurHash });
+    res.send({ original: webp.toString("base64") });
   } catch (e) {
-    res.send({ original: "", blurHash: "" });
+    res.send({ original: "" });
   }
 };
