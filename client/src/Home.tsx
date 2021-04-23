@@ -25,6 +25,7 @@ import idx from 'idx';
 import { Fab } from '@material-ui/core';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import { Masonry } from './util/masonic/masonry';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -59,6 +60,44 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   }
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
+
+interface MasonryLayoutMemo {
+  children: any;
+  data: MergedDataProps[];
+  state: IState;
+  stateShared: IStateShared;
+}
+interface MasonryMemo extends MasonryLayoutMemo {
+  getRootProps: any;
+}
+const MasonryMemo = React.memo<Omit<MasonryMemo, 'children'>>(
+  ({ data, getRootProps }) => {
+    return (
+      <div className={'masonic'}>
+        <Masonry
+          items={data}
+          args={{ getRootProps }}
+          columnGutter={10}
+          columnWidth={370}
+          overscanBy={50}
+          render={Card}
+        />
+      </div>
+    );
+  },
+  (prevProps: any, nextProps: any) => {
+    return (
+      isEqualObjects(prevProps.data.length, nextProps.data.length) &&
+      isEqualObjects(prevProps.stateShared.tokenGQL, nextProps.stateShared.tokenGQL) &&
+      isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn) &&
+      isEqualObjects(prevProps.state.imagesData, nextProps.state.imagesData) &&
+      isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
+      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width)
+    ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
+    // it needs to get re-render to get new data.
+  }
+);
+MasonryMemo.displayName = 'MasonryMemo';
 
 const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) => {
   const [state, dispatch] = useTrackedState();
@@ -523,9 +562,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   useEffect(() => {
     if (location.pathname !== '/') {
-      abortController.abort(); //cancel the fetch when the user go away from current page
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     }
-  }, [location.pathname]);
+  }, [location.pathname, stateShared.username]);
 
   useEffect(() => {
     let isFinished = false;
@@ -770,9 +809,22 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: disable searchbar while still loading
 
+  //TODO: icon of website when there's URL in the description scrapped using https://github.com/danielmiessler/GitHubRating/blob/master/GitHubRating.sh (curl)
+
   //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
 
   //TODO: show all function in code base and where it uses the function. need to differentiate between returning jsx and not returning jsx
+
+  //TODO: https://github.com/developit/redaxios https://github.com/asilvas/node-image-steam,
+  // https://github.com/robb0wen/tornis, https://github.com/postlight/mercury-parser/blob/master/src/extractors/custom/github.com/index.js,
+  // https://swc.rs/docs/usage-swc-loader
+
+  //TODO: after Details is rendered, show related repo from author and contributors sorted based on stargazers.
+
+  //TODO: if not on the viewport (already seen), render fake card of no contents but the width and height must be similar to what's previously render/seen so that it won't affect
+  // the layout at the bottom
+
+  //TODO: if the user is new, guide them using https://shepherdjs.dev/
   return (
     <React.Fragment>
       <Helmet>
@@ -807,19 +859,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         </If>
         <If condition={isMergedDataExist && !shouldRenderSkeleton}>
           <Then>
-            <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
-              {(columnCount: number) => {
-                return Object.keys(whichToUse()).map((key, idx) =>
-                  createRenderElement(Card, {
-                    key: whichToUse()[idx].id,
-                    columnCount,
-                    getRootProps,
-                    index: whichToUse()[idx].id,
-                    githubData: whichToUse()[idx],
-                  })
-                );
-              }}
-            </MasonryLayoutMemo>
+            <MasonryMemo data={whichToUse()} getRootProps={getRootProps} state={state} stateShared={stateShared} />
           </Then>
         </If>
         <If condition={shouldRenderSkeleton}>

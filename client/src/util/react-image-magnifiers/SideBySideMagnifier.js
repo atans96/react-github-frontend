@@ -137,7 +137,6 @@ SideBySideMagnifier.defaultProps = {
   onLargeImageLoad: utils.noop,
   fillAvailableSpace: true,
   fillAlignTop: false,
-  shouldRenderBlurHashCanvas: true,
   fillGapLeft: 0,
   fillGapRight: 0,
   fillGapTop: 0,

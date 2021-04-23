@@ -29,6 +29,7 @@
     "fastify-csrf": "^3.0.1",
     "fastify-helmet": "^5.2.0",
     "fastify-plugin": "^3.0.0",
+    "fastify-rate-limit": "^5.5.0",
     "fastify-redis": "^4.1.0",
     "fluent-schema": "^1.1.0",
     "form-data": "^3.0.0",
@@ -36,6 +37,7 @@
     "graphql-tools": "^7.0.4",
     "highlight.js": "^10.7.2",
     "http-errors": "^1.8.0",
+    "ioredis": "^4.26.0",
     "js-base64": "^3.6.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.20",
@@ -46,6 +48,7 @@
     "remarkable": "^2.0.1",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
+    "sharp": "^0.28.1",
     "url-exist": "^2.0.2",
     "utf8": "^3.0.0"
   },
