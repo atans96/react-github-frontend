@@ -20,7 +20,6 @@ const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<
         resolve({
           src: {
             original: data.src.original.length > 0 ? `data:image/webp;base64, ${data.src.original}` : '',
-            blurHash: data.src.blurHash,
           },
           width: data.width,
           height: data.height,
@@ -43,7 +42,7 @@ export default function useImage({
   imgPromise = imagePromiseFactory({ decode: true }),
   useSuspense = true,
 }: useImageProps): {
-  src: { original: string; blurHash: string } | undefined;
+  src: { original: string } | undefined;
   isLoading: boolean;
   error: any;
   width: number | undefined;

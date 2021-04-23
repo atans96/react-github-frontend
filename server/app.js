@@ -7,6 +7,8 @@ const { csrf } = require("./decorators/csrf");
 const { apolloServerPlugin } = require("./decorators/apollo-server");
 const helmet = require("fastify-helmet");
 const rateLimit = require("fastify-rate-limit");
+const Redis = require("ioredis");
+
 // Create custom ajv schema declaration to remove _all_ additional fields by default
 const AJV = new ajv({
   removeAdditional: "all",
@@ -34,17 +36,7 @@ module.exports = async function buildFastify(deps) {
       /\.flossbank\.vercel\.app$/,
       /\.flossbank\.now\.sh$/
     );
-    // redisConfig = config.getRedisLocalPC();
-    // fastify.register(require("fastify-redis"), {
-    //   port: redisConfig.port,
-    //   host: redisConfig.host,
-    // });
-    fastify.register(require("fastify-redis"), {
-      port: redisConfig.port,
-      host: redisConfig.host,
-      password: redisConfig.password,
-      tls: {},
-    });
+    fastify.register(require("fastify-redis"), { client: new Redis() });
   } else {
     fastify.register(require("fastify-redis"), {
       port: redisConfig.port,
