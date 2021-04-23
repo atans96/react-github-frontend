@@ -816,7 +816,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   //TODO: show all function in code base and where it uses the function. need to differentiate between returning jsx and not returning jsx
 
   //TODO: https://github.com/developit/redaxios https://github.com/asilvas/node-image-steam,
-  // https://github.com/robb0wen/tornis, https://github.com/postlight/mercury-parser/blob/master/src/extractors/custom/github.com/index.js,
+  // https://github.com/postlight/mercury-parser/blob/master/src/extractors/custom/github.com/index.js,
   // https://swc.rs/docs/usage-swc-loader
 
   //TODO: after Details is rendered, show related repo from author and contributors sorted based on stargazers.
