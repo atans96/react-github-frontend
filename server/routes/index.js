@@ -143,6 +143,7 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
+      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       redis.get(url, (err, val) => {
@@ -158,6 +159,21 @@ async function routes(fastify, opts, done) {
         } else {
           throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
+      });
+    }
+  );
+
+  fastify.get(
+    "/api/convert_to_webp",
+    {
+      logLevel: "error",
+      schema: Schema.convert.ConvertToWebp,
+      preValidation: fastify.csrfProtection,
+    },
+    (req, res) => {
+      convertToWebp(req, res, fastify, {
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
       });
     }
   );
