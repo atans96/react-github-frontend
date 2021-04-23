@@ -60,6 +60,35 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
 
+const MasonryMemo = React.memo<Omit<MasonryMemo, 'children'>>(
+  ({ data, getRootProps }) => {
+    return (
+      <div className={'masonic'}>
+        <Masonry
+          items={data}
+          args={{ getRootProps }}
+          columnGutter={10}
+          columnWidth={370}
+          overscanBy={50}
+          render={Card}
+        />
+      </div>
+    );
+  },
+  (prevProps: any, nextProps: any) => {
+    return (
+      isEqualObjects(prevProps.data.length, nextProps.data.length) &&
+      isEqualObjects(prevProps.stateShared.tokenGQL, nextProps.stateShared.tokenGQL) &&
+      isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn) &&
+      isEqualObjects(prevProps.state.imagesData, nextProps.state.imagesData) &&
+      isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
+      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width)
+    ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
+    // it needs to get re-render to get new data.
+  }
+);
+MasonryMemo.displayName = 'MasonryMemo';
+
 const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) => {
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
