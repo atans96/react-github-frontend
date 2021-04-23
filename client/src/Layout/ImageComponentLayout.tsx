@@ -3,6 +3,7 @@ import useImage from '../hooks/useImage';
 import { SideBySideMagnifier } from '../util/react-image-magnifiers';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
+import clsx from 'clsx';
 
 interface ImageComponentProps {
   urlLink: string;
@@ -22,11 +23,13 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, v
           <div style={{ textAlign: 'center' }}>Loading Images...</div>
         </Then>
       </If>
-      <If condition={!isLoading && !error && visible && src !== undefined && src?.original?.length > 0}>
+      <If condition={!isLoading && !error && src !== undefined && src?.original?.length > 0}>
         <Then>
           <div onClick={handleClick}>
             <SideBySideMagnifier
-              classNameImage={'img-loaded'}
+              classNameImage={clsx('img-loaded', {
+                'img-loaded-hide': !visible,
+              })}
               width={width}
               height={height}
               fillAvailableSpace={false}

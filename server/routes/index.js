@@ -120,21 +120,6 @@ async function routes(fastify, opts, done) {
     }
   );
 
-  fastify.get(
-    "/api/convert_to_webp",
-    {
-      logLevel: "error",
-      schema: Schema.convert.ConvertToWebp,
-      preValidation: fastify.csrfProtection,
-    },
-    (req, res) => {
-      convertToWebp(req, res, fastify, {
-        axios: opts.axios,
-        github: opts.githubAPIWrapper,
-      });
-    }
-  );
-
   fastify.post(
     "/api/images_from_markdown",
     {
@@ -145,7 +130,6 @@ async function routes(fastify, opts, done) {
     (req, res) => {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       redis.get(url, (err, val) => {
         if (val) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
