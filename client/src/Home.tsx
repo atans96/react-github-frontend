@@ -25,6 +25,7 @@ import idx from 'idx';
 import { Fab } from '@material-ui/core';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import { Masonry } from './util/masonic/masonry';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -59,6 +60,16 @@ const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
   }
 );
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
+
+interface MasonryLayoutMemo {
+  children: any;
+  data: MergedDataProps[];
+  state: IState;
+  stateShared: IStateShared;
+}
+interface MasonryMemo extends MasonryLayoutMemo {
+  getRootProps: any;
+}
 
 const MasonryMemo = React.memo<Omit<MasonryMemo, 'children'>>(
   ({ data, getRootProps }) => {
@@ -849,19 +860,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         </If>
         <If condition={isMergedDataExist && !shouldRenderSkeleton}>
           <Then>
-            <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
-              {(columnCount: number) => {
-                return Object.keys(whichToUse()).map((key, idx) =>
-                  createRenderElement(Card, {
-                    key: whichToUse()[idx].id,
-                    columnCount,
-                    getRootProps,
-                    index: whichToUse()[idx].id,
-                    githubData: whichToUse()[idx],
-                  })
-                );
-              }}
-            </MasonryLayoutMemo>
+            <MasonryMemo data={whichToUse()} getRootProps={getRootProps} state={state} stateShared={stateShared} />
           </Then>
         </If>
         <If condition={shouldRenderSkeleton}>

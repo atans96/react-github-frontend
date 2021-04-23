@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
 import Stargazers from './CardBody/Stargazers';
@@ -14,16 +14,13 @@ import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useViewportSpy } from '../hooks/use-viewport-spy';
 import { createRenderElement } from '../Layout/MasonryLayout';
 
-export interface Card {
+export interface CardProps {
+  data: MergedDataProps;
+  columnCount: number;
   index: number;
-  githubData: MergedDataProps;
   getRootProps?: any;
 }
-
-interface CardRef extends Card {
-  columnCount: number;
-}
-const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps }) => {
+const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) => {
   // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
   const [stateShared] = useTrackedStateShared();
@@ -31,25 +28,26 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
   const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
 
   const userCardMemoizedData = useCallback(() => {
-    return githubData.owner;
+    return data.owner;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [githubData.owner]);
+  }, [data.owner]);
 
   const topicsCardMemoizedData = useCallback(() => {
-    return githubData.topics;
+    return data.topics;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [githubData.topics]);
+  }, [data.topics]);
 
   const stargazersMemoizedGithubData = useCallback(() => {
-    return githubData;
+    return data;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [githubData.name, githubData.owner.login, githubData.full_name, githubData.id]);
+  }, [data.name, data.owner.login, data.full_name, data.id]);
+
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
     if (event.button === 1) {
-      localStorage.setItem('detailsData', JSON.stringify({ data: githubData, path: location.pathname }));
-      // history.push(`/detail/${githubData.id}`);
-      window.open(`/detail/${githubData.id}`);
+      localStorage.setItem('detailsData', JSON.stringify({ data: data, path: '/' }));
+      // history.push(`/detail/${data.id}`);
+      window.open(`/detail/${data.id}`);
       if (stateShared.isLoggedIn) {
         clickedAdded({
           variables: {
@@ -57,9 +55,9 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
               Object.assign(
                 {},
                 {
-                  full_name: githubData.full_name,
+                  full_name: data.full_name,
                   owner: {
-                    login: githubData.owner.login,
+                    login: data.owner.login,
                   },
                   is_queried: false,
                 }
@@ -80,9 +78,9 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
               Object.assign(
                 {},
                 {
-                  full_name: githubData.full_name,
+                  full_name: data.full_name,
                   owner: {
-                    login: githubData.owner.login,
+                    login: data.owner.login,
                   },
                   is_queried: false,
                 }
@@ -93,9 +91,8 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.isLoggedIn, githubData.full_name, githubData.owner.login]
+    [stateShared.isLoggedIn, data.full_name, data.owner.login]
   );
-  const location = useLocation();
   // TODO: show network data graph visualization
   // https://stackoverflow.com/questions/47792185/d3-how-to-pull-json-from-github-api
   // https://developer.github.com/v3/guides/rendering-data-as-graphs/
@@ -107,41 +104,41 @@ const Card: React.FC<CardRef> = ({ columnCount, githubData, index, getRootProps 
   // so wrap the component that is not subscribed to isVisible by using React Memo
   const isVisibleRef = useRef<HTMLDivElement>(null);
   const isVisible = useViewportSpy(isVisibleRef);
-  if (!githubData) return <p>No githubData, sorry</p>;
+  if (!data) return <p>No data, sorry</p>;
   return (
     <div
-      className={clsx('card bg-light fade-in', {
+      className={clsx('card bg-light', {
         'card-width-mobile': columnCount === 1,
       })}
       ref={isVisibleRef}
     >
       {createRenderElement(UserCard, { data: userCardMemoizedData() })}
-      <h3 style={{ textAlign: 'center' }}>
-        <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
+      <h3 style={{ textAlign: 'center', overflowWrap: 'anywhere' }}>
+        <strong>{data.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
       </h3>
-      {createRenderElement(ImagesCard, { index: index, visible: isVisible || false })}
+      {createRenderElement(ImagesCard, { index: index, visible: isVisible })}
       <div className="trunctuatedTexts">
-        <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
+        <h4 style={{ textAlign: 'center' }}>{data.description}</h4>
       </div>
       {createRenderElement(Stargazers, { data: stargazersMemoizedGithubData() })}
       <div className={'language-github-color'}>
-        <ul className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}>
+        <ul className={`language ${data?.language?.replace(/\+\+|#|\s/, '-')}`}>
           <li className={'language-list'}>
-            <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
+            <h6 style={{ color: 'black', width: 'max-content' }}>{data.language}</h6>
           </li>
         </ul>
       </div>
-      <If condition={!!githubData.topics}>
+      <If condition={!!data.topics}>
         <Then>{createRenderElement(TopicsCard, { data: topicsCardMemoizedData(), getRootProps: getRootProps })}</Then>
       </If>
-      <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
-        <a href={githubData.html_url}>{githubData.html_url}</a>
+      <div style={{ textAlign: 'center', overflowWrap: 'anywhere' }} onClick={handleDetailsClicked}>
+        <a href={data.html_url}>{data.html_url}</a>
       </div>
       <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
         <NavLink
           to={{
-            pathname: `/detail/${githubData.id}`,
-            state: JSON.stringify({ data: githubData, path: location.pathname }),
+            pathname: `/detail/${data.id}`,
+            state: JSON.stringify({ data: data, path: '/' }),
           }}
           className="btn-clear nav-link"
         >
