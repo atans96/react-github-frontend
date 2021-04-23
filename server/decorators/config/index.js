@@ -27,6 +27,7 @@ class Config {
     return {
       port: this.env.REDIS_LOCAL_PORT,
       host: this.env.REDIS_LOCAL_ENDPOINT,
+      password: this.env.REDIS_LOCAL_PASSWORD,
     };
   }
 }

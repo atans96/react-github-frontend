@@ -79,7 +79,7 @@ const MasonryMemo = React.memo<Omit<MasonryMemo, 'children'>>(
           args={{ getRootProps }}
           columnGutter={10}
           columnWidth={370}
-          overscanBy={15}
+          overscanBy={10}
           render={Card}
         />
       </div>

@@ -102,21 +102,20 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
 
   // when isVisible props changes, children will gets re-render
   // so wrap the component that is not subscribed to isVisible by using React Memo
-  const isVisibleRef = useRef<HTMLDivElement>(null);
-  const isVisible = useViewportSpy(isVisibleRef);
+  // const isVisibleRef = useRef<HTMLDivElement>(null);
+  // const isVisible = useViewportSpy(isVisibleRef);
   if (!data) return <p>No data, sorry</p>;
   return (
     <div
       className={clsx('card bg-light fade-in', {
         'card-width-mobile': columnCount === 1,
       })}
-      ref={isVisibleRef}
     >
       {createRenderElement(UserCard, { data: userCardMemoizedData() })}
       <h3 style={{ textAlign: 'center', overflowWrap: 'anywhere' }}>
         <strong>{data.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
       </h3>
-      {createRenderElement(ImagesCard, { index: index, visible: isVisible })}
+      {createRenderElement(ImagesCard, { index: index })}
       <div className="trunctuatedTexts">
         <h4 style={{ textAlign: 'center' }}>{data.description}</h4>
       </div>

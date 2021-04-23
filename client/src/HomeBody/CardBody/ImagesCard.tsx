@@ -17,10 +17,9 @@ import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface ImagesCardProps {
   index: number;
-  visible: boolean;
 }
 
-const ImagesCard: React.FC<ImagesCardProps> = ({ index, visible }) => {
+const ImagesCard: React.FC<ImagesCardProps> = ({ index }) => {
   const [renderChildren, setRenderChildren] = useState(false);
   const [clicked, setClicked] = useState(false);
   const [renderImages, setRenderImages] = useState<string[]>([]);
@@ -109,7 +108,6 @@ const ImagesCard: React.FC<ImagesCardProps> = ({ index, visible }) => {
               renderImages.slice(0, 2).map((image: string) => {
                 return createRenderElement(ImageComponentLayout, {
                   handleClick: handleClick,
-                  visible: visible,
                   key: image,
                   urlLink: image,
                 });
@@ -121,7 +119,6 @@ const ImagesCard: React.FC<ImagesCardProps> = ({ index, visible }) => {
               renderImages.slice(2).map((image: string) => {
                 return createRenderElement(ImageComponentLayout, {
                   handleClick: handleClick,
-                  visible: visible,
                   key: image,
                   urlLink: image,
                 });
