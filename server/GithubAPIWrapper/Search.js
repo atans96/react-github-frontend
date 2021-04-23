@@ -6,8 +6,6 @@
  */
 
 const Requestable = require("./Requestable.js");
-const debug = require("debug");
-const log = debug("github:search");
 
 /**
  * Wrap the Search API
@@ -50,7 +48,7 @@ class Search extends Requestable {
       requestOptions[prop] = withOptions[prop];
     });
 
-    log(`searching ${path} with options:`, requestOptions);
+    console.log(`searching ${path} with options:`, requestOptions);
     return this._requestAllPages(`/search/${path}`, requestOptions, cb);
   }
 

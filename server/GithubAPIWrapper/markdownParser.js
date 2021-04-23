@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("redaxios");
 const urlExist = require("url-exist");
 const util = require("../api/util");
 const { Remarkable } = require("remarkable");

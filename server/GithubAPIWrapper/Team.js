@@ -6,9 +6,6 @@
  */
 
 const Requestable = require("./Requestable.js");
-const debug = require("debug");
-const log = debug("github:team");
-
 /**
  * A Team allows scoping of API requests to a particular Github Organization Team.
  */
@@ -31,7 +28,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   getTeam(cb) {
-    log(`Fetching Team ${this.__teamId}`);
+    console.log(`Fetching Team ${this.__teamId}`);
     return this._request("Get", `/teams/${this.__teamId}`, undefined, cb);
   }
 
@@ -42,7 +39,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   listRepos(cb) {
-    log(`Fetching repositories for Team ${this.__teamId}`);
+    console.log(`Fetching repositories for Team ${this.__teamId}`);
     return this._requestAllPages(
       `/teams/${this.__teamId}/repos`,
       undefined,
@@ -63,7 +60,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   editTeam(options, cb) {
-    log(`Editing Team ${this.__teamId}`);
+    console.log(`Editing Team ${this.__teamId}`);
     return this._request("PATCH", `/teams/${this.__teamId}`, options, cb);
   }
 
@@ -76,7 +73,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   listMembers(options, cb) {
-    log(`Getting members of Team ${this.__teamId}`);
+    console.log(`Getting members of Team ${this.__teamId}`);
     return this._requestAllPages(
       `/teams/${this.__teamId}/members`,
       options,
@@ -92,7 +89,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   getMembership(username, cb) {
-    log(`Getting membership of user ${username} in Team ${this.__teamId}`);
+    console.log(`Getting membership of user ${username} in Team ${this.__teamId}`);
     return this._request(
       "GET",
       `/teams/${this.__teamId}/memberships/${username}`,
@@ -112,7 +109,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   addMembership(username, options, cb) {
-    log(`Adding user ${username} to Team ${this.__teamId}`);
+    console.log(`Adding user ${username} to Team ${this.__teamId}`);
     return this._request(
       "PUT",
       `/teams/${this.__teamId}/memberships/${username}`,
@@ -130,7 +127,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   isManagedRepo(owner, repo, cb) {
-    log(
+    console.log(
       `Getting repo management by Team ${this.__teamId} for repo ${owner}/${repo}`
     );
     return this._request204or404(
@@ -152,7 +149,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   manageRepo(owner, repo, options, cb) {
-    log(
+    console.log(
       `Adding or Updating repo management by Team ${this.__teamId} for repo ${owner}/${repo}`
     );
     return this._request204or404(
@@ -172,7 +169,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   unmanageRepo(owner, repo, cb) {
-    log(
+    console.log(
       `Remove repo management by Team ${this.__teamId} for repo ${owner}/${repo}`
     );
     return this._request204or404(
@@ -190,7 +187,7 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   deleteTeam(cb) {
-    log(`Deleting Team ${this.__teamId}`);
+    console.log(`Deleting Team ${this.__teamId}`);
     return this._request204or404(
       `/teams/${this.__teamId}`,
       undefined,

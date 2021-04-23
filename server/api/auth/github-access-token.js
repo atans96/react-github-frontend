@@ -1,4 +1,3 @@
-const FormData = require("form-data");
 const util = require("../util");
 const jwt = require("jsonwebtoken");
 module.exports = async (req, res, ctx, ...args) => {
@@ -19,13 +18,12 @@ module.exports = async (req, res, ctx, ...args) => {
       //paramString will be:
       //access_token=eb2202a68eac4b9c65620bcb085241e4cd4c0e6564db&scope=user&token_type=bearer
       let params = new URLSearchParams(paramsString);
-      const jwtToken = jwt.sign(
-        {
-          token: params.get("access_token"),
-        },
-        ctx.config.getJWTSecret()
+        util.tokenTransporter.tokenSetter = jwt.sign(
+          {
+              token: params.get("access_token"),
+          },
+          ctx.config.getJWTSecret()
       );
-      util.tokenTransporter.tokenSetter = jwtToken;
       // Request to return data of a user that has been authenticated
       return args[0].axios.get(`https://api.github.com/user`, {
         headers: {

@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("redaxios");
 const util = require("../util");
 const fastJson = require("fast-json-stringify");
 axios.defaults.withCredentials = true;

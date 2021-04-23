@@ -6,9 +6,6 @@
  */
 
 const Requestable = require("./Requestable.js");
-const debug = require("debug");
-const log = debug("github:user");
-
 /**
  * A User allows scoping of API requests to a particular Github user.
  */
@@ -66,7 +63,7 @@ class User extends Requestable {
 
     options = this._getOptionsWithDefaults(options);
 
-    log(`Fetching repositories with options: ${JSON.stringify(options)}`);
+    console.log(`Fetching repositories with options: ${JSON.stringify(options)}`);
     return this._requestAllPages(this.__getScopedUrl("repos"), options, cb);
   }
 

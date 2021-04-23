@@ -8,8 +8,6 @@
 const Requestable = require("./Requestable.js");
 const Utf8 = require("utf8");
 const Base64 = require("js-base64");
-const debug = require("debug");
-const log = debug("github:repository");
 
 /**
  * Repository encapsulates the functionality to create, query, and modify files.
@@ -340,7 +338,7 @@ class Repository extends Requestable {
   createBlob(content, cb) {
     let postBody = this._getContentObject(content);
 
-    log("sending content", postBody);
+    console.log("sending content", postBody);
     return this._request(
       "POST",
       `/repos/${this.__fullname}/git/blobs`,
@@ -356,26 +354,26 @@ class Repository extends Requestable {
    */
   _getContentObject(content) {
     if (typeof content === "string") {
-      log("contet is a string");
+      console.log("contet is a string");
       return {
         content: Utf8.encode(content),
         encoding: "utf-8",
       };
     } else if (typeof Buffer !== "undefined" && content instanceof Buffer) {
-      log("We appear to be in Node");
+      console.log("We appear to be in Node");
       return {
         content: content.toString("base64"),
         encoding: "base64",
       };
     } else if (typeof Blob !== "undefined" && content instanceof Blob) {
-      log("We appear to be in the browser");
+      console.log("We appear to be in the browser");
       return {
         content: Base64.encode(content),
         encoding: "base64",
       };
     } else {
       // eslint-disable-line
-      log(
+      console.log(
         `Not sure what this content is: ${typeof content}, ${JSON.stringify(
           content
         )}`
