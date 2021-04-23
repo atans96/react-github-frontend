@@ -85,10 +85,6 @@ const ConvertToWebp = S.object()
     .title("Converting image to webp")
     .prop("imgUrl", S.string().minLength(1).required());
 
-const ConvertToWebp = S.object()
-  .title("Converting image to webp")
-  .prop("imgUrl", S.string().minLength(1).required());
-
 const JWTVerify = S.object()
     .title("JWT Verification")
     .prop("username", S.string().minLength(1).required())
