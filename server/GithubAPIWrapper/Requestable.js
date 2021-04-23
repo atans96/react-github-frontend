@@ -5,12 +5,8 @@
  *             Github.js is freely distributable.
  */
 
-const axios = require("axios");
-const debug = require("debug");
+const axios = require("redaxios");
 const Base64 = require("js-base64");
-
-const log = debug("github:request");
-
 /**
  * The error structure returned when a network call fails
  */
@@ -174,7 +170,7 @@ class Requestable {
       responseType: raw ? "text" : "json",
     };
 
-    log(`${config.method} to ${config.url}`);
+    console.log(`${config.method} to ${config.url}`);
     const requestPromise = axios(config).catch(callbackErrorOrThrow(cb, path));
 
     if (cb) {
@@ -344,15 +340,15 @@ function callbackErrorOrThrow(cb, path) {
       } = object;
       let message = `${status} error making request ${method} ${url}: "${statusText}"`;
       error = new ResponseError(message, path, object);
-      log(`${message} ${JSON.stringify(object.data)}`);
+      console.log(`${message} ${JSON.stringify(object.data)}`);
     } else {
       error = object;
     }
     if (cb) {
-      log("going to error callback");
+      console.log("going to error callback");
       cb(error);
     } else {
-      log("throwing error");
+      console.log("throwing error");
       throw error;
     }
   };
