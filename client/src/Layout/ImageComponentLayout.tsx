@@ -1,7 +1,6 @@
 import React from 'react';
 import useImage from '../hooks/useImage';
 import { SideBySideMagnifier } from '../util/react-image-magnifiers';
-import { Loading } from '../util';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 
@@ -23,7 +22,7 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, v
           <div style={{ textAlign: 'center' }}>Loading Images...</div>
         </Then>
       </If>
-      <If condition={!isLoading && !error && visible}>
+      <If condition={!isLoading && !error && visible && src !== undefined && src?.original?.length > 0}>
         <Then>
           <div onClick={handleClick}>
             <SideBySideMagnifier
@@ -34,7 +33,7 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, v
               cursorStyle={'pointer'}
               fillAlignTop={true}
               alwaysInPlace={false}
-              imageSrc={src}
+              imageSrc={src?.original}
             />
           </div>
         </Then>

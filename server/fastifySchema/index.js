@@ -6,6 +6,9 @@ module.exports = {
     ImagesReadmeRepoInfo: require("./api/repo/images-repo-info"),
     ReadmeRepoInfo: require("./api/repo/readme-repo-info"),
   },
+  convert: {
+    ConvertToWebp: require("./api/convert/convert-to-webp"),
+  },
   graphql: {
     GetGQLData: require("./api/graphql/get-data"),
   },

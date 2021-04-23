@@ -18,6 +18,7 @@ const verifyJWTToken = require("../api/auth/verify-jwt-token");
 const testTokenGQL = require("../api/auth/github-graphql-test-token");
 const getGQLData = require("../api/graphql/get-data");
 const getGQLFile = require("../api/readFile/get-gql-properties-file");
+const convertToWebp = require("../api/convert/convert-to-webp");
 
 const verifyUsername = require("../middleware/username");
 const Schema = require("../fastifySchema");
@@ -127,6 +128,7 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
+      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
         if (val) {
@@ -141,6 +143,21 @@ async function routes(fastify, opts, done) {
         } else {
           throw new Error(`Something Wrong with ${req.url} ${err}`);
         }
+      });
+    }
+  );
+
+  fastify.get(
+    "/api/convert_to_webp",
+    {
+      logLevel: "error",
+      schema: Schema.convert.ConvertToWebp,
+      preValidation: fastify.csrfProtection,
+    },
+    (req, res) => {
+      convertToWebp(req, res, fastify, {
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
       });
     }
   );

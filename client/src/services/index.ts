@@ -223,3 +223,9 @@ export const getRepoImages = async (signal: any, data: any[], topic: string, pag
   });
   return (await response.json()) as RepoRenderImages;
 };
+export const convertToWebP = async (imgUrl: string) => {
+  const response = await fetch(`/api/convert_to_webp?imgUrl=${imgUrl}`, {
+    method: 'GET',
+  });
+  return await response.json();
+};

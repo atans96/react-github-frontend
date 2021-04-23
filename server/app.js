@@ -6,6 +6,8 @@ const { dbPlugin } = require("./decorators/db");
 const { csrf } = require("./decorators/csrf");
 const { apolloServerPlugin } = require("./decorators/apollo-server");
 const helmet = require("fastify-helmet");
+const rateLimit = require("fastify-rate-limit");
+const Redis = require("ioredis");
 
 // Create custom ajv schema declaration to remove _all_ additional fields by default
 const AJV = new ajv({
@@ -34,17 +36,7 @@ module.exports = async function buildFastify(deps) {
       /\.flossbank\.vercel\.app$/,
       /\.flossbank\.now\.sh$/
     );
-    // redisConfig = config.getRedisLocalPC();
-    // fastify.register(require("fastify-redis"), {
-    //   port: redisConfig.port,
-    //   host: redisConfig.host,
-    // });
-    fastify.register(require("fastify-redis"), {
-      port: redisConfig.port,
-      host: redisConfig.host,
-      password: redisConfig.password,
-      tls: {},
-    });
+    fastify.register(require("fastify-redis"), { client: new Redis() });
   } else {
     fastify.register(require("fastify-redis"), {
       port: redisConfig.port,
@@ -85,5 +77,24 @@ module.exports = async function buildFastify(deps) {
   fastify.register(configPlugin(config));
   fastify.register(apolloServerPlugin);
   fastify.register(helmet);
+  await fastify.register(rateLimit, {
+    max: 30,
+    timeWindow: "1 minute",
+  });
+  fastify.setErrorHandler(function (error, request, reply) {
+    if (reply.statusCode === 429) {
+      error.message =
+        "You request too much in short amount of time! Slow down please!";
+    }
+    reply.send(error);
+  });
+  fastify.setNotFoundHandler(
+    {
+      preHandler: fastify.rateLimit({ max: 30, timeWindow: "1 minute" }),
+    },
+    function (request, reply) {
+      reply.callNotFound();
+    }
+  );
   return fastify;
 };
