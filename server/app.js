@@ -36,7 +36,13 @@ module.exports = async function buildFastify(deps) {
       /\.flossbank\.vercel\.app$/,
       /\.flossbank\.now\.sh$/
     );
-    fastify.register(require("fastify-redis"), { client: new Redis() });
+    fastify.register(require("fastify-redis"), {
+      client: new Redis({
+        port: config.getRedisLocalPC().port,
+        host: config.getRedisLocalPC().host,
+        password: config.getRedisLocalPC().password,
+      }),
+    });
   } else {
     fastify.register(require("fastify-redis"), {
       port: redisConfig.port,
