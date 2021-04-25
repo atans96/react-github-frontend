@@ -130,18 +130,24 @@ const markdownImagesExtractor = (result, object, renderImages) => {
       console.log(err);
     }
   }
-  if (filteredImage.length > 0) {
-    renderImages.push(
-      Object.assign(
-        {},
-        {
-          id: object.id,
-          value: filteredImage,
-        }
-      )
-    );
-  }
-  return renderImages;
+  renderImages.push(
+    Object.assign(
+      {},
+      {
+        id: object.id,
+        value: filteredImage,
+      }
+    )
+  );
+  return [
+    Object.assign(
+      {},
+      {
+        id: object.id,
+        value: filteredImage,
+      }
+    ),
+  ];
 };
 // function getValidReadmeUrl(object) {
 //   return new Promise(function (resolve, reject) {
@@ -234,7 +240,9 @@ class MarkdownParserClass {
         });
     });
   }
-  async doQuery(data, promises, renderImages, token, ...args) {
+  async doQuery(data, renderImages, token, ...args) {
+    const { res } = args[0];
+    const re = res.res;
     for (const [, object] of data.entries()) {
       const readme = ["README", "Readme", "readme", "ReadMe"];
       const fileExtension = ["md", "rst", "adoc"];
@@ -270,56 +278,50 @@ class MarkdownParserClass {
       try {
         const validUrl = await firstTrue(promisesUrlExist);
         if (validUrl.length > 0) {
-          promises.push(
-            new Promise((resolve, reject) => {
-              axios
-                .get(validUrl, {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: "application/vnd.github.VERSION.html",
-                  },
-                })
-                .then((result) => {
-                  let contents = result.data || result.content || undefined;
-                  if (contents === undefined) {
-                    throw new Error(
-                      `No readme data for ${object.value.full_name}`
-                    );
-                  }
-                  if (result.content) {
-                    contents = base64.decode(contents);
-                  }
-                  contents = mdParser.render(contents);
-                  const readme = processHtml({
-                    html: contents,
-                    repo: object.value.full_name,
-                    branch: object.value.branch,
-                  });
-                  const extractedImages = markdownImagesExtractor(
-                    readme,
-                    object,
-                    renderImages
-                  );
-                  resolve(extractedImages);
-                })
-                .catch((err) => {
-                  if (err.message.includes("API")) {
-                    reject(err.message);
-                  } else if (err.response.status === 404) {
-                    resolve([]);
-                    console.log(`ERROR ${validUrl}, message: ${err.message}`);
-                  } else {
-                    util.sendErrorMessageToClient(err, args.res);
-                  }
-                });
+          axios
+            .get(validUrl, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: "application/vnd.github.VERSION.html",
+              },
             })
-          );
+            .then((result) => {
+              let contents = result.data || result.content || undefined;
+              if (contents === undefined) {
+                throw new Error(`No readme data for ${object.value.full_name}`);
+              }
+              if (result.content) {
+                contents = base64.decode(contents);
+              }
+              contents = mdParser.render(contents);
+              const readme = processHtml({
+                html: contents,
+                repo: object.value.full_name,
+                branch: object.value.branch,
+              });
+              const extractedImages = markdownImagesExtractor(
+                readme,
+                object,
+                renderImages
+              );
+              re.write(
+                JSON.stringify({
+                  renderImages: extractedImages,
+                })
+              );
+            })
+            .catch((err) => {
+              if (err.response.status === 404) {
+                console.log(`ERROR ${validUrl}, message: ${err.message}`);
+              } else {
+                util.sendErrorMessageToClient(err, args.res);
+              }
+            });
         }
       } catch (e) {
         console.log(e);
       }
     }
-    return promises;
   }
 }
 const MarkdownParser = new MarkdownParserClass();

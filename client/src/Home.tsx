@@ -26,6 +26,8 @@ import { Fab } from '@material-ui/core';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import { Masonry } from './util/masonic/masonry';
+// @ts-ignore
+import ndjsonStream from 'can-ndjson-stream';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -672,15 +674,21 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           );
           return acc;
         }, [] as any[]);
-        getRepoImages(
-          abortController.signal,
-          data,
-          Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
-          state.page,
-          token
-        )
-          .then((repoImage) => {
-            if (repoImage.renderImages.length > 0) {
+        const fetchData = async () => {
+          const response = await getRepoImages(
+            abortController.signal,
+            data,
+            Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+            state.page,
+            token
+          );
+          const reader = response!.body!.getReader();
+          const td = new TextDecoder('utf-8');
+          while (true) {
+            const { value, done } = await reader!.read();
+            if (done) break;
+            const decoded = JSON.parse(td.decode(value));
+            if (decoded.renderImages.length > 0) {
               dispatch({
                 type: 'SHOULD_IMAGES_DATA_ADDED',
                 payload: {
@@ -690,21 +698,13 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
               dispatch({
                 type: 'IMAGES_DATA_ADDED',
                 payload: {
-                  images: repoImage.renderImages,
+                  images: decoded.renderImages,
                 },
               });
             }
-          })
-          .catch((error) => {
-            actionResolvePromise({
-              action: ActionResolvedPromise.error,
-              setLoading,
-              setNotification,
-              isFetchFinish: isFetchFinish.current,
-              displayName: displayName!,
-              error,
-            });
-          });
+          }
+        };
+        fetchData().then(noop);
         return () => {
           isFinished = true;
         };
