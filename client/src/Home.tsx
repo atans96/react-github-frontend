@@ -856,6 +856,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     <React.Fragment>
       <Helmet>
         <title>Github Fetcher Dashboard</title>
+        <meta charSet={'utf-8'} />
         <meta
           name="description"
           content="Improving Github search and discover experience with an enhanced user-interface and functionalities"

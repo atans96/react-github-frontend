@@ -1,4 +1,5 @@
 /*don't send the height because it wont work with infinity scrolling*/
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap');
 :root {
   --dark: #000000;
   --lightGrey: #d8d8d8;
@@ -965,6 +966,23 @@ li a.underlining:hover {
   max-width: 100vw;
   box-sizing: border-box;
   margin-left: 7rem;
+}
+.not-found {
+  .google {
+    font-family: 'PlayfairDisplay,Helvetica,Arial', sans-serif;
+    font-weight: 400;
+    font-size: 10em;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+  }
+  .texts {
+    font-size: 2em;
+    font-weight: 700;
+    margin-bottom: 30px;
+    font-family: 'Helvetica Neue',Arial,Helvetica,sans-serif;
+    text-align: center;
+    line-height: 1;
+  }
 }
 .loading-spinner {
   border: 2px solid #f3f3f3;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
+import { NavLink } from 'react-router-dom';
 
 const NotFound = () => {
   const [stateShared] = useTrackedStateShared();
@@ -10,10 +11,19 @@ const NotFound = () => {
       style={{
         marginLeft: `${stateShared.drawerWidth > 60 ? `${stateShared.drawerWidth}px` : `${5}rem`}`,
         display: 'grid',
-        marginTop: '10rem',
+        marginTop: '30rem',
+        textAlign: 'center',
       }}
+      className={'not-found'}
     >
-      <h3>404 not found</h3>
+      <h3 className={'google'}>
+        4<span style={{ color: 'gray' }}>0</span>4
+      </h3>
+      <h3 className={'texts'}>Oops, something went wrong...</h3>
+      <h3 style={{ marginBottom: '30px', fontSize: '1.5em' }}>The page you are looking for is not here</h3>
+      <NavLink style={{ color: 'black' }} to={{ pathname: '/' }}>
+        <h3>GO BACK TO HOME</h3>
+      </NavLink>
     </div>
   );
 };
