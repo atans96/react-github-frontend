@@ -72,7 +72,6 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       verifyJWTToken(req, res, fastify, {
-        axios: opts.axios,
         jwtService: opts.jwtService,
       });
     }

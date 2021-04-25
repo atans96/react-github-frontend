@@ -17,8 +17,8 @@ class Project extends Requestable {
    * @param {Requestable.auth} [auth] - information required to authenticate to Github
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
    */
-  constructor(id, auth, apiBase) {
-    super(auth, apiBase, "inertia-preview");
+  constructor(id, auth, apiBase, axios) {
+    super({ auth, apiBase, AcceptHeader: "inertia-preview", axios });
     this.__id = id;
   }
 

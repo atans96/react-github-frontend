@@ -15,10 +15,11 @@ class Markdown extends Requestable {
    * construct a Markdown
    * @param {Requestable.auth} auth - the credentials to authenticate to GitHub
    * @param {string} [apiBase] - the base Github API URL
+   * @param axios
    * @return {Promise} - the promise for the http request
    */
-  constructor(auth, apiBase) {
-    super(auth, apiBase);
+  constructor(auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
   }
 
   getReadMe(full_name, options, cb) {

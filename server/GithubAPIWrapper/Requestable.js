@@ -5,7 +5,6 @@
  *             Github.js is freely distributable.
  */
 
-const axios = require("redaxios");
 const Base64 = require("js-base64");
 /**
  * The error structure returned when a network call fails
@@ -43,11 +42,13 @@ class Requestable {
    *                                  not provided request will be made unauthenticated
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
    * @param {string} [AcceptHeader=v3] - the accept header for the requests
+   * @param axios
    */
-  constructor(auth, apiBase, AcceptHeader) {
+  constructor({ auth, apiBase, AcceptHeader, axios }) {
     this.__apiBase = apiBase || "https://api.github.com";
     this.__AcceptHeader = AcceptHeader || "v3";
     this.multiplier = 0;
+    this.axios = axios;
     if (auth.token) {
       this.__authorizationHeader = "Bearer " + auth.token;
     } else if (auth.username && auth.password) {
@@ -171,7 +172,9 @@ class Requestable {
     };
 
     console.log(`${config.method} to ${config.url}`);
-    const requestPromise = axios(config).catch(callbackErrorOrThrow(cb, path));
+    const requestPromise = this.axios(config).catch(
+      callbackErrorOrThrow(cb, path)
+    );
 
     if (cb) {
       requestPromise.then((response) => {

@@ -2,7 +2,7 @@ const util = require("../util");
 const fastJson = require("fast-json-stringify");
 module.exports = async (req, res, ctx, ...args) => {
   const token = util.convertJWTToken(req.query.token);
-  const gh = new args[0].github.Github({ token });
+  const gh = new args[0].github.Github({ token }, args[0].axios);
   const queryTopic = gh
     .search({
       q: req.query.topic,
@@ -20,6 +20,9 @@ module.exports = async (req, res, ctx, ...args) => {
       },
     },
   });
+  if (req.query.axiosCancel) {
+    cancelTokenSource.cancel();
+  }
   args[0].axios
     .all([queryTopic])
     .then(

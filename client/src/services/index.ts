@@ -89,18 +89,28 @@ export const subscribeUser = async (username: string, signal: any) => {
     return await response.json();
   }
 };
-export const getUser = async (
-  signal: any | undefined,
-  username: string,
-  perPage: number,
-  page: number,
-  token: string | null | undefined
-) => {
+export const getUser = async ({
+  signal,
+  username,
+  perPage,
+  page,
+  token,
+  axiosCancel = false,
+}: {
+  signal: any | undefined;
+  username: string;
+  perPage: number;
+  page: number;
+  token: string | null | undefined;
+  axiosCancel: boolean;
+}) => {
   if (username !== '') {
     const toke = await rotateTokens();
     const validToken = toke.length === 0 ? token : toke;
     const response = await fetch(
-      `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${token === null ? '' : validToken}`,
+      `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${
+        token === null ? '' : validToken
+      }&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
         signal,
@@ -109,18 +119,28 @@ export const getUser = async (
     return await response.json();
   }
 };
-export const getOrg = async (
-  signal: any | undefined,
-  org: string,
-  perPage: number,
-  page: number,
-  token: string | null | undefined
-) => {
+export const getOrg = async ({
+  signal,
+  org,
+  perPage,
+  page,
+  token,
+  axiosCancel = false,
+}: {
+  signal: any | undefined;
+  org: string;
+  perPage: number;
+  page: number;
+  token: string | null | undefined;
+  axiosCancel: boolean;
+}) => {
   if (org !== '') {
     const toke = await rotateTokens();
     const validToken = toke.length === 0 ? token : toke;
     const response = await fetch(
-      `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${token === null ? '' : validToken}`,
+      `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${
+        token === null ? '' : validToken
+      }&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
         signal,
@@ -172,13 +192,26 @@ export const getSearchUsers = async (query: string, token: string | null | undef
   });
   return (await response.json()) as SearchUser;
 };
-export const getSearchTopics = async (signal: any, topic: string, token: string | null | undefined) => {
+export const getSearchTopics = async ({
+  axiosCancel = false,
+  signal,
+  topic,
+  token,
+}: {
+  axiosCancel: boolean;
+  signal: any | undefined;
+  topic: string;
+  token: string | null | undefined;
+}) => {
   const toke = await rotateTokens();
   const validToken = toke.length === 0 ? token : toke;
-  const response = await fetch(`/api/search_topics?topic=${topic}&token=${validToken === null ? '' : validToken}`, {
-    method: 'GET',
-    signal,
-  });
+  const response = await fetch(
+    `/api/search_topics?topic=${topic}&token=${validToken === null ? '' : validToken}&axiosCancel=${axiosCancel}`,
+    {
+      method: 'GET',
+      signal,
+    }
+  );
   return await response.json();
 };
 export const getElasticSearchBertAutocomplete = async (query: string) => {
@@ -211,12 +244,26 @@ export const convertToWebP = async (imgUrl: string) => {
   });
   return await response.json();
 };
-export const getRepoImages = async (signal: any, data: any[], topic: string, page: number, token: string) => {
+export const getRepoImages = async ({
+  axiosCancel = false,
+  signal,
+  data,
+  topic,
+  page,
+  token,
+}: {
+  axiosCancel: boolean;
+  signal: any | undefined;
+  data: any[];
+  topic: string;
+  page: number;
+  token: string | null | undefined;
+}) => {
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
   const toke = await rotateTokens();
   const validToken = toke.length === 0 ? token : toke;
-  return await fetch(`/api/images_from_markdown?query_topic=${topic}&page=${page}`, {
+  return await fetch(`/api/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`, {
     method: 'POST',
     body: JSON.stringify({
       data: data,

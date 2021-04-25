@@ -25,11 +25,13 @@ class GitHub {
    * Create a new GitHub.
    * @param {Requestable.auth} [auth] - the credentials to authenticate to Github. If auth is
    *                                  not provided requests will be made unauthenticated
+   * @param axios
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
    */
-  constructor(auth, apiBase = "https://api.github.com") {
+  constructor(auth, axios, apiBase = "https://api.github.com") {
     this.__apiBase = apiBase;
     this.__auth = auth || {};
+    this.axios = axios;
   }
 
   /**
@@ -38,7 +40,7 @@ class GitHub {
    * @return {Gist}
    */
   getGist(id) {
-    return new Gist(id, this.__auth, this.__apiBase);
+    return new Gist(id, this.__auth, this.__apiBase, this.axios);
   }
 
   /**
@@ -48,7 +50,7 @@ class GitHub {
    * @return {User}
    */
   getUser(user, per_page) {
-    return new User(user, this.__auth, this.__apiBase);
+    return new User(user, this.__auth, this.__apiBase, this.axios);
   }
 
   /**
@@ -57,26 +59,30 @@ class GitHub {
    * @return {Organization}
    */
   getOrganization(organization) {
-    return new Organization(organization, this.__auth, this.__apiBase);
+    return new Organization(
+      organization,
+      this.__auth,
+      this.__apiBase,
+      this.axios
+    );
   }
 
   /**
    * create a new Team wrapper
    * @param {string} teamId - the name of the team
-   * @return {team}
+   * @return {Team}
    */
   getTeam(teamId) {
-    return new Team(teamId, this.__auth, this.__apiBase);
+    return new Team(teamId, this.__auth, this.__apiBase, this.axios);
   }
 
   /**
    * Create a new Repository wrapper
-   * @param {string} user - the user who owns the repository
-   * @param {string} repo - the name of the repository
    * @return {Repository}
+   * @param fullName
    */
   getRepo(fullName) {
-    return new Repository(fullName, this.__auth, this.__apiBase);
+    return new Repository(fullName, this.__auth, this.__apiBase, this.axios);
   }
 
   /**
@@ -89,7 +95,8 @@ class GitHub {
     return new Issue(
       this._getFullName(user, repo),
       this.__auth,
-      this.__apiBase
+      this.__apiBase,
+      this.axios
     );
   }
 
@@ -99,7 +106,7 @@ class GitHub {
    * @return {Search}
    */
   search(query) {
-    return new Search(query, this.__auth, this.__apiBase);
+    return new Search(query, this.__auth, this.__apiBase, this.axios);
   }
 
   /**
@@ -107,7 +114,7 @@ class GitHub {
    * @return {RateLimit}
    */
   getRateLimit() {
-    return new RateLimit(this.__auth, this.__apiBase);
+    return new RateLimit(this.__auth, this.__apiBase, this.axios);
   }
 
   /**
@@ -115,7 +122,7 @@ class GitHub {
    * @return {Markdown}
    */
   getMarkdown() {
-    return new Markdown(this.__auth, this.__apiBase);
+    return new Markdown(this.__auth, this.__apiBase, this.axios);
   }
 
   /**
@@ -124,7 +131,7 @@ class GitHub {
    * @return {Project}
    */
   getProject(id) {
-    return new Project(id, this.__auth, this.__apiBase);
+    return new Project(id, this.__auth, this.__apiBase, this.axios);
   }
 
   /**

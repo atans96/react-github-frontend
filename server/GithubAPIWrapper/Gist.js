@@ -15,9 +15,10 @@ class Gist extends Requestable {
    * @param {string} id - the id of the gist (not required when creating a gist)
    * @param {Requestable.auth} [auth] - information required to authenticate to Github
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
+   * @param axios
    */
-  constructor(id, auth, apiBase) {
-    super(auth, apiBase);
+  constructor(id, auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
     this.__id = id;
   }
 

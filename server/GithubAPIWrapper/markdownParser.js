@@ -1,11 +1,9 @@
-const axios = require("redaxios");
 const urlExist = require("url-exist");
 const util = require("../api/util");
 const { Remarkable } = require("remarkable");
 const hljs = require("highlight.js");
 const base64 = require("js-base64").Base64;
 
-axios.defaults.withCredentials = true;
 function processHtml({ html, repo, branch }) {
   const root = `https://github.com/${repo}`;
   let readme = html;
@@ -207,10 +205,15 @@ function firstTrue(promises) {
   return Promise.race(newPromises);
 }
 class MarkdownParserClass {
+  constructor(req, res, axios) {
+    this.req = req;
+    this.res = res;
+    this.axios = axios;
+  }
   async doQueryWithoutImages(data, token, ...args) {
     return new Promise((resolve, reject) => {
       const url = `https://api.github.com/repos/${data.full_name}/readme`;
-      axios
+      this.axios
         .get(url, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -241,8 +244,7 @@ class MarkdownParserClass {
     });
   }
   async doQuery(data, renderImages, token, ...args) {
-    const { res } = args[0];
-    const re = res.res;
+    const re = this.res.res;
     for (const [, object] of data.entries()) {
       const readme = ["README", "Readme", "readme", "ReadMe"];
       const fileExtension = ["md", "rst", "adoc"];
@@ -278,7 +280,7 @@ class MarkdownParserClass {
       try {
         const validUrl = await firstTrue(promisesUrlExist);
         if (validUrl.length > 0) {
-          axios
+          this.axios
             .get(validUrl, {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -324,5 +326,5 @@ class MarkdownParserClass {
     }
   }
 }
-const MarkdownParser = new MarkdownParserClass();
+const MarkdownParser = (req, res) => new MarkdownParserClass(req, res);
 module.exports = MarkdownParser;

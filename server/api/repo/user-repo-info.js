@@ -3,7 +3,7 @@ const _ = require("lodash");
 const fastJson = require("fast-json-stringify");
 module.exports = async (req, res, ctx, ...args) => {
   const token = util.convertJWTToken(req.query.token);
-  const gh = new args[0].github.Github({ token });
+  const gh = new args[0].github.Github({ token }, args[0].axios);
   const requestOne = gh.getUser(req.query.username).listStarredRepos({
     page: req.query.page,
     per_page: req.query.per_page,

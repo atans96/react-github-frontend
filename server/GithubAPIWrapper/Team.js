@@ -15,9 +15,10 @@ class Team extends Requestable {
    * @param {string} [teamId] - the id for the team
    * @param {Requestable.auth} [auth] - information required to authenticate to Github
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
+   * @param axios
    */
-  constructor(teamId, auth, apiBase) {
-    super(auth, apiBase);
+  constructor(teamId, auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
     this.__teamId = teamId;
   }
 
@@ -89,7 +90,9 @@ class Team extends Requestable {
    * @return {Promise} - the promise for the http request
    */
   getMembership(username, cb) {
-    console.log(`Getting membership of user ${username} in Team ${this.__teamId}`);
+    console.log(
+      `Getting membership of user ${username} in Team ${this.__teamId}`
+    );
     return this._request(
       "GET",
       `/teams/${this.__teamId}/memberships/${username}`,
