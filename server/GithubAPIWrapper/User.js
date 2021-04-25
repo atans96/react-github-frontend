@@ -15,9 +15,10 @@ class User extends Requestable {
    * @param {string} [username] - the user to use for user-scoped queries
    * @param {Requestable.auth} [auth] - information required to authenticate to Github
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
+   * @param axios
    */
-  constructor(username, auth, apiBase) {
-    super(auth, apiBase);
+  constructor(username, auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
     this.__user = username;
   }
 
@@ -63,7 +64,9 @@ class User extends Requestable {
 
     options = this._getOptionsWithDefaults(options);
 
-    console.log(`Fetching repositories with options: ${JSON.stringify(options)}`);
+    console.log(
+      `Fetching repositories with options: ${JSON.stringify(options)}`
+    );
     return this._requestAllPages(this.__getScopedUrl("repos"), options, cb);
   }
 

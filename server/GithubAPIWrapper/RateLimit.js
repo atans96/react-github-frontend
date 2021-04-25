@@ -15,10 +15,11 @@ class RateLimit extends Requestable {
    * construct a RateLimit
    * @param {Requestable.auth} auth - the credentials to authenticate to GitHub
    * @param {string} [apiBase] - the base Github API URL
+   * @param axios
    * @return {Promise} - the promise for the http request
    */
-  constructor(auth, apiBase) {
-    super(auth, apiBase);
+  constructor(auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
   }
 
   /**

@@ -16,9 +16,10 @@ class Issue extends Requestable {
    * @param {string} repository - the full name of the repository (`:user/:repo`) to get issues for
    * @param {Requestable.auth} [auth] - information required to authenticate to Github
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
+   * @param axios
    */
-  constructor(repository, auth, apiBase) {
-    super(auth, apiBase);
+  constructor(repository, auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
     this.__repository = repository;
   }
 

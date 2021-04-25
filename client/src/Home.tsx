@@ -98,7 +98,7 @@ const MasonryMemo = React.memo<Omit<MasonryMemo, 'children'>>(
   }
 );
 MasonryMemo.displayName = 'MasonryMemo';
-
+let axiosCancel = false;
 const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) => {
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
@@ -106,7 +106,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   const location = useLocation();
   const abortController = new AbortController();
   const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
-
   const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
@@ -204,11 +203,25 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     }
   };
   const dataPrefetch = useRef<IDataOne | undefined>();
-  const prefetch = (name: string) => () => {
-    getUser(undefined, name, stateShared.perPage, state.page + 1, token)
+  const prefetch = (name: string, axiosCancel: boolean) => () => {
+    getUser({
+      signal: undefined,
+      username: name,
+      perPage: stateShared.perPage,
+      page: state.page + 1,
+      token,
+      axiosCancel,
+    })
       .then((data: IDataOne) => {
         if (!!data && (data.error_404 || data.error_403)) {
-          getOrg(undefined, name, stateShared.perPage, state.page + 1, token)
+          getOrg({
+            signal: undefined,
+            org: name,
+            perPage: stateShared.perPage,
+            page: state.page + 1,
+            token,
+            axiosCancel,
+          })
             .then((data: IDataOne) => {
               dataPrefetch.current = data;
             })
@@ -249,7 +262,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       setLoading(true); // spawn loading spinner at bottom page
       setNotification('');
       if (clickedGQLTopic.queryTopic !== undefined) {
-        getSearchTopics(abortController.signal, clickedGQLTopic.queryTopic, userDataRef.current!)
+        getSearchTopics({
+          signal: abortController.signal,
+          topic: clickedGQLTopic.queryTopic,
+          token: userDataRef.current!,
+          axiosCancel,
+        })
           .then((res: IDataOne) => {
             actionController(res);
           })
@@ -271,7 +289,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           userNameTransformed = stateShared.username;
         }
         userNameTransformed.forEach((user) => {
-          const temp = prefetch(user);
+          const temp = prefetch(user, axiosCancel);
           const clone = JSON.parse(JSON.stringify(dataPrefetch.current));
           actionController(clone, temp);
         });
@@ -286,12 +304,26 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         const promises: Promise<void>[] = [];
         userNameTransformed.forEach((name) => {
           promises.push(
-            getUser(signal.signal, name, stateShared.perPage, state.page, token)
+            getUser({
+              signal: signal.signal,
+              username: name,
+              perPage: stateShared.perPage,
+              axiosCancel,
+              page: state.page,
+              token,
+            })
               .then((data: IDataOne) => {
                 const callback = () =>
-                  getOrg(signal.signal, name, stateShared.perPage, 1, token)
+                  getOrg({
+                    signal: signal.signal,
+                    org: name,
+                    perPage: stateShared.perPage,
+                    page: state.page,
+                    axiosCancel,
+                    token,
+                  })
                     .then((data: IDataOne) => {
-                      const temp = prefetch(name);
+                      const temp = prefetch(name, axiosCancel);
                       actionController(data, temp);
                     })
                     .catch((error) => {
@@ -304,7 +336,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                         error,
                       });
                     });
-                const temp = prefetch(name);
+                const temp = prefetch(name, axiosCancel);
                 actionController(data, temp, callback);
               })
               .catch((error) => {
@@ -337,10 +369,17 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     let paginationInfo = 0;
     userNameTransformed.forEach((name) => {
       promises.push(
-        getUser(signal.signal, name, stateShared.perPage, 1, token)
+        getUser({ signal: signal.signal, username: name, perPage: stateShared.perPage, page: 1, axiosCancel, token })
           .then((data: IDataOne) => {
             const callback = () =>
-              getOrg(signal.signal, name, stateShared.perPage, 1, token)
+              getOrg({
+                signal: signal.signal,
+                org: name,
+                perPage: stateShared.perPage,
+                page: 1,
+                axiosCancel,
+                token,
+              })
                 .then((data: IDataOne) => {
                   paginationInfo += data.paginationInfoData;
                   dispatch({
@@ -349,7 +388,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                       lastPage: paginationInfo,
                     },
                   });
-                  const temp = prefetch(name);
+                  const temp = prefetch(name, axiosCancel);
                   actionController(data, temp);
                 })
                 .catch((error) => {
@@ -369,7 +408,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 lastPage: paginationInfo,
               },
             });
-            const temp = prefetch(name);
+            const temp = prefetch(name, axiosCancel);
             actionController(data, temp, callback);
           })
           .catch((error) => {
@@ -528,7 +567,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     // so you need another dependency of stateShared.perPage
     // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.username, stateShared.perPage, state.mergedData]);
+  }, [stateShared.username, stateShared.perPage, state.mergedData, axiosCancel]);
 
   useEffect(() => {
     let isFinished = false;
@@ -543,11 +582,14 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.page]);
+  }, [state.page, axiosCancel]);
 
   useEffect(() => {
     if (location.pathname !== '/') {
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+      axiosCancel = true;
+    } else {
+      axiosCancel = false; // back to default when in '/' path
     }
   }, [location.pathname, stateShared.username]);
 
@@ -658,13 +700,14 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           return acc;
         }, [] as any[]);
         const fetchData = async () => {
-          const response = await getRepoImages(
-            abortController.signal,
+          const response = await getRepoImages({
+            signal: abortController.signal,
             data,
-            Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
-            state.page,
-            token
-          );
+            topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+            page: state.page,
+            token,
+            axiosCancel,
+          });
           const reader = response!.body!.getReader();
           const td = new TextDecoder('utf-8');
           while (true) {
@@ -694,7 +737,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.shouldFetchImages, isMergedDataExist]
+    [state.shouldFetchImages, isMergedDataExist, axiosCancel]
   );
 
   const userDataRef = useRef<string>();
@@ -731,7 +774,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           variables,
         });
         let paginationInfo = 0;
-        return getSearchTopics(abortController.signal, variables.queryTopic, userDataRef.current!)
+        return getSearchTopics({
+          signal: abortController.signal,
+          topic: variables.queryTopic,
+          token: userDataRef.current!,
+          axiosCancel,
+        })
           .then((result: IDataOne) => {
             paginationInfo += result.paginationInfoData;
             dispatch({
@@ -755,7 +803,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.tokenGQL, userDataRef.current, state.filterBySeen] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
+    [stateShared.tokenGQL, userDataRef.current, state.filterBySeen, axiosCancel] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
   );
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 

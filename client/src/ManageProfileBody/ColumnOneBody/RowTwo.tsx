@@ -20,7 +20,7 @@ import { LocationGraphQL } from '../../typing/interface';
 interface RowTwoProps {
   handleLanguageFilter: (...args: any) => void;
 }
-
+let axiosCancel = false;
 const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
   const [, dispatchManageProfile] = useTrackedStateManageProfile();
   const [stateShared, dispatchStateShared] = useTrackedStateShared();
@@ -83,15 +83,17 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
       (async () => {
         let isApiExceeded = false;
         const promises: Promise<any>[] = [];
-        await getUser(
-          abortController.signal,
-          location?.state?.data?.userData?.getUserData?.userName,
-          +readEnvironmentVariable('QUERY_GITHUB_API')!,
-          1,
-          location?.state?.data?.userData && location?.state?.data?.userData?.getUserData
-            ? location?.state?.data?.userData?.getUserData.token
-            : ''
-        ).then((data) => {
+        await getUser({
+          signal: abortController.signal,
+          username: location?.state?.data?.userData?.getUserData?.userName,
+          perPage: +readEnvironmentVariable('QUERY_GITHUB_API')!,
+          page: 1,
+          token:
+            location?.state?.data?.userData && location?.state?.data?.userData?.getUserData
+              ? location?.state?.data?.userData?.getUserData.token
+              : '',
+          axiosCancel,
+        }).then((data) => {
           if (data && data.error_403) {
             isApiExceeded = true;
             setNotification('Sorry, API rate limit exceeded.');
@@ -191,11 +193,14 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.fetchDataPath, consumers, alreadyFetch.current]);
+  }, [stateShared.fetchDataPath, consumers, alreadyFetch.current, axiosCancel]);
 
   useEffect(() => {
     if (location.pathname !== '/profile') {
       abortController.abort(); //cancel the fetch when the user go away from current page
+      axiosCancel = true;
+    } else {
+      axiosCancel = false;
     }
   }, [location.pathname]);
 

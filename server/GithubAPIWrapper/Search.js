@@ -16,9 +16,10 @@ class Search extends Requestable {
    * @param {Object} defaults - defaults for the search
    * @param {Requestable.auth} [auth] - information required to authenticate to Github
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
+   * @param axios
    */
-  constructor(defaults, auth, apiBase) {
-    super(auth, apiBase);
+  constructor(defaults, auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
     this.__defaults = this._getOptionsWithDefaults(defaults);
   }
 

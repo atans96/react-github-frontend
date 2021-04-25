@@ -16,9 +16,10 @@ class Organization extends Requestable {
    * @param {string} organization - the name of the organization
    * @param {Requestable.auth} [auth] - information required to authenticate to Github
    * @param {string} [apiBase=https://api.github.com] - the base Github API URL
+   * @param axios
    */
-  constructor(organization, auth, apiBase) {
-    super(auth, apiBase);
+  constructor(organization, auth, apiBase, axios) {
+    super({ auth, apiBase, axios });
     this.__name = organization;
   }
 
