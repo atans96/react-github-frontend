@@ -1,7 +1,4 @@
-const axios = require("redaxios");
 const util = require("../util");
-axios.defaults.withCredentials = true;
-
 module.exports = async (req, res, ctx, ...args) => {
   let renderImages = [];
   const token = util.convertJWTToken(req.body.token);

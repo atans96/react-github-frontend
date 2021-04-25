@@ -6,7 +6,6 @@
  */
 
 const Requestable = require("./Requestable.js");
-const Utf8 = require("utf8");
 const Base64 = require("js-base64");
 
 /**
@@ -356,7 +355,7 @@ class Repository extends Requestable {
     if (typeof content === "string") {
       console.log("contet is a string");
       return {
-        content: Utf8.encode(content),
+        content: Buffer.from(content, "utf-8"),
         encoding: "utf-8",
       };
     } else if (typeof Buffer !== "undefined" && content instanceof Buffer) {

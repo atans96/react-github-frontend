@@ -14,7 +14,6 @@
     "apollo-server-fastify": "^2.19.2",
     "babel-loader": "^8.2.2",
     "blurhash": "^1.1.3",
-    "cors": "^2.8.5",
     "cors-anywhere": "^0.4.3",
     "deep-merge": "^1.0.0",
     "dotenv": "^8.2.0",
@@ -38,11 +37,9 @@
     "lodash": "^4.17.20",
     "mongodb": "^3.6.4",
     "mongoose": "^5.11.5",
-    "redaxios": "^0.4.1",
     "remarkable": "^2.0.1",
     "sharp": "^0.28.1",
-    "url-exist": "^2.0.2",
-    "utf8": "^3.0.0"
+    "url-exist": "^2.0.2"
   },
   "engines": {
     "node": "12.x"

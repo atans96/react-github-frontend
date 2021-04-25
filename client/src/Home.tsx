@@ -26,8 +26,6 @@ import { Fab } from '@material-ui/core';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import { Masonry } from './util/masonic/masonry';
-// @ts-ignore
-import ndjsonStream from 'can-ndjson-stream';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -113,7 +111,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
   // useState is used when the HTML depends on it directly to render something
-  const [shouldRenderSkeleton, setRenderSkeleton] = useState(false);
   const [isLoading, setLoading] = useState(false);
   const [notification, setNotification] = useState('');
   const [clickedGQLTopic, setGQLTopic] = useState({
@@ -352,13 +349,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                       lastPage: paginationInfo,
                     },
                   });
-                  setTimeout(() => {
-                    // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-                    // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-                    // changing state to false
-                    setRenderSkeleton(false);
-                  }, 1000);
-                  setRenderSkeleton(true);
                   const temp = prefetch(name);
                   actionController(data, temp);
                 })
@@ -379,13 +369,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 lastPage: paginationInfo,
               },
             });
-            setTimeout(() => {
-              // setTimeout is not sync function so it will execute setRenderSkeleton(true);
-              // first before setRenderSkeleton(false); so set 1.5 second for setRenderSkeleton(true) before
-              // changing state to false
-              setRenderSkeleton(false);
-            }, 1000);
-            setRenderSkeleton(true);
             const temp = prefetch(name);
             actionController(data, temp, callback);
           })
@@ -512,7 +495,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
-    isLoading || shouldRenderSkeleton || isFetchFinish.current // include isFetchFinish to indicate not to listen anymore
+    isLoading || !isMergedDataExist || isFetchFinish.current // include isFetchFinish to indicate not to listen anymore
   );
 
   function handleResize() {
@@ -758,10 +741,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
               },
             });
             actionController(result);
-            setTimeout(() => {
-              setRenderSkeleton(false);
-            }, 1000);
-            setRenderSkeleton(true);
           })
           .catch((error) => {
             actionResolvePromise({
@@ -857,12 +836,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             </div>
           </Then>
         </If>
-        <If condition={isMergedDataExist && !shouldRenderSkeleton}>
+        <If condition={isMergedDataExist}>
           <Then>
             <MasonryMemo data={whichToUse()} getRootProps={getRootProps} state={state} stateShared={stateShared} />
           </Then>
         </If>
-        <If condition={shouldRenderSkeleton}>
+        <If condition={!isMergedDataExist}>
           <Then>
             <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
               {() => {
