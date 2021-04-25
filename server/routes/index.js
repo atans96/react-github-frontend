@@ -113,9 +113,20 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      contributorsRepoInfo(req, res, fastify, {
-        axios: opts.axios,
-        github: opts.githubAPIWrapper,
+      const url = crypto.createHash("md5").update(req.url).digest("hex");
+      const { redis } = fastify;
+      redis.get(url, (err, val) => {
+        if (val) {
+          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          res.send(val);
+        } else if (!err && !val) {
+          contributorsRepoInfo(req, res, fastify, {
+            axios: opts.axios,
+            github: opts.githubAPIWrapper,
+          });
+        } else {
+          throw new Error(`Something Wrong with ${req.url} ${err}`);
+        }
       });
     }
   );
