@@ -209,6 +209,8 @@ class MarkdownParserClass {
     this.req = req;
     this.res = res;
     this.axios = axios;
+    this.doQueryWithoutImages.bind(this);
+    this.doQuery.bind(this);
   }
   async doQueryWithoutImages(data, token, ...args) {
     return new Promise((resolve, reject) => {
@@ -326,5 +328,6 @@ class MarkdownParserClass {
     }
   }
 }
-const MarkdownParser = (req, res) => new MarkdownParserClass(req, res);
+const MarkdownParser = (req, res, axios) =>
+  new MarkdownParserClass(req, res, axios);
 module.exports = MarkdownParser;
