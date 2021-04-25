@@ -1,5 +1,7 @@
 import { readEnvironmentVariable } from '../util';
-import { RepoRenderImages, SearchUser } from '../typing/interface';
+import { SearchUser } from '../typing/interface';
+// @ts-ignore
+import ndjsonStream from 'can-ndjson-stream';
 
 function rateLimitInfo(token: string) {
   return new Promise(function (resolve, reject) {
@@ -214,7 +216,7 @@ export const getRepoImages = async (signal: any, data: any[], topic: string, pag
   //must contain a different URL to save each request
   const toke = await rotateTokens();
   const validToken = toke.length === 0 ? token : toke;
-  const response = await fetch(`/api/images_from_markdown?query_topic=${topic}&page=${page}`, {
+  return await fetch(`/api/images_from_markdown?query_topic=${topic}&page=${page}`, {
     method: 'POST',
     body: JSON.stringify({
       data: data,
@@ -227,5 +229,4 @@ export const getRepoImages = async (signal: any, data: any[], topic: string, pag
     headers: new Headers({ 'content-type': 'application/json' }),
     signal,
   });
-  return (await response.json()) as RepoRenderImages;
 };

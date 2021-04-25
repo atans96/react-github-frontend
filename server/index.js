@@ -8,11 +8,6 @@ const { Db } = require("./decorators/db");
 const jwtService = require("./helpers/jwt-service");
 const githubAPIWrapper = require("./GithubAPIWrapper/index");
 axios.defaults.withCredentials = true;
-const { Client } = require("elasticsearch");
-const elastic = new Client({
-  host: "localhost:9200",
-  log: "error",
-});
 mongoose
   .connect(process.env.DATABASE, {
     useCreateIndex: true,
@@ -48,7 +43,6 @@ cors_proxy
     config,
     axios,
     db,
-    elastic,
     jwtService,
     githubAPIWrapper,
   });

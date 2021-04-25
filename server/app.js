@@ -23,7 +23,6 @@ module.exports = async function buildFastify(deps) {
     jwtService,
     db,
     githubAPIWrapper,
-    elastic,
     logger = true,
     bodyLimit = 6000000000,
   } = deps;
@@ -75,7 +74,6 @@ module.exports = async function buildFastify(deps) {
   fastify.register(routes, {
     axios,
     githubAPIWrapper,
-    elastic,
     jwtService,
     config,
   });
