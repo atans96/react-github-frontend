@@ -27,17 +27,9 @@ const sendErrorMessageToClient = (errors, res, rateLimit = {}) => {
 };
 const convertJWTToken = (token) => {
   try {
-    if (token !== "") {
-      return jwt.verify(token, process.env.JWT_SECRET).token;
-    } else {
-      return "";
-    }
+    return jwt.verify(token, process.env.JWT_SECRET).token;
   } catch (e) {
-    if (e.name === "JsonWebTokenError") {
-      return token;
-    } else {
-      throw new Error(e.message);
-    }
+    throw new Error(e.message);
   }
 };
 module.exports = {

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
@@ -11,7 +11,6 @@ import ImagesCard from './CardBody/ImagesCard';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import { useViewportSpy } from '../hooks/use-viewport-spy';
 import { createRenderElement } from '../Layout/MasonryLayout';
 
 export interface CardProps {

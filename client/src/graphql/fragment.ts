@@ -1,5 +1,5 @@
-import gql from 'graphql-tag';
-import { enableExperimentalFragmentVariables } from 'graphql-tag';
+import { gql } from '@apollo/client';
+import { enableExperimentalFragmentVariables } from '@apollo/client';
 enableExperimentalFragmentVariables();
 export const pageInfoCursor = gql`
   fragment pageInfoCursor on RepositoryTopicConnection {

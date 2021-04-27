@@ -1,7 +1,7 @@
 const util = require("../util");
 module.exports = async (req, res, ctx, ...args) => {
   let renderImages = [];
-  const token = util.convertJWTToken(req.body.token);
+  const token = util.convertJWTToken(req.query.token);
   await args[0].github
     .MarkdownParser(req, res, args[0].axios)
     .doQuery(req.body.data, renderImages, token);
