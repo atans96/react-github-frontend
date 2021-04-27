@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActionResolvePromiseOutput, IDataOne, IState, IStateShared } from './typing/interface';
 import CardSkeleton from './HomeBody/CardSkeleton';
-import { getOrg, getRepoImages, getSearchTopics, getUser } from './services';
+import { getOrg, getRepoImages, getSearchTopics, getUser, crawlerPython } from './services';
 import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
@@ -250,7 +250,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         });
       });
   };
-  const fetchUserMore = (signal: any) => {
+  const fetchUserMore = () => {
     // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
     // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
     // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
@@ -294,68 +294,10 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           actionController(clone, temp);
         });
         dataPrefetch.current = undefined;
-      } else {
-        let userNameTransformed: string[];
-        if (!Array.isArray(stateShared.username)) {
-          userNameTransformed = [stateShared.username];
-        } else {
-          userNameTransformed = stateShared.username;
-        }
-        const promises: Promise<void>[] = [];
-        userNameTransformed.forEach((name) => {
-          promises.push(
-            getUser({
-              signal: signal.signal,
-              username: name,
-              perPage: stateShared.perPage,
-              axiosCancel,
-              page: state.page,
-              token,
-            })
-              .then((data: IDataOne) => {
-                const callback = () =>
-                  getOrg({
-                    signal: signal.signal,
-                    org: name,
-                    perPage: stateShared.perPage,
-                    page: state.page,
-                    axiosCancel,
-                    token,
-                  })
-                    .then((data: IDataOne) => {
-                      const temp = prefetch(name, axiosCancel);
-                      actionController(data, temp);
-                    })
-                    .catch((error) => {
-                      actionResolvePromise({
-                        action: ActionResolvedPromise.error,
-                        setLoading,
-                        setNotification,
-                        isFetchFinish: isFetchFinish.current,
-                        displayName: displayName!,
-                        error,
-                      });
-                    });
-                const temp = prefetch(name, axiosCancel);
-                actionController(data, temp, callback);
-              })
-              .catch((error) => {
-                actionResolvePromise({
-                  action: ActionResolvedPromise.error,
-                  setLoading,
-                  setNotification,
-                  isFetchFinish: isFetchFinish.current,
-                  displayName: displayName!,
-                  error,
-                });
-              })
-          );
-        });
-        Promise.all(promises).then(noop);
       }
     }
   };
-  const fetchUser = (signal: any) => {
+  const fetchUser = () => {
     setLoading(true);
     isFetchFinish.current = false;
     setNotification('');
@@ -369,11 +311,18 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     let paginationInfo = 0;
     userNameTransformed.forEach((name) => {
       promises.push(
-        getUser({ signal: signal.signal, username: name, perPage: stateShared.perPage, page: 1, axiosCancel, token })
+        getUser({
+          signal: abortController.signal,
+          username: name,
+          perPage: stateShared.perPage,
+          page: 1,
+          axiosCancel,
+          token,
+        })
           .then((data: IDataOne) => {
             const callback = () =>
               getOrg({
-                signal: signal.signal,
+                signal: abortController.signal,
                 org: name,
                 perPage: stateShared.perPage,
                 page: 1,
@@ -423,7 +372,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           })
       );
     });
-    Promise.all(promises).then(noop);
+    promises.forEach((promise) => promise.then(noop));
   };
   const mergedDataRef = useRef<MergedDataProps[]>([]);
   const isLoadingRef = useRef<boolean>(false);
@@ -557,7 +506,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       // However, as the component unmount, stateShared.username is not "", thus causing fetchUser to fire in useEffect
       // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
       // otherwise, don't re-fetch. in this way, stateShared.username and state.mergedData are still preserved
-      fetchUser(abortController);
+      fetchUser();
       return () => {
         isFinished = true;
       };
@@ -573,9 +522,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     let isFinished = false;
     if (location.pathname === '/' && !isFinished) {
       if (stateShared.username.length > 0) {
-        fetchUserMore(abortController);
+        fetchUserMore();
       } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
-        fetchUserMore(abortController);
+        fetchUserMore();
       }
       return () => {
         isFinished = true;
@@ -693,12 +642,28 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 value: {
                   full_name: object.full_name,
                   branch: object.default_branch,
+                  ownerName: object.owner.login,
                 },
               }
             )
           );
           return acc;
         }, [] as any[]);
+        const doCrawler = async () => {
+          for (let i = 0; i < data.length; i++) {
+            const obj = data[i];
+            const response = await crawlerPython({
+              signal: abortController.signal,
+              data: obj,
+              topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+              page: state.page,
+              axiosCancel,
+              token,
+            });
+
+            console.log(response);
+          }
+        };
         const fetchData = async () => {
           const response = await getRepoImages({
             signal: abortController.signal,
@@ -730,7 +695,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             }
           }
         };
-        fetchData().then(noop);
+        // fetchData().then(noop);
+        doCrawler()
+          .then(noop)
+          .catch((err) => {
+            console.log(err);
+          });
         return () => {
           isFinished = true;
         };
@@ -816,8 +786,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     return state.mergedData; // return this if filteredTopics.length === 0
   };
 
-  // TODO: change the styling like: https://gatsby.pizza/ or maybe styling like nested menu (NOT SURE YET)
-
   // TODO: put the color of each card to change as the user scroll to the bottom to see it: https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
   // and put delay at each Card so that as if the animation is at random
 
@@ -834,8 +802,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: test brutal requests the reslience of handling requests
 
-  //TODO: disable searchbar while still loading
-
   //TODO: icon of website when there's URL in the description scrapped using https://github.com/danielmiessler/GitHubRating/blob/master/GitHubRating.sh (curl)
 
   //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
@@ -847,9 +813,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   // https://swc.rs/docs/usage-swc-loader
 
   //TODO: after Details is rendered, show related repo from author and contributors sorted based on stargazers.
-
-  //TODO: if not on the viewport (already seen), render fake card of no contents but the width and height must be similar to what's previously render/seen so that it won't affect
-  // the layout at the bottom
 
   //TODO: if the user is new, guide them using https://shepherdjs.dev/
   return (

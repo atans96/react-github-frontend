@@ -1,34 +1,5 @@
 import { readEnvironmentVariable } from '../util';
 import { SearchUser } from '../typing/interface';
-// @ts-ignore
-import ndjsonStream from 'can-ndjson-stream';
-
-function rateLimitInfo(token: string) {
-  return new Promise(function (resolve, reject) {
-    (async () => {
-      let rateLimit = null;
-      do {
-        rateLimit = await getRateLimitInfo(token);
-      } while (rateLimit === null);
-      resolve(rateLimit);
-    })();
-  });
-}
-
-async function rotateTokens() {
-  //TODO: in production, user only get 1 token, that is provided by him/her
-  const tokens = readEnvironmentVariable('TOKENS')!.split(',');
-  let validToken = tokens.slice()[0];
-  while (tokens.length) {
-    const token = tokens.shift();
-    const rateLimit: any = await rateLimitInfo(token!);
-    if (rateLimit.rateLimit.limit > 10 || rateLimit.rateLimitGQL.limit > 10 || rateLimit.rateLimitSearch.limit > 5) {
-      validToken = token!;
-      break;
-    }
-  }
-  return validToken;
-}
 
 export const getAllGraphQLNavBar = async (username: string) => {
   const response = await fetch(`/api/graphqlUserData?username=${username}`, {
@@ -38,9 +9,7 @@ export const getAllGraphQLNavBar = async (username: string) => {
   return await response.json();
 };
 export const getTopContributors = async (fullName: string, token: string | null | undefined) => {
-  const toke = await rotateTokens();
-  const validToken = toke.length === 0 ? token : toke;
-  const response = await fetch(`/api/getTopContributors?fullName=${fullName}&token=${validToken}`, {
+  const response = await fetch(`/api/getTopContributors?full_name=${fullName}&token=${token}`, {
     method: 'GET',
     credentials: 'include',
   });
@@ -77,6 +46,7 @@ export const getTokenGQL = async () => {
 export const removeTokenGQL = async () => {
   const response = await fetch(`/api/destroyTokenGQL`, {
     method: 'GET',
+    credentials: 'include',
   });
   return await response.json();
 };
@@ -84,6 +54,7 @@ export const subscribeUser = async (username: string, signal: any) => {
   if (username !== '') {
     const response = await fetch(`/api/subscribe_user?username=${username}`, {
       method: 'GET',
+      credentials: 'include',
       signal,
     });
     return await response.json();
@@ -105,14 +76,11 @@ export const getUser = async ({
   axiosCancel: boolean;
 }) => {
   if (username !== '') {
-    const toke = await rotateTokens();
-    const validToken = toke.length === 0 ? token : toke;
     const response = await fetch(
-      `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${
-        token === null ? '' : validToken
-      }&axiosCancel=${axiosCancel}`,
+      `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
+        credentials: 'include',
         signal,
       }
     );
@@ -135,14 +103,11 @@ export const getOrg = async ({
   axiosCancel: boolean;
 }) => {
   if (org !== '') {
-    const toke = await rotateTokens();
-    const validToken = toke.length === 0 ? token : toke;
     const response = await fetch(
-      `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${
-        token === null ? '' : validToken
-      }&axiosCancel=${axiosCancel}`,
+      `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
+        credentials: 'include',
         signal,
       }
     );
@@ -152,26 +117,28 @@ export const getOrg = async ({
 export const getValidGQLProperties = async () => {
   const response = await fetch(`/api/getValidGQLProperties`, {
     method: 'GET',
+    credentials: 'include',
   });
   return await response.json();
 };
 export const markdownParsing = async (full_name: string, branch: string, token: string | null | undefined) => {
-  const toke = await rotateTokens();
-  const validToken = toke.length === 0 ? token : toke;
-  const response = await fetch(
-    `/api/markdown?full_name=${full_name}&branch=${branch}&token=${token === null ? '' : validToken}`
-  );
+  const response = await fetch(`/api/markdown?full_name=${full_name}&branch=${branch}&token=${token}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
   return await response.json();
 };
 export const getRateLimitInfo = async (token: string | null | undefined) => {
   const response = await fetch(`/api/get_rate_limit?token=${token === null ? '' : token}`, {
     method: 'GET',
+    credentials: 'include',
   });
   return await response.json();
 };
 export const verifyJWTToken = async (token: string, username: string, isLoggedIn: boolean) => {
   const response = await fetch(`/api/verifyJWTToken?token=${token}&username=${username}&isLoggedIn=${isLoggedIn}`, {
     method: 'GET',
+    credentials: 'include',
   });
   return await response.json();
 };
@@ -185,10 +152,9 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
   return await response.json();
 };
 export const getSearchUsers = async (query: string, token: string | null | undefined) => {
-  const toke = await rotateTokens();
-  const validToken = toke.length === 0 ? token : toke;
-  const response = await fetch(`/api/search_users?user=${query}&token=${validToken === null ? '' : validToken}`, {
+  const response = await fetch(`/api/search_users?username=${query}&token=${token}`, {
     method: 'GET',
+    credentials: 'include',
   });
   return (await response.json()) as SearchUser;
 };
@@ -203,15 +169,11 @@ export const getSearchTopics = async ({
   topic: string;
   token: string | null | undefined;
 }) => {
-  const toke = await rotateTokens();
-  const validToken = toke.length === 0 ? token : toke;
-  const response = await fetch(
-    `/api/search_topics?topic=${topic}&token=${validToken === null ? '' : validToken}&axiosCancel=${axiosCancel}`,
-    {
-      method: 'GET',
-      signal,
-    }
-  );
+  const response = await fetch(`/api/search_topics?topic=${topic}&token=${token}&axiosCancel=${axiosCancel}`, {
+    method: 'GET',
+    credentials: 'include',
+    signal,
+  });
   return await response.json();
 };
 export const getElasticSearchBertAutocomplete = async (query: string) => {
@@ -224,6 +186,7 @@ export const getElasticSearchBertAutocomplete = async (query: string) => {
 export const getElasticSearchBert = async (query: string) => {
   const response = await fetch(`${readEnvironmentVariable('BERT')}?q=${query}&docName=github`, {
     method: 'GET',
+    credentials: 'include',
     mode: 'cors',
   });
   return await response.json();
@@ -241,6 +204,7 @@ export const requestGithubGraphQLLogin = async (token: string) => {
 export const convertToWebP = async (imgUrl: string) => {
   const response = await fetch(`/api/convert_to_webp?imgUrl=${imgUrl}`, {
     method: 'GET',
+    credentials: 'include',
   });
   return await response.json();
 };
@@ -261,19 +225,49 @@ export const getRepoImages = async ({
 }) => {
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
-  const toke = await rotateTokens();
-  const validToken = toke.length === 0 ? token : toke;
-  return await fetch(`/api/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`, {
-    method: 'POST',
-    body: JSON.stringify({
-      data: data,
-      token: validToken,
-    }),
-    //Fastify not only supports async functions for use as controller code,
-    // but it also automatically parses incoming requests into JSON if the Content-Type header suggests
-    // the body is JSON. Thus, when using fetch request to Fastify, we need to use headers of content-type
-    // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
-    headers: new Headers({ 'content-type': 'application/json' }),
-    signal,
-  });
+  return await fetch(
+    `/api/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        data: data,
+      }),
+      //Fastify not only supports async functions for use as controller code,
+      // but it also automatically parses incoming requests into JSON if the Content-Type header suggests
+      // the body is JSON. Thus, when using fetch request to Fastify, we need to use headers of content-type
+      // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
+      headers: new Headers({ 'content-type': 'application/json' }),
+      signal,
+    }
+  );
+};
+export const crawlerPython = async ({
+  axiosCancel = false,
+  signal,
+  data,
+  topic,
+  page,
+  token,
+}: {
+  axiosCancel: boolean;
+  signal: any | undefined;
+  data: any[];
+  topic: string;
+  page: number;
+  token: string | null | undefined;
+}) => {
+  const response = await fetch(
+    `${readEnvironmentVariable(
+      'PYTHON_CRAWLER'
+    )}?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        data: data,
+      }),
+      headers: new Headers({ 'content-type': 'application/json' }),
+      signal,
+    }
+  );
+  return await response.json();
 };

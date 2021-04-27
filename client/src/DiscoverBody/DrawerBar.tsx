@@ -113,8 +113,8 @@ const DrawerBar = () => {
         <div className={classes.toolbar}>
           <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
         </div>
-        {RSSFeed()}
-        {SubscribeFeed()}
+        {/*{RSSFeed()}*/}
+        {/*{SubscribeFeed()}*/}
         {SubscribeFeedSetting()}
         {open && (
           <DraggableCore key="drawerBar" {...dragHandlers}>

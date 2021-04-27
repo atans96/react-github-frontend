@@ -1,4 +1,4 @@
-const { ForbiddenError } = require("apollo-server");
+const { ForbiddenError } = require("apollo-server-fastify");
 module.exports = async (req, res, ctx, ...args) => {
   if (req.query.username === undefined) {
     res.send({
