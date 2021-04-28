@@ -5,7 +5,14 @@ import { getOrg, getRepoImages, getSearchTopics, getUser, crawlerPython } from '
 import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
-import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, Seen, SeenProps } from './typing/type';
+import {
+  ActionResolvedPromise,
+  ImagesDataProps,
+  MergedDataProps,
+  Nullable,
+  Seen,
+  SeenProps,
+} from './typing/type';
 import Card from './HomeBody/Card';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
@@ -70,7 +77,7 @@ interface MasonryLayoutMemo {
 interface MasonryMemo extends MasonryLayoutMemo {
   getRootProps: any;
 }
-const MasonryMemo = React.memo<Omit<MasonryMemo, 'children'>>(
+const MasonryMemo = React.memo<Omit<MasonryMemo, 'children' | 'state' | 'stateShared'>>(
   ({ data, getRootProps }) => {
     return (
       <div className={'masonic'}>
@@ -86,14 +93,7 @@ const MasonryMemo = React.memo<Omit<MasonryMemo, 'children'>>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.data.length, nextProps.data.length) &&
-      isEqualObjects(prevProps.stateShared.tokenGQL, nextProps.stateShared.tokenGQL) &&
-      isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn) &&
-      isEqualObjects(prevProps.state.imagesData, nextProps.state.imagesData) &&
-      isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
-      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width)
-    ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
+    return isEqualObjects(prevProps.data.length, nextProps.data.length); // when the component receives updated data from state such as load more, or clicked to login to access graphql
     // it needs to get re-render to get new data.
   }
 );
@@ -651,6 +651,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         }, [] as any[]);
         const doCrawler = async () => {
           for (let i = 0; i < data.length; i++) {
+            if (i == 2) {
+              break;
+            }
             const obj = data[i];
             const response = await crawlerPython({
               signal: abortController.signal,
@@ -660,8 +663,26 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
               axiosCancel,
               token,
             });
-
-            console.log(response);
+            const output = Object.assign(
+              {},
+              {
+                id: obj.id,
+                webLink: response.webLink || '',
+                profile: {
+                  bio: response.profile.bio || '',
+                  homeLocation: response.profile.homeLocation || [],
+                  twitter: response.profile.twitter || [],
+                  url: response.profile.url || [],
+                  worksFor: response.profile.worksFor || [],
+                },
+              }
+            );
+            dispatch({
+              type: 'SET_CARD_ENHANCEMENT',
+              payload: {
+                cardEnhancement: output,
+              },
+            });
           }
         };
         const fetchData = async () => {
@@ -695,11 +716,15 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             }
           }
         };
-        // fetchData().then(noop);
+        fetchData()
+          .then(noop)
+          .catch((err) => {
+            throw new Error(err);
+          });
         doCrawler()
           .then(noop)
           .catch((err) => {
-            console.log(err);
+            throw new Error(err);
           });
         return () => {
           isFinished = true;
@@ -850,7 +875,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         </If>
         <If condition={isMergedDataExist}>
           <Then>
-            <MasonryMemo data={whichToUse()} getRootProps={getRootProps} state={state} stateShared={stateShared} />
+            <MasonryMemo data={whichToUse()} getRootProps={getRootProps} />
           </Then>
         </If>
         <If condition={!isMergedDataExist}>

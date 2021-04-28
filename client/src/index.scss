@@ -493,6 +493,46 @@ i.special {
         transition: all 0.3s;
       }
     }
+    .bio {
+      cursor: help;
+    }
+    .github-card {
+      text-align: center;
+      position: relative;
+    }
+    .github-card ul {
+      font-size: 8px;
+      color: #707070;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      zoom: 1;
+    }
+    .github-card ul:after {
+      display: block;
+      content: '';
+      clear: both;
+    }
+    .github-card .status li {
+      display: flex;
+      float: left;
+      padding: 10px;
+    }
+    .github-card .status strong {
+      display: block;
+      color: #292f33;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+    .github-card .status a {
+      transition: transform .2s;
+      color: #707070;
+      position: relative;
+    }
+    .github-card .status a:hover {
+      color: #4183c4;
+      transform: scale(1.5);
+    }
   }
   .trunctuatedTexts {
     overflow: auto;

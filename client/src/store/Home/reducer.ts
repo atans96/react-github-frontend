@@ -1,6 +1,7 @@
 import { IAction, IState } from '../../typing/interface';
 import { fastFilter } from '../../util';
 import _ from 'lodash';
+import { CardEnhancement } from '../../typing/type';
 
 export type Action =
   | 'LAST_PAGE'
@@ -22,6 +23,7 @@ export type Action =
   | 'FILTER_SET_TOPICS_REMOVE'
   | 'MERGED_DATA_FILTER_BY_TAGS'
   | 'SHOULD_IMAGES_DATA_ADDED'
+  | 'SET_CARD_ENHANCEMENT'
   | 'UNDISPLAY_MERGED_DATA';
 
 export const initialState: IState = {
@@ -30,6 +32,7 @@ export const initialState: IState = {
   mergedData: [],
   repoStat: [],
   filteredMergedData: [],
+  cardEnhancement: new Map<number, CardEnhancement>(),
   filterBySeen: true,
   filteredTopics: [],
   topics: [],
@@ -48,6 +51,17 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
       return {
         ...state,
         repoStat: action.payload.repoStat,
+      };
+    }
+    case 'SET_CARD_ENHANCEMENT': {
+      state.cardEnhancement = state.cardEnhancement.set(
+        action.payload.cardEnhancement.id,
+        action.payload.cardEnhancement
+      );
+      //https://stackoverflow.com/questions/56795743/how-to-convert-map-to-array-of-object
+      return {
+        ...state,
+        cardEnhancement: new Map([...Array.from(state.cardEnhancement)]), // if we only set state.cardEnhancement.set(action.payload), the dispatch won't get re-render since it's not a brand new object
       };
     }
     case 'UNDISPLAY_MERGED_DATA': {

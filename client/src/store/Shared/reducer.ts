@@ -16,6 +16,7 @@ export type ActionShared =
   | 'USERNAME_ADDED'
   | 'TOKEN_RSS_ADDED'
   | 'SET_DRAWER_WIDTH'
+  | 'SET_CARD_ENHANCEMENT'
   | 'NO_DATA_FETCH';
 
 export const initialStateShared: IStateShared = {
