@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { NavLink } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
+import CardTitle from './CardBody/CardTitle';
 import Stargazers from './CardBody/Stargazers';
 import { MergedDataProps } from '../typing/type';
 import { If } from '../util/react-if/If';
@@ -27,9 +28,14 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
 
   const userCardMemoizedData = useCallback(() => {
-    return data.owner;
+    return { owner: data.owner, id: data.id };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data.owner]);
+  }, [data.owner, data.id]);
+
+  const cardTitleMemoize = useCallback(() => {
+    return { name: data.name, id: data.id };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.name, data.id]);
 
   const topicsCardMemoizedData = useCallback(() => {
     return data.topics;
@@ -111,9 +117,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
       })}
     >
       {createRenderElement(UserCard, { data: userCardMemoizedData() })}
-      <h3 style={{ textAlign: 'center', overflowWrap: 'anywhere' }}>
-        <strong>{data.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
-      </h3>
+      {createRenderElement(CardTitle, { data: cardTitleMemoize() })}
       {createRenderElement(ImagesCard, { index: index })}
       <div className="trunctuatedTexts">
         <h4 style={{ textAlign: 'center' }}>{data.description}</h4>

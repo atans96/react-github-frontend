@@ -2,6 +2,7 @@ import { CSSProperties, Dispatch, MouseEvent, MutableRefObject, ReactNode, Trans
 
 import {
   ActionResolvedPromise,
+  CardEnhancement,
   ContributorsProps,
   HasNextPage,
   ImagesDataProps,
@@ -110,6 +111,7 @@ export interface IState {
   repoStat: [];
   imagesMapData: Map<number, any>;
   filterBySeen: boolean;
+  cardEnhancement: Map<number, CardEnhancement>;
   shouldFetchImages: boolean;
   topics: TopicsProps[];
   filteredTopics: string[];

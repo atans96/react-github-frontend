@@ -93,6 +93,18 @@ export type RenderImagesProps = {
   id: string;
   filteredImages: string[];
 };
+export type Profile = {
+  bio: string;
+  homeLocation: string[];
+  twitter: string[];
+  url: string[];
+  worksFor: string[];
+};
+export type CardEnhancement = {
+  id: number;
+  profile: Profile;
+  webLink: string;
+};
 export type StargazerProps = {
   id: string;
   starredRepositories: {
