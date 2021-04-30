@@ -87,9 +87,9 @@ const ImagesReadmeRepoInfo = S.object()
 //if you define the schema here but forgot to include in the client/service folder, it will throw error
 //if you define the query or body that doesn't exist in the schema, that specific request params/request body will be ignored
 const ImagesReadmeRepoInfoBody = S.object()
-  .title("Any Array of Objects")
+  .title("Object")
   .description("Attributes for body data of Images Readme")
-  .prop("data", S.array().items(S.object()).required());
+  .prop("data", S.object().required());
 
 const ObjectData = S.object();
 

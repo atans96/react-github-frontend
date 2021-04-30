@@ -225,7 +225,7 @@ export const getRepoImages = async ({
 }) => {
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
-  return await fetch(
+  const response = await fetch(
     `/api/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
     {
       method: 'POST',
@@ -240,16 +240,15 @@ export const getRepoImages = async ({
       signal,
     }
   );
+  return await response.json();
 };
 export const crawlerPython = async ({
-  axiosCancel = false,
   signal,
   data,
   topic,
   page,
   token,
 }: {
-  axiosCancel: boolean;
   signal: any | undefined;
   data: any[];
   topic: string;
@@ -257,9 +256,7 @@ export const crawlerPython = async ({
   token: string | null | undefined;
 }) => {
   const response = await fetch(
-    `${readEnvironmentVariable(
-      'PYTHON_CRAWLER'
-    )}?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
+    `${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}&token=${token}`,
     {
       method: 'POST',
       body: JSON.stringify({

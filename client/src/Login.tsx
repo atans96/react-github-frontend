@@ -46,6 +46,7 @@ const Login = () => {
             if (response.data) {
               signUpAdded({
                 variables: {
+                  tokenRSS: '',
                   username: response.data.login,
                   avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
                   token: response.token,

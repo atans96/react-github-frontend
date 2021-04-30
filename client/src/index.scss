@@ -470,6 +470,26 @@ i.special {
   .language .language-list::marker {
     content: '•';
   }
+  .title-href-available {
+    text-decoration: #cc4700;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: stretch;
+    justify-content: center;
+    align-items: baseline;
+    span {
+      margin-right: 5px;
+    }
+  }
+  .title-href-non-available {
+    text-decoration: none;
+    cursor: default;
+    color: black;
+  }
+  .title-href-non-available:hover, .title-href-non-available:visited, .title-href-non-available:link, .title-href-non-available:active {
+    text-decoration: none;
+    cursor: default;
+  }
   a {
     color: #cc4700;
     text-decoration: none;
@@ -515,7 +535,7 @@ i.special {
     }
     .github-card .status li {
       display: flex;
-      float: left;
+      float: right;
       padding: 10px;
     }
     .github-card .status strong {

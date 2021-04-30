@@ -114,7 +114,9 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
           </ul>
         </div>
         <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
-          <a href={githubData.html_url}>{githubData.html_url}</a>
+          <a href={githubData.html_url} target="_blank" rel="noopener noreferrer">
+            {githubData.html_url}
+          </a>
         </div>
         <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
           <NavLink

@@ -12,7 +12,7 @@ const Mutation = {
   Mutation: {
     signUp: async (
       root,
-      { username, avatar, token, languagePreference, code },
+      { username, avatar, token, languagePreference, code, tokenRSS },
       { models: { User } }
     ) => {
       await User.findOneAndUpdate(
@@ -21,6 +21,7 @@ const Mutation = {
           $set: {
             avatar: avatar,
             code: code,
+            tokenRSS: tokenRSS,
             languagePreference: languagePreference,
             token: token,
           },

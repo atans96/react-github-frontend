@@ -27,7 +27,11 @@ const sendErrorMessageToClient = (errors, res, rateLimit = {}) => {
 };
 const convertJWTToken = (token) => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET).token;
+    if (token !== "") {
+      return jwt.verify(token, process.env.JWT_SECRET).token;
+    } else {
+      return "";
+    }
   } catch (e) {
     throw new Error(e.message);
   }

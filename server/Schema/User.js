@@ -26,8 +26,9 @@ const User = gql`
       avatar: String!
       token: String!
       code: String!
+      tokenRSS: String
       languagePreference: [LanguagePreferenceInput]
-    ): Token
+    ): User
     tokenRSSAdded(tokenRSS: String!): Boolean @auth
     setLanguagePreference(languagePreference: [LanguagePreferenceInput]): User
       @auth

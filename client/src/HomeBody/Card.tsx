@@ -13,6 +13,7 @@ import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { createRenderElement } from '../Layout/MasonryLayout';
+import GitHubIcon from '@material-ui/icons/GitHub';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -134,7 +135,9 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         <Then>{createRenderElement(TopicsCard, { data: topicsCardMemoizedData(), getRootProps: getRootProps })}</Then>
       </If>
       <div style={{ textAlign: 'center', overflowWrap: 'anywhere' }} onClick={handleDetailsClicked}>
-        <a href={data.html_url}>{data.html_url}</a>
+        <a href={data.html_url} target="_blank" rel="noopener noreferrer">
+          <GitHubIcon />
+        </a>
       </div>
       <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
         <NavLink
