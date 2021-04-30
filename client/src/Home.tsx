@@ -5,21 +5,14 @@ import { getOrg, getRepoImages, getSearchTopics, getUser, crawlerPython } from '
 import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
-import {
-  ActionResolvedPromise,
-  ImagesDataProps,
-  MergedDataProps,
-  Nullable,
-  Seen,
-  SeenProps,
-} from './typing/type';
+import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, Seen, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
 import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { Counter, fastFilter, isEqualObjects } from './util';
+import { Counter, fastFilter, isEqualObjects, pMap } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 import { Helmet } from 'react-helmet';
@@ -79,9 +72,16 @@ interface MasonryMemo extends MasonryLayoutMemo {
 }
 const MasonryMemo = React.memo<Omit<MasonryMemo, 'children' | 'state' | 'stateShared'>>(
   ({ data, getRootProps }) => {
+    const length = useRef<number>(0);
+    let key = 0;
+    if (data.length < length.current) {
+      key = 1;
+    }
+    length.current = data.length;
     return (
       <div className={'masonic'}>
         <Masonry
+          key={key}
           items={data}
           args={{ getRootProps }}
           columnGutter={10}
@@ -633,6 +633,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       let isFinished = false;
       if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/' && !isFinished) {
         // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
+        dispatch({
+          type: 'SHOULD_IMAGES_DATA_ADDED',
+          payload: {
+            shouldFetchImages: false,
+          },
+        });
         const data = state.mergedData.reduce((acc, object) => {
           acc.push(
             Object.assign(
@@ -649,74 +655,80 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           );
           return acc;
         }, [] as any[]);
+        const promises: Promise<void>[] = [];
+        const promisesImage: Promise<void>[] = [];
+        data.forEach((obj) => {
+          promises.push(
+            new Promise((resolve, reject) => {
+              (async () => {
+                const response = await crawlerPython({
+                  signal: abortController.signal,
+                  data: obj,
+                  topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+                  page: state.page,
+                  token,
+                });
+                const output = Object.assign(
+                  {},
+                  {
+                    id: obj.id,
+                    webLink: response.webLink || '',
+                    profile: {
+                      bio: response.profile.bio || '',
+                      homeLocation: response.profile.homeLocation || [],
+                      twitter: response.profile.twitter || [],
+                      url: response.profile.url || [],
+                      worksFor: response.profile.worksFor || [],
+                    },
+                  }
+                );
+                dispatch({
+                  type: 'SET_CARD_ENHANCEMENT',
+                  payload: {
+                    cardEnhancement: output,
+                  },
+                });
+                resolve();
+              })();
+            })
+          );
+          promisesImage.push(
+            new Promise((resolve, reject) => {
+              (async () => {
+                const response = await getRepoImages({
+                  signal: abortController.signal,
+                  data: obj,
+                  topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+                  page: state.page,
+                  token,
+                  axiosCancel,
+                });
+                if (response.length > 0) {
+                  dispatch({
+                    type: 'IMAGES_DATA_ADDED',
+                    payload: {
+                      images: response,
+                    },
+                  });
+                }
+                resolve();
+              })();
+            })
+          );
+        });
         const doCrawler = async () => {
-          for (let i = 0; i < data.length; i++) {
-            if (i == 2) {
-              break;
-            }
-            const obj = data[i];
-            const response = await crawlerPython({
-              signal: abortController.signal,
-              data: obj,
-              topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
-              page: state.page,
-              axiosCancel,
-              token,
-            });
-            const output = Object.assign(
-              {},
-              {
-                id: obj.id,
-                webLink: response.webLink || '',
-                profile: {
-                  bio: response.profile.bio || '',
-                  homeLocation: response.profile.homeLocation || [],
-                  twitter: response.profile.twitter || [],
-                  url: response.profile.url || [],
-                  worksFor: response.profile.worksFor || [],
-                },
-              }
-            );
-            dispatch({
-              type: 'SET_CARD_ENHANCEMENT',
-              payload: {
-                cardEnhancement: output,
-              },
-            });
-          }
+          await pMap(promises, (promise: Promise<void>) => promise?.then(noop), { concurrency: 5 });
+          // while (promises.length) {
+          //   // 3 concurrent request at at time (batch mode) but if there is two more queue items, it won't go immediately to fill the empty slot so need to use pMap
+          //   await Promise.all(promises.splice(0, 3).map((f) => f.then(noop)));
+          // }
         };
-        const fetchData = async () => {
-          const response = await getRepoImages({
-            signal: abortController.signal,
-            data,
-            topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
-            page: state.page,
-            token,
-            axiosCancel,
+        const doFetchImages = async () => {
+          await pMap(promisesImage, (promise: Promise<void>) => promise?.then(noop), {
+            concurrency: promisesImage.length,
           });
-          const reader = response!.body!.getReader();
-          const td = new TextDecoder('utf-8');
-          while (true) {
-            const { value, done } = await reader!.read();
-            if (done) break;
-            const decoded = JSON.parse(td.decode(value));
-            if (decoded.renderImages.length > 0) {
-              dispatch({
-                type: 'SHOULD_IMAGES_DATA_ADDED',
-                payload: {
-                  shouldFetchImages: false,
-                },
-              });
-              dispatch({
-                type: 'IMAGES_DATA_ADDED',
-                payload: {
-                  images: decoded.renderImages,
-                },
-              });
-            }
-          }
         };
-        fetchData()
+        doFetchImages()
           .then(noop)
           .catch((err) => {
             throw new Error(err);
@@ -827,14 +839,11 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: test brutal requests the reslience of handling requests
 
-  //TODO: icon of website when there's URL in the description scrapped using https://github.com/danielmiessler/GitHubRating/blob/master/GitHubRating.sh (curl)
-
   //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
 
   //TODO: show all function in code base and where it uses the function. need to differentiate between returning jsx and not returning jsx
 
-  //TODO: https://github.com/developit/redaxios https://github.com/asilvas/node-image-steam,
-  // https://github.com/postlight/mercury-parser/blob/master/src/extractors/custom/github.com/index.js,
+  //TODO: https://github.com/asilvas/node-image-steam,
   // https://swc.rs/docs/usage-swc-loader
 
   //TODO: after Details is rendered, show related repo from author and contributors sorted based on stargazers.

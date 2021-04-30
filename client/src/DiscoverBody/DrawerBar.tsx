@@ -4,8 +4,6 @@ import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import RSSFeed from '../HomeBody/BottomNavigationBarBody/DrawerBarBody/RSSFeed';
-import SubscribeFeed from '../HomeBody/BottomNavigationBarBody/DrawerBarBody/SubscribeFeed';
 import SubscribeFeedSetting from '../HomeBody/BottomNavigationBarBody/DrawerBarBody/SubscribeFeedSetting';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';

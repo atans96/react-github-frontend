@@ -1,4 +1,5 @@
 import { gql } from '@apollo/client';
+//NOTE THAT mutation.ts and queries.ts gql schema must be the same if you use cache.writeQuery so that it won't query database again
 export const SIGN_UP_USER = gql`
   mutation(
     $username: String!
@@ -6,8 +7,16 @@ export const SIGN_UP_USER = gql`
     $token: String!
     $languagePreference: [LanguagePreferenceInput]
     $code: String!
+    $tokenRSS: String
   ) {
-    signUp(username: $username, avatar: $avatar, token: $token, languagePreference: $languagePreference, code: $code) {
+    signUp(
+      tokenRSS: $tokenRSS
+      username: $username
+      avatar: $avatar
+      token: $token
+      languagePreference: $languagePreference
+      code: $code
+    ) {
       token
     }
   }
@@ -15,6 +24,10 @@ export const SIGN_UP_USER = gql`
 export const SET_LANGUAGE_PREFERENCE = gql`
   mutation($languagePreference: [LanguagePreferenceInput]) {
     setLanguagePreference(languagePreference: $languagePreference) {
+      userName
+      avatar
+      token
+      tokenRSS
       languagePreference {
         language
         checked
@@ -56,6 +69,7 @@ export const WATCH_USERS_ADDED = gql`
         login
         feeds
         lastSeenFeeds
+        avatarUrl
       }
     }
   }
@@ -80,8 +94,21 @@ export const SEEN_ADDED = gql`
   mutation($seenCards: [SeenCardsInput]!) {
     seenAdded(seenCards: $seenCards) {
       seenCards {
+        stargazers_count
+        full_name
+        default_branch
+        owner {
+          login
+          avatar_url
+          html_url
+        }
+        description
+        language
+        topics
+        html_url
         name
         id
+        imagesData
         is_queried
       }
     }
@@ -92,6 +119,8 @@ export const SEARCHES_ADDED = gql`
     searchHistoryAdded(search: $search) {
       searches {
         search
+        count
+        updatedAt
       }
     }
   }

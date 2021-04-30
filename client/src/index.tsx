@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { BrowserRouter as Router, Redirect, useHistory, useLocation, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Redirect, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
@@ -41,6 +41,9 @@ import { Then } from './util/react-if/Then';
 import loadable from '@loadable/component';
 import { createRenderElement } from './Layout/MasonryLayout';
 import NotFound from './NotFound';
+import { getMainDefinition } from '@apollo/client/utilities';
+import { WebSocketLink } from '@apollo/client/link/ws';
+import ComposeProviders from './Layout/ComposeProviders';
 // const ManageProfile = React.lazy(() => import('./ManageProfile'));
 const Discover = loadable(() => import('./Discover'));
 const ManageProfile = loadable(() => import('./ManageProfile'));
@@ -343,7 +346,26 @@ const CustomApolloProvider = ({ children }: any) => {
     isLoggedInRef.current = stateShared.isLoggedIn;
   });
   const clientWrapped = useCallback(() => {
-    // Create First Link for querying data to external Github GQL API
+    // const httpLink = new HttpLink({
+    //   uri: 'https://api.github.com/graphql',
+    //   headers: {
+    //     Authorization: `Bearer ${stateShared.tokenGQL}`,
+    //   },
+    // });
+    // const wsLink = new WebSocketLink({
+    //   uri: readEnvironmentVariable('WS_LINK') || ('' as string),
+    //   options: {
+    //     reconnect: true,
+    //   },
+    // });
+    // const githubGateway = ApolloLink.split(
+    //   ({ query }) => {
+    //     const { kind, operation } = getMainDefinition(query) as any;
+    //     return kind === 'OperationDefinition' && operation === 'subscription';
+    //   }, // Routes the query to the proper client
+    //   wsLink,
+    //   httpLink
+    // );
     const githubGateway = new HttpLink({
       uri: 'https://api.github.com/graphql',
       headers: {
@@ -388,6 +410,16 @@ const CustomApolloProvider = ({ children }: any) => {
         Query: {
           fields: {
             getSeen: {
+              merge(existing, incoming) {
+                return incoming;
+              },
+            },
+            getUserInfoData: {
+              merge(existing, incoming) {
+                return incoming;
+              },
+            },
+            getUserInfoStarred: {
               merge(existing, incoming) {
                 return incoming;
               },
@@ -483,13 +515,15 @@ const Main = () => {
         <StateDiscoverProvider>
           <StateSharedProvider>
             <CustomApolloProvider>
-              <SuggestedRepoImagesContainer.Provider>
-                <SuggestedRepoContainer.Provider>
-                  <StarRankingContainer.Provider>
-                    <App />
-                  </StarRankingContainer.Provider>
-                </SuggestedRepoContainer.Provider>
-              </SuggestedRepoImagesContainer.Provider>
+              <ComposeProviders
+                components={[
+                  SuggestedRepoImagesContainer.Provider,
+                  SuggestedRepoContainer.Provider,
+                  StarRankingContainer.Provider,
+                ]}
+              >
+                <App />
+              </ComposeProviders>
             </CustomApolloProvider>
           </StateSharedProvider>
         </StateDiscoverProvider>

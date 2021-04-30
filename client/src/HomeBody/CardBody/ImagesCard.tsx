@@ -34,7 +34,9 @@ const ImagesCard: React.FC<ImagesCardProps> = ({ index }) => {
     if (location.pathname === '/' && !isFinished) {
       if (Array.isArray(state.imagesData) && state.imagesData.length > 0) {
         const temp = state.imagesMapData.get(index)?.value ?? [];
-        setRenderImages(temp);
+        if (temp.length > 0 && renderImages.length === 0) {
+          setRenderImages(temp);
+        }
       }
     }
     return () => {

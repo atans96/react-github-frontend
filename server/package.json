@@ -41,6 +41,7 @@
     "lodash": "^4.17.20",
     "mongodb": "^3.6.4",
     "mongoose": "^5.11.5",
+    "ndjson": "^2.0.0",
     "remarkable": "^2.0.1",
     "sharp": "^0.28.1",
     "urijs": "^1.19.6",

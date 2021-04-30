@@ -136,7 +136,9 @@ const Details: React.FC = () => {
               </If>
             </div>
             <div className={'footer'}>
-              <a href={data?.data?.html_url}>View on GitHub</a>
+              <a href={data?.data?.html_url} target="_blank" rel="noopener noreferrer">
+                View on GitHub
+              </a>
             </div>
           </div>
         </div>

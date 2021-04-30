@@ -38,7 +38,7 @@ function pushConsumers(property: string, path: string) {
     consumers[path] = [property];
   }
 }
-
+//TODO: add the mutation once the user log out will then be appended to database. otherwise, use cache when client still active
 export function useApolloFactory(path: string) {
   const [seenAdded] = useMutation(SEEN_ADDED, {
     context: { clientName: 'mongo' },
@@ -67,7 +67,6 @@ export function useApolloFactory(path: string) {
     context: { clientName: 'mongo' },
     update: (cache, data: any) => {
       cache.writeQuery({
-        //with this, the SubscribeFeed useQuery no need to query the database again as the data will be on the cache of the useQuery in there
         query: GET_USER_STARRED,
         data: {
           getUserInfoStarred: {
@@ -95,12 +94,9 @@ export function useApolloFactory(path: string) {
     context: { clientName: 'mongo' },
     update: (cache, data: any) => {
       cache.writeQuery({
-        //with this, the SubscribeFeed useQuery no need to query the database again as the data will be on the cache of the useQuery in there
         query: GET_USER_DATA,
         data: {
-          getUserData: {
-            languagePreference: data?.data?.setLanguagePreference?.languagePreference,
-          },
+          getUserData: data?.data?.setLanguagePreference,
         },
       });
     },
@@ -109,7 +105,6 @@ export function useApolloFactory(path: string) {
     context: { clientName: 'mongo' },
     update: (cache, data: any) => {
       cache.writeQuery({
-        //with this, the SubscribeFeed useQuery no need to query the database again as the data will be on the cache of the useQuery in there
         query: GET_WATCH_USERS,
         data: {
           getWatchUsers: {
@@ -126,12 +121,9 @@ export function useApolloFactory(path: string) {
     context: { clientName: 'mongo' },
     update: (cache, data: any) => {
       cache.writeQuery({
-        //with this, the SubscribeFeed useQuery no need to query the database again as the data will be on the cache of the useQuery in there
         query: GET_SEARCHES,
         data: {
-          getSearches: {
-            searches: data.data.searchHistoryAdded?.searches,
-          },
+          getSearches: data.data.searchHistoryAdded?.searches,
         },
       });
     },

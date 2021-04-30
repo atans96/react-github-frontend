@@ -3,6 +3,7 @@ const util = require("../api/util");
 const { Remarkable } = require("remarkable");
 const hljs = require("highlight.js");
 const base64 = require("js-base64").Base64;
+const ndjson = require("ndjson");
 
 function processHtml({ html, repo, branch }) {
   const root = `https://github.com/${repo}`;
@@ -246,85 +247,79 @@ class MarkdownParserClass {
     });
   }
   async doQuery(data, renderImages, token, ...args) {
-    const re = this.res.res;
-    for (const [, object] of data.entries()) {
-      const readme = ["README", "Readme", "readme", "ReadMe"];
-      const fileExtension = ["md", "rst", "adoc"];
-      let listReadme = readme.flatMap((d) =>
-        fileExtension.map(
-          (v) =>
-            `https://raw.githubusercontent.com/${object.value.full_name}/${object.value.branch}/` +
-            d +
-            "." +
-            v
-        )
+    const readme = ["README", "Readme", "readme", "ReadMe"];
+    const fileExtension = ["md", "rst", "adoc"];
+    let listReadme = readme.flatMap((d) =>
+      fileExtension.map(
+        (v) =>
+          `https://raw.githubusercontent.com/${data.value.full_name}/${data.value.branch}/` +
+          d +
+          "." +
+          v
+      )
+    );
+    listReadme = listReadme.concat(
+      readme.map(
+        (v) =>
+          `https://raw.githubusercontent.com/${data.value.full_name}/${data.value.branch}/${v}`
+      )
+    );
+    const promisesUrlExist = [];
+    for (const url of listReadme) {
+      promisesUrlExist.push(
+        new Promise((resolve, reject) => {
+          (async () => {
+            const URL = url;
+            const exists = await urlExist(URL);
+            if (exists) {
+              resolve(URL);
+            }
+          })();
+        })
       );
-      listReadme = listReadme.concat(
-        readme.map(
-          (v) =>
-            `https://raw.githubusercontent.com/${object.value.full_name}/${object.value.branch}/${v}`
-        )
-      );
-      const promisesUrlExist = [];
-      for (const url of listReadme) {
-        promisesUrlExist.push(
-          new Promise((resolve, reject) => {
-            (async () => {
-              const URL = url;
-              const exists = await urlExist(URL);
-              if (exists) {
-                resolve(URL);
-              }
-            })();
+    }
+    try {
+      const validUrl = await firstTrue(promisesUrlExist);
+      if (validUrl.length > 0) {
+        this.axios
+          .get(validUrl, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/vnd.github.VERSION.html",
+            },
           })
-        );
-      }
-      try {
-        const validUrl = await firstTrue(promisesUrlExist);
-        if (validUrl.length > 0) {
-          this.axios
-            .get(validUrl, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "application/vnd.github.VERSION.html",
-              },
-            })
-            .then((result) => {
-              let contents = result.data || result.content || undefined;
-              if (contents === undefined) {
-                throw new Error(`No readme data for ${object.value.full_name}`);
-              }
-              if (result.content) {
-                contents = base64.decode(contents);
-              }
-              contents = mdParser.render(contents);
-              const readme = processHtml({
-                html: contents,
-                repo: object.value.full_name,
-                branch: object.value.branch,
-              });
-              const extractedImages = markdownImagesExtractor(
-                readme,
-                object,
-                renderImages
-              );
-              re.write(
-                JSON.stringify({
-                  renderImages: extractedImages,
-                })
-              );
-            })
-            .catch((err) => {
-              if (err.response.status === 404) {
-                console.log(`ERROR ${validUrl}, message: ${err.message}`);
-              } else {
-                util.sendErrorMessageToClient(err, args.res);
-              }
+          .then((result) => {
+            let contents = result.data || result.content || undefined;
+            if (contents === undefined) {
+              throw new Error(`No readme data for ${data.value.full_name}`);
+            }
+            if (result.content) {
+              contents = base64.decode(contents);
+            }
+            contents = mdParser.render(contents);
+            const readme = processHtml({
+              html: contents,
+              repo: data.value.full_name,
+              branch: data.value.branch,
             });
-        }
-      } catch (e) {
-        console.log(e);
+            const extractedImages = markdownImagesExtractor(
+              readme,
+              data,
+              renderImages
+            );
+            this.res.send(JSON.stringify(extractedImages));
+          })
+          .catch((err) => {
+            if (err?.response?.status === 404) {
+              console.log(`ERROR ${validUrl}, message: ${err.message}`);
+            } else if (!err.message.includes("ETIMEDOUT")) {
+              console.log(`ERROR ${validUrl}, message: ${err.message}`);
+              util.sendErrorMessageToClient(err, args.res);
+            }
+          });
       }
+    } catch (e) {
+      console.log(e);
     }
   }
 }
