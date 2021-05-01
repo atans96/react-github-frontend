@@ -88,25 +88,25 @@ const Mutation = {
         },
         { upsert: true }
       );
-      return await WatchUsers.findOne({ userName: currentUser?.username });
-      // return await WatchUsers.findOneAndUpdate(
-      //   { userName: currentUser?.username, "login.login": login },
-      //   {
-      //     $push: {
-      //       "login.$.feeds": {
-      //         //for $each takes an array of items to "add" in the $push operation,
-      //         // which in this case we leave empty since we do not actually want to add anything
-      //         $each: [],
-      //         $slice: -300, //get the last 300, which means to exclude anything greater than 300 at first n element (the oldest data)
-      //       },
-      //       "login.$.lastSeenFeeds": {
-      //         $each: [],
-      //         $slice: -300,
-      //       },
-      //     },
-      //   },
-      //   { new: true } //return new document
-      // );
+      // return await WatchUsers.findOne({ userName: currentUser?.username });
+      return await WatchUsers.findOneAndUpdate(
+        { userName: currentUser?.username, "login.login": login },
+        {
+          $push: {
+            "login.$.feeds": {
+              //for $each takes an array of items to "add" in the $push operation,
+              // which in this case we leave empty since we do not actually want to add anything
+              $each: [],
+              $slice: -300, //get the last 300, which means to exclude anything greater than 300 at first n element (the oldest data)
+            },
+            "login.$.lastSeenFeeds": {
+              $each: [],
+              $slice: -300,
+            },
+          },
+        },
+        { new: true } //return new document
+      );
     },
     watchUsersAdded: async (
       root,
