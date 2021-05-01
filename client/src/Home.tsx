@@ -388,6 +388,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.mergedData]);
 
   useEffect(() => {
@@ -398,6 +399,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
   useEffect(() => {
@@ -408,6 +410,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notification]);
 
   useEffect(() => {
@@ -418,6 +421,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.imagesData]);
 
   useEffect(() => {
@@ -428,6 +432,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filterBySeen]);
 
   const handleBottomHit = useCallback(() => {
@@ -470,11 +475,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         return acc;
       }, [] as MergedDataProps[]);
       if (result.length > 0 && imagesDataRef.current.length > 0 && stateShared.isLoggedIn) {
-        seenAdded({
-          variables: {
-            seenCards: result,
-          },
-        }).then(noop);
+        seenAdded(result).then(noop);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

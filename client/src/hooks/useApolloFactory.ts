@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@apollo/client';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client';
 import {
   CLICKED_ADDED,
   RSS_FEED_ADDED,
@@ -38,21 +38,32 @@ function pushConsumers(property: string, path: string) {
     consumers[path] = [property];
   }
 }
-//TODO: add the mutation once the user log out will then be appended to database. otherwise, use cache when client still active
 export function useApolloFactory(path: string) {
-  const [seenAdded] = useMutation(SEEN_ADDED, {
-    context: { clientName: 'mongo' },
-    update: (cache, data: any) => {
-      cache.writeQuery({
+  const client = useApolloClient();
+  const seenAdded = async (data: any[]) => {
+    const oldData: GraphQLSeenData = (await client.cache.readQuery({ query: GET_SEEN })) || {
+      getSeen: { seenCards: [] },
+    };
+    if (oldData.getSeen) {
+      return client.cache.writeQuery({
         query: GET_SEEN,
         data: {
           getSeen: {
-            seenCards: data.data.seenAdded?.seenCards,
+            seenCards: [...data, ...oldData?.getSeen?.seenCards],
           },
         },
       });
-    },
-  });
+    } else {
+      return client.cache.writeQuery({
+        query: GET_SEEN,
+        data: {
+          getSeen: {
+            seenCards: data,
+          },
+        },
+      });
+    }
+  };
 
   const [clickedAdded] = useMutation(CLICKED_ADDED, {
     context: { clientName: 'mongo' },

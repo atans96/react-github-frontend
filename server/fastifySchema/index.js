@@ -4,6 +4,7 @@ module.exports = {
     OrgRepoInfo: require("./api/repo/org-repo-info"),
     ContributorsRepoInfo: require("./api/repo/contributors-repo-info"),
     ImagesReadmeRepoInfo: require("./api/repo/images-repo-info"),
+    GatherApolloCache: require("./api/session/gather-apollo-cache"),
     ReadmeRepoInfo: require("./api/repo/readme-repo-info"),
   },
   convert: {

@@ -20,9 +20,6 @@ module.exports = async (req, res, ctx, ...args) => {
       },
     },
   });
-  if (req.query.axiosCancel) {
-    cancelTokenSource.cancel();
-  }
   args[0].axios
     .all([queryTopic])
     .then(

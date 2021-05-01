@@ -243,11 +243,7 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
         }, [] as SeenProps[]);
         if (result.length > 0 && imagesDataDiscoverRef.current.mapData.size > 0) {
           //don't add to database yet when imagesData still loading.
-          seenAdded({
-            variables: {
-              seenCards: result,
-            },
-          }).then(noop);
+          seenAdded(result).then(noop);
         }
       }
     }, // eslint-disable-next-line react-hooks/exhaustive-deps

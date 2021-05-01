@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import './hamburgers.css';
 import { BrowserRouter as Router, Redirect, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
-import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
+import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
@@ -244,7 +244,21 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [stateShared.username, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
   );
-
+  const cacheData = useApolloClient().cache.extract();
+  useEffect(() => {
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState == 'hidden') {
+        if (Object.keys(cacheData).length > 0) {
+          fetch(`/api/session_end_actions`, {
+            method: 'POST',
+            body: JSON.stringify(cacheData),
+            headers: new Headers({ 'content-type': 'application/json' }),
+            keepalive: true,
+          }).then(noop);
+        }
+      }
+    });
+  }, [cacheData]);
   return (
     <div>
       <KeepMountedLayout
