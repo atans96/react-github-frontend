@@ -8,7 +8,8 @@ const { apolloServerPlugin } = require("./decorators/apollo-server");
 const helmet = require("fastify-helmet");
 const rateLimit = require("fastify-rate-limit");
 const Redis = require("ioredis");
-
+const { EventEmitter } = require("events");
+const eventEmitter = new EventEmitter();
 // Create custom ajv schema declaration to remove _all_ additional fields by default
 const AJV = new ajv({
   removeAdditional: "all",
@@ -54,12 +55,6 @@ module.exports = async function buildFastify(deps) {
     console.log(`Compiling AJV Schema for: ${url}`);
     return AJV.compile(schema);
   });
-  fastify.setSerializerCompiler(function (schemaDefinition) {
-    const { schema, method, url, httpStatus } = schemaDefinition;
-    return function (data) {
-      return JSON.stringify(data);
-    };
-  });
   fastify.register(require("fastify-cookie"), {
     secret: config.getJWTSecret(),
   });
@@ -76,10 +71,11 @@ module.exports = async function buildFastify(deps) {
     githubAPIWrapper,
     jwtService,
     config,
+    eventEmitter,
   });
   fastify.register(csrf);
   fastify.register(configPlugin(config));
-  fastify.register(apolloServerPlugin);
+  fastify.register(apolloServerPlugin(eventEmitter));
   fastify.register(helmet);
   await fastify.register(rateLimit, {
     max: 30,

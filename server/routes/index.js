@@ -120,6 +120,7 @@ async function routes(fastify, opts, done) {
           res.send(val);
         } else if (!err && !val) {
           contributorsRepoInfo(req, res, fastify, {
+            url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });

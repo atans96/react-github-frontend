@@ -3,7 +3,6 @@ const util = require("../api/util");
 const { Remarkable } = require("remarkable");
 const hljs = require("highlight.js");
 const base64 = require("js-base64").Base64;
-const ndjson = require("ndjson");
 
 function processHtml({ html, repo, branch }) {
   const root = `https://github.com/${repo}`;
@@ -312,7 +311,10 @@ class MarkdownParserClass {
           .catch((err) => {
             if (err?.response?.status === 404) {
               console.log(`ERROR ${validUrl}, message: ${err.message}`);
-            } else if (!err.message.includes("ETIMEDOUT")) {
+            } else if (
+              !err.message.includes("ETIMEDOUT") ||
+              !err.message.includes("ECONNRESET")
+            ) {
               console.log(`ERROR ${validUrl}, message: ${err.message}`);
               util.sendErrorMessageToClient(err, args.res);
             }
