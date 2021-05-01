@@ -15,7 +15,7 @@ const Mutation = {
       { username, avatar, token, languagePreference, code, tokenRSS },
       { models: { User } }
     ) => {
-      await User.findOneAndUpdate(
+      User.findOneAndUpdate(
         { userName: username },
         {
           $set: {
@@ -88,25 +88,25 @@ const Mutation = {
         },
         { upsert: true }
       );
-      return await WatchUsers.findOne({ userName: currentUser?.username });
-      // return await WatchUsers.findOneAndUpdate(
-      //   { userName: currentUser?.username, "login.login": login },
-      //   {
-      //     $push: {
-      //       "login.$.feeds": {
-      //         //for $each takes an array of items to "add" in the $push operation,
-      //         // which in this case we leave empty since we do not actually want to add anything
-      //         $each: [],
-      //         $slice: -300, //get the last 300, which means to exclude anything greater than 300 at first n element (the oldest data)
-      //       },
-      //       "login.$.lastSeenFeeds": {
-      //         $each: [],
-      //         $slice: -300,
-      //       },
-      //     },
-      //   },
-      //   { new: true } //return new document
-      // );
+      // return await WatchUsers.findOne({ userName: currentUser?.username });
+      return await WatchUsers.findOneAndUpdate(
+        { userName: currentUser?.username, "login.login": login },
+        {
+          $push: {
+            "login.$.feeds": {
+              //for $each takes an array of items to "add" in the $push operation,
+              // which in this case we leave empty since we do not actually want to add anything
+              $each: [],
+              $slice: -300, //get the last 300, which means to exclude anything greater than 300 at first n element (the oldest data)
+            },
+            "login.$.lastSeenFeeds": {
+              $each: [],
+              $slice: -300,
+            },
+          },
+        },
+        { new: true } //return new document
+      );
     },
     watchUsersAdded: async (
       root,
@@ -200,23 +200,24 @@ const Mutation = {
       );
       return await RSSFeed.findOne({ userName: currentUser?.username });
     },
-    seenAdded: async (
+    getSeen: async (
       root,
       { seenCards },
-      { models: { Seen }, currentUser }
+      { models: { Seen }, currentUser, eventEmitter }
     ) => {
-      await Seen.findOneAndUpdate(
-        { userName: currentUser?.username },
-        {
-          $addToSet: {
-            seenCards: {
-              $each: seenCards,
+      eventEmitter.on("getSeen", async (cacheData) => {
+        await Seen.findOneAndUpdate(
+          { userName: currentUser?.username },
+          {
+            $addToSet: {
+              seenCards: {
+                $each: seenCards,
+              },
             },
           },
-        },
-        { upsert: true }
-      );
-      return await Seen.findOne({ userName: currentUser?.username });
+          { upsert: true }
+        );
+      });
     },
     searchHistoryAdded: async (
       root,

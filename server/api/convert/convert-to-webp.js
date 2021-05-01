@@ -12,6 +12,7 @@ module.exports = async (req, res, ctx, ...args) => {
       .toBuffer();
     res.send({ original: webp.toString("base64") });
   } catch (e) {
+    console.log(e);
     res.send({ original: "" });
   }
 };

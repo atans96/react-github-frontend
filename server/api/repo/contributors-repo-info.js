@@ -27,6 +27,13 @@ module.exports = async (req, res, ctx, ...args) => {
         res.send({
           data: result,
         });
+        ctx.redis.setex(
+          args[0].url,
+          300 * 1000,
+          JSON.stringify({
+            data: result,
+          })
+        );
       })
     )
     .catch((errors) => {

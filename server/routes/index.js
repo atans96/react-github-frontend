@@ -19,6 +19,7 @@ const testTokenGQL = require("../api/auth/github-graphql-test-token");
 const getGQLData = require("../api/graphql/get-data");
 const getGQLFile = require("../api/readFile/get-gql-properties-file");
 const convertToWebp = require("../api/convert/convert-to-webp");
+const gatherApolloCache = require("../api/session/gather-apollo-cache");
 
 const verifyUsername = require("../middleware/username");
 const Schema = require("../fastifySchema");
@@ -120,6 +121,7 @@ async function routes(fastify, opts, done) {
           res.send(val);
         } else if (!err && !val) {
           contributorsRepoInfo(req, res, fastify, {
+            url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
@@ -139,21 +141,26 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
-      const { redis } = fastify;
-      redis.get(url, (err, val) => {
-        if (val) {
-          redis.expire(url, 300 * 1000); //refresh it since we're still using it
-          res.send(val);
-        } else if (!err && !val) {
-          imagesRepoInfo(req, res, fastify, {
-            url,
-            axios: opts.axios,
-            github: opts.githubAPIWrapper,
-          });
-        } else {
-          throw new Error(`Something Wrong with ${req.url} ${err}`);
-        }
+      imagesRepoInfo(req, res, fastify, {
+        url,
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
       });
+      // const { redis } = fastify;
+      // redis.get(url, (err, val) => {
+      //   if (val) {
+      //     redis.expire(url, 300 * 1000); //refresh it since we're still using it
+      //     res.send(val);
+      //   } else if (!err && !val) {
+      //     imagesRepoInfo(req, res, fastify, {
+      //       url,
+      //       axios: opts.axios,
+      //       github: opts.githubAPIWrapper,
+      //     });
+      //   } else {
+      //     throw new Error(`Something Wrong with ${req.url} ${err}`);
+      //   }
+      // });
     }
   );
 
@@ -197,7 +204,13 @@ async function routes(fastify, opts, done) {
       });
     }
   );
-
+  fastify.post("/api/session_end_actions", (req, res) => {
+    gatherApolloCache(req, res, fastify, {
+      eventEmitter: opts.eventEmitter,
+      axios: opts.axios,
+      github: opts.githubAPIWrapper,
+    });
+  });
   fastify.get(
     "/api/search_topics",
     {
@@ -209,7 +222,7 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (val) {
+        if (val && JSON.parse(val).dataOne.length > 0) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
@@ -236,7 +249,7 @@ async function routes(fastify, opts, done) {
       const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
       redis.get(url, (err, val) => {
-        if (val) {
+        if (val && JSON.parse(val).users.length > 0) {
           redis.expire(url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
