@@ -5,7 +5,6 @@ import { noop } from '../util/util';
 export const getAllGraphQLNavBar = async (username: string) => {
   const response = await fetch(`/api/graphqlUserData?username=${username}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -13,7 +12,6 @@ export const getAllGraphQLNavBar = async (username: string) => {
 export const getTopContributors = async (fullName: string, token: string | null | undefined) => {
   const response = await fetch(`/api/getTopContributors?full_name=${fullName}&token=${token}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -21,7 +19,6 @@ export const getTopContributors = async (fullName: string, token: string | null 
 export const removeStarredMe = async (repoFullName: string, token: string | null | undefined) => {
   const response = await fetch(`/api/removeStarredMe?repoFullName=${repoFullName}&token=${token}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -29,7 +26,6 @@ export const removeStarredMe = async (repoFullName: string, token: string | null
 export const setStarredMe = async (repoFullName: string, token: string | null | undefined) => {
   const response = await fetch(`/api/setStarredMe?repoFullName=${repoFullName}&token=${token}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -37,7 +33,6 @@ export const setStarredMe = async (repoFullName: string, token: string | null | 
 export const setTokenGQL = async (tokenGQL: string) => {
   const response = await fetch(`/api/setTokenGQL?tokenGQL=${tokenGQL}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -45,7 +40,6 @@ export const setTokenGQL = async (tokenGQL: string) => {
 export const getTokenGQL = async () => {
   const response = await fetch(`/api/getTokenGQL`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -53,7 +47,6 @@ export const getTokenGQL = async () => {
 export const removeTokenGQL = async () => {
   const response = await fetch(`/api/destroyTokenGQL`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -62,7 +55,6 @@ export const subscribeUser = async (username: string, signal: any) => {
   if (username !== '') {
     const response = await fetch(`/api/subscribe_user?username=${username}`, {
       method: 'GET',
-      keepalive: true,
       credentials: 'include',
       signal,
     });
@@ -89,7 +81,6 @@ export const getUser = async ({
       `/api/users?username=${username}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
-        keepalive: true,
         credentials: 'include',
         signal,
       }
@@ -117,7 +108,6 @@ export const getOrg = async ({
       `/api/org?org=${org}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
-        keepalive: true,
         credentials: 'include',
         signal,
       }
@@ -128,7 +118,6 @@ export const getOrg = async ({
 export const getValidGQLProperties = async () => {
   const response = await fetch(`/api/getValidGQLProperties`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -136,7 +125,6 @@ export const getValidGQLProperties = async () => {
 export const markdownParsing = async (full_name: string, branch: string, token: string | null | undefined) => {
   const response = await fetch(`/api/markdown?full_name=${full_name}&branch=${branch}&token=${token}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -144,7 +132,6 @@ export const markdownParsing = async (full_name: string, branch: string, token: 
 export const getRateLimitInfo = async (token: string | null | undefined) => {
   const response = await fetch(`/api/get_rate_limit?token=${token === null ? '' : token}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -152,7 +139,6 @@ export const getRateLimitInfo = async (token: string | null | undefined) => {
 export const verifyJWTToken = async (token: string, username: string, isLoggedIn: boolean) => {
   const response = await fetch(`/api/verifyJWTToken?token=${token}&username=${username}&isLoggedIn=${isLoggedIn}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -160,7 +146,6 @@ export const verifyJWTToken = async (token: string, username: string, isLoggedIn
 export const requestGithubLogin = async (proxy_url: string, data: any) => {
   const response = await fetch(proxy_url, {
     method: 'POST',
-    keepalive: true,
     mode: 'cors',
     body: JSON.stringify(data),
     headers: new Headers({ 'content-type': 'application/json' }),
@@ -170,7 +155,6 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
 export const getSearchUsers = async (query: string, token: string | null | undefined) => {
   const response = await fetch(`/api/search_users?username=${query}&token=${token}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return (await response.json()) as SearchUser;
@@ -188,7 +172,6 @@ export const getSearchTopics = async ({
 }) => {
   const response = await fetch(`/api/search_topics?topic=${topic}&token=${token}&axiosCancel=${axiosCancel}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
     signal,
   });
@@ -197,7 +180,6 @@ export const getSearchTopics = async ({
 export const getElasticSearchBertAutocomplete = async (query: string) => {
   const response = await fetch(`${readEnvironmentVariable('BERT_AUTOCOMPLETE')}?q=${query}&docName=github`, {
     method: 'GET',
-    keepalive: true,
     mode: 'cors',
   });
   return await response.json();
@@ -205,7 +187,6 @@ export const getElasticSearchBertAutocomplete = async (query: string) => {
 export const getElasticSearchBert = async (query: string) => {
   const response = await fetch(`${readEnvironmentVariable('BERT')}?q=${query}&docName=github`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
     mode: 'cors',
   });
@@ -214,7 +195,6 @@ export const getElasticSearchBert = async (query: string) => {
 export const requestGithubGraphQLLogin = async (token: string) => {
   const response = await fetch('/api/auth_graphql', {
     method: 'POST',
-    keepalive: true,
     body: JSON.stringify({
       token: token,
     }),
@@ -225,7 +205,6 @@ export const requestGithubGraphQLLogin = async (token: string) => {
 export const convertToWebP = async (imgUrl: string) => {
   const response = await fetch(`/api/convert_to_webp?imgUrl=${imgUrl}`, {
     method: 'GET',
-    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -251,7 +230,6 @@ export const getRepoImages = async ({
     `/api/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
     {
       method: 'POST',
-      keepalive: true,
       body: JSON.stringify({
         data: data,
       }),
@@ -282,7 +260,6 @@ export const crawlerPython = async ({
     `${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}&token=${token}`,
     {
       method: 'POST',
-      keepalive: true,
       body: JSON.stringify({
         data: data,
       }),
