@@ -52,6 +52,17 @@ const Login = loadable(() => import('./Login'));
 const Details = loadable(() => import('./Details'));
 
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker
+    .register('sw.js')
+    .then(() => navigator.serviceWorker.ready)
+    .then((reg) => {
+      return (window.onbeforeunload = (e: any) => {
+        reg.sync.register('apolloCacheToDatabase').then(noop);
+        return window.close();
+      });
+    });
+}
 const App = () => {
   const location = useLocation();
   const [state, dispatch] = useTrackedState();
@@ -272,20 +283,6 @@ const App = () => {
     }
   }, [cacheData]);
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('sw.js')
-        .then(() => navigator.serviceWorker.ready)
-        .then((reg) => {
-          window.onbeforeunload = async (e: any) => {
-            e.preventDefault();
-            await reg.sync.register('apolloCacheToDatabase');
-            return;
-          };
-        });
-    }
-  }, []);
   return (
     <div>
       <KeepMountedLayout
