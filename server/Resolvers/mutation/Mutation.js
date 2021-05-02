@@ -15,7 +15,7 @@ const Mutation = {
       { username, avatar, token, languagePreference, code, tokenRSS },
       { models: { User } }
     ) => {
-      User.findOneAndUpdate(
+      await User.findOneAndUpdate(
         { userName: username },
         {
           $set: {
