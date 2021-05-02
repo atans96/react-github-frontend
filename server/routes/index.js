@@ -204,7 +204,7 @@ async function routes(fastify, opts, done) {
       });
     }
   );
-  fastify.post("/api/session_end_actions", (req, res) => {
+  fastify.post("/api/end_of_session", (req, res) => {
     gatherApolloCache(req, res, fastify, {
       eventEmitter: opts.eventEmitter,
       axios: opts.axios,
