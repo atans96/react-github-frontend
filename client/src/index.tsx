@@ -51,35 +51,11 @@ const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
 const Login = loadable(() => import('./Login'));
 const Details = loadable(() => import('./Details'));
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
-let apolloCacheData = {};
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker
-    .register('sw.js')
-    .then(() => navigator.serviceWorker.ready)
-    .then((reg) => {
-      // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-      navigator?.serviceWorker?.controller?.postMessage({
-        type: 'username',
-        username: `${CryptoJS.TripleDES.decrypt(
-          localStorage.getItem('jbb') || '',
-          readEnvironmentVariable('CRYPTO_SECRET')!
-        ).toString(CryptoJS.enc.Latin1)}`,
-      });
-      return (window.onbeforeunload = (e: any) => {
-        // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
-        // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-        navigator?.serviceWorker?.controller?.postMessage({
-          type: 'apolloCacheData',
-          cacheData: apolloCacheData,
-        });
-        // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-        navigator?.serviceWorker?.controller?.postMessage({
-          type: 'execute',
-        });
-        return window.close();
-      });
-    });
-}
+
+let apolloCacheData = {
+  isLoggedIn: false,
+};
+
 const App = () => {
   const location = useLocation();
   const [state, dispatch] = useTrackedState();
@@ -278,6 +254,38 @@ const App = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData]);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
+      navigator.serviceWorker
+        .register('sw.js')
+        .then(() => navigator.serviceWorker.ready)
+        .then((reg) => {
+          // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+          navigator?.serviceWorker?.controller?.postMessage({
+            type: 'username',
+            username: `${CryptoJS.TripleDES.decrypt(
+              localStorage.getItem('jbb') || '',
+              readEnvironmentVariable('CRYPTO_SECRET')!
+            ).toString(CryptoJS.enc.Latin1)}`,
+          });
+          return (window.onbeforeunload = () => {
+            // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
+            // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+            navigator?.serviceWorker?.controller?.postMessage({
+              type: 'apolloCacheData',
+              cacheData: apolloCacheData,
+            });
+            // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+            navigator?.serviceWorker?.controller?.postMessage({
+              type: 'execute',
+            });
+            return window.close();
+          });
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateShared.isLoggedIn]);
 
   return (
     <div>

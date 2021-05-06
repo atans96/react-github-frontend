@@ -4,6 +4,8 @@ import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
 import { removeTokenGQL } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
+import CryptoJS from 'crypto-js';
+import { readEnvironmentVariable } from '../util';
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
@@ -427,6 +429,10 @@ export async function addRSSFeed(url: string) {
 
 export function logoutAction(history: any, dispatch: React.Dispatch<IAction<ActionShared>>) {
   history.push('/');
+  // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+  navigator?.serviceWorker?.controller?.postMessage({
+    type: 'logout',
+  });
   removeTokenGQL().then(noop);
   dispatch({ type: 'LOGOUT' });
   window.location.reload(false); // full refresh to reset everything at all components
