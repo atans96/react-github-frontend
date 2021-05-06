@@ -5,7 +5,7 @@ const resolvers = require("../../Resolvers");
 const typeDefs = require("../../Schema");
 const models = require("../../models");
 const directives = require("./directives");
-const apolloServerPlugin = (eventEmitter) =>
+const apolloServerPlugin = () =>
   fastifyPlugin(async (fastify, opts, next) => {
     const corsOptions = {
       origin: `http://localhost:${process.env.CLIENT_PORT || 3000}`,
@@ -24,7 +24,6 @@ const apolloServerPlugin = (eventEmitter) =>
       // to Mongo Schema and will be used to query in resolvers\Query\Query.js
       context: ({ request }) => ({
         models,
-        eventEmitter,
         currentUser: request?.currentUser,
       }),
     });

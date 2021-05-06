@@ -2,6 +2,7 @@ const ajv = require("ajv");
 const Fastify = require("fastify");
 const routes = require("./routes");
 const { configPlugin } = require("./decorators/config");
+const ApolloCache = require("./apolloCache");
 const { dbPlugin } = require("./decorators/db");
 const { csrf } = require("./decorators/csrf");
 const { apolloServerPlugin } = require("./decorators/apollo-server");
@@ -17,6 +18,10 @@ const AJV = new ajv({
   coerceTypes: true,
   allErrors: true,
 });
+
+for (const key of Object.keys(ApolloCache)) {
+  ApolloCache[key]({ eventEmitter });
+}
 module.exports = async function buildFastify(deps) {
   const {
     config,
@@ -68,6 +73,7 @@ module.exports = async function buildFastify(deps) {
   fastify.register(dbPlugin(db));
   fastify.register(routes, {
     axios,
+    ApolloCache,
     githubAPIWrapper,
     jwtService,
     config,
@@ -75,7 +81,7 @@ module.exports = async function buildFastify(deps) {
   });
   fastify.register(csrf);
   fastify.register(configPlugin(config));
-  fastify.register(apolloServerPlugin(eventEmitter));
+  fastify.register(apolloServerPlugin());
   fastify.register(helmet);
   await fastify.register(rateLimit, {
     max: 30,

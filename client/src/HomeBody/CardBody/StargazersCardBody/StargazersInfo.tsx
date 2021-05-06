@@ -92,7 +92,6 @@ const StargazersInfo = ({
             <thead>
               <tr>
                 <th style={{ width: '10%' }} className="sticky-column-table" />
-                <th style={{ width: '10%' }} className="sticky-column-table" />
                 <th style={{ width: '100%' }} className="sticky-column-table" />
                 <th style={{ width: '30%' }} className="sticky-column-table">
                   <LanguagesList />

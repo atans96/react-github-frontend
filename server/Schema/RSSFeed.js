@@ -6,8 +6,8 @@ const RSSFeed = gql`
     rss: [String] @length(max: 300)
     lastSeen: [String] @length(max: 300)
   }
-  extend type Mutation {
-    rssFeedAdded(rss: [String], lastSeen: [String]): RSSFeed @auth
+  extend type Query {
+    getRSSFeed: RSSFeed @auth
   }
 `;
 module.exports = RSSFeed;

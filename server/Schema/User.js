@@ -29,9 +29,6 @@ const User = gql`
       tokenRSS: String
       languagePreference: [LanguagePreferenceInput]
     ): User
-    tokenRSSAdded(tokenRSS: String!): Boolean @auth
-    setLanguagePreference(languagePreference: [LanguagePreferenceInput]): User
-      @auth
   }
   extend type Query {
     getUserData: User @auth

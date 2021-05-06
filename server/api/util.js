@@ -9,12 +9,12 @@ const tokenTransporter = {
   },
 };
 const sendErrorMessageToClient = (errors, res, rateLimit = {}) => {
-  if (errors.response.status === 403) {
+  if (errors?.response?.status === 403) {
     res.send({
       error_403: true,
       rateLimit: rateLimit,
     });
-  } else if (errors.response.status === 404) {
+  } else if (errors?.response?.status === 404) {
     res.send({
       error_404: true,
       rateLimit: rateLimit,

@@ -6,7 +6,6 @@ const User = require("./User");
 const UserLanguages = require("./UserLanguages");
 const UserStarred = require("./UserStarred");
 const RSSFeed = require("./RSSFeed");
-const WatchUsers = require("./WatchUsers");
 const Root = require("./Root");
 const Search = require("./Search");
 const Clicked = require("./Clicked");
@@ -22,7 +21,6 @@ let schemaArrays = [
   UserStarred,
   Seen,
   RSSFeed,
-  WatchUsers,
   Search,
   Clicked,
   Suggested,

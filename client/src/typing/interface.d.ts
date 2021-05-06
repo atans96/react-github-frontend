@@ -3,6 +3,7 @@ import { CSSProperties, Dispatch, MouseEvent, MutableRefObject, ReactNode, Trans
 import {
   ActionResolvedPromise,
   CardEnhancement,
+  ClickedData,
   ContributorsProps,
   HasNextPage,
   ImagesDataProps,
@@ -11,6 +12,7 @@ import {
   RateLimit,
   RenderImagesProps,
   RepoInfoProps,
+  RSSFeedData,
   SearchesData,
   SeenData,
   SeenProps,
@@ -21,7 +23,6 @@ import {
   TopicsProps,
   UserData,
   UserInfoData,
-  WatchUsersData,
 } from './type';
 export interface LocationGraphQL {
   //follow NavBar.tsx at getAllGraphQLData
@@ -131,7 +132,7 @@ export interface GraphQLUserData {
 }
 
 export interface GraphQLUserStarred {
-  getUserInfoStarred: { starred: number[] };
+  getUserInfoStarred: { starred: number[] | any[]; userName: string };
 }
 
 export interface GraphQLUserInfoData {
@@ -142,8 +143,12 @@ export interface GraphQLSeenData {
   getSeen: SeenData;
 }
 
-export interface GraphQLWatchUsersData {
-  getWatchUsers: WatchUsersData;
+export interface GraphQLClickedData {
+  getClicked: ClickedData;
+}
+
+export interface GraphQLRSSFeedData {
+  getRSSFeed: RSSFeedData;
 }
 
 export interface GraphQLSearchesData {

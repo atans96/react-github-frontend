@@ -1,4 +1,3 @@
-const crypto = require("crypto");
 const userRepoInfo = require("../api/repo/user-repo-info");
 const orgRepoInfo = require("../api/repo/org-repo-info");
 const contributorsRepoInfo = require("../api/repo/contributors-repo-info");
@@ -20,7 +19,6 @@ const getGQLData = require("../api/graphql/get-data");
 const getGQLFile = require("../api/readFile/get-gql-properties-file");
 const convertToWebp = require("../api/convert/convert-to-webp");
 const gatherApolloCache = require("../api/session/gather-apollo-cache");
-
 const verifyUsername = require("../middleware/username");
 const Schema = require("../fastifySchema");
 
@@ -33,15 +31,14 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
-      redis.get(url, (err, val) => {
+      redis.get(req.req.url, (err, val) => {
         if (val) {
-          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
           userRepoInfo(req, res, fastify, {
-            url,
+            url: req.url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
@@ -86,15 +83,14 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
-      redis.get(url, (err, val) => {
+      redis.get(req.url, (err, val) => {
         if (val) {
-          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
           orgRepoInfo(req, res, fastify, {
-            url,
+            url: req.url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
@@ -113,15 +109,14 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
-      redis.get(url, (err, val) => {
+      redis.get(req.url, (err, val) => {
         if (val) {
-          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
           contributorsRepoInfo(req, res, fastify, {
-            url,
+            url: req.url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
@@ -140,20 +135,19 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       imagesRepoInfo(req, res, fastify, {
-        url,
+        url: req.url,
         axios: opts.axios,
         github: opts.githubAPIWrapper,
       });
       // const { redis } = fastify;
-      // redis.get(url, (err, val) => {
+      // redis.get(req.url, (err, val) => {
       //   if (val) {
-      //     redis.expire(url, 300 * 1000); //refresh it since we're still using it
+      //     redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
       //     res.send(val);
       //   } else if (!err && !val) {
       //     imagesRepoInfo(req, res, fastify, {
-      //       url,
+      //       req.url,
       //       axios: opts.axios,
       //       github: opts.githubAPIWrapper,
       //     });
@@ -187,15 +181,14 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
-      redis.get(url, (err, val) => {
+      redis.get(req.url, (err, val) => {
         if (val) {
-          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
           readmeRepoInfo(req, res, fastify, {
-            url,
+            url: req.url,
             github: opts.githubAPIWrapper,
           });
         } else {
@@ -204,13 +197,21 @@ async function routes(fastify, opts, done) {
       });
     }
   );
-  fastify.post("/api/end_of_session", (req, res) => {
-    gatherApolloCache(req, res, fastify, {
-      eventEmitter: opts.eventEmitter,
-      axios: opts.axios,
-      github: opts.githubAPIWrapper,
-    });
-  });
+  fastify.post(
+    "/api/end_of_session",
+    {
+      preHandler: (req, res, done) => verifyUsername(req, res, fastify, done),
+      preValidation: fastify.csrfProtection,
+    },
+    (req, res) => {
+      gatherApolloCache(req, res, fastify, {
+        eventEmitter: opts.eventEmitter,
+        ApolloCache: opts.ApolloCache,
+        axios: opts.axios,
+        github: opts.githubAPIWrapper,
+      });
+    }
+  );
   fastify.get(
     "/api/search_topics",
     {
@@ -219,15 +220,14 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
-      redis.get(url, (err, val) => {
+      redis.get(req.url, (err, val) => {
         if (val && JSON.parse(val).dataOne.length > 0) {
-          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
           topicSearchInfo(req, res, fastify, {
-            url,
+            url: req.url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });
@@ -246,15 +246,14 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const url = crypto.createHash("md5").update(req.url).digest("hex");
       const { redis } = fastify;
-      redis.get(url, (err, val) => {
+      redis.get(req.url, (err, val) => {
         if (val && JSON.parse(val).users.length > 0) {
-          redis.expire(url, 300 * 1000); //refresh it since we're still using it
+          redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
           res.send(val);
         } else if (!err && !val) {
           usersSearchInfo(req, res, fastify, {
-            url,
+            url: req.url,
             axios: opts.axios,
             github: opts.githubAPIWrapper,
           });

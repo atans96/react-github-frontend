@@ -108,18 +108,16 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
         .filter((e) => !!e)
         .forEach((char) => {
           searchesAdded({
-            variables: {
-              search: [
-                Object.assign(
-                  {},
-                  {
-                    search: char,
-                    updatedAt: new Date(),
-                    count: 1,
-                  }
-                ),
-              ],
-            },
+            getSearches: [
+              Object.assign(
+                {},
+                {
+                  search: char,
+                  updatedAt: new Date(),
+                  count: 1,
+                }
+              ),
+            ],
           }).then(noop);
         });
     }

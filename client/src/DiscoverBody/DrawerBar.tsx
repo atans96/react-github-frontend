@@ -4,7 +4,6 @@ import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import SubscribeFeedSetting from '../HomeBody/BottomNavigationBarBody/DrawerBarBody/SubscribeFeedSetting';
 import { useDraggable } from '../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
 import { useLocation } from 'react-router-dom';
@@ -112,8 +111,6 @@ const DrawerBar = () => {
           <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
         </div>
         {/*{RSSFeed()}*/}
-        {/*{SubscribeFeed()}*/}
-        {SubscribeFeedSetting()}
         {open && (
           <DraggableCore key="drawerBar" {...dragHandlers}>
             <div style={{ height: '100vh', width: '0px', position: 'fixed' }}>

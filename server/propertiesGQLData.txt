@@ -7,7 +7,6 @@ token
 tokenRSS
 joinDate
 languagePreference
-tokenRSSAdded
 fullName
 description
 stars
@@ -34,10 +33,6 @@ is_queried
 seenCards
 rss
 lastSeen
-avatarUrl
-feeds
-lastSeenFeeds
-watchUsersRemoved
 search
 count
 searches

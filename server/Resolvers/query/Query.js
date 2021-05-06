@@ -20,6 +20,16 @@ const Query = {
         userName: currentUser?.username,
       });
     },
+    getClicked: async (root, {}, { models: { Clicked }, currentUser }) => {
+      return await Clicked.findOne({
+        userName: currentUser?.username,
+      });
+    },
+    getRSSFeed: async (root, {}, { models: { RSSFeed }, currentUser }) => {
+      return await RSSFeed.findOne({
+        userName: currentUser?.username,
+      });
+    },
     getSuggestedRepo: async (
       root,
       {},
@@ -60,10 +70,6 @@ const Query = {
     },
     getUserData: async (root, {}, { models: { User }, currentUser }) => {
       return await User.findOne({ userName: currentUser?.username });
-    },
-    getWatchUsers: async (root, {}, { models: { WatchUsers } }) => {
-      //get all data from one field without returning _id
-      return await WatchUsers.findOne({}, { login: 1, _id: 0 });
     },
     getSeen: async (root, {}, { models: { Seen }, currentUser }) => {
       //get all data from one field without returning _id

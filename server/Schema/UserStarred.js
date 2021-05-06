@@ -5,10 +5,6 @@ const UserStarred = gql`
     _id: ID
     starred: [Int]
   }
-  extend type Mutation {
-    starredMeAdded(starred: [Int]!): UserStarred @auth
-    starredMeRemoved(removeStarred: Int!): UserStarred @auth
-  }
   extend type Query {
     getUserInfoStarred: UserStarred @auth
   }
