@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
@@ -8,7 +8,7 @@ import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, us
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
-import { allowedRoutes, detectBrowser, fastFilter, readEnvironmentVariable } from './util';
+import { allowedRoutes, fastFilter, readEnvironmentVariable } from './util';
 import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
 import { getTokenGQL, getValidGQLProperties } from './services';
 import {
@@ -50,15 +50,32 @@ const ManageProfile = loadable(() => import('./ManageProfile'));
 const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
 const Login = loadable(() => import('./Login'));
 const Details = loadable(() => import('./Details'));
-
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
+let apolloCacheData = {};
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker
     .register('sw.js')
     .then(() => navigator.serviceWorker.ready)
     .then((reg) => {
+      // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+      navigator?.serviceWorker?.controller?.postMessage({
+        type: 'username',
+        username: `${CryptoJS.TripleDES.decrypt(
+          localStorage.getItem('jbb') || '',
+          readEnvironmentVariable('CRYPTO_SECRET')!
+        ).toString(CryptoJS.enc.Latin1)}`,
+      });
       return (window.onbeforeunload = (e: any) => {
-        reg.sync.register('apolloCacheToDatabase').then(noop);
+        // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
+        // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+        navigator?.serviceWorker?.controller?.postMessage({
+          type: 'apolloCacheData',
+          cacheData: apolloCacheData,
+        });
+        // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+        navigator?.serviceWorker?.controller?.postMessage({
+          type: 'execute',
+        });
         return window.close();
       });
     });
@@ -257,30 +274,9 @@ const App = () => {
   const cacheData: any = useApolloClient().cache.extract();
   useEffect(() => {
     if (cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
-      indexedDB.deleteDatabase('data');
-      const db = indexedDB.open('data');
-      db.onerror = function (event) {
-        throw new Error('fail to open');
-      };
-      db.onupgradeneeded = () => {
-        const store = db.result.createObjectStore('apolloCache', { autoIncrement: true });
-        store.createIndex('by_name', 'name');
-      };
-      db.onsuccess = () => {
-        const DB = db.result;
-        // Store the images into the database
-        const tx = DB.transaction(['apolloCache'], 'readwrite');
-        const store = tx.objectStore('apolloCache');
-        store.put(cacheData.ROOT_QUERY);
-        tx.onerror = () => {
-          DB.close();
-          throw new Error('fail to add');
-        };
-        tx.oncomplete = () => {
-          DB.close();
-        };
-      };
+      apolloCacheData = cacheData.ROOT_QUERY;
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData]);
 
   return (
@@ -436,15 +432,6 @@ const CustomApolloProvider = ({ children }: any) => {
     const cache = new InMemoryCache({
       addTypename: false,
       typePolicies: {
-        WatchUsers: {
-          fields: {
-            login: {
-              merge(existing, incoming) {
-                return incoming;
-              },
-            },
-          },
-        },
         Query: {
           fields: {
             getSeen: {

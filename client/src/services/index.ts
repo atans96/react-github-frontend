@@ -1,6 +1,5 @@
 import { readEnvironmentVariable } from '../util';
 import { SearchUser } from '../typing/interface';
-import { noop } from '../util/util';
 
 export const getAllGraphQLNavBar = async (username: string) => {
   const response = await fetch(`/api/graphqlUserData?username=${username}`, {

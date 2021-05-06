@@ -1,18 +1,21 @@
-const Mutation = require("../../Resolvers/mutation/Mutation");
 const { GITHUB_GRAPHQL } = require("../../helpers/constants");
 module.exports = async (req, res, ctx, ...args) => {
   res.clearCookie(GITHUB_GRAPHQL);
   res.send("set cookie");
-  const valid = keys.reduce((acc, key) => {
-    if (Object.keys(Mutation.Mutation).includes(key)) {
-      acc.push(key);
+  let valid = new Map();
+  let validKeys = [];
+  for (const key of Object.keys(req.body[0])) {
+    if (Object.keys(args[0].ApolloCache).includes(key)) {
+      valid.set(key, req.body[0][key]);
+      validKeys.push(key);
     }
-    return acc;
-  }, []);
-  valid.forEach((key) => {
-    redis.get(key, function (err, res) {
-      args[0].eventEmitter.emit(key, { data: JSON.parse(res) });
-      console.log(res);
-    });
+  }
+  validKeys.forEach((key) => {
+    if (valid.get(key) && req.username && req.username.length > 0) {
+      args[0].eventEmitter.emit(key, {
+        username: req.username,
+        data: JSON.stringify(valid.get(key)),
+      });
+    }
   });
 };

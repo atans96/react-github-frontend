@@ -14,6 +14,8 @@ import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { createRenderElement } from '../Layout/MasonryLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
+import CryptoJS from 'crypto-js';
+import { readEnvironmentVariable } from '../util';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -55,20 +57,25 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
       // history.push(`/detail/${data.id}`);
       window.open(`/detail/${data.id}`);
       if (stateShared.isLoggedIn) {
+        const temp = [
+          Object.assign(
+            {},
+            {
+              full_name: data.full_name,
+              owner: {
+                login: data.owner.login,
+              },
+              is_queried: false,
+            }
+          ),
+        ];
         clickedAdded({
-          variables: {
-            clickedInfo: [
-              Object.assign(
-                {},
-                {
-                  full_name: data.full_name,
-                  owner: {
-                    login: data.owner.login,
-                  },
-                  is_queried: false,
-                }
-              ),
-            ],
+          getClicked: {
+            clicked: temp,
+            userName: CryptoJS.TripleDES.decrypt(
+              localStorage.getItem('jbb') || '',
+              readEnvironmentVariable('CRYPTO_SECRET')!
+            ).toString(CryptoJS.enc.Latin1),
           },
         }).then(noop);
       }
@@ -78,20 +85,25 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
     (e: React.MouseEvent) => {
       e.preventDefault();
       if (stateShared.isLoggedIn) {
+        const temp = [
+          Object.assign(
+            {},
+            {
+              full_name: data.full_name,
+              owner: {
+                login: data.owner.login,
+              },
+              is_queried: false,
+            }
+          ),
+        ];
         clickedAdded({
-          variables: {
-            clickedInfo: [
-              Object.assign(
-                {},
-                {
-                  full_name: data.full_name,
-                  owner: {
-                    login: data.owner.login,
-                  },
-                  is_queried: false,
-                }
-              ),
-            ],
+          getClicked: {
+            clicked: temp,
+            userName: CryptoJS.TripleDES.decrypt(
+              localStorage.getItem('jbb') || '',
+              readEnvironmentVariable('CRYPTO_SECRET')!
+            ).toString(CryptoJS.enc.Latin1),
           },
         }).then(noop);
       }

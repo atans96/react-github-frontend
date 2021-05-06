@@ -5,7 +5,6 @@ const UserStarred = require("./UserStarred");
 const UserRepoContributions = require("./UserRepoContributions");
 const UserLanguages = require("./UserLanguages");
 const RSSFeed = require("./RSSFeed");
-const WatchUsers = require("./WatchUsers");
 const Search = require("./Search");
 const Clicked = require("./Clicked");
 const Suggested = require("./Suggested");
@@ -14,7 +13,6 @@ const SuggestedRepoImages = require("./SuggestedRepoImages");
 const StarRanking = require("./StarRanking");
 module.exports = {
   Seen,
-  WatchUsers,
   RSSFeed,
   User,
   UserRepoInfo,
