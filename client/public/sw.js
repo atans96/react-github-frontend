@@ -5,20 +5,30 @@
 //   return db.then((db) => db.transaction('apolloCache').objectStore('apolloCache').getAll());
 // }
 let username = '';
-let cacheData = '';
+let cacheData = {};
+const preCache = [
+  '/static/media/new_16-2.d9260786.gif',
+  'https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap',
+  'https://cdn.jsdelivr.net/npm/bootstrap@3.3.5/dist/css/bootstrap.min.css',
+];
 const CACHE_NAME = 'cache';
 addEventListener('install', (e) => {
-  e.waitUntil(self.skipWaiting());
-  console.log('SUCCESS INSTALL');
+  //register the client at first loading page
+  //Once a new service worker has installed and a previous version isn't being used, the new one activates,
+  // and you get an activate event. Because the old version is out of the way, it's a good time to delete unused caches.
+  e.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(cacheNames.map((cache) => caches.delete(cache)));
+    })
+  );
 });
 function readDB() {
   try {
-    console.log('yee');
     fetch(`/api/end_of_session?username=${username}`, {
       method: 'POST',
-      body: cacheData,
+      body: JSON.stringify(cacheData),
       headers: {
-        'Content-Type': 'text/plain',
+        'Content-Type': 'application/json',
       },
     }).then(() => {
       console.log('[Service Worker]: /api/end_of_session SUCCESS');
@@ -28,13 +38,16 @@ function readDB() {
   }
 }
 addEventListener('activate', (event) => {
-  //register the client at first loading page
-  //Once a new service worker has installed and a previous version isn't being used, the new one activates,
-  // and you get an activate event. Because the old version is out of the way, it's a good time to delete unused caches.
   event.waitUntil(
     self.clients.claim().then(() => {
-      caches.keys().then((cacheNames) => {
-        return Promise.all(cacheNames.map((cache) => caches.delete(cache)));
+      caches.open(CACHE_NAME).then(function (cache) {
+        return Promise.all(
+          preCache.map((link) => {
+            fetch(link).then(function (response) {
+              cache.put(link, response.clone());
+            });
+          })
+        );
       });
     })
   );
@@ -46,6 +59,9 @@ addEventListener('message', (event) => {
       break;
     case 'apolloCacheData':
       cacheData = event.data.cacheData;
+      break;
+    case 'SKIP_WAITING':
+      self.skipWaiting().then(() => {});
       break;
     case 'execute':
       readDB();
@@ -70,7 +86,14 @@ addEventListener('fetch', function (event) {
   if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') {
     return false;
   }
-  if (event.request.url.includes('/api') || event.request.url.includes('chrome-extension')) {
+  if (/\.(png|gif|jpg|jpeg|svg|webp).*$/.test(event.request.url)) {
+    return false;
+  }
+  if (
+    event.request.url.includes('/api') ||
+    event.request.url.includes('chrome-extension') ||
+    event.request.url.includes('hot-update.js')
+  ) {
     return false;
   }
   if (event.request.mode !== 'navigate' && event.request.method === 'GET') {
@@ -80,7 +103,9 @@ addEventListener('fetch', function (event) {
           return (
             response ||
             fetch(event.request).then(function (response) {
-              cache.put(event.request, response.clone());
+              if (response.type !== 'opaque') {
+                cache.put(event.request, response.clone());
+              }
               return response;
             })
           );

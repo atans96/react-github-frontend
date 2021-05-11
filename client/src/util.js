@@ -54,7 +54,7 @@ export const debounce = (fn) => {
     });
   };
 };
-export const allowedRoutes = ['/', '/profile', '/detail', '/login', '/discover'];
+export const allowedRoutes = ['/', '/profile', '/login', '/discover'];
 export function binarySearch(arr, n) {
   let min = 0;
   let max = arr.length - 1;

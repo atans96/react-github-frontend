@@ -31,10 +31,8 @@ function pushConsumers(property: string, path: string) {
 export function useApolloFactory(path: string) {
   const client = useApolloClient();
   const seenAdded = async (data: any[]) => {
-    const oldData: GraphQLSeenData = (await client.cache.readQuery({ query: GET_SEEN })) || {
-      getSeen: { seenCards: [] },
-    };
-    if (oldData.getSeen) {
+    const oldData: GraphQLSeenData | null = (await client.cache.readQuery({ query: GET_SEEN })) || null;
+    if (oldData && oldData.getSeen) {
       return client.cache.writeQuery({
         query: GET_SEEN,
         data: {
@@ -56,16 +54,14 @@ export function useApolloFactory(path: string) {
   };
 
   const clickedAdded = async (data: GraphQLClickedData) => {
-    const oldData: GraphQLClickedData = (await client.cache.readQuery({ query: GET_CLICKED })) || {
-      getClicked: { clicked: [], userName: 'wa1618i' },
-    };
-    if (oldData.getClicked.clicked && oldData.getClicked.clicked.length > 0) {
+    const oldData: GraphQLClickedData | null = (await client.cache.readQuery({ query: GET_CLICKED })) || null;
+    if (oldData && oldData.getClicked.clicked && oldData.getClicked.clicked.length > 0) {
       return client.cache.writeQuery({
         query: GET_CLICKED,
         data: {
           getClicked: {
             userName: oldData.getClicked.userName,
-            seenCards: [...data.getClicked.clicked, ...oldData?.getClicked?.clicked],
+            clicked: [...data.getClicked.clicked, ...oldData?.getClicked?.clicked],
           },
         },
       });
@@ -75,37 +71,28 @@ export function useApolloFactory(path: string) {
         data: {
           getClicked: {
             userName: data.getClicked.userName,
-            seenCards: data.getClicked.clicked,
+            clicked: data.getClicked.clicked,
           },
         },
       });
     }
   };
   const tokenRSSAdded = async (data: { getUserData: { tokenRSS: string } }) => {
-    const oldData: GraphQLUserData = (await client.cache.readQuery({ query: GET_USER_DATA })) || {
-      getUserData: {
-        avatar: '',
-        userName: 'wa1618i',
-        token: '',
-        tokenRSS: '',
-        languagePreference: [],
-        code: '',
-        joinDate: new Date(),
-      },
-    };
-    await client.cache.writeQuery({
-      query: GET_USER_DATA,
-      data: {
-        ...oldData,
-        tokenRSS: data.getUserData.tokenRSS,
-      },
-    });
+    const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
+    if (oldData) {
+      await client.cache.writeQuery({
+        query: GET_USER_DATA,
+        data: {
+          ...oldData,
+          tokenRSS: data.getUserData.tokenRSS,
+        },
+      });
+    }
   };
   const rssFeedAdded = async (data: GraphQLRSSFeedData) => {
-    const oldData: GraphQLRSSFeedData = (await client.cache.readQuery({ query: GET_RSS_FEED })) || {
-      getRSSFeed: { rss: [], userName: 'wa1618i', lastSeen: [] },
-    };
+    const oldData: GraphQLRSSFeedData | null = (await client.cache.readQuery({ query: GET_RSS_FEED })) || null;
     if (
+      oldData &&
       oldData.getRSSFeed.rss &&
       oldData.getRSSFeed.rss.length > 0 &&
       oldData.getRSSFeed.lastSeen &&
@@ -126,7 +113,7 @@ export function useApolloFactory(path: string) {
         query: GET_RSS_FEED,
         data: {
           getRSSFeed: {
-            userName: oldData.getRSSFeed.userName,
+            userName: oldData!.getRSSFeed.userName,
             rss: data.getRSSFeed.rss,
             lastSeen: data.getRSSFeed.lastSeen,
           },
@@ -136,13 +123,8 @@ export function useApolloFactory(path: string) {
     return (await client.cache.readQuery({ query: GET_RSS_FEED })) as GraphQLRSSFeedData;
   };
   const removeStarred = async (data: { removeStarred: number }) => {
-    const oldData: GraphQLUserStarred = (await client.cache.readQuery({ query: GET_USER_STARRED })) || {
-      getUserInfoStarred: {
-        userName: 'wa1618i',
-        starred: [],
-      },
-    };
-    if (oldData.getUserInfoStarred.starred.length > 0) {
+    const oldData: GraphQLUserStarred | null = (await client.cache.readQuery({ query: GET_USER_STARRED })) || null;
+    if (oldData && oldData.getUserInfoStarred.starred.length > 0) {
       await client.cache.writeQuery({
         query: GET_USER_STARRED,
         data: {
@@ -154,13 +136,8 @@ export function useApolloFactory(path: string) {
     }
   };
   const addedStarredMe = async (data: { getUserInfoStarred: { starred: number[] } }) => {
-    const oldData: GraphQLUserStarred = (await client.cache.readQuery({ query: GET_USER_STARRED })) || {
-      getUserInfoStarred: {
-        userName: 'wa1618i',
-        starred: [],
-      },
-    };
-    if (oldData.getUserInfoStarred.starred.length > 0) {
+    const oldData: GraphQLUserStarred | null = (await client.cache.readQuery({ query: GET_USER_STARRED })) || null;
+    if (oldData && oldData.getUserInfoStarred.starred.length > 0) {
       await client.cache.writeQuery({
         query: GET_USER_STARRED,
         data: {
@@ -183,30 +160,20 @@ export function useApolloFactory(path: string) {
   const languagesPreferenceAdded = async (data: {
     getUserData: { languagePreference: [{ language: string; checked: boolean }] };
   }) => {
-    const oldData: GraphQLUserData = (await client.cache.readQuery({ query: GET_USER_DATA })) || {
-      getUserData: {
-        avatar: '',
-        userName: 'wa1618i',
-        token: '',
-        tokenRSS: '',
-        languagePreference: [],
-        code: '',
-        joinDate: new Date(),
-      },
-    };
-    await client.cache.writeQuery({
-      query: GET_USER_DATA,
-      data: {
-        ...oldData,
-        languagePreference: [...data.getUserData.languagePreference],
-      },
-    });
+    const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
+    if (oldData) {
+      await client.cache.writeQuery({
+        query: GET_USER_DATA,
+        data: {
+          ...oldData,
+          languagePreference: [...data.getUserData.languagePreference],
+        },
+      });
+    }
   };
   const searchesAdded = async (data: GraphQLSearchesData) => {
-    const oldData: GraphQLSearchesData = (await client.cache.readQuery({ query: GET_SEARCHES })) || {
-      getSearches: [{ search: '', count: 0, updatedAt: new Date() }],
-    };
-    if (oldData.getSearches.length > 0) {
+    const oldData: GraphQLSearchesData | null = (await client.cache.readQuery({ query: GET_SEARCHES })) || null;
+    if (oldData && oldData.getSearches.length > 0) {
       await client.cache.writeQuery({
         query: GET_SEARCHES,
         data: {
