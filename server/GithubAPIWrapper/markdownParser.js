@@ -240,7 +240,7 @@ class MarkdownParserClass {
             resolve([]);
             console.log(`ERROR ${url}, message: ${err.message}`);
           } else {
-            util.sendErrorMessageToClient(err, args.res);
+            util.sendErrorMessageToClient(err, this.res);
           }
         });
     });
@@ -316,7 +316,7 @@ class MarkdownParserClass {
               !err.message.includes("ECONNRESET")
             ) {
               console.log(`ERROR ${validUrl}, message: ${err.message}`);
-              util.sendErrorMessageToClient(err, args.res);
+              util.sendErrorMessageToClient(err, this.res);
             }
           });
       }

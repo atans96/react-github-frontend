@@ -127,41 +127,44 @@ const ApolloCache = {
   },
   getClicked: async ({ eventEmitter }) => {
     eventEmitter.on("getClicked", async (cacheData) => {
-      const hasSeen = await Models.Seen.aggregate([
-        {
-          $match: {
-            userName: cacheData.username,
-            "seenCards.full_name": JSON.parse(cacheData.data).clickedInfo[0]
-              .full_name, //TODO: do in loop
-          },
-        },
-        {
-          $project: {
-            is_queried: {
-              $filter: {
-                input: "$seenCards",
-                as: "seenCards",
-                cond: { $eq: ["$$seenCards.is_queried", true] },
+      JSON.parse(cacheData.data).clicked.forEach((obj) => {
+        (async () => {
+          const hasSeen = await Models.Seen.aggregate([
+            {
+              $match: {
+                userName: cacheData.username,
+                "seenCards.full_name": obj.full_name,
               },
             },
-          },
-        },
-      ]);
-      //if seenCards has been queried by the github-api-static, don't append the Clicked database to prevent being queried again
-      if (hasSeen.length === 0 || hasSeen[0].is_queried.length === 0) {
-        //always take the first element in array since we're querying for 1 full_name ("seenCards.full_name": clickedInfo[0].full_name) above
-        await Models.Clicked.findOneAndUpdate(
-          { userName: cacheData.username },
-          {
-            $addToSet: {
-              clicked: {
-                $each: JSON.parse(cacheData.data).clicked,
+            {
+              $project: {
+                is_queried: {
+                  $filter: {
+                    input: "$seenCards",
+                    as: "seenCards",
+                    cond: { $eq: ["$$seenCards.is_queried", true] },
+                  },
+                },
               },
             },
-          },
-          { upsert: true }
-        );
-      }
+          ]);
+          //if seenCards has been queried by the github-api-static, don't append the Clicked database to prevent being queried again
+          if (hasSeen.length === 0 || hasSeen[0].is_queried.length === 0) {
+            //always take the first element in array since we're querying for 1 full_name ("seenCards.full_name": clickedInfo[0].full_name) above
+            await Models.Clicked.findOneAndUpdate(
+              { userName: cacheData.username },
+              {
+                $addToSet: {
+                  clicked: {
+                    $each: [obj],
+                  },
+                },
+              },
+              { upsert: true }
+            );
+          }
+        })();
+      });
     });
   },
 };

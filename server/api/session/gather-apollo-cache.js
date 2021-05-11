@@ -4,9 +4,9 @@ module.exports = async (req, res, ctx, ...args) => {
   res.send("set cookie");
   let valid = new Map();
   let validKeys = [];
-  for (const key of Object.keys(req.body[0])) {
+  for (const key of Object.keys(req.body)) {
     if (Object.keys(args[0].ApolloCache).includes(key)) {
-      valid.set(key, req.body[0][key]);
+      valid.set(key, req.body[key]);
       validKeys.push(key);
     }
   }

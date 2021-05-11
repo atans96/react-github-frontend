@@ -52,9 +52,7 @@ const Login = loadable(() => import('./Login'));
 const Details = loadable(() => import('./Details'));
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
 
-let apolloCacheData = {
-  isLoggedIn: false,
-};
+let apolloCacheData = {};
 
 const App = () => {
   const location = useLocation();
@@ -261,6 +259,12 @@ const App = () => {
         .register('sw.js')
         .then(() => navigator.serviceWorker.ready)
         .then((reg) => {
+          reg.onupdatefound = () => {
+            const waitingServiceWorker = reg.waiting;
+            if (waitingServiceWorker) {
+              waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          };
           // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
           navigator?.serviceWorker?.controller?.postMessage({
             type: 'username',
@@ -285,7 +289,7 @@ const App = () => {
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.isLoggedIn]);
+  }, [stateShared.isLoggedIn, apolloCacheData]);
 
   return (
     <div>
@@ -328,6 +332,7 @@ const App = () => {
               );
             }}
           />
+
           <KeepMountedLayout
             mountedCondition={/detail/.test(location.pathname)}
             render={() => {
@@ -338,6 +343,7 @@ const App = () => {
               }
             }}
           />
+
           <KeepMountedLayout
             mountedCondition={location.pathname === '/discover'}
             render={() => {
@@ -364,7 +370,7 @@ const App = () => {
             }}
           />
           <KeepMountedLayout
-            mountedCondition={!allowedRoutes.includes(location.pathname)}
+            mountedCondition={!/detail/.test(location.pathname) && !allowedRoutes.includes(location.pathname)}
             render={() => {
               return <NotFound />;
             }}
@@ -378,7 +384,6 @@ const CustomApolloProvider = ({ children }: any) => {
   const history = useHistory();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const unAuthorizedAction = () => {
-    localStorage.removeItem('sess');
     logoutAction(history, dispatchShared);
     window.alert('Your token has expired. We will logout you out.');
   };

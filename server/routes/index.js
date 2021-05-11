@@ -21,6 +21,7 @@ const convertToWebp = require("../api/convert/convert-to-webp");
 const gatherApolloCache = require("../api/session/gather-apollo-cache");
 const verifyUsername = require("../middleware/username");
 const Schema = require("../fastifySchema");
+const axios = require("../helpers/axios-instance");
 
 async function routes(fastify, opts, done) {
   fastify.get(
@@ -39,7 +40,7 @@ async function routes(fastify, opts, done) {
         } else if (!err && !val) {
           userRepoInfo(req, res, fastify, {
             url: req.url,
-            axios: opts.axios,
+            axios,
             github: opts.githubAPIWrapper,
           });
         } else {
@@ -91,7 +92,7 @@ async function routes(fastify, opts, done) {
         } else if (!err && !val) {
           orgRepoInfo(req, res, fastify, {
             url: req.url,
-            axios: opts.axios,
+            axios,
             github: opts.githubAPIWrapper,
           });
         } else {
@@ -117,7 +118,7 @@ async function routes(fastify, opts, done) {
         } else if (!err && !val) {
           contributorsRepoInfo(req, res, fastify, {
             url: req.url,
-            axios: opts.axios,
+            axios,
             github: opts.githubAPIWrapper,
           });
         } else {
@@ -137,7 +138,7 @@ async function routes(fastify, opts, done) {
     (req, res) => {
       imagesRepoInfo(req, res, fastify, {
         url: req.url,
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
       // const { redis } = fastify;
@@ -148,7 +149,7 @@ async function routes(fastify, opts, done) {
       //   } else if (!err && !val) {
       //     imagesRepoInfo(req, res, fastify, {
       //       req.url,
-      //       axios: opts.axios,
+      //       axios: opts.axios.create(,
       //       github: opts.githubAPIWrapper,
       //     });
       //   } else {
@@ -167,7 +168,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       convertToWebp(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -181,19 +182,10 @@ async function routes(fastify, opts, done) {
       preValidation: fastify.csrfProtection,
     },
     (req, res) => {
-      const { redis } = fastify;
-      redis.get(req.url, (err, val) => {
-        if (val) {
-          redis.expire(req.url, 300 * 1000); //refresh it since we're still using it
-          res.send(val);
-        } else if (!err && !val) {
-          readmeRepoInfo(req, res, fastify, {
-            url: req.url,
-            github: opts.githubAPIWrapper,
-          });
-        } else {
-          throw new Error(`Something Wrong with ${req.url} ${err}`);
-        }
+      readmeRepoInfo(req, res, fastify, {
+        url: req.url,
+        axios,
+        github: opts.githubAPIWrapper,
       });
     }
   );
@@ -207,7 +199,7 @@ async function routes(fastify, opts, done) {
       gatherApolloCache(req, res, fastify, {
         eventEmitter: opts.eventEmitter,
         ApolloCache: opts.ApolloCache,
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -228,7 +220,7 @@ async function routes(fastify, opts, done) {
         } else if (!err && !val) {
           topicSearchInfo(req, res, fastify, {
             url: req.url,
-            axios: opts.axios,
+            axios,
             github: opts.githubAPIWrapper,
           });
         } else {
@@ -254,7 +246,7 @@ async function routes(fastify, opts, done) {
         } else if (!err && !val) {
           usersSearchInfo(req, res, fastify, {
             url: req.url,
-            axios: opts.axios,
+            axios,
             github: opts.githubAPIWrapper,
           });
         } else {
@@ -269,7 +261,7 @@ async function routes(fastify, opts, done) {
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
       setStarredMe(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -280,7 +272,7 @@ async function routes(fastify, opts, done) {
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
       removeStarredMe(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -295,7 +287,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       githubAccessToken(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -310,7 +302,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       getRateLimit(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -325,7 +317,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       subscribeUserFeed(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -336,7 +328,7 @@ async function routes(fastify, opts, done) {
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
       setTokenGQL(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -347,7 +339,7 @@ async function routes(fastify, opts, done) {
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
       getTokenGQL(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -358,7 +350,7 @@ async function routes(fastify, opts, done) {
     { logLevel: "error", preValidation: fastify.csrfProtection },
     (req, res) => {
       destroyTokenGQL(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
@@ -373,7 +365,7 @@ async function routes(fastify, opts, done) {
     },
     (req, res) => {
       testTokenGQL(req, res, fastify, {
-        axios: opts.axios,
+        axios,
         github: opts.githubAPIWrapper,
       });
     }
