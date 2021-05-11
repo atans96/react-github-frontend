@@ -5,7 +5,6 @@ const { configPlugin } = require("./decorators/config");
 const ApolloCache = require("./apolloCache");
 const { dbPlugin } = require("./decorators/db");
 const { csrf } = require("./decorators/csrf");
-const { apolloServerPlugin } = require("./decorators/apollo-server");
 const helmet = require("fastify-helmet");
 const rateLimit = require("fastify-rate-limit");
 const Redis = require("ioredis");
@@ -25,7 +24,6 @@ for (const key of Object.keys(ApolloCache)) {
 module.exports = async function buildFastify(deps) {
   const {
     config,
-    axios,
     jwtService,
     db,
     githubAPIWrapper,
@@ -72,7 +70,6 @@ module.exports = async function buildFastify(deps) {
   });
   fastify.register(dbPlugin(db));
   fastify.register(routes, {
-    axios,
     ApolloCache,
     githubAPIWrapper,
     jwtService,
@@ -81,7 +78,6 @@ module.exports = async function buildFastify(deps) {
   });
   fastify.register(csrf);
   fastify.register(configPlugin(config));
-  fastify.register(apolloServerPlugin());
   fastify.register(helmet);
   await fastify.register(rateLimit, {
     max: 30,
