@@ -42,9 +42,7 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
     });
     if (stateShared.isLoggedIn) {
       searchesAdded({
-        variables: {
-          search: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })],
-        },
+        getSearches: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })],
       }).then(noop);
     }
   };

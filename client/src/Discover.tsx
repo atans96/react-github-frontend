@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import { useResizeHandler } from './hooks/hooks';
 import { ActionResolvedPromise, MergedDataProps, RenderImages, SeenProps } from './typing/type';
-import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
@@ -21,6 +20,7 @@ import { ActionResolvePromiseOutput, IStateDiscover, IStateShared, StaticState }
 import { Fab } from '@material-ui/core';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
+import { useScrollSaver } from './hooks/useScrollSaver';
 
 interface MasonryLayoutMemo {
   children: any;
@@ -202,14 +202,17 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [imagesDataDiscover]);
-
+  const locationRef = useRef('/discover');
+  useEffect(() => {
+    locationRef.current = location.pathname;
+  });
   const handleBottomHit = useCallback(
     () => {
       if (
         !isFetchFinish.current &&
         mergedDataRef.current.length > 0 &&
         !isLoadingRef.current &&
-        location.pathname === '/discover' &&
+        locationRef.current === '/discover' &&
         notificationRef.current === ''
       ) {
         dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
@@ -243,15 +246,11 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
         }, [] as SeenProps[]);
         if (result.length > 0 && imagesDataDiscoverRef.current.mapData.size > 0) {
           //don't add to database yet when imagesData still loading.
-          seenAdded({
-            variables: {
-              seenCards: result,
-            },
-          }).then(noop);
+          seenAdded(result).then(noop);
         }
       }
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [locationRef.current, isFetchFinish.current, mergedDataRef.current, isLoadingRef.current, notificationRef.current]
   );
 
   useBottomHit(
@@ -326,11 +325,12 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
   };
   //TODO: only show image if size is....https://github.com/ShogunPanda/fastimage at backend
 
+  useScrollSaver(location.pathname, '/discover');
+
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
        when unmounted*/}
-      <ScrollPositionManager scrollKey="discover" />
       <div className={'top'} />
       <div
         ref={windowScreenRef}

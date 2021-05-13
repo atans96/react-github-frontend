@@ -68,15 +68,26 @@ export const GET_SUGGESTED_REPO = gql`
     }
   }
 `;
-export const GET_WATCH_USERS = gql`
+export const GET_CLICKED = gql`
   query {
-    getWatchUsers {
-      login {
-        login
-        feeds
-        lastSeenFeeds
-        avatarUrl
+    getClicked {
+      userName
+      clicked {
+        is_queried
+        full_name
+        owner {
+          login
+        }
       }
+    }
+  }
+`;
+export const GET_RSS_FEED = gql`
+  query {
+    getRSSFeed {
+      userName
+      rss
+      lastSeen
     }
   }
 `;

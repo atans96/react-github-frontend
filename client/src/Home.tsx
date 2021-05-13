@@ -7,7 +7,6 @@ import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
 import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, Seen, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
-import ScrollPositionManager from './util/scrollPositionSaver';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
@@ -26,6 +25,7 @@ import { Fab } from '@material-ui/core';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import { Masonry } from './util/masonic/masonry';
+import { useScrollSaver } from './hooks/useScrollSaver';
 
 // only re-render Card component when mergedData and idx changes
 // Memo: given the same/always same props, always render the same output
@@ -388,6 +388,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.mergedData]);
 
   useEffect(() => {
@@ -398,6 +399,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 
   useEffect(() => {
@@ -408,6 +410,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [notification]);
 
   useEffect(() => {
@@ -418,6 +421,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.imagesData]);
 
   useEffect(() => {
@@ -428,14 +432,20 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         isFinished = true;
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filterBySeen]);
+
+  const locationRef = useRef('/');
+  useEffect(() => {
+    locationRef.current = location.pathname;
+  });
 
   const handleBottomHit = useCallback(() => {
     if (
       !isFetchFinish.current &&
       mergedDataRef.current.length > 0 &&
       !isLoadingRef.current &&
-      location.pathname === '/' &&
+      locationRef.current === '/' &&
       notificationRef.current === '' &&
       filterBySeenRef.current
     ) {
@@ -470,15 +480,19 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         return acc;
       }, [] as MergedDataProps[]);
       if (result.length > 0 && imagesDataRef.current.length > 0 && stateShared.isLoggedIn) {
-        seenAdded({
-          variables: {
-            seenCards: result,
-          },
-        }).then(noop);
+        seenAdded(result).then(noop);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.isLoggedIn]);
+  }, [
+    stateShared.isLoggedIn,
+    isFetchFinish.current,
+    mergedDataRef.current.length,
+    isLoadingRef.current,
+    notificationRef.current,
+    filterBySeenRef.current,
+    locationRef.current,
+  ]);
 
   useBottomHit(
     windowScreenRef,
@@ -823,6 +837,8 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     return state.mergedData; // return this if filteredTopics.length === 0
   };
 
+  useScrollSaver(location.pathname, '/');
+
   // TODO: put the color of each card to change as the user scroll to the bottom to see it: https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
   // and put delay at each Card so that as if the animation is at random
 
@@ -837,7 +853,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: show the history of the user + statistic of what languages they browse
 
-  //TODO: test brutal requests the reslience of handling requests
+  //TODO: test brutal requests the reslience of handling requests (use https://marmelab.com/blog/2018/04/03/how-to-track-and-fix-memory-leak-with-nodejs.html#first-code-example)
 
   //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
 
@@ -849,6 +865,10 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   //TODO: after Details is rendered, show related repo from author and contributors sorted based on stargazers.
 
   //TODO: if the user is new, guide them using https://shepherdjs.dev/
+
+  //TODO: recommend based on comment and thread comments. For example if you want to search for serviceworker, show them the git
+
+  //TODO: build fault-tolerant nodejs server using Elixir as a supervisor for our Nodejs server (see DogeHouse)
   return (
     <React.Fragment>
       <Helmet>
@@ -861,14 +881,16 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       </Helmet>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
        when unmounted*/}
-      <ScrollPositionManager scrollKey="home" />
       <div className={'top'} />
       <div
         ref={windowScreenRef}
         className={clsx('', {
           header: isMergedDataExist,
         })}
-        style={{ marginLeft: `${stateShared.drawerWidth > 0 ? 170 : 50}px`, zIndex: state.visible ? -1 : 0 }}
+        style={{
+          marginLeft: `${stateShared.drawerWidth > 0 ? 170 : 50}px`,
+          zIndex: state.visible ? -1 : 0,
+        }}
       >
         {
           // we want to render Card first and ImagesCard later because it requires more bandwith
