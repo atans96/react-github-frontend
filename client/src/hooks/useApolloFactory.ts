@@ -1,32 +1,22 @@
-import { useMutation, useQuery } from '@apollo/client';
+import { useApolloClient, useMutation, useQuery } from '@apollo/client';
+import { SIGN_UP_USER } from '../graphql/mutations';
 import {
-  CLICKED_ADDED,
-  RSS_FEED_ADDED,
-  SEARCHES_ADDED,
-  SEEN_ADDED,
-  SET_LANGUAGE_PREFERENCE,
-  SIGN_UP_USER,
-  STARRED_ME_ADDED,
-  STARRED_ME_REMOVED,
-  TOKEN_RSS_ADDED,
-  WATCH_USER_FEEDS_ADDED,
-  WATCH_USERS_ADDED,
-} from '../graphql/mutations';
-import {
+  GET_CLICKED,
+  GET_RSS_FEED,
   GET_SEARCHES,
   GET_SEEN,
   GET_USER_DATA,
   GET_USER_INFO_DATA,
   GET_USER_STARRED,
-  GET_WATCH_USERS,
 } from '../graphql/queries';
 import {
+  GraphQLClickedData,
+  GraphQLRSSFeedData,
   GraphQLSearchesData,
   GraphQLSeenData,
   GraphQLUserData,
   GraphQLUserInfoData,
   GraphQLUserStarred,
-  GraphQLWatchUsersData,
 } from '../typing/interface';
 
 const consumers: Record<string, Array<string>> = {};
@@ -38,96 +28,167 @@ function pushConsumers(property: string, path: string) {
     consumers[path] = [property];
   }
 }
-//TODO: add the mutation once the user log out will then be appended to database. otherwise, use cache when client still active
 export function useApolloFactory(path: string) {
-  const [seenAdded] = useMutation(SEEN_ADDED, {
-    context: { clientName: 'mongo' },
-    update: (cache, data: any) => {
-      cache.writeQuery({
+  const client = useApolloClient();
+  const seenAdded = async (data: any[]) => {
+    const oldData: GraphQLSeenData | null = (await client.cache.readQuery({ query: GET_SEEN })) || null;
+    if (oldData && oldData.getSeen) {
+      return client.cache.writeQuery({
         query: GET_SEEN,
         data: {
           getSeen: {
-            seenCards: data.data.seenAdded?.seenCards,
+            seenCards: [...data, ...oldData?.getSeen?.seenCards],
           },
         },
       });
-    },
-  });
+    } else {
+      return client.cache.writeQuery({
+        query: GET_SEEN,
+        data: {
+          getSeen: {
+            seenCards: data,
+          },
+        },
+      });
+    }
+  };
 
-  const [clickedAdded] = useMutation(CLICKED_ADDED, {
-    context: { clientName: 'mongo' },
-  });
-  const [tokenRSSAdded] = useMutation(TOKEN_RSS_ADDED, {
-    context: { clientName: 'mongo' },
-  });
-  const [rssFeedAdded] = useMutation(RSS_FEED_ADDED, {
-    context: { clientName: 'mongo' },
-  });
-  const [removeStarred] = useMutation(STARRED_ME_REMOVED, {
-    context: { clientName: 'mongo' },
-    update: (cache, data: any) => {
-      cache.writeQuery({
-        query: GET_USER_STARRED,
+  const clickedAdded = async (data: GraphQLClickedData) => {
+    const oldData: GraphQLClickedData | null = (await client.cache.readQuery({ query: GET_CLICKED })) || null;
+    if (oldData && oldData.getClicked.clicked && oldData.getClicked.clicked.length > 0) {
+      return client.cache.writeQuery({
+        query: GET_CLICKED,
         data: {
-          getUserInfoStarred: {
-            starred: data.data.starredMeRemoved?.starred,
+          getClicked: {
+            userName: oldData.getClicked.userName,
+            clicked: [...data.getClicked.clicked, ...oldData?.getClicked?.clicked],
           },
         },
       });
-    },
-  });
-  const [addedStarredMe] = useMutation(STARRED_ME_ADDED, {
-    context: { clientName: 'mongo' },
-    update: (cache, data: any) => {
-      cache.writeQuery({
-        //with this, the SubscribeFeed useQuery no need to query the database again as the data will be on the cache of the useQuery in there
-        query: GET_USER_STARRED,
+    } else {
+      return client.cache.writeQuery({
+        query: GET_CLICKED,
         data: {
-          getUserInfoStarred: {
-            starred: data.data.starredMeAdded?.starred,
+          getClicked: {
+            userName: data.getClicked.userName,
+            clicked: data.getClicked.clicked,
           },
         },
       });
-    },
-  });
-  const [languagesPreferenceAdded] = useMutation(SET_LANGUAGE_PREFERENCE, {
-    context: { clientName: 'mongo' },
-    update: (cache, data: any) => {
-      cache.writeQuery({
+    }
+  };
+  const tokenRSSAdded = async (data: { getUserData: { tokenRSS: string } }) => {
+    const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
+    if (oldData) {
+      await client.cache.writeQuery({
         query: GET_USER_DATA,
         data: {
-          getUserData: data?.data?.setLanguagePreference,
+          ...oldData,
+          tokenRSS: data.getUserData.tokenRSS,
         },
       });
-    },
-  });
-  const [watchUsersAdded] = useMutation(WATCH_USERS_ADDED, {
-    context: { clientName: 'mongo' },
-    update: (cache, data: any) => {
-      cache.writeQuery({
-        query: GET_WATCH_USERS,
+    }
+  };
+  const rssFeedAdded = async (data: GraphQLRSSFeedData) => {
+    const oldData: GraphQLRSSFeedData | null = (await client.cache.readQuery({ query: GET_RSS_FEED })) || null;
+    if (
+      oldData &&
+      oldData.getRSSFeed.rss &&
+      oldData.getRSSFeed.rss.length > 0 &&
+      oldData.getRSSFeed.lastSeen &&
+      oldData.getRSSFeed.lastSeen.length > 0
+    ) {
+      await client.cache.writeQuery({
+        query: GET_RSS_FEED,
         data: {
-          getWatchUsers: {
-            login: data.data.watchUsersAdded?.login,
+          getRSSFeed: {
+            userName: oldData.getRSSFeed.userName,
+            rss: [...data.getRSSFeed.rss, ...oldData?.getRSSFeed?.rss],
+            lastSeen: [...data.getRSSFeed.lastSeen, ...oldData?.getRSSFeed?.lastSeen],
           },
         },
       });
-    },
-  });
-  const [watchUsersFeedsAdded] = useMutation(WATCH_USER_FEEDS_ADDED, {
-    context: { clientName: 'mongo' },
-  });
-  const [searchesAdded] = useMutation(SEARCHES_ADDED, {
-    context: { clientName: 'mongo' },
-    update: (cache, data: any) => {
-      cache.writeQuery({
-        query: GET_SEARCHES,
+    } else {
+      await client.cache.writeQuery({
+        query: GET_RSS_FEED,
         data: {
-          getSearches: data.data.searchHistoryAdded?.searches,
+          getRSSFeed: {
+            userName: oldData!.getRSSFeed.userName,
+            rss: data.getRSSFeed.rss,
+            lastSeen: data.getRSSFeed.lastSeen,
+          },
         },
       });
-    },
-  });
+    }
+    return (await client.cache.readQuery({ query: GET_RSS_FEED })) as GraphQLRSSFeedData;
+  };
+  const removeStarred = async (data: { removeStarred: number }) => {
+    const oldData: GraphQLUserStarred | null = (await client.cache.readQuery({ query: GET_USER_STARRED })) || null;
+    if (oldData && oldData.getUserInfoStarred.starred.length > 0) {
+      await client.cache.writeQuery({
+        query: GET_USER_STARRED,
+        data: {
+          getUserInfoStarred: {
+            starred: oldData.getUserInfoStarred.starred.filter((old) => old !== data.removeStarred),
+          },
+        },
+      });
+    }
+  };
+  const addedStarredMe = async (data: { getUserInfoStarred: { starred: number[] } }) => {
+    const oldData: GraphQLUserStarred | null = (await client.cache.readQuery({ query: GET_USER_STARRED })) || null;
+    if (oldData && oldData.getUserInfoStarred.starred.length > 0) {
+      await client.cache.writeQuery({
+        query: GET_USER_STARRED,
+        data: {
+          getUserInfoStarred: {
+            starred: [...oldData.getUserInfoStarred.starred, ...data.getUserInfoStarred.starred],
+          },
+        },
+      });
+    } else {
+      await client.cache.writeQuery({
+        query: GET_USER_STARRED,
+        data: {
+          getUserInfoStarred: {
+            starred: data.getUserInfoStarred.starred,
+          },
+        },
+      });
+    }
+  };
+  const languagesPreferenceAdded = async (data: {
+    getUserData: { languagePreference: [{ language: string; checked: boolean }] };
+  }) => {
+    const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
+    if (oldData) {
+      await client.cache.writeQuery({
+        query: GET_USER_DATA,
+        data: {
+          ...oldData,
+          languagePreference: [...data.getUserData.languagePreference],
+        },
+      });
+    }
+  };
+  const searchesAdded = async (data: GraphQLSearchesData) => {
+    const oldData: GraphQLSearchesData | null = (await client.cache.readQuery({ query: GET_SEARCHES })) || null;
+    if (oldData && oldData.getSearches.length > 0) {
+      await client.cache.writeQuery({
+        query: GET_SEARCHES,
+        data: {
+          getSearches: [...data.getSearches, ...oldData.getSearches],
+        },
+      });
+    } else {
+      await client.cache.writeQuery({
+        query: GET_SEARCHES,
+        data: {
+          getSearches: [...data.getSearches],
+        },
+      });
+    }
+  };
   const [signUpAdded] = useMutation(SIGN_UP_USER, {
     context: { clientName: 'mongo' },
   });
@@ -146,13 +207,6 @@ export function useApolloFactory(path: string) {
     context: { clientName: 'mongo' },
   });
 
-  const { data: watchUsersData, loading: loadingWatchUsersData, error: errorWatchUsersData } = useQuery(
-    GET_WATCH_USERS,
-    {
-      context: { clientName: 'mongo' },
-    }
-  );
-
   const { data: searchesData, loading: loadingSearchesData, error: errorSearchesData } = useQuery(GET_SEARCHES, {
     context: { clientName: 'mongo' },
   });
@@ -165,8 +219,6 @@ export function useApolloFactory(path: string) {
       removeStarred,
       addedStarredMe,
       languagesPreferenceAdded,
-      watchUsersAdded,
-      watchUsersFeedsAdded,
       searchesAdded,
       signUpAdded,
     },
@@ -193,11 +245,6 @@ export function useApolloFactory(path: string) {
         const temp: GraphQLSeenData = seenData;
         pushConsumers('getSeen', path);
         return { seenData: temp, seenDataLoading, seenDataError };
-      },
-      getWatchUsers: () => {
-        const temp: GraphQLWatchUsersData = watchUsersData;
-        pushConsumers('getWatchUsers', path);
-        return { watchUsersData: temp, loadingWatchUsersData, errorWatchUsersData };
       },
       getSearchesData: () => {
         const temp: GraphQLSearchesData = searchesData;

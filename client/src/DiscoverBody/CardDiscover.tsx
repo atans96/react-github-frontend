@@ -10,6 +10,8 @@ import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
 import { StateStargazersProvider } from '../selectors/stateContextSelector';
 import { useViewportSpy } from '../hooks/use-viewport-spy';
 import { createRenderElement } from '../Layout/MasonryLayout';
+import CryptoJS from 'crypto-js';
+import { readEnvironmentVariable } from '../util';
 
 export interface Card {
   index: number;
@@ -44,40 +46,50 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
         localStorage.setItem('detailsData', JSON.stringify({ data: githubData, path: location.pathname }));
         // history.push(`/detail/${githubData.id}`);
         window.open(`/detail/${githubData.id}`);
+        const temp = [
+          Object.assign(
+            {},
+            {
+              full_name: githubData.full_name,
+              owner: {
+                login: githubData.owner.login,
+              },
+              is_queried: false,
+            }
+          ),
+        ];
         clickedAdded({
-          variables: {
-            clickedInfo: [
-              Object.assign(
-                {},
-                {
-                  full_name: githubData.full_name,
-                  owner: {
-                    login: githubData.owner.login,
-                  },
-                  is_queried: false,
-                }
-              ),
-            ],
+          getClicked: {
+            clicked: temp,
+            userName: CryptoJS.TripleDES.decrypt(
+              localStorage.getItem('jbb') || '',
+              readEnvironmentVariable('CRYPTO_SECRET')!
+            ).toString(CryptoJS.enc.Latin1),
           },
         }).then(noop);
       }
     };
     const handleDetailsClicked = (e: React.MouseEvent) => {
       e.preventDefault();
+      const temp = [
+        Object.assign(
+          {},
+          {
+            full_name: githubData.full_name,
+            owner: {
+              login: githubData.owner.login,
+            },
+            is_queried: false,
+          }
+        ),
+      ];
       clickedAdded({
-        variables: {
-          clickedInfo: [
-            Object.assign(
-              {},
-              {
-                full_name: githubData.full_name,
-                owner: {
-                  login: githubData.owner.login,
-                },
-                is_queried: false,
-              }
-            ),
-          ],
+        getClicked: {
+          clicked: temp,
+          userName: CryptoJS.TripleDES.decrypt(
+            localStorage.getItem('jbb') || '',
+            readEnvironmentVariable('CRYPTO_SECRET')!
+          ).toString(CryptoJS.enc.Latin1),
         },
       }).then(noop);
     };

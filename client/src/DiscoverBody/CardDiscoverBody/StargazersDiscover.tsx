@@ -86,7 +86,7 @@ const StargazerDiscover = React.memo<StargazerDiscover>(
         await setStarredMe(data.full_name, stateShared.tokenGQL).then(() => {
           if (stateShared.isLoggedIn) {
             addedStarredMe({
-              variables: {
+              getUserInfoStarred: {
                 starred: [data.id],
               },
             }).then(noop);
@@ -96,9 +96,7 @@ const StargazerDiscover = React.memo<StargazerDiscover>(
         await removeStarredMe(data.full_name, stateShared.tokenGQL).then(() => {
           if (stateShared.isLoggedIn) {
             removeStarred({
-              variables: {
-                removeStarred: data.id,
-              },
+              removeStarred: data.id,
             }).then(noop);
           }
         });

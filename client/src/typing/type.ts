@@ -9,7 +9,6 @@ export type RepoInfoProps = {
   topics: string[];
   defaultBranch: string;
   html_url: string;
-  readme: string;
 };
 export enum ActionResolvedPromise {
   append = 'append',
@@ -190,7 +189,6 @@ export type RepoInfo = {
   topics: Nullable<string[] | []>;
   defaultBranch: string;
   html_url: string;
-  readme: string;
 };
 export type Contributors = {
   login: string;
@@ -221,20 +219,22 @@ export type Seen = {
   imagesData: string[] | [];
   is_queried: boolean;
 };
+export type Clicked = {
+  is_queried: boolean;
+  full_name: string;
+  owner: Omit<OwnerProps, 'html_url' | 'avatar_url'>;
+};
+export type ClickedData = {
+  userName: string;
+  clicked: Nullable<Clicked[] | []>;
+};
+export type RSSFeedData = {
+  userName: string;
+  rss: string[];
+  lastSeen: string[];
+};
 export type SeenData = {
   seenCards: Nullable<Seen[] | []>;
-};
-export type Login = {
-  id: number;
-  login: string;
-  feeds: string;
-  lastSeenFeeds: string;
-  createdAt: Date;
-  avatarUrl: string;
-};
-export type WatchUsersData = {
-  login: Login[];
-  userName: string;
 };
 export type SearchesData = {
   search: string;
