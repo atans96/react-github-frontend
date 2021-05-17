@@ -9,7 +9,6 @@ export type RepoInfoProps = {
   topics: string[];
   defaultBranch: string;
   html_url: string;
-  readme: string;
 };
 export enum ActionResolvedPromise {
   append = 'append',
@@ -190,7 +189,6 @@ export type RepoInfo = {
   topics: Nullable<string[] | []>;
   defaultBranch: string;
   html_url: string;
-  readme: string;
 };
 export type Contributors = {
   login: string;

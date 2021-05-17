@@ -1,11 +1,3 @@
-/server/public.pub
-/server/private
-/server/rsa_generator.bat
-/server/node_modules
-/server/scratch
-/server/.env
-/server/*.txt
-/server/package-lock.json
 /client/.env
 /client/node_modules
 /client/package-lock.json
