@@ -15,12 +15,14 @@ import { makeStyles } from '@material-ui/core/styles';
 import { addRSSFeed, noop } from '../../../util/util';
 import { Then } from '../../../util/react-if/Then';
 import { If } from '../../../util/react-if/If';
-import { fastFilter, uniqFast } from '../../../util';
+import { fastFilter, readEnvironmentVariable, uniqFast } from '../../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import idx from 'idx';
+import CryptoJS from 'crypto-js';
+import { GraphQLRSSFeedData } from '../../../typing/interface';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -114,7 +116,7 @@ const RSSFeed = () => {
               setLoading(false);
               setToken('');
               tokenRSSAdded({
-                variables: {
+                getUserData: {
                   tokenRSS: token,
                 },
               }).then(noop);
@@ -126,7 +128,11 @@ const RSSFeed = () => {
               });
               setRSSFeed(HTML.reverse());
               rssFeedAdded({
-                variables: {
+                getRSSFeed: {
+                  userName: CryptoJS.TripleDES.decrypt(
+                    localStorage.getItem('jbb') || '',
+                    readEnvironmentVariable('CRYPTO_SECRET')!
+                  ).toString(CryptoJS.enc.Latin1),
                   rss: HTML,
                   lastSeen: HTML,
                 },
@@ -135,16 +141,20 @@ const RSSFeed = () => {
             if (!openRSS) {
               unseenFeeds.current = [];
               rssFeedAdded({
-                variables: {
+                getRSSFeed: {
+                  userName: CryptoJS.TripleDES.decrypt(
+                    localStorage.getItem('jbb') || '',
+                    readEnvironmentVariable('CRYPTO_SECRET')!
+                  ).toString(CryptoJS.enc.Latin1),
                   rss: HTML,
                   lastSeen: [],
                 },
               })
-                .then((res: any) => {
-                  if (res.data.rssFeedAdded) {
+                .then((res) => {
+                  if (res.getRSSFeed.lastSeen) {
                     unseenFeeds.current = fastFilter(
-                      (x: string) => res.data.rssFeedAdded.lastSeen.indexOf(x) === -1,
-                      res.data.rssFeedAdded.rss
+                      (x: string) => res.getRSSFeed.lastSeen.indexOf(x) === -1,
+                      res.getRSSFeed.rss
                     );
                     setNotificationBadge(unseenFeeds.current.length);
                     resolve({ status: 200 });
@@ -159,13 +169,17 @@ const RSSFeed = () => {
               if (isTokenRSSExist) {
                 const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
                 rssFeedAdded({
-                  variables: {
+                  getRSSFeed: {
+                    userName: CryptoJS.TripleDES.decrypt(
+                      localStorage.getItem('jbb') || '',
+                      readEnvironmentVariable('CRYPTO_SECRET')!
+                    ).toString(CryptoJS.enc.Latin1),
                     rss: HTML,
                     lastSeen: uniqq,
                   },
                 })
-                  .then((res: any) => {
-                    const uniqq = uniqFast([...res.data.rssFeedAdded.lastSeen, ...res.data.rssFeedAdded.rss]);
+                  .then((res) => {
+                    const uniqq = uniqFast([...res.getRSSFeed.lastSeen, ...res.getRSSFeed.rss]);
                     setRSSFeed(uniqq.reverse()); //show it to the user
                     if (notificationBadge > 0) {
                       setNotificationBadge(0);

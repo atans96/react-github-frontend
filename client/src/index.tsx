@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import './hamburgers.css';
 import { BrowserRouter as Router, Redirect, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
-import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache } from '@apollo/client';
+import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
@@ -50,8 +50,9 @@ const ManageProfile = loadable(() => import('./ManageProfile'));
 const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
 const Login = loadable(() => import('./Login'));
 const Details = loadable(() => import('./Details'));
-
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
+
+let apolloCacheData = {};
 
 const App = () => {
   const location = useLocation();
@@ -244,6 +245,51 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [stateShared.username, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
   );
+  const cacheData: any = useApolloClient().cache.extract();
+  useEffect(() => {
+    if (cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
+      apolloCacheData = cacheData.ROOT_QUERY;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cacheData]);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
+      navigator.serviceWorker
+        .register('sw.js')
+        .then(() => navigator.serviceWorker.ready)
+        .then((reg) => {
+          reg.onupdatefound = () => {
+            const waitingServiceWorker = reg.waiting;
+            if (waitingServiceWorker) {
+              waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          };
+          // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+          navigator?.serviceWorker?.controller?.postMessage({
+            type: 'username',
+            username: `${CryptoJS.TripleDES.decrypt(
+              localStorage.getItem('jbb') || '',
+              readEnvironmentVariable('CRYPTO_SECRET')!
+            ).toString(CryptoJS.enc.Latin1)}`,
+          });
+          return (window.onbeforeunload = () => {
+            // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
+            // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+            navigator?.serviceWorker?.controller?.postMessage({
+              type: 'apolloCacheData',
+              cacheData: apolloCacheData,
+            });
+            // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+            navigator?.serviceWorker?.controller?.postMessage({
+              type: 'execute',
+            });
+            return window.close();
+          });
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateShared.isLoggedIn, apolloCacheData]);
 
   return (
     <div>
@@ -286,6 +332,7 @@ const App = () => {
               );
             }}
           />
+
           <KeepMountedLayout
             mountedCondition={/detail/.test(location.pathname)}
             render={() => {
@@ -296,6 +343,7 @@ const App = () => {
               }
             }}
           />
+
           <KeepMountedLayout
             mountedCondition={location.pathname === '/discover'}
             render={() => {
@@ -322,7 +370,7 @@ const App = () => {
             }}
           />
           <KeepMountedLayout
-            mountedCondition={!allowedRoutes.includes(location.pathname)}
+            mountedCondition={!/detail/.test(location.pathname) && !allowedRoutes.includes(location.pathname)}
             render={() => {
               return <NotFound />;
             }}
@@ -336,7 +384,6 @@ const CustomApolloProvider = ({ children }: any) => {
   const history = useHistory();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const unAuthorizedAction = () => {
-    localStorage.removeItem('sess');
     logoutAction(history, dispatchShared);
     window.alert('Your token has expired. We will logout you out.');
   };
@@ -398,15 +445,6 @@ const CustomApolloProvider = ({ children }: any) => {
     const cache = new InMemoryCache({
       addTypename: false,
       typePolicies: {
-        WatchUsers: {
-          fields: {
-            login: {
-              merge(existing, incoming) {
-                return incoming;
-              },
-            },
-          },
-        },
         Query: {
           fields: {
             getSeen: {

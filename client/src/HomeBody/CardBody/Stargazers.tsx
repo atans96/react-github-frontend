@@ -215,7 +215,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
       await setStarredMe(data.full_name, stateShared.tokenGQL).then(() => {
         if (stateShared.isLoggedIn) {
           addedStarredMe({
-            variables: {
+            getUserInfoStarred: {
               starred: [data.id],
             },
           }).then(noop);
@@ -225,9 +225,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
       await removeStarredMe(data.full_name, stateShared.tokenGQL).then(() => {
         if (stateShared.isLoggedIn) {
           removeStarred({
-            variables: {
-              removeStarred: data.id,
-            },
+            removeStarred: data.id,
           }).then(noop);
         }
       });
