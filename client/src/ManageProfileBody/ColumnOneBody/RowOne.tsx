@@ -79,7 +79,7 @@ const RowOne = React.memo(() => {
     let isFinished = false;
     if (location.pathname === '/profile' && !isFinished) {
       languagesPreferenceAdded({
-        variables: {
+        getUserData: {
           languagePreference: languagePreferences,
         },
       }).then(noop);
