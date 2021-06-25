@@ -51,7 +51,6 @@ const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
 const Login = loadable(() => import('./Login'));
 const Details = loadable(() => import('./Details'));
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
-
 let apolloCacheData = {};
 
 const App = () => {
@@ -421,7 +420,7 @@ const CustomApolloProvider = ({ children }: any) => {
     });
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
-      uri: `http://localhost:${process.env.SERVER_PORT || 5000}/graphql`,
+      uri: `${readEnvironmentVariable("GRAPHQL_ADDRESS")}/graphql`,
       fetchOptions: {
         credentials: 'include',
       },
@@ -494,7 +493,7 @@ const CustomApolloProvider = ({ children }: any) => {
                 break;
               }
             }
-            console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`);
+            console.log(`[GraphQL error]: Message: ${message}, Path: ${path}`);
             const validGQLProperties = await getValidGQLProperties();
             if (
               property &&
@@ -544,7 +543,7 @@ const CustomApolloProvider = ({ children }: any) => {
   );
   return <ApolloContext.Provider value={value}>{children}</ApolloContext.Provider>;
 };
-
+console.log(localStorage.getItem("jbb"))
 const Main = () => {
   //make sure that SuggestedRepoImagesContainer.Provider is below CustomApolloProvider since it's using ApolloContext.Provider in order to use useQuery hook
   return (

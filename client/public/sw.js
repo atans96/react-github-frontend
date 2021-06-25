@@ -24,7 +24,7 @@ addEventListener('install', (e) => {
 });
 function readDB() {
   try {
-    fetch(`/api/end_of_session?username=${username}`, {
+    fetch(`${process.env.REACT_APP_GRAPHQL_ADDRESS}/end_of_session?username=${username}`, {
       method: 'POST',
       body: JSON.stringify(cacheData),
       headers: {
@@ -90,7 +90,7 @@ addEventListener('fetch', function (event) {
     return false;
   }
   if (
-    event.request.url.includes('/api') ||
+    event.request.url.includes('/server') ||
     event.request.url.includes('chrome-extension') ||
     event.request.url.includes('hot-update.js')
   ) {

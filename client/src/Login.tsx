@@ -5,7 +5,6 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import './Login.scss';
 import CryptoJS from 'crypto-js';
 import { languageList, readEnvironmentVariable } from './util';
-import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { useLocation, useHistory } from 'react-router-dom';
 import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
@@ -122,10 +121,6 @@ const Login = () => {
 
   return (
     <React.Fragment>
-      <Helmet>
-        <title>Login to Github Profile</title>
-        <meta name="description" content="Login using Github account to access more than 500 API Limit" />
-      </Helmet>
       <LoginLayout data={data} apiType={'API'} notification="">
         {() => (
           <div className={'login-link-container'}>

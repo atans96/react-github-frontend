@@ -32,7 +32,7 @@ export const initialStateShared: IStateShared = {
   client_id: readEnvironmentVariable('CLIENT_ID'), //setting
   redirect_uri: readEnvironmentVariable('REDIRECT_URI'), //setting
   client_secret: readEnvironmentVariable('CLIENT_SECRET'), //setting
-  proxy_url: readEnvironmentVariable('PROXY_URL')!, //setting
+  proxy_url: readEnvironmentVariable('UWEBSOCKET_ADDRESS_PROXY_URL')!, //setting
 };
 export const reducerShared = (state = initialStateShared, action: IAction<ActionShared>): IStateShared => {
   switch (action.type) {

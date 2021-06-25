@@ -136,6 +136,7 @@ export const GET_USER_INFO_DATA = gql`
         topics
         defaultBranch
         html_url
+        readme
       }
       repoContributions {
         fullName

@@ -107,8 +107,8 @@ const config: webpack.Configuration = {
     open: true,
     hot: true,
     proxy: {
-      '^/api/*': {
-        target: `http://localhost:${process.env.SERVER_PORT}/api/`,
+      '^/server_uwebsocket/*': {
+        target: `${process.env.REACT_APP_UWEBSOCKET_ADDRESS}/`,
         secure: false,
       },
     },
