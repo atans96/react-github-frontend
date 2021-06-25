@@ -14,7 +14,6 @@ import useBottomHit from './hooks/useBottomHit';
 import { Counter, fastFilter, isEqualObjects, pMap } from './util';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
-import { Helmet } from 'react-helmet';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
@@ -868,17 +867,26 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   //TODO: recommend based on comment and thread comments. For example if you want to search for serviceworker, show them the git
 
-  //TODO: build fault-tolerant nodejs server using Elixir as a supervisor for our Nodejs server (see DogeHouse)
+  //TODO: search code using AST or sourcegraph so that if we want to search for uwebsocket and csrf (implement csrf in uwebsocket server), rank the search based on the document that appears from the queries in the repo
+  // take into account in filename or folder or comment or package.json name also such as middleware
+
+  //TODO: if you want to search for react sw.js create-react-app, create multiple searchboxes for each queries.
+
+  //TODO: separate between Trending (popularity content) and For you (personalized content) tabs
+
+  //TODO: if the setting is to load 1000 cards, instead of waiting 1000 cards, render in batch so that the user can interact immediately using request module for stream URL then use ndjson as a pipe
+  // (https://medium.com/@Jekrb/process-streaming-json-with-node-js-d6530cde72e9 https://github.com/maxogden/ndjson https://github.com/FdezRomero/request-image-size/blob/master/index.js) and use http response stream
+
+  //TODO: (not related to react-github). Scatter articles in your social media accounts. To easily search, you can copy link of your bookmark, Netflix Medium Blog URL, etc and let use elasticsearch to search keyword for your query
+
+  //TODO: optimize Apollo Cache using: https://stackoverflow.com/questions/54307214/how-to-tell-apollo-client-to-not-apply-normalization-on-specific-fields or
+  // https://stackoverflow.com/questions/50626652/apollo-inmemorycache-performance-strategies-for-large-data-set-react or https://www.apollographql.com/docs/react/caching/cache-configuration/#disabling-normalization
+
+  // TODO: if you follow the user logged-in to your platform, you can see their browsing history and display the gists where the case they don't starred the git.
+
+  //TODO: store JSON data at https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore at user disk
   return (
     <React.Fragment>
-      <Helmet>
-        <title>Github Fetcher Dashboard</title>
-        <meta charSet={'utf-8'} />
-        <meta
-          name="description"
-          content="Improving Github search and discover experience with an enhanced user-interface and functionalities"
-        />
-      </Helmet>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
        when unmounted*/}
       <div className={'top'} />
