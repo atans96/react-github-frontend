@@ -1,91 +1,91 @@
-const React = require('react')
-const PropTypes = require('prop-types')
+const React = require('react');
+const PropTypes = require('prop-types');
 
-const ALL_INITIALIZERS = []
-const READY_INITIALIZERS = []
+const ALL_INITIALIZERS = [];
+const READY_INITIALIZERS = [];
 
-function load (loader) {
-  const promise = loader()
+function load(loader) {
+  const promise = loader();
 
   const state = {
     loading: true,
     loaded: null,
-    error: null
-  }
+    error: null,
+  };
 
   state.promise = promise
     .then((loaded) => {
-      state.loading = false
-      state.loaded = loaded
-      return loaded
+      state.loading = false;
+      state.loaded = loaded;
+      return loaded;
     })
     .catch((err) => {
-      state.loading = false
-      state.error = err
-      throw err
-    })
+      state.loading = false;
+      state.error = err;
+      throw err;
+    });
 
-  return state
+  return state;
 }
 
-function loadMap (obj) {
+function loadMap(obj) {
   const state = {
     loading: false,
     loaded: {},
-    error: null
-  }
+    error: null,
+  };
 
-  const promises = []
+  const promises = [];
 
   try {
     Object.keys(obj).forEach((key) => {
-      const result = load(obj[key])
+      const result = load(obj[key]);
 
       if (!result.loading) {
-        state.loaded[key] = result.loaded
-        state.error = result.error
+        state.loaded[key] = result.loaded;
+        state.error = result.error;
       } else {
-        state.loading = true
+        state.loading = true;
       }
 
-      promises.push(result.promise)
+      promises.push(result.promise);
 
       result.promise
         .then((res) => {
-          state.loaded[key] = res
+          state.loaded[key] = res;
         })
         .catch((err) => {
-          state.error = err
-        })
-    })
+          state.error = err;
+        });
+    });
   } catch (err) {
-    state.error = err
+    state.error = err;
   }
 
   state.promise = Promise.all(promises)
     .then((res) => {
-      state.loading = false
-      return res
+      state.loading = false;
+      return res;
     })
     .catch((err) => {
-      state.loading = false
-      throw err
-    })
+      state.loading = false;
+      throw err;
+    });
 
-  return state
+  return state;
 }
 
-function resolve (obj) {
-  return obj && obj.__esModule ? obj.default : obj
+function resolve(obj) {
+  return obj && obj.__esModule ? obj.default : obj;
 }
 
-function render (loaded, props) {
-  return React.createElement(resolve(loaded), props)
+function render(loaded, props) {
+  return React.createElement(resolve(loaded), props);
 }
 
-function createLoadableComponent (loadFn, options) {
+function createLoadableComponent(loadFn, options) {
   if (!options.loading) {
-    throw new Error('react-loadable requires a `loading` component')
+    throw new Error('react-loadable requires a `loading` component');
   }
 
   const opts = Object.assign(
@@ -95,209 +95,209 @@ function createLoadableComponent (loadFn, options) {
       delay: 200,
       timeout: null,
       render: render,
-      modules: null
+      modules: null,
     },
     options
-  )
+  );
 
-  let res = null
+  let res = null;
 
-  function init () {
+  function init() {
     if (!res) {
-      res = loadFn(opts.loader)
+      res = loadFn(opts.loader);
     }
-    return res.promise
+    return res.promise;
   }
 
-  ALL_INITIALIZERS.push(init)
+  ALL_INITIALIZERS.push(init);
 
   return class LoadableComponent extends React.Component {
-    constructor (props) {
-      super(props)
-      init()
+    constructor(props) {
+      super(props);
+      init();
 
       this.state = {
         error: res.error,
         pastDelay: false,
         timedOut: false,
         loading: res.loading,
-        loaded: res.loaded
-      }
+        loaded: res.loaded,
+      };
     }
 
     static contextTypes = {
       loadable: PropTypes.shape({
-        report: PropTypes.func.isRequired
-      })
+        report: PropTypes.func.isRequired,
+      }),
     };
 
-    static preload () {
-      return init()
+    static preload() {
+      return init();
     }
 
-    componentWillMount () {
-      this._loadModule()
+    componentWillMount() {
+      this._loadModule();
     }
 
-    componentDidMount () {
-      this._mounted = true
+    componentDidMount() {
+      this._mounted = true;
     }
 
-    _loadModule () {
+    _loadModule() {
       if (this.context.loadable && Array.isArray(opts.modules)) {
         opts.modules.forEach((moduleName) => {
-          this.context.loadable.report(moduleName)
-        })
+          this.context.loadable.report(moduleName);
+        });
       }
 
       if (!res.loading) {
-        return
+        return;
       }
 
       const setStateWithMountCheck = (newState) => {
         if (!this._mounted) {
-          return
+          return;
         }
 
-        this.setState(newState)
-      }
+        this.setState(newState);
+      };
 
       if (typeof opts.delay === 'number') {
         if (opts.delay === 0) {
-          this.setState({ pastDelay: true })
+          this.setState({ pastDelay: true });
         } else {
           this._delay = setTimeout(() => {
-            setStateWithMountCheck({ pastDelay: true })
-          }, opts.delay)
+            setStateWithMountCheck({ pastDelay: true });
+          }, opts.delay);
         }
       }
 
       if (typeof opts.timeout === 'number') {
         this._timeout = setTimeout(() => {
-          setStateWithMountCheck({ timedOut: true })
-        }, opts.timeout)
+          setStateWithMountCheck({ timedOut: true });
+        }, opts.timeout);
       }
 
       const update = () => {
         setStateWithMountCheck({
           error: res.error,
           loaded: res.loaded,
-          loading: res.loading
-        })
+          loading: res.loading,
+        });
 
-        this._clearTimeouts()
-      }
+        this._clearTimeouts();
+      };
 
       res.promise
         .then(() => {
-          update()
-          return null
+          update();
+          return null;
         })
         .catch((err) => {
-          update()
-          return null
-        })
+          update();
+          return null;
+        });
     }
 
-    componentWillUnmount () {
-      this._mounted = false
-      this._clearTimeouts()
+    componentWillUnmount() {
+      this._mounted = false;
+      this._clearTimeouts();
     }
 
-    _clearTimeouts () {
-      clearTimeout(this._delay)
-      clearTimeout(this._timeout)
+    _clearTimeouts() {
+      clearTimeout(this._delay);
+      clearTimeout(this._timeout);
     }
 
     retry = () => {
-      this.setState({ error: null, loading: true, timedOut: false })
-      res = loadFn(opts.loader)
-      this._loadModule()
+      this.setState({ error: null, loading: true, timedOut: false });
+      res = loadFn(opts.loader);
+      this._loadModule();
     };
 
-    render () {
+    render() {
       if (this.state.loading || this.state.error) {
         return React.createElement(opts.loading, {
           isLoading: this.state.loading,
           pastDelay: this.state.pastDelay,
           timedOut: this.state.timedOut,
           error: this.state.error,
-          retry: this.retry
-        })
+          retry: this.retry,
+        });
       } else if (this.state.loaded) {
-        return opts.render(this.state.loaded, this.props)
+        return opts.render(this.state.loaded, this.props);
       } else {
-        return null
+        return null;
       }
     }
-  }
+  };
 }
 
-function Loadable (opts) {
-  return createLoadableComponent(load, opts)
+function Loadable(opts) {
+  return createLoadableComponent(load, opts);
 }
 
-function LoadableMap (opts) {
+function LoadableMap(opts) {
   if (typeof opts.render !== 'function') {
-    throw new Error('LoadableMap requires a `render(loaded, props)` function')
+    throw new Error('LoadableMap requires a `render(loaded, props)` function');
   }
 
-  return createLoadableComponent(loadMap, opts)
+  return createLoadableComponent(loadMap, opts);
 }
 
-Loadable.Map = LoadableMap
+Loadable.Map = LoadableMap;
 
 class Capture extends React.Component {
   static propTypes = {
-    report: PropTypes.func.isRequired
+    report: PropTypes.func.isRequired,
   };
 
   static childContextTypes = {
     loadable: PropTypes.shape({
-      report: PropTypes.func.isRequired
-    }).isRequired
+      report: PropTypes.func.isRequired,
+    }).isRequired,
   };
 
-  getChildContext () {
+  getChildContext() {
     return {
       loadable: {
-        report: this.props.report
-      }
-    }
+        report: this.props.report,
+      },
+    };
   }
 
-  render () {
-    return React.Children.only(this.props.children)
+  render() {
+    return React.Children.only(this.props.children);
   }
 }
 
-Loadable.Capture = Capture
+Loadable.Capture = Capture;
 
-function flushInitializers (initializers) {
-  const promises = []
+function flushInitializers(initializers) {
+  const promises = [];
 
   while (initializers.length) {
-    const init = initializers.pop()
-    promises.push(init())
+    const init = initializers.pop();
+    promises.push(init());
   }
 
   return Promise.all(promises).then(() => {
     if (initializers.length) {
-      return flushInitializers(initializers)
+      return flushInitializers(initializers);
     }
-  })
+  });
 }
 
 Loadable.preloadAll = () => {
   return new Promise((resolve, reject) => {
-    flushInitializers(ALL_INITIALIZERS).then(resolve, reject)
-  })
-}
+    flushInitializers(ALL_INITIALIZERS).then(resolve, reject);
+  });
+};
 
 Loadable.preloadReady = () => {
   return new Promise((resolve, reject) => {
     // We always will resolve, errors should be handled within loading UIs.
-    flushInitializers(READY_INITIALIZERS).then(resolve, resolve)
-  })
-}
-export default Loadable
+    flushInitializers(READY_INITIALIZERS).then(resolve, resolve);
+  });
+};
+export default Loadable;

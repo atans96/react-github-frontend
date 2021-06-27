@@ -14,7 +14,7 @@ import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
-import idx from 'idx';
+
 import PaginationBarDiscover from './DiscoverBody/PaginationBarDiscover';
 import { ActionResolvePromiseOutput, IStateDiscover, IStateShared, StaticState } from './typing/interface';
 import { Fab } from '@material-ui/core';
@@ -108,7 +108,7 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
       type: 'LAST_PAGE_DISCOVER',
       payload: {
         lastPageDiscover: Math.ceil(
-          idx(suggestedData, (_) => _.getSuggestedRepo.repoInfo.length) ?? 0 / stateShared.perPage
+          (suggestedData.getSuggestedRepo.repoInfoSuggested.length || 0) / stateShared.perPage
         ),
       },
     });
@@ -443,10 +443,11 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
           </Then>
         </If>
         <If
-          condition={idx(
-            suggestedData,
-            (_) => !suggestedDataError && !suggestedDataLoading && !_.suggestedData.getSuggestedRepo.repoInfo.length
-          )}
+          condition={
+            !suggestedDataError &&
+            !suggestedDataLoading &&
+            !suggestedData.suggestedData.getSuggestedRepo.repoInfoSuggested.length
+          }
         >
           <Then>
             <div style={{ textAlign: 'center' }}>

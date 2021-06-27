@@ -3,8 +3,7 @@ import Results from './PureSearchBarBody/Results';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
 import { PureInput } from './PureInput';
-import _ from 'lodash';
-import { MergedDataProps, SearchesData, StargazerProps } from '../typing/type';
+import { MergedDataProps, StargazerProps } from '../typing/type';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import Result from './PureSearchBarBody/ResultsBody/Result';
@@ -108,16 +107,18 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
         .filter((e) => !!e)
         .forEach((char) => {
           searchesAdded({
-            getSearches: [
-              Object.assign(
-                {},
-                {
-                  search: char,
-                  updatedAt: new Date(),
-                  count: 1,
-                }
-              ),
-            ],
+            getSearches: {
+              searches: [
+                Object.assign(
+                  {},
+                  {
+                    search: char,
+                    updatedAt: new Date(),
+                    count: 1,
+                  }
+                ),
+              ],
+            },
           }).then(noop);
         });
     }
@@ -158,7 +159,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
               if (x.language) {
                 topics.push(x.language.toLowerCase());
               }
-              return _.intersection(topics, state.filteredTopics).length > 0;
+              return (
+                [...topics, ...state.filteredTopics].reduce((a: any, b: any) => a.filter((c: string) => b.includes(c)))
+                  .length > 0
+              );
               // return _.intersection(topics, state.filteredTopics).length === state.filteredTopics.length;
             }, state.mergedData),
           },
@@ -203,7 +207,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
         if (obj.language) {
           topics.push(obj.language.toLowerCase());
         }
-        const languageAndTopics = _.uniq(topics);
+        const languageAndTopics = [...new Set(topics)];
         languageAndTopics.forEach((topic: string) => {
           const index = state.topics.findIndex((x) => x.topic === topic);
           if (!result.find((obj) => obj.topic === topic)) {
@@ -255,7 +259,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     });
   });
 
-  const filter = (searchesHistory: SearchesData[] | undefined, valueRef: string) => {
+  const filter = (
+    searchesHistory: Array<{ search: string; count: number; updatedAt: Date }> | undefined,
+    valueRef: string
+  ) => {
     const result: any[] = [];
     if (searchesHistory && searchesHistory.length > 0) {
       for (const searchHistory of searchesHistory) {
@@ -286,18 +293,18 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             condition={
               searchesData &&
               searchesData.getSearches !== null &&
-              searchesData.getSearches.length > 0 &&
+              searchesData.getSearches.searches.length > 0 &&
               valueRef.length > 0 &&
               visibleSearchesHistory &&
-              filter(searchesData?.getSearches, valueRef).length > 0
+              filter(searchesData?.getSearches?.searches, valueRef).length > 0
             }
           >
             <Then>
               <div className="resultsContainer" style={style} ref={resultsRef}>
                 <ul className={'results'}>
-                  {filter(searchesData?.getSearches, valueRef)
+                  {filter(searchesData?.getSearches?.searches, valueRef)
                     .sort((a, b) => b.count - a.count) //the most frequent searches at the top
-                    .map((search: SearchesData, idx) => {
+                    .map((search: { search: string; count: number; updatedAt: Date }, idx) => {
                       const newBody = search.search.replace(
                         new RegExp(valueRef.toLowerCase(), 'gi'),
                         (match: string) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
@@ -324,12 +331,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                   </If>
                   <If condition={!state.isLoading}>
                     <Then>
-                      {fastFilter((search: SearchesData) => {
+                      {fastFilter((search: Array<{ search: string; count: number; updatedAt: Date }>) => {
                         const temp =
-                          searchesData?.getSearches?.reduce((acc: any, obj: SearchesData) => {
-                            acc.push(obj.search);
-                            return acc;
-                          }, []) ?? [];
+                          searchesData?.getSearches?.searches.reduce(
+                            (acc: any, obj: { search: string; count: number; updatedAt: Date }) => {
+                              acc.push(obj.search);
+                              return acc;
+                            },
+                            []
+                          ) ?? [];
                         return !temp.includes(Object.keys(search)[0]);
                       }, state.searchUsers).map((result, idx) => (
                         <Result getRootProps={getRootProps} userName={Object.keys(result).toString()} key={idx}>
@@ -350,7 +360,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             </Then>
           </If>
 
-          <If condition={visible && filter(searchesData?.getSearches, valueRef).length === 0}>
+          <If condition={visible && filter(searchesData?.getSearches?.searches, valueRef).length === 0}>
             <Then>
               {createRenderElement(Results, {
                 getRootProps,

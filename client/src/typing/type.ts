@@ -1,4 +1,10 @@
 import { PropsWithChildren } from 'react';
+export type Pick2<T, K1 extends keyof T, K2 extends keyof T[K1]> = {
+  //https://gist.github.com/staltz/368866ea6b8a167fbdac58cddf79c1bf
+  [P1 in K1]: {
+    [P2 in K2]: T[K1][P2];
+  };
+};
 export type RepoInfoProps = {
   fullName: string;
   description: string;
@@ -31,29 +37,26 @@ export type RepoInfoSuggested = {
   id: number;
   name: string;
 };
-export type suggestedData = {
-  getSuggestedRepo: { userName: string; repoInfo: [RepoInfoSuggested] };
-};
 export type SuggestedData = {
-  suggestedData: suggestedData;
+  suggestedData: { getSuggestedRepo: { repoInfoSuggested: [RepoInfoSuggested] } };
   suggestedDataLoading: any;
   suggestedDataError: any;
 };
-export type Trends = {
+type Trends = {
   daily: number;
   weekly: number;
   monthly: number;
   quarterly: number;
   yearly: number;
 };
-export type Monthly = {
+type Monthly = {
   year: number;
   months: number;
   firstDay: number;
   lastDay: number;
   delta: number;
 };
-export type TimeSeries = {
+type TimeSeries = {
   daily: [number];
   monthly: [Monthly];
 };
@@ -62,11 +65,8 @@ export type starRanking = {
   trends: Trends | any;
   timeSeries: TimeSeries;
 };
-export type StarRanking = {
-  getStarRanking: { userName: string; starRanking: Nullable<[starRanking]> };
-};
 export type StarRankingData = {
-  starRankingData: StarRanking;
+  starRankingData: { getStarRanking: { starRanking: Nullable<[starRanking]> } };
   starRankingDataLoading: any;
   starRankingDataError: any;
 };
@@ -74,9 +74,8 @@ export type RenderImages = {
   id: number;
   value: [string];
 };
-export type suggestedDataImages = { userName: string; getSuggestedRepoImages: [RenderImages] };
 export type SuggestedDataImages = {
-  suggestedDataImages: suggestedDataImages;
+  suggestedDataImages: { getSuggestedRepoImages: [RenderImages] };
   suggestedDataImagesLoading: any;
   suggestedDataImagesError: any;
 };
@@ -132,10 +131,10 @@ export type SeenProps = {
   owner: OwnerProps;
   description: string;
   language: string;
-  topics: [string];
+  topics: string[];
   html_url: string;
   name: string;
-  imagesData: [string];
+  imagesData: string[];
   is_queried: boolean;
 };
 export type TopicsProps = {
@@ -152,17 +151,7 @@ export type ImagesDataProps = {
   id: number;
   value: string[];
 };
-export type MergedDataProps = {
-  id: number;
-  stargazers_count: string;
-  full_name: string;
-  default_branch: string;
-  owner: OwnerProps;
-  name: string;
-  description: string;
-  language: string;
-  topics: string[];
-  html_url: string;
+export type MergedDataProps = SeenProps & {
   viewerHasStarred?: boolean;
   trends?: number;
   [key: string]: any;
@@ -171,10 +160,17 @@ export type LanguagePreference = {
   language: string;
   checked: boolean;
 };
+export type GithubLanguages = {
+  language: string;
+  color: string;
+  type: string;
+  ace_mode: string;
+  id: number;
+  group: string;
+};
 export type UserData = {
   tokenRSS: string;
   languagePreference: LanguagePreference[];
-  code: string;
   userName: string;
   avatar: string;
   token: string;
@@ -207,38 +203,12 @@ export type UserInfoData = {
   repoContributions: RepoContributions[];
   languages: string[];
 };
-export type Seen = {
-  stargazers_count: number;
-  full_name: string;
-  owner: OwnerProps;
-  description: string;
-  language: string;
-  topics: string[] | [];
-  html_url: string;
-  name: string;
-  id: number;
-  default_branch: string;
-  imagesData: string[] | [];
-  is_queried: boolean;
-};
 export type Clicked = {
   is_queried: boolean;
   full_name: string;
   owner: Omit<OwnerProps, 'html_url' | 'avatar_url'>;
 };
-export type ClickedData = {
-  userName: string;
-  clicked: Nullable<Clicked[] | []>;
-};
-export type RSSFeedData = {
-  userName: string;
-  rss: string[];
-  lastSeen: string[];
-};
-export type SeenData = {
-  seenCards: Nullable<Seen[] | []>;
-};
-export type SearchesData = {
+export type Searches = {
   search: string;
   count: number;
   updatedAt: Date;

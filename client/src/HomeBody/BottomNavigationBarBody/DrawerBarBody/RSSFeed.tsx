@@ -15,14 +15,11 @@ import { makeStyles } from '@material-ui/core/styles';
 import { addRSSFeed, noop } from '../../../util/util';
 import { Then } from '../../../util/react-if/Then';
 import { If } from '../../../util/react-if/If';
-import { fastFilter, readEnvironmentVariable, uniqFast } from '../../../util';
+import { fastFilter, uniqFast } from '../../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
-import idx from 'idx';
-import CryptoJS from 'crypto-js';
-import { GraphQLRSSFeedData } from '../../../typing/interface';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -44,7 +41,7 @@ const useStyles = makeStyles<Theme>(() => ({
 
 const RSSFeed = () => {
   const [stateShared, dispatch] = useTrackedStateShared();
-  const isTokenRSSExist = idx(stateShared, (_) => _.tokenRSS.length > 0) ?? false;
+  const isTokenRSSExist = stateShared.tokenRSS.length > 0;
   const classes = useStyles();
   const displayName: string | undefined = (RSSFeed as React.ComponentType<any>).displayName;
   const tokenRSSAdded = useApolloFactory(displayName!).mutation.tokenRSSAdded;
@@ -129,10 +126,6 @@ const RSSFeed = () => {
               setRSSFeed(HTML.reverse());
               rssFeedAdded({
                 getRSSFeed: {
-                  userName: CryptoJS.TripleDES.decrypt(
-                    localStorage.getItem('jbb') || '',
-                    readEnvironmentVariable('CRYPTO_SECRET')!
-                  ).toString(CryptoJS.enc.Latin1),
                   rss: HTML,
                   lastSeen: HTML,
                 },
@@ -142,10 +135,6 @@ const RSSFeed = () => {
               unseenFeeds.current = [];
               rssFeedAdded({
                 getRSSFeed: {
-                  userName: CryptoJS.TripleDES.decrypt(
-                    localStorage.getItem('jbb') || '',
-                    readEnvironmentVariable('CRYPTO_SECRET')!
-                  ).toString(CryptoJS.enc.Latin1),
                   rss: HTML,
                   lastSeen: [],
                 },
@@ -170,10 +159,6 @@ const RSSFeed = () => {
                 const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
                 rssFeedAdded({
                   getRSSFeed: {
-                    userName: CryptoJS.TripleDES.decrypt(
-                      localStorage.getItem('jbb') || '',
-                      readEnvironmentVariable('CRYPTO_SECRET')!
-                    ).toString(CryptoJS.enc.Latin1),
                     rss: HTML,
                     lastSeen: uniqq,
                   },

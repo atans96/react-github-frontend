@@ -3,9 +3,6 @@ import { getRateLimitInfo, requestGithubLogin } from './services';
 import LoginLayout from './Layout/LoginLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import './Login.scss';
-import CryptoJS from 'crypto-js';
-import { languageList, readEnvironmentVariable } from './util';
-import { useApolloFactory } from './hooks/useApolloFactory';
 import { useLocation, useHistory } from 'react-router-dom';
 import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
 
@@ -13,8 +10,6 @@ const Login = () => {
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
-  const displayName: string | undefined = (Login as React.ComponentType<any>).displayName;
-  const signUpAdded = useApolloFactory(displayName!).mutation.signUpAdded;
   const history = useHistory();
   const location = useLocation();
   useEffect(() => {
@@ -43,64 +38,46 @@ const Login = () => {
         requestGithubLogin(proxy_url, requestData)
           .then((response) => {
             if (response.data) {
-              signUpAdded({
-                variables: {
-                  tokenRSS: '',
-                  username: response.data.login,
-                  avatar: response.data.avatar_url !== '' ? response.data.avatar_url : '',
-                  token: response.token,
-                  code: newUrl[1],
-                  languagePreference: languageList.reduce((acc, language: string) => {
-                    acc.push(Object.assign({}, { language, checked: true }));
-                    return acc;
-                  }, [] as any[]),
-                },
-              }).then(({ data }: any) => {
-                localStorage.setItem('sess', data.signUp.token);
-                localStorage.setItem(
-                  'jbb',
-                  CryptoJS.TripleDES.encrypt(response.data.login, readEnvironmentVariable('CRYPTO_SECRET')!).toString()
-                );
-                dispatchShared({
-                  type: 'LOGIN',
-                  payload: { isLoggedIn: true },
-                });
-                dispatchRateLimit({
-                  type: 'RATE_LIMIT_ADDED',
-                  payload: {
-                    rateLimitAnimationAdded: false,
-                  },
-                });
-                getRateLimitInfo(response.token).then((data) => {
-                  if (data.rateLimit && data.rateLimitGQL) {
-                    dispatchRateLimit({
-                      type: 'RATE_LIMIT_ADDED',
-                      payload: {
-                        rateLimitAnimationAdded: true,
-                      },
-                    });
-                    dispatchRateLimit({
-                      type: 'RATE_LIMIT',
-                      payload: {
-                        limit: data.rateLimit.limit,
-                        used: data.rateLimit.used,
-                        reset: data.rateLimit.reset,
-                      },
-                    });
-
-                    dispatchRateLimit({
-                      type: 'RATE_LIMIT_GQL',
-                      payload: {
-                        limit: data.rateLimitGQL.limit,
-                        used: data.rateLimitGQL.used,
-                        reset: data.rateLimitGQL.reset,
-                      },
-                    });
-                  }
-                });
-                history.push('/');
-                window.location.reload(false);
+              localStorage.setItem('sess', response.token);
+              dispatchShared({
+                type: 'LOGIN',
+                payload: { isLoggedIn: true },
               });
+              dispatchRateLimit({
+                type: 'RATE_LIMIT_ADDED',
+                payload: {
+                  rateLimitAnimationAdded: false,
+                },
+              });
+              getRateLimitInfo(response.token).then((data) => {
+                if (data.rateLimit && data.rateLimitGQL) {
+                  dispatchRateLimit({
+                    type: 'RATE_LIMIT_ADDED',
+                    payload: {
+                      rateLimitAnimationAdded: true,
+                    },
+                  });
+                  dispatchRateLimit({
+                    type: 'RATE_LIMIT',
+                    payload: {
+                      limit: data.rateLimit.limit,
+                      used: data.rateLimit.used,
+                      reset: data.rateLimit.reset,
+                    },
+                  });
+
+                  dispatchRateLimit({
+                    type: 'RATE_LIMIT_GQL',
+                    payload: {
+                      limit: data.rateLimitGQL.limit,
+                      used: data.rateLimitGQL.used,
+                      reset: data.rateLimitGQL.reset,
+                    },
+                  });
+                }
+              });
+              history.push('/');
+              window.location.reload(false);
             } else {
               setData({
                 isLoading: false,

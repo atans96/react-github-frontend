@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
@@ -14,8 +14,6 @@ import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { createRenderElement } from '../Layout/MasonryLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
-import CryptoJS from 'crypto-js';
-import { readEnvironmentVariable } from '../util';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -72,10 +70,6 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         clickedAdded({
           getClicked: {
             clicked: temp,
-            userName: CryptoJS.TripleDES.decrypt(
-              localStorage.getItem('jbb') || '',
-              readEnvironmentVariable('CRYPTO_SECRET')!
-            ).toString(CryptoJS.enc.Latin1),
           },
         }).then(noop);
       }
@@ -100,10 +94,6 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         clickedAdded({
           getClicked: {
             clicked: temp,
-            userName: CryptoJS.TripleDES.decrypt(
-              localStorage.getItem('jbb') || '',
-              readEnvironmentVariable('CRYPTO_SECRET')!
-            ).toString(CryptoJS.enc.Latin1),
           },
         }).then(noop);
       }
@@ -136,8 +126,8 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         <h4 style={{ textAlign: 'center' }}>{data.description}</h4>
       </div>
       {createRenderElement(Stargazers, { data: stargazersMemoizedGithubData() })}
-      <div className={'language-github-color'}>
-        <ul className={`language ${data?.language?.replace(/\+\+|#|\s/, '-')}`}>
+      <div>
+        <ul style={{ color: stateShared.githubLanguages.get(data?.language?.replace(/\+\+|#|\s/, '-'))?.color }}>
           <li className={'language-list'}>
             <h6 style={{ color: 'black', width: 'max-content' }}>{data.language}</h6>
           </li>

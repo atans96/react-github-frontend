@@ -2,9 +2,11 @@ import { gql } from '@apollo/client';
 export const GET_SEARCHES = gql`
   query {
     getSearches {
-      search
-      count
-      updatedAt
+      searches {
+        search
+        count
+        updatedAt
+      }
     }
   }
 `;
@@ -36,7 +38,6 @@ export const GET_STAR_RANKING = gql`
 export const GET_SUGGESTED_REPO_IMAGES = gql`
   query {
     getSuggestedRepoImages {
-      userName
       renderImages {
         value
         id
@@ -47,7 +48,7 @@ export const GET_SUGGESTED_REPO_IMAGES = gql`
 export const GET_SUGGESTED_REPO = gql`
   query {
     getSuggestedRepo {
-      repoInfo {
+      repoInfoSuggested {
         from
         is_seen
         stargazers_count
@@ -71,7 +72,6 @@ export const GET_SUGGESTED_REPO = gql`
 export const GET_CLICKED = gql`
   query {
     getClicked {
-      userName
       clicked {
         is_queried
         full_name
@@ -85,7 +85,6 @@ export const GET_CLICKED = gql`
 export const GET_RSS_FEED = gql`
   query {
     getRSSFeed {
-      userName
       rss
       lastSeen
     }
@@ -125,7 +124,6 @@ export const GET_USER_STARRED = gql`
 export const GET_USER_INFO_DATA = gql`
   query {
     getUserInfoData {
-      userName
       repoInfo {
         fullName
         description

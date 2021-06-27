@@ -13,7 +13,7 @@ import LoginGQL from '../../HomeBody/CardBody/StargazersCardBody/LoginGQL';
 import clsx from 'clsx';
 import { useClickOutside } from '../../hooks/hooks';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
-import idx from 'idx';
+
 import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface StargazerDiscover {
@@ -27,9 +27,7 @@ const StargazerDiscover = React.memo<StargazerDiscover>(
     const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
     const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
 
-    const [starClicked, setStarClicked] = useState(
-      idx(userStarred, (_) => _.getUserInfoStarred.starred.includes(data.id)) ?? false
-    );
+    const [starClicked, setStarClicked] = useState(userStarred.getUserInfoStarred.starred.includes(data.id));
     const [clicked, setClicked] = useState(false);
     const [visible, setVisible] = useState(false);
     const modalWidth = useRef('400px');

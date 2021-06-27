@@ -1,9 +1,7 @@
 import React from 'react';
 import CalendarHeatmap from 'react-calendar-heatmap';
 import tinytime from 'tinytime';
-
 import './heatmap.css';
-import _ from 'lodash';
 
 const fulldate = tinytime('{YYYY}/{Mo}/{DD} ({dddd})', {
   padMonth: true,
@@ -12,9 +10,7 @@ const fulldate = tinytime('{YYYY}/{Mo}/{DD} ({dddd})', {
 
 const dayOfWeek = tinytime('{dddd}');
 
-const values = _.times(40)
-  .map((i: number) => i + 1)
-  .concat([45, 50, 55, 60, 70, 80, 90, 100, 200, 500]);
+const values = [...Array(40).keys()].map((i: number) => i + 1).concat([45, 50, 55, 60, 70, 80, 90, 100, 200, 500]);
 const steps = values.length;
 const max = values[values.length - 1];
 

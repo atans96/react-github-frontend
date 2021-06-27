@@ -1,7 +1,7 @@
 import { IAction, IStateStargazers } from '../../typing/interface';
 import { HasNextPage, StargazerProps } from '../../typing/type';
 import { fastFilter } from '../../util';
-import _ from 'lodash';
+import uniqBy from 'lodash.uniqby';
 export type ActionStargazers =
   | 'STARGAZERS_ADDED'
   | 'STARGAZERS_SORTED_LANGUAGE'
@@ -54,7 +54,7 @@ export const reducerStargazers = (
               (obj: StargazerProps) => obj.id !== action.payload.stargazersQueueData.id,
               state.stargazersQueueData
             )
-          : _.uniqBy([...state.stargazersQueueData, action.payload.stargazersQueueData], 'id'),
+          : uniqBy([...state.stargazersQueueData, action.payload.stargazersQueueData], 'id'),
       };
     }
     case 'STARGAZERS_UPDATED': {
@@ -64,7 +64,7 @@ export const reducerStargazers = (
       };
     }
     case 'STARGAZERS_ADDED': {
-      const temp = _.uniqBy([...state.stargazersData, action.payload.stargazersData], 'id');
+      const temp = uniqBy([...state.stargazersData, action.payload.stargazersData], 'id');
       return {
         ...state,
         stargazersData: fastFilter(
@@ -76,7 +76,7 @@ export const reducerStargazers = (
     case 'STARGAZERS_ADDED_WITHOUT_FILTER': {
       return {
         ...state,
-        stargazersData: _.uniqBy([...state.stargazersData, action.payload.stargazersData], 'id'),
+        stargazersData: uniqBy([...state.stargazersData, action.payload.stargazersData], 'id'),
       };
     }
     case 'STARGAZERS_USERS': {

@@ -1,26 +1,26 @@
-import React from 'react'
+import React from 'react';
 
-function useHover (): [
+function useHover(): [
   boolean,
   {
     onMouseEnter: (e: React.MouseEvent) => void;
     onMouseLeave: (e: React.MouseEvent) => void;
   }
-  ] {
-  const [isHovered, setHovered] = React.useState(false)
+] {
+  const [isHovered, setHovered] = React.useState(false);
   const bind = React.useMemo(
     () => ({
       onMouseEnter: (e: React.MouseEvent) => {
-        setHovered(true)
+        setHovered(true);
       },
       onMouseLeave: (e: React.MouseEvent) => {
-        setHovered(false)
-      }
+        setHovered(false);
+      },
     }),
     []
-  )
+  );
 
-  return [isHovered, bind]
+  return [isHovered, bind];
 }
 
-export default useHover
+export default useHover;

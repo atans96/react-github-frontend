@@ -4,8 +4,6 @@ import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
 import { removeTokenGQL } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
-import CryptoJS from 'crypto-js';
-import { readEnvironmentVariable } from '../util';
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;

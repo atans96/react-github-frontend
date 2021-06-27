@@ -10,7 +10,8 @@
   ],
   "extends": [
     "plugin:react/recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "plugin:you-dont-need-lodash-underscore/compatible"
   ],
   "rules": {
     "react-hooks/rules-of-hooks": "error",

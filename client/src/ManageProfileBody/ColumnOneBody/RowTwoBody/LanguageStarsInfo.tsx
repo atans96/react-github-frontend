@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { isEqualObjects } from '../../../util';
+import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 interface LanguageStarsInfoProps {
   languageStar: any;
   onClickLanguageStarInfo: any;
@@ -8,6 +9,7 @@ interface LanguageStarsInfoProps {
 const LanguageStarsInfo = React.memo<LanguageStarsInfoProps>(
   ({ languageStar, onClickLanguageStarInfo }) => {
     const [clicked, setClicked] = useState(false);
+    const [stateShared] = useTrackedStateShared();
     return (
       <tr
         onClick={(event) => {
@@ -15,11 +17,18 @@ const LanguageStarsInfo = React.memo<LanguageStarsInfoProps>(
           onClickLanguageStarInfo(event)(languageStar[0], !clicked);
           setClicked(!clicked);
         }}
-        className={'language-stars-info language-github-background-color'}
+        className={'language-stars-info'}
         style={{ backgroundColor: clicked ? 'grey' : '' }}
       >
         <th style={{ width: '80%' }}>{languageStar[0]}</th>
-        <th className={`badge language ${languageStar[0]?.replace(/\+\+|#|\s/, '-')}`}>{languageStar[1]}</th>
+        <th
+          style={{
+            backgroundColor: stateShared.githubLanguages.get(languageStar[0]?.replace(/\+\+|#|\s/, '-'))?.color,
+          }}
+          className={`badge language`}
+        >
+          {languageStar[1]}
+        </th>
       </tr>
     );
   },

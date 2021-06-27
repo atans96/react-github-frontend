@@ -1,4 +1,4 @@
-function getLargeImageStyle (positionX, positionY, active) {
+function getLargeImageStyle(positionX, positionY, active) {
   return {
     position: 'absolute',
     boxSizing: 'border-box',
@@ -8,11 +8,11 @@ function getLargeImageStyle (positionX, positionY, active) {
     transform: `translate(${positionX}px, ${positionY}px)`,
     zIndex: '1',
     visibility: !active ? 'hidden' : 'visible',
-    width: 'auto'
-  }
+    width: 'auto',
+  };
 }
 
-function getZoomContainerStyle (width, height, inPlace, switchSides) {
+function getZoomContainerStyle(width, height, inPlace, switchSides) {
   const style = {
     position: 'absolute',
     boxSizing: 'border-box',
@@ -20,21 +20,21 @@ function getZoomContainerStyle (width, height, inPlace, switchSides) {
     width: `${width}px`,
     height: `${height}px`,
     top: '0',
-    overflow: 'hidden'
-  }
+    overflow: 'hidden',
+  };
 
   if (inPlace) {
-    style.left = '0px'
+    style.left = '0px';
   } else if (switchSides) {
-    style.right = `${width}px`
+    style.right = `${width}px`;
   } else {
-    style.left = `${width}px`
+    style.left = `${width}px`;
   }
 
-  return style
+  return style;
 }
 
-function getOverlayCenterStyle (
+function getOverlayCenterStyle(
   width,
   height,
   left,
@@ -45,14 +45,14 @@ function getOverlayCenterStyle (
   backgroundImage,
   backgroundImageSize
 ) {
-  const backgroundStyle = {}
+  const backgroundStyle = {};
 
   if (backgroundImage) {
-    backgroundStyle.backgroundImage = `url("${backgroundImage}")`
+    backgroundStyle.backgroundImage = `url("${backgroundImage}")`;
   }
 
   if (backgroundImageSize) {
-    backgroundStyle.backgroundSize = backgroundImageSize
+    backgroundStyle.backgroundSize = backgroundImageSize;
   }
 
   return {
@@ -68,17 +68,11 @@ function getOverlayCenterStyle (
     transition: `opacity ${transitionSpeed}s ease`,
     zIndex: '15',
     pointerEvents: 'none',
-    ...backgroundStyle
-  }
+    ...backgroundStyle,
+  };
 }
 
-function getOverlayTopStyle (
-  width,
-  height,
-  opacity,
-  transitionSpeed,
-  backgroundColor
-) {
+function getOverlayTopStyle(width, height, opacity, transitionSpeed, backgroundColor) {
   return {
     backgroundColor: backgroundColor,
     position: 'absolute',
@@ -91,18 +85,11 @@ function getOverlayTopStyle (
     transition: `opacity ${transitionSpeed}s ease`,
     opacity: opacity,
     transform: 'scale3d(1,1,1)',
-    pointerEvents: 'none'
-  }
+    pointerEvents: 'none',
+  };
 }
 
-function getOverlayLeftStyle (
-  width,
-  height,
-  top,
-  opacity,
-  transitionSpeed,
-  backgroundColor
-) {
+function getOverlayLeftStyle(width, height, top, opacity, transitionSpeed, backgroundColor) {
   return {
     backgroundColor: backgroundColor,
     position: 'absolute',
@@ -115,18 +102,11 @@ function getOverlayLeftStyle (
     transition: `opacity ${transitionSpeed}s ease`,
     opacity: opacity,
     transform: 'scale3d(1,1,1)',
-    pointerEvents: 'none'
-  }
+    pointerEvents: 'none',
+  };
 }
 
-function getOverlayRightStyle (
-  width,
-  height,
-  top,
-  opacity,
-  transitionSpeed,
-  backgroundColor
-) {
+function getOverlayRightStyle(width, height, top, opacity, transitionSpeed, backgroundColor) {
   return {
     backgroundColor: backgroundColor,
     position: 'absolute',
@@ -139,18 +119,11 @@ function getOverlayRightStyle (
     transition: `opacity ${transitionSpeed}s ease`,
     opacity: opacity,
     transform: 'scale3d(1,1,1)',
-    pointerEvents: 'none'
-  }
+    pointerEvents: 'none',
+  };
 }
 
-function getOverlayBottomStyle (
-  width,
-  height,
-  top,
-  opacity,
-  transitionSpeed,
-  backgroundColor
-) {
+function getOverlayBottomStyle(width, height, top, opacity, transitionSpeed, backgroundColor) {
   return {
     backgroundColor: backgroundColor,
     position: 'absolute',
@@ -162,16 +135,16 @@ function getOverlayBottomStyle (
     transition: `opacity ${transitionSpeed}s ease`,
     opacity: opacity,
     transform: 'scale3d(1,1,1)',
-    pointerEvents: 'none'
-  }
+    pointerEvents: 'none',
+  };
 }
 
-function getMagnifierZoomStyle (active, transitionSpeed) {
+function getMagnifierZoomStyle(active, transitionSpeed) {
   return {
     position: 'relative',
     opacity: active ? 1 : 0,
-    transition: `opacity ${transitionSpeed}s ease`
-  }
+    transition: `opacity ${transitionSpeed}s ease`,
+  };
 }
 
 export default {
@@ -182,5 +155,5 @@ export default {
   getOverlayLeftStyle,
   getOverlayRightStyle,
   getOverlayBottomStyle,
-  getMagnifierZoomStyle
-}
+  getMagnifierZoomStyle,
+};

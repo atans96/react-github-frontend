@@ -1,5 +1,4 @@
 import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
-import _ from 'lodash';
 import { getElasticSearchBertAutocomplete } from '../services';
 import { Then } from '../util/react-if/Then';
 import { Typography } from '@material-ui/core';
@@ -10,7 +9,7 @@ import { useSelector } from '../selectors/stateSelector';
 import { IAction, StaticState } from '../typing/interface';
 import { RepoInfoSuggested } from '../typing/type';
 import { ActionDiscover } from '../store/Discover/reducer';
-import idx from 'idx';
+import { debounce_lodash } from '../util';
 
 interface SearchBarProps {
   style: React.CSSProperties;
@@ -50,9 +49,9 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
     });
   });
   const handler = useCallback(
-    _.debounce(function (query) {
+    debounce_lodash(function (query: string) {
       if (query.trim().length > 0) {
-        getElasticSearchBertAutocomplete(query.toString().trim()).then((data) => {
+        getElasticSearchBertAutocomplete(query.trim()).then((data) => {
           if (data.isSuggested.status) {
             data.result.unshift(
               Object.assign({}, { full_name: `No result found for ${query}. Did you mean ${data.isSuggested.text}?` })
@@ -77,8 +76,8 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
     setQuery(e.currentTarget.value);
     handler(e.currentTarget.value);
   };
-  const repoInfo = useSelector((state: StaticState) =>
-    idx(state, (_) => _.SuggestedRepo.suggestedData.getSuggestedRepo.repoInfo)
+  const repoInfo = useSelector(
+    (state: StaticState) => state.SuggestedRepo.suggestedData.getSuggestedRepo.repoInfoSuggested
   );
   const handleClick = (event: React.FormEvent) => (query: string) => {
     event.preventDefault();

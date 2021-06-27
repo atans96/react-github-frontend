@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getSearchUsers } from '../services';
-import _ from 'lodash';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
 import { MultiValueSearch } from './PureInputBody/MultiValueSearch';
@@ -8,6 +7,7 @@ import { StargazerProps } from '../typing/type';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateStargazers } from '../selectors/stateContextSelector';
+import { debounce_lodash } from '../util';
 
 interface SearchBarProps {
   setVisible: any;
@@ -28,7 +28,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
     const handler = useCallback(
-      _.debounce(function (username) {
+      debounce_lodash(function (username: string) {
         if (username.toString().trim().length > 0) {
           setVisible(true); // show the autocomplete
           dispatch({

@@ -7,7 +7,6 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { useLocation } from 'react-router-dom';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
-import idx from 'idx';
 
 interface DetailsProps {
   branch: string;
@@ -19,7 +18,7 @@ interface DetailsProps {
 const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) => {
   const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
   const { userData } = useApolloFactory(displayName!).query.getUserData();
-  const token = idx(userData, (_) => _.getUserData.token) || '';
+  const token = userData.getUserData.token || '';
 
   const _isMounted = useRef(true);
   const readmeRef = useRef<HTMLDivElement>(null);

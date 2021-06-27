@@ -3,9 +3,8 @@ import { ActionResolvePromiseOutput, IDataOne, IState, IStateShared } from './ty
 import CardSkeleton from './HomeBody/CardSkeleton';
 import { getOrg, getRepoImages, getSearchTopics, getUser, crawlerPython } from './services';
 import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
-import _ from 'lodash';
 import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
-import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, Seen, SeenProps } from './typing/type';
+import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, SeenProps } from './typing/type';
 import Card from './HomeBody/Card';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
@@ -19,7 +18,7 @@ import { noop } from './util/util';
 import eye from './new_16-2.gif';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from './selectors/stateContextSelector';
-import idx from 'idx';
+
 import { Fab } from '@material-ui/core';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
@@ -119,7 +118,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const windowScreenRef = useRef<HTMLDivElement>(null);
-  const token = idx(userData, (_) => _.getUserData.token) || '';
+  const token = userData?.getUserData?.token || '';
   const isDataExists = (data: Nullable<IDataOne>) => {
     if (data === undefined || data?.dataOne === undefined) {
       return [[], []];
@@ -133,11 +132,13 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       return newID.push(obj.id);
     });
 
-    return newID.length > 0 && !(_.uniq([...oldID, ...newID]).length === oldID.length);
+    return newID.length > 0 && !([...new Set([...oldID, ...newID])].length === oldID.length);
   };
-  const isMergedDataExist = idx(state, (_) => _.mergedData.length > 0);
-  const isSeenCardsExist = idx(seenData, (_) => _.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError);
-  const isTokenRSSExist = idx(userData, (_) => _.getUserData.tokenRSS.length > 0 && !userDataLoading && !userDataError);
+  const isMergedDataExist = state.mergedData.length > 0;
+  const isSeenCardsExist =
+    (seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError) ||
+    false;
+  const isTokenRSSExist = userData?.getUserData?.tokenRSS?.length > 0 && !userDataLoading && !userDataError;
   const isFunction = (value: () => void) =>
     value && (Object.prototype.toString.call(value) === '[object Function]' || 'function' === typeof value || true)
       ? value()
@@ -155,7 +156,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       const repoStat = Object.entries(ja)
         .slice(0, 5)
         .map((arr: any) => {
-          const ja = idx(state, (_) => _.repoStat.find((xx) => xx[0] === arr[0])) ?? [0, 0];
+          const ja = state.repoStat.find((xx) => xx[0] === arr[0]) || [0, 0];
           return [arr[0], ja[1] + arr[1]];
         });
       dispatch({
@@ -455,7 +456,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         const temp = Object.assign(
           {},
           {
-            stargazers_count: obj.stargazers_count,
+            stargazers_count: Number(obj.stargazers_count),
             full_name: obj.full_name,
             default_branch: obj.default_branch,
             owner: {
@@ -468,16 +469,14 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             topics: obj.topics,
             html_url: obj.html_url,
             id: obj.id,
-            imagesData:
-              idx(imagesDataRef.current, (_) => _.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0]) ??
-              [],
+            imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
             name: obj.name,
             is_queried: false,
           }
         );
         acc.push(temp);
         return acc;
-      }, [] as MergedDataProps[]);
+      }, [] as SeenProps[]);
       if (result.length > 0 && imagesDataRef.current.length > 0 && stateShared.isLoggedIn) {
         seenAdded(result).then(noop);
       }
@@ -610,7 +609,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         },
       });
       const temp = seenData.getSeen.seenCards ?? [];
-      const images = temp!.reduce((acc: any[], obj: Seen) => {
+      const images = temp!.reduce((acc: any[], obj: SeenProps) => {
         acc.push(
           Object.assign(
             {},
@@ -908,7 +907,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         <If condition={!state.filterBySeen && isSeenCardsExist}>
           <Then>
             <div style={{ textAlign: 'center' }}>
-              <h3>Your {idx(seenData, (_) => _.getSeen.seenCards.length)} Card History:</h3>
+              <h3>Your {(seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length) || 0} Card History:</h3>
             </div>
           </Then>
         </If>

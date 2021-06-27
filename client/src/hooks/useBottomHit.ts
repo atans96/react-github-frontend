@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
-import _ from 'lodash';
 import { DebounceOptions, useInterval } from './useInterval';
+import { debounce_lodash } from '../util';
 
 function useBottomHit<T extends HTMLDivElement>(
   containerRef: any,
@@ -50,7 +50,7 @@ function useBottomHit<T extends HTMLDivElement>(
 
 const createCallback = (debounce: number, handleOnScroll: () => void, options: DebounceOptions): (() => void) => {
   if (debounce) {
-    return _.debounce(handleOnScroll, debounce, options);
+    return debounce_lodash(handleOnScroll, debounce, options);
   } else {
     return handleOnScroll;
   }

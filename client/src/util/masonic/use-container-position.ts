@@ -1,5 +1,5 @@
-import * as React from 'react'
-import useLayoutEffect from '@react-hook/passive-layout-effect'
+import * as React from 'react';
+import useLayoutEffect from '@react-hook/passive-layout-effect';
 
 /**
  * A hook for measuring the width of the grid container, as well as its distance
@@ -16,35 +16,30 @@ export function useContainerPosition(
   elementRef: React.MutableRefObject<HTMLElement | null>,
   deps: React.DependencyList = emptyArr
 ): ContainerPosition {
-  const [containerPosition, setContainerPosition] = React.useState<
-    ContainerPosition
-  >({offset: 0, width: 0})
+  const [containerPosition, setContainerPosition] = React.useState<ContainerPosition>({ offset: 0, width: 0 });
 
   useLayoutEffect(() => {
-    const {current} = elementRef
+    const { current } = elementRef;
     if (current !== null) {
-      let offset = 0
-      let el = current
+      let offset = 0;
+      let el = current;
 
       do {
-        offset += el.offsetTop || 0
-        el = el.offsetParent as HTMLElement
-      } while (el)
+        offset += el.offsetTop || 0;
+        el = el.offsetParent as HTMLElement;
+      } while (el);
 
-      if (
-        offset !== containerPosition.offset ||
-        current.offsetWidth !== containerPosition.width
-      ) {
+      if (offset !== containerPosition.offset || current.offsetWidth !== containerPosition.width) {
         setContainerPosition({
           offset,
           width: current.offsetWidth,
-        })
+        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps)
+  }, deps);
 
-  return containerPosition
+  return containerPosition;
 }
 
 export interface ContainerPosition {
@@ -52,11 +47,11 @@ export interface ContainerPosition {
    * The distance in pixels between the top of the element in `elementRef` and the top of
    * the `document.documentElement`.
    */
-  offset: number
+  offset: number;
   /**
    * The `offsetWidth` of the element in `elementRef`.
    */
-  width: number
+  width: number;
 }
 
-const emptyArr: [] = []
+const emptyArr: [] = [];

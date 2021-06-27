@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { MergedDataProps } from '../../typing/type';
 import { useApolloClient } from '@apollo/client';
 import { useClickOutside, useEventHandlerComposer } from '../../hooks/hooks';
-import idx from 'idx';
+
 import {
   useTrackedState,
   useTrackedStateShared,
@@ -60,22 +60,20 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
             context: { clientName: 'github' },
           })
           .then((result) => {
-            idx(result, (_) =>
-              _.data.repository.stargazers.nodes.map((node: any) => {
-                const newNode = { ...node };
-                newNode['isQueue'] = false;
-                return dispatchStargazers({
-                  type: 'STARGAZERS_ADDED',
-                  payload: {
-                    stargazersData: newNode,
-                  },
-                });
-              })
-            );
+            result.data.repository.stargazers.nodes.map((node: any) => {
+              const newNode = { ...node };
+              newNode['isQueue'] = false;
+              return dispatchStargazers({
+                type: 'STARGAZERS_ADDED',
+                payload: {
+                  stargazersData: newNode,
+                },
+              });
+            });
             dispatchStargazers({
               type: 'STARGAZERS_HAS_NEXT_PAGE',
               payload: {
-                hasNextPage: idx(result, (_) => _.data.repository.stargazers.pageInfo) ?? {},
+                hasNextPage: result.data.repository.stargazers.pageInfo || {},
               },
             });
           });
@@ -90,9 +88,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
   const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
   const modalWidth = useRef('400px');
-  const [starClicked, setStarClicked] = useState(
-    idx(userStarred, (_) => _.getUserInfoStarred.starred.includes(data.id)) ?? false
-  );
+  const [starClicked, setStarClicked] = useState(userStarred.getUserInfoStarred.starred.includes(data.id));
 
   const [visible, setVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

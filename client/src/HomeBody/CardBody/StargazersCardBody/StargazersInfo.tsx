@@ -13,7 +13,6 @@ import { dragMove } from '../../../util';
 import { useLocation } from 'react-router-dom';
 import { useTrackedStateStargazers } from '../../../selectors/stateContextSelector';
 import { useDeepMemo } from '../../../hooks/useDeepMemo';
-import idx from 'idx';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -102,18 +101,16 @@ const StargazersInfo = ({
               <Then>
                 {useDeepMemo(() => {
                   return (
-                    idx(stateStargazers, (_) =>
-                      _.stargazersData.map((stargazer: StargazerProps, idx: number) => (
-                        <Result
-                          key={idx}
-                          getRootPropsCard={getRootPropsCard}
-                          stargazer={stargazer}
-                          stateStargazers={stateStargazers}
-                        />
-                      ))
-                    ) ?? <></>
+                    stateStargazers.stargazersData.map((stargazer: StargazerProps, idx: number) => (
+                      <Result
+                        key={idx}
+                        getRootPropsCard={getRootPropsCard}
+                        stargazer={stargazer}
+                        stateStargazers={stateStargazers}
+                      />
+                    )) || <></>
                   );
-                }, [idx(stateStargazers, (_) => _.stargazersData)])}
+                }, [stateStargazers.stargazersData])}
               </Then>
             </If>
           </table>

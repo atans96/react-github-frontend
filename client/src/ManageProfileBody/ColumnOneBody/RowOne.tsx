@@ -18,7 +18,7 @@ import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { noop } from '../../util/util';
 import { LanguagePreference } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
-import idx from 'idx';
+
 import { useDeepMemo } from '../../hooks/useDeepMemo';
 import { LocationGraphQL } from '../../typing/interface';
 
@@ -63,7 +63,7 @@ const RowOne = React.memo(() => {
   useEffect(() => {
     let isFinished = false;
     if (
-      idx(location?.state?.data?.userData, (_) => _.getUserData.languagePreference.length > 0) &&
+      location?.state?.data?.userData.getUserData.languagePreference.length > 0 &&
       location.pathname === '/profile' &&
       !isFinished
     ) {

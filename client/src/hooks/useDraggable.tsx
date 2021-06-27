@@ -1,6 +1,6 @@
-import _ from 'lodash';
 import $ from 'cash-dom';
 import React, { useRef, useState } from 'react';
+import { debounce_lodash } from '../util';
 
 export const useDraggable = ({ maxWidth = 600, drawerWidthClient = 200, direction = 'e' }) => {
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -18,7 +18,7 @@ export const useDraggable = ({ maxWidth = 600, drawerWidthClient = 200, directio
   };
   const dragHandlers = {
     onDrag: handleDrag,
-    onStop: _.debounce(handleDragEnd, 100),
+    onStop: debounce_lodash(handleDragEnd, 100),
   };
   const validateSize = () => {
     // Or if our size doesn't equal the actual content size, then we

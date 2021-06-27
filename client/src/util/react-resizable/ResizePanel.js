@@ -2,7 +2,7 @@ import React from 'react';
 import { DraggableCore } from 'react-draggable';
 import classNames from 'classnames/bind';
 import style from './ResizePanel.module.css';
-import _ from 'lodash';
+import { debounce_lodash } from '../../util';
 
 let cx = classNames.bind(style);
 const $ = window.$;
@@ -13,7 +13,7 @@ class ResizePanel extends React.Component {
 
     this.contentRef = React.createRef();
     this.wrapperRef = React.createRef();
-    this.validateSize = _.debounce(this.validateSize, 100).bind(this);
+    this.validateSize = debounce_lodash(this.validateSize, 100).bind(this);
   }
 
   isHorizontal = () => this.props.direction === 'w' || this.props.direction === 'e';

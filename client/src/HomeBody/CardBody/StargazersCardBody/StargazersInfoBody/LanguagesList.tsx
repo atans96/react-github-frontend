@@ -1,15 +1,17 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { If } from '../../../../util/react-if/If';
 import { Then } from '../../../../util/react-if/Then';
 import './LanguageListStyle.scss';
 import { StargazerProps } from '../../../../typing/type';
-import { fastFilter, languageList } from '../../../../util';
+import { fastFilter } from '../../../../util';
 import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
+import { getFile } from '../../../../services';
 
 const LanguagesList: React.FC = React.memo(() => {
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [selectedLanguage, setSelectedLanguage] = useState(stateStargazers.language);
   const evenOdd = useRef(0);
+  const [languageInfo, setLanguageInfo] = useState([]);
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     localStorage.setItem('language', e.currentTarget.innerText);
@@ -58,6 +60,11 @@ const LanguagesList: React.FC = React.memo(() => {
     });
     evenOdd.current += 1;
   };
+  useEffect(() => {
+    getFile('languages.yml').then((data) => {
+      setLanguageInfo(data);
+    });
+  }, []);
   return (
     <div className="btn-group" style={{ display: 'flex', justifyContent: 'center', border: 'solid' }}>
       <button
@@ -81,7 +88,7 @@ const LanguagesList: React.FC = React.memo(() => {
         <span className="caret" />
       </button>
       <ul className="dropdown-menu scrollable-menu">
-        {languageList.map((language: string, idx: number) => {
+        {languageInfo.map((language: string, idx: number) => {
           return (
             <li key={idx}>
               <a href="/" onClick={handleClick}>

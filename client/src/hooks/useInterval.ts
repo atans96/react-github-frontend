@@ -1,8 +1,8 @@
-import _ from 'lodash';
 import { useEffect, useRef } from 'react';
 import { Maybe } from '../typing/interface';
+import { debounce_lodash } from '../util';
 
-export type DebounceOptions = Parameters<typeof _.debounce>[2];
+export type DebounceOptions = Parameters<typeof debounce_lodash>[2];
 export function useInterval(callback: VoidFunction, delay: number) {
   const savedCallback = useRef<Maybe<VoidFunction>>(null);
 
