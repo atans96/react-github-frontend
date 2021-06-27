@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Search from './ColumnTwoBody/Search';
 import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../typing/type';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
-import _ from 'lodash';
-import { fastFilter, isEqualObjects } from '../util';
+import { debounce_lodash, fastFilter, isEqualObjects } from '../util';
 import Details from './ColumnTwoBody/Details';
 import RepoInfo from './ColumnTwoBody/RepoInfo';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../selectors/stateContextSelector';
@@ -49,7 +48,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = React.memo(
       debounceInputChange(event.currentTarget.value);
     };
     const debounceInputChange = useCallback(
-      _.debounce(function (typed) {
+      debounce_lodash(function (typed: string) {
         setTypedFilter(typed);
       }, 500),
       // eslint-disable-next-line react-hooks/exhaustive-deps

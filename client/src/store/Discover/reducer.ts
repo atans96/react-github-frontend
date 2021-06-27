@@ -1,5 +1,5 @@
 import { IAction, IStateDiscover } from '../../typing/interface';
-import _ from 'lodash';
+import uniqBy from 'lodash.uniqby';
 
 export type ActionDiscover =
   | 'LAST_PAGE_DISCOVER'
@@ -10,7 +10,7 @@ export type ActionDiscover =
   | 'ADVANCE_PAGE_DISCOVER'
   | 'VISIBLE'
   | 'REMOVE_ALL'
-  | 'MERGED_DATA_APPEND_DISCOVER_EMPTY'
+  | 'MERGED_DATA_APPEND_DISCOVER_EMPTY';
 
 export const initialStateDiscover: IStateDiscover = {
   mergedDataDiscover: [],
@@ -45,7 +45,7 @@ export const reducerDiscover = (state = initialStateDiscover, action: IAction<Ac
     case 'MERGED_DATA_APPEND_DISCOVER': {
       return {
         ...state,
-        mergedDataDiscover: _.uniqBy([...state.mergedDataDiscover, ...action.payload.data], 'id'),
+        mergedDataDiscover: uniqBy([...state.mergedDataDiscover, ...action.payload.data], 'id'),
       };
     }
     case 'MERGED_DATA_ADDED_DISCOVER': {

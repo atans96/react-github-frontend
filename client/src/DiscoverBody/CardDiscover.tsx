@@ -7,11 +7,9 @@ import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import UserCardDiscover from './CardDiscoverBody/UserCardDiscover';
 import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
-import { StateStargazersProvider } from '../selectors/stateContextSelector';
+import { StateStargazersProvider, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useViewportSpy } from '../hooks/use-viewport-spy';
 import { createRenderElement } from '../Layout/MasonryLayout';
-import CryptoJS from 'crypto-js';
-import { readEnvironmentVariable } from '../util';
 
 export interface Card {
   index: number;
@@ -32,7 +30,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [githubData.owner, githubData.trends, sorted]);
-
+    const [stateShared] = useTrackedStateShared();
     const stargazersMemoizedGithubData = useCallback(() => {
       return githubData;
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,10 +59,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
         clickedAdded({
           getClicked: {
             clicked: temp,
-            userName: CryptoJS.TripleDES.decrypt(
-              localStorage.getItem('jbb') || '',
-              readEnvironmentVariable('CRYPTO_SECRET')!
-            ).toString(CryptoJS.enc.Latin1),
           },
         }).then(noop);
       }
@@ -86,10 +80,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
       clickedAdded({
         getClicked: {
           clicked: temp,
-          userName: CryptoJS.TripleDES.decrypt(
-            localStorage.getItem('jbb') || '',
-            readEnvironmentVariable('CRYPTO_SECRET')!
-          ).toString(CryptoJS.enc.Latin1),
         },
       }).then(noop);
     };
@@ -115,10 +105,13 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
           <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
         </div>
         {createRenderElement(StargazersDiscover, { data: stargazersMemoizedGithubData() })}
-        <div className={'language-github-color'}>
+        <div>
           <ul
-            className={`language ${githubData?.language?.replace(/\+\+|#|\s/, '-')}`}
-            style={{ backgroundColor: 'transparent' }}
+            className={`language}`}
+            style={{
+              backgroundColor: 'transparent',
+              color: stateShared.githubLanguages.get(githubData?.language?.replace(/\+\+|#|\s/, '-'))?.color,
+            }}
           >
             <li className={'language-list'}>
               <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>

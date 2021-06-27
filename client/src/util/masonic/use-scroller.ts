@@ -1,6 +1,6 @@
-import * as React from 'react'
-import useScrollPosition from '@react-hook/window-scroll'
-import {requestTimeout, clearRequestTimeout} from '@essentials/request-timeout'
+import * as React from 'react';
+import useScrollPosition from '@react-hook/window-scroll';
+import { requestTimeout, clearRequestTimeout } from '@essentials/request-timeout';
 
 /**
  * A hook for tracking whether the `window` is currently being scrolled and it's scroll position on
@@ -14,24 +14,21 @@ import {requestTimeout, clearRequestTimeout} from '@essentials/request-timeout'
  *  The default value of `12` has been very reasonable in my own testing, but if you have particularly
  *  heavy `render` components it may be prudent to reduce this number.
  */
-export function useScroller(
-  offset = 0,
-  fps = 12
-): {scrollTop: number; isScrolling: boolean} {
-  const scrollTop = useScrollPosition(fps)
-  const [isScrolling, setIsScrolling] = React.useState(false)
-  const didMount = React.useRef(0)
+export function useScroller(offset = 0, fps = 12): { scrollTop: number; isScrolling: boolean } {
+  const scrollTop = useScrollPosition(fps);
+  const [isScrolling, setIsScrolling] = React.useState(false);
+  const didMount = React.useRef(0);
 
   React.useEffect(() => {
-    if (didMount.current === 1) setIsScrolling(true)
+    if (didMount.current === 1) setIsScrolling(true);
     const to = requestTimeout(() => {
       // This is here to prevent premature bail outs while maintaining high resolution
       // unsets. Without it there will always bee a lot of unnecessary DOM writes to style.
-      setIsScrolling(false)
-    }, 40 + 1000 / fps)
-    didMount.current = 1
-    return () => clearRequestTimeout(to)
-  }, [fps, scrollTop])
+      setIsScrolling(false);
+    }, 40 + 1000 / fps);
+    didMount.current = 1;
+    return () => clearRequestTimeout(to);
+  }, [fps, scrollTop]);
 
-  return {scrollTop: Math.max(0, scrollTop - offset), isScrolling}
+  return { scrollTop: Math.max(0, scrollTop - offset), isScrolling };
 }

@@ -11,7 +11,7 @@ import moment from 'moment';
 import { epochToJsDate } from '../../util/util';
 import { MergedDataProps } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
-import idx from 'idx';
+
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useDeepMemo } from '../../hooks/useDeepMemo';
 import { createRenderElement } from '../../Layout/MasonryLayout';
@@ -43,7 +43,7 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
     let isFinished = false;
     if (
       !isFinished &&
-      idx(location?.state?.data?.userInfoData, (_) => _.getUserInfoData.repoContributions.length > 0) &&
+      location?.state?.data?.userInfoData.getUserInfoData.repoContributions.length > 0 &&
       location.pathname === '/profile'
     ) {
       dispatchManageProfile({

@@ -11,7 +11,6 @@ import { useHistory } from 'react-router-dom';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
-import idx from 'idx';
 import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface StateProps {
@@ -30,7 +29,7 @@ interface StateProps {
 const Details: React.FC = () => {
   const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
   const { userData } = useApolloFactory(displayName!).query.getUserData();
-  const token = idx(userData, (_) => _.getUserData.token) || '';
+  const token = userData.getUserData.token || '';
 
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
@@ -40,10 +39,8 @@ const Details: React.FC = () => {
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
     (state: StaticState) => state.StarRanking
   );
-  const isStarRankingExist = idx(
-    starRankingData,
-    (_) => !starRankingDataLoading && !starRankingDataError && _.getStarRanking
-  );
+
+  const isStarRankingExist = !starRankingDataLoading && !starRankingDataError && starRankingData.getStarRanking;
 
   useEffect(() => {
     let isFinished = false;

@@ -5,7 +5,7 @@ import { GET_STAR_RANKING, GET_SUGGESTED_REPO, GET_SUGGESTED_REPO_IMAGES } from 
 import { StaticState } from '../typing/interface';
 import {
   RepoInfoSuggested,
-  Seen,
+  SeenProps,
   starRanking,
   StarRankingData,
   SuggestedData,
@@ -33,6 +33,7 @@ const useSuggestedRepo = () => {
   return { suggestedData, suggestedDataError, suggestedDataLoading } as SuggestedData;
 };
 export const SuggestedRepoContainer = createContainer(useSuggestedRepo);
+export type suggestedDataImages = Pick<SuggestedDataImages, 'suggestedDataImages'>;
 const useSuggestedRepoImages = () => {
   const { data: suggestedDataImages, loading: suggestedDataImagesLoading, error: suggestedDataImagesError } = useQuery(
     GET_SUGGESTED_REPO_IMAGES,
@@ -57,11 +58,11 @@ export function useSelector(selector: any) {
   return selector(useApolloData());
 }
 //don't import createSelector to React component as it will re-create selector (not memoize) when the component gets rerender
-export const alreadySeenCardSelector = createSelector<Seen[] | [], any, any[]>(
-  [(seenCards: Seen[]) => seenCards],
-  (seenCard: Seen[]) => {
+export const alreadySeenCardSelector = createSelector<SeenProps[] | [], any, any[]>(
+  [(seenCards: SeenProps[]) => seenCards],
+  (seenCard: SeenProps[]) => {
     return (
-      seenCard?.reduce((acc: any[], obj: Seen) => {
+      seenCard?.reduce((acc: any[], obj: SeenProps) => {
         acc.push(obj.id);
         return acc;
       }, []) ?? []
@@ -74,7 +75,7 @@ export const sortedRepoInfoSelector = (starRankingFiltered: starRanking[], sorte
     [(data: StaticState) => data.SuggestedRepo],
     (suggestedRepo: SuggestedData) => {
       const ids = starRankingFiltered?.map((obj: starRanking) => obj.id);
-      return suggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfo
+      return suggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfoSuggested
         ?.slice()
         .sort((a: RepoInfoSuggested, b: RepoInfoSuggested) => {
           return ids.indexOf(a.id) - ids.indexOf(b.id);

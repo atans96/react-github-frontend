@@ -1,5 +1,5 @@
 import Parser from 'rss-parser';
-import {readEnvironmentVariable} from "../util";
+import { readEnvironmentVariable } from '../util';
 
 export class RSSSource {
   url: string;
@@ -42,7 +42,7 @@ export async function decodeFetchResponse(response: Response, isHTML = false) {
 export async function parseRSS(url: string) {
   let result: Response | undefined;
   try {
-    result = await fetch(`${readEnvironmentVariable("CORS_PROXY_SERVER_ADDRESS")}/` + url, { credentials: 'omit' });
+    result = await fetch(`${readEnvironmentVariable('CORS_PROXY_SERVER_ADDRESS')}/` + url, { credentials: 'omit' });
   } catch {
     console.log('error');
   }

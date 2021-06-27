@@ -3,8 +3,9 @@ import { CSSProperties, Dispatch, MouseEvent, MutableRefObject, ReactNode, Trans
 import {
   ActionResolvedPromise,
   CardEnhancement,
-  ClickedData,
+  Clicked,
   ContributorsProps,
+  GithubLanguages,
   HasNextPage,
   ImagesDataProps,
   MergedDataProps,
@@ -12,9 +13,7 @@ import {
   RateLimit,
   RenderImagesProps,
   RepoInfoProps,
-  RSSFeedData,
-  SearchesData,
-  SeenData,
+  Searches,
   SeenProps,
   StargazerProps,
   StarRankingData,
@@ -24,6 +23,7 @@ import {
   UserData,
   UserInfoData,
 } from './type';
+
 export interface LocationGraphQL {
   //follow NavBar.tsx at getAllGraphQLData
   data: {
@@ -32,9 +32,11 @@ export interface LocationGraphQL {
   };
   previousPath: string;
 }
+
 interface Output {
   isFetchFinish: boolean;
 }
+
 export interface ActionResolvePromise {
   action: ActionResolvedPromise;
   setLoading: any;
@@ -45,6 +47,7 @@ export interface ActionResolvePromise {
   error?: string;
   prefetch?: (x: string) => void;
 }
+
 export interface ActionResolvePromiseOutput {
   actionResolvePromise: ({ args }: ActionResolvePromise) => Output;
 }
@@ -75,12 +78,12 @@ export interface IStateShared {
   width: number;
   perPage: number;
   fetchDataPath: string;
+  githubLanguages: Map<string, GithubLanguages>;
   drawerWidth: number;
   username: string[];
   tokenRSS: string;
   tokenGQL: string;
   isLoggedIn: boolean;
-  languagesInfo: [];
   client_id: Nullable<string>;
   redirect_uri: Nullable<string>;
   client_secret: Nullable<string>;
@@ -132,7 +135,7 @@ export interface GraphQLUserData {
 }
 
 export interface GraphQLUserStarred {
-  getUserInfoStarred: { starred: number[] | any[]; userName: string };
+  getUserInfoStarred: { starred: number[] | any[] };
 }
 
 export interface GraphQLUserInfoData {
@@ -140,34 +143,27 @@ export interface GraphQLUserInfoData {
 }
 
 export interface GraphQLSeenData {
-  getSeen: SeenData;
+  getSeen: {
+    seenCards: Nullable<SeenProps[] | []>;
+  };
 }
 
 export interface GraphQLClickedData {
-  getClicked: ClickedData;
+  getClicked: { clicked: Nullable<Clicked[] | []> };
 }
 
 export interface GraphQLRSSFeedData {
-  getRSSFeed: RSSFeedData;
+  getRSSFeed: { rss: string[]; lastSeen: string[] };
 }
 
 export interface GraphQLSearchesData {
-  getSearches: SearchesData[];
+  getSearches: { searches: Searches[] };
 }
 
 export interface StaticState {
   StarRanking: StarRankingData;
   SuggestedRepo: SuggestedData;
   SuggestedRepoImages: SuggestedDataImages;
-}
-
-export interface RenderImages {
-  id: number;
-  value: string[];
-}
-
-export interface RepoRenderImages {
-  renderImages: RenderImages[];
 }
 
 export interface SearchUser {

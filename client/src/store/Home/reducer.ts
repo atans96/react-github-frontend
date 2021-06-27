@@ -1,6 +1,6 @@
 import { IAction, IState } from '../../typing/interface';
 import { fastFilter } from '../../util';
-import _ from 'lodash';
+import uniqBy from 'lodash.uniqby';
 import { CardEnhancement } from '../../typing/type';
 
 export type Action =
@@ -58,6 +58,7 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         action.payload.cardEnhancement.id,
         action.payload.cardEnhancement
       );
+      //TODO: is there a better solution for detecting change partially for dispatcher rather than copying a whole array that's expensive?
       //https://stackoverflow.com/questions/56795743/how-to-convert-map-to-array-of-object
       return {
         ...state,
@@ -160,7 +161,7 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
     case 'MERGED_DATA_APPEND': {
       return {
         ...state,
-        mergedData: _.uniqBy([...state.mergedData, ...action.payload.data], 'id'),
+        mergedData: uniqBy([...state.mergedData, ...action.payload.data], 'id'),
       };
     }
     case 'MERGED_DATA_ADDED': {
@@ -172,9 +173,9 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
     case 'IMAGES_DATA_ADDED': {
       return {
         ...state,
-        imagesData: _.uniqBy([...state.imagesData, ...action.payload.images], 'id'),
+        imagesData: uniqBy([...state.imagesData, ...action.payload.images], 'id'),
         imagesMapData: new Map(
-          _.uniqBy([...state.imagesData, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
+          uniqBy([...state.imagesData, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
         ),
       };
     }

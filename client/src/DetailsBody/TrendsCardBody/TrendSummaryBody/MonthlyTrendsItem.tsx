@@ -9,10 +9,10 @@ export const MonthlyTrendsItem = React.memo<TrendSummaryProps>(({ item, trends }
   const { label, category } = item;
   const value = getDeltaByDay(category)({ trends });
   return (
-      <div>
-        <div>{label}</div>
-        <StarDelta value={value} average={category !== 'daily'} />
-      </div>
+    <div>
+      <div>{label}</div>
+      <StarDelta value={value} average={category !== 'daily'} />
+    </div>
   );
 });
 

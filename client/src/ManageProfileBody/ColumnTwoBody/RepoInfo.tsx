@@ -11,6 +11,7 @@ import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import { createRenderElement } from '../../Layout/MasonryLayout';
+import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 
 interface Props {
   obj: RepoInfoProps;
@@ -32,6 +33,7 @@ const RepoInfo = React.memo<Props>(
       setOpen((prevState) => !prevState);
     }, []);
     const classes = useStyles();
+    const [stateShared] = useTrackedStateShared();
     return (
       <div style={{ borderBottom: 'solid' }}>
         <div style={active === obj.fullName ? { borderLeft: '5px solid', backgroundColor: '#f8fafc' } : {}}>
@@ -48,10 +50,19 @@ const RepoInfo = React.memo<Props>(
               <div style={{ marginBottom: '5px' }}>
                 <p>{obj.description}</p>
               </div>
-              <div style={{ marginBottom: '5px' }} className={'language-github-background-color'}>
+              <div
+                style={{
+                  marginBottom: '5px',
+                }}
+              >
                 <ul
-                  style={{ width: 'fit-content', padding: '2px 1em', borderRadius: '5px' }}
-                  className={`language ${obj?.language?.replace(/\+\+|#|\s/, '-')}`}
+                  style={{
+                    width: 'fit-content',
+                    padding: '2px 1em',
+                    borderRadius: '5px',
+                    backgroundColor: stateShared.githubLanguages.get(obj?.language?.replace(/\+\+|#|\s/, '-'))?.color,
+                  }}
+                  className={`language`}
                 >
                   <h6 style={{ color: 'white' }}>{obj.language}</h6>
                 </ul>

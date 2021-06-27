@@ -1,27 +1,31 @@
 #box {
-    box-sizing: content-box;
-    width: fit-content;
-    height: fit-content;
-    border: 3px solid black;
-    text-align: center;
-    display: inline-flex;
-    background-color: white;
-    z-index: 10;
-    color: black;
+  box-sizing: content-box;
+  width: fit-content;
+  height: fit-content;
+  border: 3px solid black;
+  text-align: center;
+  display: inline-flex;
+  background-color: white;
+  z-index: 10;
+  color: black;
 }
 /*position fixed so that whenever you scroll, it will follow it
 An element with position:fixed is fixed with respect to the viewport.
  It stays where it is, even if the document is scrolled*/
 #container {
-    position:fixed;
-    right:5px;
-    z-index: 10;
+  position: fixed;
+  right: 5px;
+  z-index: 10;
 }
 @keyframes fade {
-    from {background-color:#1aff00;}
-    to {background-color: white;}
+  from {
+    background-color: #1aff00;
+  }
+  to {
+    background-color: white;
+  }
 }
 .added {
-    opacity: 1;
-    animation: fade 4s forwards;
+  opacity: 1;
+  animation: fade 4s forwards;
 }

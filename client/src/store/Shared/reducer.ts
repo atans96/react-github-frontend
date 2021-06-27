@@ -5,14 +5,15 @@ import { initialStateStargazers } from '../Staargazers/reducer';
 import { readEnvironmentVariable } from '../../util';
 import { initialStateManageProfile } from '../ManageProfile/reducer';
 import { initialStateRateLimit } from '../RateLimit/reducer';
+import { CardEnhancement, GithubLanguages } from '../../typing/type';
 
 export type ActionShared =
   | 'TOKEN_ADDED'
   | 'LOGIN'
   | 'PER_PAGE'
   | 'LOGOUT'
+  | 'SET_GITHUB_LANGUAGES'
   | 'SET_WIDTH'
-  | 'LANGUAGES_INFO'
   | 'USERNAME_ADDED'
   | 'TOKEN_RSS_ADDED'
   | 'SET_DRAWER_WIDTH'
@@ -21,7 +22,7 @@ export type ActionShared =
 
 export const initialStateShared: IStateShared = {
   width: window.innerWidth,
-  languagesInfo: [],
+  githubLanguages: new Map<string, GithubLanguages>(),
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
   tokenGQL: '', //setting
@@ -47,16 +48,18 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateRateLimit,
       };
     }
+    case 'SET_GITHUB_LANGUAGES': {
+      return {
+        ...state,
+        githubLanguages: new Map(
+          action.payload.githubLanguages.map((obj: GithubLanguages) => [obj.language, obj]) || []
+        ),
+      };
+    }
     case 'SET_DRAWER_WIDTH': {
       return {
         ...state,
         drawerWidth: action.payload.drawerWidth,
-      };
-    }
-    case 'LANGUAGES_INFO': {
-      return {
-        ...state,
-        languagesInfo: action.payload.languagesInfo,
       };
     }
     case 'NO_DATA_FETCH': {

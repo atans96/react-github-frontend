@@ -10,7 +10,7 @@ import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
 import { allowedRoutes, fastFilter, readEnvironmentVariable } from './util';
 import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
-import { getTokenGQL, getValidGQLProperties } from './services';
+import { getFile, getTokenGQL, getValidGQLProperties } from './services';
 import {
   alreadySeenCardSelector,
   StarRankingContainer,
@@ -32,7 +32,7 @@ import {
 } from './selectors/stateContextSelector';
 import useUserVerification from './hooks/useUserVerification';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import idx from 'idx';
+
 import { LanguagePreference, MergedDataProps } from './typing/type';
 import { IDataOne } from './typing/interface';
 import { If } from './util/react-if/If';
@@ -97,10 +97,10 @@ const App = () => {
 
   const languagePreference = React.useMemo(() => {
     return new Map(
-      idx(userData, (_) => _.getUserData.languagePreference.map((obj: LanguagePreference) => [obj.language, obj])) || []
+      userData?.getUserData?.languagePreference.map((obj: LanguagePreference) => [obj.language, obj]) || []
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx(userData, (_) => _.getUserData.languagePreference)]);
+  }, [userData?.getUserData?.languagePreference]);
 
   const languagePreferenceRef = useRef(languagePreference);
   const userStarredRef = useRef(userStarred?.getUserInfoStarred?.starred);
@@ -289,7 +289,16 @@ const App = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn, apolloCacheData]);
-
+  useEffect(() => {
+    getFile('languages.json').then((githubLanguages) => {
+      dispatchShared({
+        type: 'SET_GITHUB_LANGUAGES',
+        payload: {
+          githubLanguages,
+        },
+      });
+    });
+  }, []);
   return (
     <div>
       <KeepMountedLayout
@@ -420,7 +429,7 @@ const CustomApolloProvider = ({ children }: any) => {
     });
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
-      uri: `${readEnvironmentVariable("GRAPHQL_ADDRESS")}/graphql`,
+      uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql`,
       fetchOptions: {
         credentials: 'include',
       },
@@ -543,7 +552,7 @@ const CustomApolloProvider = ({ children }: any) => {
   );
   return <ApolloContext.Provider value={value}>{children}</ApolloContext.Provider>;
 };
-console.log(localStorage.getItem("jbb"))
+
 const Main = () => {
   //make sure that SuggestedRepoImagesContainer.Provider is below CustomApolloProvider since it's using ApolloContext.Provider in order to use useQuery hook
   return (

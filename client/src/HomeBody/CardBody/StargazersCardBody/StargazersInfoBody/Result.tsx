@@ -5,7 +5,7 @@ import './ResultStyle.scss';
 import '../StargazersInfoStyle.scss';
 import clsx from 'clsx';
 import { StargazerProps } from '../../../../typing/type';
-import idx from 'idx';
+
 import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 import { IStateStargazers } from '../../../../typing/interface';
 
@@ -38,7 +38,7 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
         stargazersQueueData: stargazer,
       },
     });
-    const ja = idx(stateStargazers, (_) => _.stargazersData) ?? [];
+    const ja = stateStargazers.stargazersData || [];
     const updatedStargazersData = ja.find((obj: StargazerProps) => obj.id === stargazer.id);
     if (updatedStargazersData !== undefined) {
       try {
@@ -49,17 +49,14 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
       dispatchStargazers({
         type: 'STARGAZERS_UPDATED',
         payload: {
-          stargazersData: idx(
-            stateStargazers,
-            (_) =>
-              _.stargazersData.map((obj: StargazerProps) => {
-                if (obj.id === updatedStargazersData.id) {
-                  return updatedStargazersData;
-                } else {
-                  return obj;
-                }
-              }) ?? []
-          ),
+          stargazersData:
+            stateStargazers.stargazersData.map((obj: StargazerProps) => {
+              if (obj.id === updatedStargazersData.id) {
+                return updatedStargazersData;
+              } else {
+                return obj;
+              }
+            }) || [],
         },
       });
     } else {
@@ -124,14 +121,10 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
             <Typography variant="subtitle2" className={classes.typography}>
               {
                 // filter will get updated when state.language changes due to LanguagesList.tsx click event
-                idx(
-                  stargazer,
-                  (_) =>
-                    _.starredRepositories.nodes
-                      .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
-                      .map((x: { name: string }) => x && x.name)
-                      .filter((language: string) => language === stateStargazers.language).length
-                ) ?? 0
+                stargazer.starredRepositories.nodes
+                  .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
+                  .map((x: { name: string }) => x && x.name)
+                  .filter((language: string) => language === stateStargazers.language).length || 0
               }
             </Typography>
           </div>

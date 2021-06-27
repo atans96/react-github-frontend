@@ -2,64 +2,87 @@ import { readEnvironmentVariable } from '../util';
 import { SearchUser } from '../typing/interface';
 
 export const getAllGraphQLNavBar = async (username: string) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/graphqlUserData?username=${username}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/graphqlUserData?username=${username}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+    }
+  );
   return await response.json();
 };
 export const getTopContributors = async (fullName: string, token: string | null | undefined) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/getTopContributors?full_name=${fullName}&token=${token}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}&token=${token}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+    }
+  );
   return await response.json();
 };
 export const removeStarredMe = async (repoFullName: string, token: string | null | undefined) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/removeStarredMe?repoFullName=${repoFullName}&token=${token}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/removeStarredMe?repoFullName=${repoFullName}&token=${token}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+    }
+  );
   return await response.json();
 };
 export const setStarredMe = async (repoFullName: string, token: string | null | undefined) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/setStarredMe?repoFullName=${repoFullName}&token=${token}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setStarredMe?repoFullName=${repoFullName}&token=${token}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+    }
+  );
   return await response.json();
 };
 export const setTokenGQL = async (tokenGQL: string) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/setTokenGQL`, {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setTokenGQL`, {
     method: 'GET',
+    keepalive: true,
     credentials: 'include',
     headers: {
-      'Authorization': `${tokenGQL}`
+      Authorization: `${tokenGQL}`,
     },
   });
   return await response.json();
 };
 export const getTokenGQL = async () => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/getTokenGQL`, {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTokenGQL`, {
     method: 'GET',
+    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
 };
 export const removeTokenGQL = async () => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/destroyTokenGQL`, {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyTokenGQL`, {
     method: 'GET',
+    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
 };
 export const subscribeUser = async (username: string, signal: any) => {
   if (username !== '') {
-    const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/subscribe_user?username=${username}`, {
-      method: 'GET',
-      credentials: 'include',
-      signal,
-    });
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/subscribe_user?username=${username}`,
+      {
+        method: 'GET',
+        keepalive: true,
+        credentials: 'include',
+        signal,
+      }
+    );
     return await response.json();
   }
 };
@@ -80,9 +103,12 @@ export const getUser = async ({
 }) => {
   if (username !== '') {
     const response = await fetch(
-      `${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/users?username=${username}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
+      `${readEnvironmentVariable(
+        'UWEBSOCKET_ADDRESS'
+      )}/users?username=${username}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
+        keepalive: true,
         credentials: 'include',
         signal,
       }
@@ -107,9 +133,12 @@ export const getOrg = async ({
 }) => {
   if (org !== '') {
     const response = await fetch(
-      `${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/org?org=${org}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
+      `${readEnvironmentVariable(
+        'UWEBSOCKET_ADDRESS'
+      )}/org?org=${org}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
+        keepalive: true,
         credentials: 'include',
         signal,
       }
@@ -118,46 +147,65 @@ export const getOrg = async ({
   }
 };
 export const getValidGQLProperties = async () => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/getValidGQLProperties`, {
+  const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_gql_properties`, {
     method: 'GET',
+    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
 };
 export const markdownParsing = async (full_name: string, branch: string, token: string | null | undefined) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/markdown?full_name=${full_name}&branch=${branch}&token=${token}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/markdown?full_name=${full_name}&branch=${branch}&token=${token}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+    }
+  );
   return await response.json();
 };
 export const getRateLimitInfo = async (token: string | null | undefined) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/get_rate_limit?token=${token === null ? '' : token}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/get_rate_limit?token=${token === null ? '' : token}`,
+    {
+      method: 'GET',
+      keepalive: true,
+    }
+  );
   return await response.json();
 };
 export const verifyJWTToken = async (token: string, username: string, isLoggedIn: boolean) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/verifyJWTToken?token=${token}&username=${username}&isLoggedIn=${isLoggedIn}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable(
+      'UWEBSOCKET_ADDRESS'
+    )}/verifyJWTToken?token=${token}&username=${username}&isLoggedIn=${isLoggedIn}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+    }
+  );
   return await response.json();
 };
 export const requestGithubLogin = async (proxy_url: string, data: any) => {
   const response = await fetch(proxy_url, {
     method: 'POST',
+    keepalive: true,
     mode: 'cors',
     body: JSON.stringify(data),
   });
   return await response.json();
 };
 export const getSearchUsers = async (query: string, token: string | null | undefined) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/search_users?username=${query}&token=${token}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_users?username=${query}&token=${token}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+    }
+  );
   return (await response.json()) as SearchUser;
 };
 export const getSearchTopics = async ({
@@ -171,11 +219,17 @@ export const getSearchTopics = async ({
   topic: string;
   token: string | null | undefined;
 }) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/search_topics?topic=${topic}&token=${token}&axiosCancel=${axiosCancel}`, {
-    method: 'GET',
-    credentials: 'include',
-    signal,
-  });
+  const response = await fetch(
+    `${readEnvironmentVariable(
+      'UWEBSOCKET_ADDRESS'
+    )}/search_topics?topic=${topic}&token=${token}&axiosCancel=${axiosCancel}`,
+    {
+      method: 'GET',
+      keepalive: true,
+      credentials: 'include',
+      signal,
+    }
+  );
   return await response.json();
 };
 export const getElasticSearchBertAutocomplete = async (query: string) => {
@@ -183,6 +237,7 @@ export const getElasticSearchBertAutocomplete = async (query: string) => {
   // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
   const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT_AUTOCOMPLETE')}?q=${query}&docName=github`, {
     method: 'GET',
+    keepalive: true,
     mode: 'cors',
   });
   return await response.json();
@@ -192,14 +247,17 @@ export const getElasticSearchBert = async (query: string) => {
   // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
   const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT')}?q=${query}&docName=github`, {
     method: 'GET',
+    keepalive: true,
     credentials: 'include',
     mode: 'cors',
   });
   return await response.json();
 };
 export const requestGithubGraphQLLogin = async (token: string) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/auth_graphql`, {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/auth_graphql`, {
     method: 'POST',
+    keepalive: true,
+    mode: 'cors',
     body: JSON.stringify({
       token: token,
     }),
@@ -207,8 +265,17 @@ export const requestGithubGraphQLLogin = async (token: string) => {
   return await response.json();
 };
 export const convertToWebP = async (imgUrl: string) => {
-  const response = await fetch(`${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/convert_to_webp?imgUrl=${imgUrl}`, {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/convert_to_webp?imgUrl=${imgUrl}`, {
     method: 'GET',
+    keepalive: true,
+    credentials: 'include',
+  });
+  return await response.json();
+};
+export const getFile = async (filename: string) => {
+  const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_github_languages?filename=${filename}`, {
+    method: 'GET',
+    keepalive: true,
     credentials: 'include',
   });
   return await response.json();
@@ -231,9 +298,13 @@ export const getRepoImages = async ({
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
   const response = await fetch(
-    `${readEnvironmentVariable("UWEBSOCKET_ADDRESS")}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
+    `${readEnvironmentVariable(
+      'UWEBSOCKET_ADDRESS'
+    )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
     {
       method: 'POST',
+      keepalive: true,
+      mode: 'cors',
       body: JSON.stringify({
         data: data,
       }),
@@ -264,6 +335,8 @@ export const crawlerPython = async ({
     `${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}&token=${token}`,
     {
       method: 'POST',
+      keepalive: true,
+      mode: 'cors',
       body: JSON.stringify({
         data: data,
       }),

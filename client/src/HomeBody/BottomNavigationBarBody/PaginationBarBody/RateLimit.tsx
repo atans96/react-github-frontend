@@ -4,7 +4,7 @@ import { getRateLimitInfo } from '../../../services';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateRateLimit } from '../../../selectors/stateContextSelector';
-import idx from 'idx';
+
 import { createRenderElement } from '../../../Layout/MasonryLayout';
 
 const RateLimit = () => {
@@ -26,36 +26,34 @@ const RateLimit = () => {
             rateLimitAnimationAdded: false,
           },
         });
-        getRateLimitInfo((!userDataLoading && !userDataError && idx(userData, (_) => _.getUserData.token)) || '').then(
-          (data) => {
-            if (data.rateLimit && data.rateLimitGQL) {
-              dispatchRateLimit({
-                type: 'RATE_LIMIT_ADDED',
-                payload: {
-                  rateLimitAnimationAdded: true,
-                },
-              });
-              dispatchRateLimit({
-                type: 'RATE_LIMIT',
-                payload: {
-                  limit: data.rateLimit.limit,
-                  used: data.rateLimit.used,
-                  reset: data.rateLimit.reset,
-                },
-              });
+        getRateLimitInfo((!userDataLoading && !userDataError && userData?.getUserData?.token) || '').then((data) => {
+          if (data.rateLimit && data.rateLimitGQL) {
+            dispatchRateLimit({
+              type: 'RATE_LIMIT_ADDED',
+              payload: {
+                rateLimitAnimationAdded: true,
+              },
+            });
+            dispatchRateLimit({
+              type: 'RATE_LIMIT',
+              payload: {
+                limit: data.rateLimit.limit,
+                used: data.rateLimit.used,
+                reset: data.rateLimit.reset,
+              },
+            });
 
-              dispatchRateLimit({
-                type: 'RATE_LIMIT_GQL',
-                payload: {
-                  limit: data.rateLimitGQL.limit,
-                  used: data.rateLimitGQL.used,
-                  reset: data.rateLimitGQL.reset,
-                },
-              });
-            }
-            setRefetch(false); // turn back to default after setting to true from RateLimitInfo
+            dispatchRateLimit({
+              type: 'RATE_LIMIT_GQL',
+              payload: {
+                limit: data.rateLimitGQL.limit,
+                used: data.rateLimitGQL.used,
+                reset: data.rateLimitGQL.reset,
+              },
+            });
           }
-        );
+          setRefetch(false); // turn back to default after setting to true from RateLimitInfo
+        });
         return () => {
           isFinished = true;
         };

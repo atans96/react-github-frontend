@@ -1,5 +1,4 @@
-import { useApolloClient, useMutation, useQuery } from '@apollo/client';
-import { SIGN_UP_USER } from '../graphql/mutations';
+import { useApolloClient, useQuery } from '@apollo/client';
 import {
   GET_CLICKED,
   GET_RSS_FEED,
@@ -18,6 +17,7 @@ import {
   GraphQLUserInfoData,
   GraphQLUserStarred,
 } from '../typing/interface';
+import { Pick2, SeenProps } from '../typing/type';
 
 const consumers: Record<string, Array<string>> = {};
 
@@ -28,9 +28,10 @@ function pushConsumers(property: string, path: string) {
     consumers[path] = [property];
   }
 }
+
 export function useApolloFactory(path: string) {
   const client = useApolloClient();
-  const seenAdded = async (data: any[]) => {
+  const seenAdded = async (data: SeenProps[]) => {
     const oldData: GraphQLSeenData | null = (await client.cache.readQuery({ query: GET_SEEN })) || null;
     if (oldData && oldData.getSeen) {
       return client.cache.writeQuery({
@@ -60,7 +61,6 @@ export function useApolloFactory(path: string) {
         query: GET_CLICKED,
         data: {
           getClicked: {
-            userName: oldData.getClicked.userName,
             clicked: [...data.getClicked.clicked, ...oldData?.getClicked?.clicked],
           },
         },
@@ -70,14 +70,13 @@ export function useApolloFactory(path: string) {
         query: GET_CLICKED,
         data: {
           getClicked: {
-            userName: data.getClicked.userName,
             clicked: data.getClicked.clicked,
           },
         },
       });
     }
   };
-  const tokenRSSAdded = async (data: { getUserData: { tokenRSS: string } }) => {
+  const tokenRSSAdded = async (data: Pick2<GraphQLUserData, 'getUserData', 'tokenRSS'>) => {
     const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
     if (oldData) {
       await client.cache.writeQuery({
@@ -102,7 +101,6 @@ export function useApolloFactory(path: string) {
         query: GET_RSS_FEED,
         data: {
           getRSSFeed: {
-            userName: oldData.getRSSFeed.userName,
             rss: [...data.getRSSFeed.rss, ...oldData?.getRSSFeed?.rss],
             lastSeen: [...data.getRSSFeed.lastSeen, ...oldData?.getRSSFeed?.lastSeen],
           },
@@ -113,7 +111,6 @@ export function useApolloFactory(path: string) {
         query: GET_RSS_FEED,
         data: {
           getRSSFeed: {
-            userName: oldData!.getRSSFeed.userName,
             rss: data.getRSSFeed.rss,
             lastSeen: data.getRSSFeed.lastSeen,
           },
@@ -135,7 +132,7 @@ export function useApolloFactory(path: string) {
       });
     }
   };
-  const addedStarredMe = async (data: { getUserInfoStarred: { starred: number[] } }) => {
+  const addedStarredMe = async (data: GraphQLUserStarred) => {
     const oldData: GraphQLUserStarred | null = (await client.cache.readQuery({ query: GET_USER_STARRED })) || null;
     if (oldData && oldData.getUserInfoStarred.starred.length > 0) {
       await client.cache.writeQuery({
@@ -157,9 +154,7 @@ export function useApolloFactory(path: string) {
       });
     }
   };
-  const languagesPreferenceAdded = async (data: {
-    getUserData: { languagePreference: [{ language: string; checked: boolean }] };
-  }) => {
+  const languagesPreferenceAdded = async (data: Pick2<GraphQLUserData, 'getUserData', 'languagePreference'>) => {
     const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
     if (oldData) {
       await client.cache.writeQuery({
@@ -173,25 +168,22 @@ export function useApolloFactory(path: string) {
   };
   const searchesAdded = async (data: GraphQLSearchesData) => {
     const oldData: GraphQLSearchesData | null = (await client.cache.readQuery({ query: GET_SEARCHES })) || null;
-    if (oldData && oldData.getSearches.length > 0) {
+    if (oldData && oldData.getSearches.searches.length > 0) {
       await client.cache.writeQuery({
         query: GET_SEARCHES,
         data: {
-          getSearches: [...data.getSearches, ...oldData.getSearches],
+          getSearches: oldData.getSearches.searches.unshift.apply(oldData.getSearches, data.getSearches.searches), //the newest always at top
         },
       });
     } else {
       await client.cache.writeQuery({
         query: GET_SEARCHES,
         data: {
-          getSearches: [...data.getSearches],
+          getSearches: [...data.getSearches.searches],
         },
       });
     }
   };
-  const [signUpAdded] = useMutation(SIGN_UP_USER, {
-    context: { clientName: 'mongo' },
-  });
   const { data: userData, loading: userDataLoading, error: userDataError } = useQuery(GET_USER_DATA, {
     context: { clientName: 'mongo' },
   });
@@ -220,7 +212,6 @@ export function useApolloFactory(path: string) {
       addedStarredMe,
       languagesPreferenceAdded,
       searchesAdded,
-      signUpAdded,
     },
     consumers: () => {
       return { consumers };
