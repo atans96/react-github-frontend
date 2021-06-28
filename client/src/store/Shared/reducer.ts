@@ -5,7 +5,7 @@ import { initialStateStargazers } from '../Staargazers/reducer';
 import { readEnvironmentVariable } from '../../util';
 import { initialStateManageProfile } from '../ManageProfile/reducer';
 import { initialStateRateLimit } from '../RateLimit/reducer';
-import { CardEnhancement, GithubLanguages } from '../../typing/type';
+import { GithubLanguages } from '../../typing/type';
 
 export type ActionShared =
   | 'TOKEN_ADDED'
@@ -26,7 +26,7 @@ export const initialStateShared: IStateShared = {
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
   tokenGQL: '', //setting
-  isLoggedIn: !!localStorage.getItem('jbb') || false,
+  isLoggedIn: !!localStorage.getItem('sess') || false,
   fetchDataPath: '',
   username: [], //multiple username or queue
   drawerWidth: 0, //persist drawer width once it's dragged and moved by the user
