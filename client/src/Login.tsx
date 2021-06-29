@@ -5,6 +5,7 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import './Login.scss';
 import { useLocation, useHistory } from 'react-router-dom';
 import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
+import { v1 } from 'uuid';
 
 const Login = () => {
   const [stateShared, dispatchShared] = useTrackedStateShared();
@@ -25,7 +26,6 @@ const Login = () => {
         // needed to prevent maximum depth exceed when the redirect URL from github is hit
         window.history.pushState({}, '', newUrl[0]);
         setData({ ...data, isLoading: true }); // re-render the html tag below to show the loader spinner
-
         const proxy_url = stateShared.proxy_url;
         const requestData = {
           client_id: stateShared.client_id,
@@ -35,7 +35,7 @@ const Login = () => {
         };
 
         // Use code parameter and other parameters to make POST request to proxy_server
-        requestGithubLogin(proxy_url, requestData)
+        requestGithubLogin(`${proxy_url}?&end=false`, requestData)
           .then((response) => {
             if (response.data) {
               localStorage.setItem('sess', response.token);
