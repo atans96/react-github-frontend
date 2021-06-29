@@ -10,7 +10,7 @@ import { setContext } from '@apollo/client/link/context';
 import CryptoJS from 'crypto-js';
 import { allowedRoutes, fastFilter, readEnvironmentVariable } from './util';
 import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
-import { getFile, getTokenGQL, getValidGQLProperties } from './services';
+import { getFile, getTokenGQL, getValidGQLProperties, session } from './services';
 import {
   alreadySeenCardSelector,
   StarRankingContainer,
@@ -32,6 +32,7 @@ import {
 } from './selectors/stateContextSelector';
 import useUserVerification from './hooks/useUserVerification';
 import { useApolloFactory } from './hooks/useApolloFactory';
+import { v1 } from 'uuid';
 
 import { LanguagePreference, MergedDataProps } from './typing/type';
 import { IDataOne } from './typing/interface';
@@ -273,6 +274,7 @@ const App = () => {
             ).toString(CryptoJS.enc.Latin1)}`,
           });
           return (window.onbeforeunload = () => {
+            session(true).then(noop);
             // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
             // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
             navigator?.serviceWorker?.controller?.postMessage({
@@ -298,6 +300,16 @@ const App = () => {
         },
       });
     });
+    if (stateShared.isLoggedIn) {
+      session(false).then((data) => {
+        dispatchShared({
+          type: 'LOGIN',
+          payload: {
+            isLoggedIn: data.data,
+          },
+        });
+      });
+    }
   }, []);
   return (
     <div>
