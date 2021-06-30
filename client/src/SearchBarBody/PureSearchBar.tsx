@@ -86,9 +86,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       return acc;
     }, []);
     dispatchShared({
-      type: 'USERNAME_ADDED',
+      type: 'QUERY_USERNAME',
       payload: {
-        username: [...usernameList, username.current.getState()].filter((e) => !!e),
+        queryUsername: [...usernameList, username.current.getState()].filter((e) => !!e),
       },
     });
     dispatch({

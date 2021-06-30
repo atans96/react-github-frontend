@@ -71,9 +71,9 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
   };
   const onClick = () => {
     dispatchShared({
-      type: 'USERNAME_ADDED',
+      type: 'QUERY_USERNAME',
       payload: {
-        username: stargazer.login,
+        queryUsername: stargazer.login,
       },
     });
   };

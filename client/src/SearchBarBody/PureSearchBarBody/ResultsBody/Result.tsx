@@ -35,9 +35,9 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
       type: 'REMOVE_ALL',
     });
     dispatchShared({
-      type: 'USERNAME_ADDED',
+      type: 'QUERY_USERNAME',
       payload: {
-        username: userName,
+        queryUsername: userName,
       },
     });
     if (stateShared.isLoggedIn) {

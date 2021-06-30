@@ -35,9 +35,9 @@ const UserCardDiscover = React.memo<UserCardDiscover>(
         type: 'REMOVE_ALL',
       });
       dispatchShared({
-        type: 'USERNAME_ADDED',
+        type: 'QUERY_USERNAME',
         payload: {
-          username: login,
+          queryUsername: login,
         },
       });
     }

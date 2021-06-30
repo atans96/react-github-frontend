@@ -14,8 +14,6 @@ import { Then } from './util/react-if/Then';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { getAllGraphQLNavBar } from './services';
-import CryptoJS from 'crypto-js';
-import { readEnvironmentVariable } from './util';
 
 //why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
 const directionLogin = new Map(
@@ -54,7 +52,7 @@ const NavBar = React.memo(() => {
   const previousClickedId = useRef<number>(number || 0);
   const previousActive = useRef<string>('');
   const [isFinished, setIsFinished] = useState<boolean>(true);
-
+  const [stateShared] = useTrackedStateShared();
   const history = useHistory();
   useEffect(() => {
     if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active[1] !== '' ? Active[1] : 'home')) {
@@ -96,12 +94,7 @@ const NavBar = React.memo(() => {
 
   useEffect(() => {
     if (state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
-      getAllGraphQLNavBar(
-        CryptoJS.TripleDES.decrypt(
-          localStorage.getItem('jbb') || '',
-          readEnvironmentVariable('CRYPTO_SECRET')!
-        ).toString(CryptoJS.enc.Latin1)
-      ).then((data) => {
+      getAllGraphQLNavBar(stateShared.username).then((data) => {
         setIsFinished(true);
         directionLogin.set(
           active.toLowerCase(),

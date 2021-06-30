@@ -3,7 +3,7 @@ import uniqBy from 'lodash.uniqby';
 
 export type ActionDiscover =
   | 'LAST_PAGE_DISCOVER'
-  | 'USERNAME_ADDED'
+  | 'QUERY_USERNAME'
   | 'MERGED_DATA_APPEND_DISCOVER'
   | 'MERGED_DATA_ADDED_DISCOVER'
   | 'PER_PAGE'

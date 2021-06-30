@@ -7,7 +7,6 @@ import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
-import CryptoJS from 'crypto-js';
 import { allowedRoutes, fastFilter, readEnvironmentVariable } from './util';
 import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
 import { getFile, getTokenGQL, getValidGQLProperties, session } from './services';
@@ -30,9 +29,7 @@ import {
   useTrackedStateDiscover,
   useTrackedStateShared,
 } from './selectors/stateContextSelector';
-import useUserVerification from './hooks/useUserVerification';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { v1 } from 'uuid';
 
 import { LanguagePreference, MergedDataProps } from './typing/type';
 import { IDataOne } from './typing/interface';
@@ -59,31 +56,6 @@ const App = () => {
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchDiscover] = useTrackedStateDiscover();
-  const { verifiedLoading, username } = useUserVerification(dispatchShared);
-  useEffect(() => {
-    if (!stateShared.isLoggedIn) {
-      dispatchShared({
-        type: 'LOGIN',
-        payload: {
-          isLoggedIn: !verifiedLoading && username !== '',
-        },
-      });
-    }
-    if (!verifiedLoading && username !== '') {
-      getTokenGQL().then((res) => {
-        if (res.tokenGQL) {
-          dispatchShared({
-            type: 'TOKEN_ADDED',
-            payload: {
-              tokenGQL: res.tokenGQL,
-            },
-          });
-        }
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [verifiedLoading, username, stateShared.isLoggedIn, stateShared.tokenGQL]);
-
   const { userData } = useApolloFactory(Function.name).query.getUserData();
   const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
     Function.name
@@ -226,13 +198,13 @@ const App = () => {
         }
         if (action === 'noData') {
           isFetchFinish = true;
-          setNotification(`Sorry, no more data found for ${stateShared.username}`);
+          setNotification(`Sorry, no more data found for ${stateShared.queryUsername}`);
         }
         if (action === 'error' && error) {
           throw new Error(`Something wrong at ${displayName} ${error}`);
         }
         if (data && data.error_404) {
-          setNotification(`Sorry, no data found for ${stateShared.username}`);
+          setNotification(`Sorry, no data found for ${stateShared.queryUsername}`);
         } else if (data && data.error_403) {
           isFetchFinish = true;
           setNotification('Sorry, API rate limit exceeded.');
@@ -243,7 +215,7 @@ const App = () => {
       return { isFetchFinish };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.username, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
+    [stateShared.queryUsername, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
   );
   const cacheData: any = useApolloClient().cache.extract();
   useEffect(() => {
@@ -253,44 +225,41 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData]);
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
-      navigator.serviceWorker
-        .register('sw.js')
-        .then(() => navigator.serviceWorker.ready)
-        .then((reg) => {
-          reg.onupdatefound = () => {
-            const waitingServiceWorker = reg.waiting;
-            if (waitingServiceWorker) {
-              waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-          };
-          // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-          navigator?.serviceWorker?.controller?.postMessage({
-            type: 'username',
-            username: `${CryptoJS.TripleDES.decrypt(
-              localStorage.getItem('jbb') || '',
-              readEnvironmentVariable('CRYPTO_SECRET')!
-            ).toString(CryptoJS.enc.Latin1)}`,
-          });
-          return (window.onbeforeunload = () => {
-            session(true).then(noop);
-            // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
-            // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-            navigator?.serviceWorker?.controller?.postMessage({
-              type: 'apolloCacheData',
-              cacheData: apolloCacheData,
-            });
-            // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-            navigator?.serviceWorker?.controller?.postMessage({
-              type: 'execute',
-            });
-            return window.close();
-          });
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.isLoggedIn, apolloCacheData]);
+  // useEffect(() => {
+  //   if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
+  //     navigator.serviceWorker
+  //       .register('sw.js')
+  //       .then(() => navigator.serviceWorker.ready)
+  //       .then((reg) => {
+  //         reg.onupdatefound = () => {
+  //           const waitingServiceWorker = reg.waiting;
+  //           if (waitingServiceWorker) {
+  //             waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+  //           }
+  //         };
+  //         // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+  //         navigator?.serviceWorker?.controller?.postMessage({
+  //           type: 'username',
+  //           username: stateShared.username,
+  //         });
+  //         return (window.onbeforeunload = () => {
+  //           session(true).then(noop);
+  //           // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
+  //           // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+  //           navigator?.serviceWorker?.controller?.postMessage({
+  //             type: 'apolloCacheData',
+  //             cacheData: apolloCacheData,
+  //           });
+  //           // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+  //           navigator?.serviceWorker?.controller?.postMessage({
+  //             type: 'execute',
+  //           });
+  //           return window.close();
+  //         });
+  //       });
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [stateShared.isLoggedIn, apolloCacheData]);
   useEffect(() => {
     getFile('languages.json').then((githubLanguages) => {
       dispatchShared({
@@ -300,16 +269,24 @@ const App = () => {
         },
       });
     });
-    if (stateShared.isLoggedIn) {
-      session(false).then((data) => {
+    getTokenGQL().then((res) => {
+      if (res.tokenGQL) {
         dispatchShared({
-          type: 'LOGIN',
+          type: 'TOKEN_ADDED',
           payload: {
-            isLoggedIn: data.data,
+            tokenGQL: res.tokenGQL,
           },
         });
+      }
+    });
+    session(false).then((data) => {
+      dispatchShared({
+        type: 'LOGIN',
+        payload: {
+          isLoggedIn: data.data,
+        },
       });
-    }
+    });
   }, []);
   return (
     <div>
@@ -450,14 +427,11 @@ const CustomApolloProvider = ({ children }: any) => {
       return {
         headers: {
           ...headers,
-          ...(localStorage.getItem('sess') ? { authorization: localStorage.getItem('sess') } : {}),
+          ...(stateShared.tokenGQL.trim().length > 0 ? { authorization: stateShared.tokenGQL } : {}),
         },
         query: {
           ...query,
-          username: CryptoJS.TripleDES.decrypt(
-            localStorage.getItem('jbb') || '',
-            readEnvironmentVariable('CRYPTO_SECRET')!
-          ).toString(CryptoJS.enc.Latin1),
+          username: stateShared.username,
         },
         ...context,
       };
@@ -554,13 +528,13 @@ const CustomApolloProvider = ({ children }: any) => {
       link: link,
       cache: cache,
     });
-  }, [stateShared.tokenGQL, localStorage.getItem('sess')]);
+  }, [stateShared.tokenGQL, stateShared.isLoggedIn]);
 
   const ApolloContext = getApolloContext();
   const value = React.useMemo(
     () => ({ client: clientWrapped() }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.tokenGQL, localStorage.getItem('sess')]
+    [stateShared.tokenGQL, stateShared.isLoggedIn]
   );
   return <ApolloContext.Provider value={value}>{children}</ApolloContext.Provider>;
 };

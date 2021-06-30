@@ -30,9 +30,9 @@ const UserCard: React.FC<UserCard> = ({ data }) => {
       type: 'REMOVE_ALL',
     });
     dispatchShared({
-      type: 'USERNAME_ADDED',
+      type: 'QUERY_USERNAME',
       payload: {
-        username: login,
+        queryUsername: login,
       },
     });
   }

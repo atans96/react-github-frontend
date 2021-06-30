@@ -80,7 +80,8 @@ export interface IStateShared {
   fetchDataPath: string;
   githubLanguages: Map<string, GithubLanguages>;
   drawerWidth: number;
-  username: string[];
+  queryUsername: string[];
+  username: string;
   tokenRSS: string;
   tokenGQL: string;
   isLoggedIn: boolean;
