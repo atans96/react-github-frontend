@@ -14,7 +14,8 @@ export type ActionShared =
   | 'LOGOUT'
   | 'SET_GITHUB_LANGUAGES'
   | 'SET_WIDTH'
-  | 'USERNAME_ADDED'
+  | 'QUERY_USERNAME'
+  | 'SET_USERNAME'
   | 'TOKEN_RSS_ADDED'
   | 'SET_DRAWER_WIDTH'
   | 'SET_CARD_ENHANCEMENT'
@@ -26,9 +27,10 @@ export const initialStateShared: IStateShared = {
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
   tokenGQL: '', //setting
-  isLoggedIn: !!localStorage.getItem('sess') || false,
+  isLoggedIn: false,
   fetchDataPath: '',
-  username: [], //multiple username or queue
+  username: '',
+  queryUsername: [], //multiple username or queue
   drawerWidth: 0, //persist drawer width once it's dragged and moved by the user
   client_id: readEnvironmentVariable('CLIENT_ID'), //setting
   redirect_uri: readEnvironmentVariable('REDIRECT_URI'), //setting
@@ -46,6 +48,12 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateStargazers,
         ...initialStateManageProfile,
         ...initialStateRateLimit,
+      };
+    }
+    case 'SET_USERNAME': {
+      return {
+        ...state,
+        username: action.payload.username,
       };
     }
     case 'SET_GITHUB_LANGUAGES': {
@@ -80,10 +88,10 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         perPage: action.payload.perPage,
       };
     }
-    case 'USERNAME_ADDED': {
+    case 'QUERY_USERNAME': {
       return {
         ...state,
-        username: action.payload.username,
+        queryUsername: action.payload.queryUsername,
       };
     }
     case 'TOKEN_ADDED': {

@@ -18,11 +18,11 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, style 
   const [loginLayoutRef, setRef] = useState<Nullable<React.RefObject<HTMLDivElement>>>(null);
   const [notification, setNotification] = useState('');
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
-  const [, dispatch] = useTrackedStateShared();
+  const [stateShared, dispatch] = useTrackedStateShared();
   const verifyTokenGQL = async () => {
     await requestGithubGraphQLLogin(token).then((res) => {
       if (res.success) {
-        setTokenGQL(token).then(noop);
+        setTokenGQL(token, stateShared.username).then(noop);
         dispatch({
           type: 'TOKEN_ADDED',
           payload: {

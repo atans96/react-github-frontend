@@ -38,7 +38,6 @@ const Login = () => {
         requestGithubLogin(`${proxy_url}?&end=false`, requestData)
           .then((response) => {
             if (response.data) {
-              localStorage.setItem('sess', response.token);
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },
@@ -48,6 +47,10 @@ const Login = () => {
                 payload: {
                   rateLimitAnimationAdded: false,
                 },
+              });
+              dispatchShared({
+                type: 'SET_USERNAME',
+                payload: { username: response.data.login },
               });
               getRateLimitInfo(response.token).then((data) => {
                 if (data.rateLimit && data.rateLimitGQL) {

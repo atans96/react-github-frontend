@@ -14,9 +14,9 @@ const Contributor: React.FC<Props> = ({ obj }) => {
   const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
     e.preventDefault();
     dispatchShared({
-      type: 'USERNAME_ADDED',
+      type: 'QUERY_USERNAME',
       payload: {
-        username: contributor,
+        queryUsername: contributor,
       },
     });
     dispatch({

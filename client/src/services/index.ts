@@ -37,8 +37,8 @@ export const setStarredMe = async (repoFullName: string, token: string | null | 
   );
   return await response.json();
 };
-export const setTokenGQL = async (tokenGQL: string) => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setTokenGQL`, {
+export const setTokenGQL = async (tokenGQL: string, username: string) => {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setTokenGQL?username=${username}`, {
     method: 'GET',
     headers: {
       Authorization: `${tokenGQL}`,
@@ -55,20 +55,16 @@ export const getTokenGQL = async () => {
 export const removeTokenGQL = async () => {
   const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyTokenGQL`, {
     method: 'GET',
+    credentials: 'include',
   });
   return await response.json();
 };
-export const subscribeUser = async (username: string, signal: any) => {
-  if (username !== '') {
-    const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/subscribe_user?username=${username}`,
-      {
-        method: 'GET',
-        signal,
-      }
-    );
-    return await response.json();
-  }
+export const removeToken = async () => {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyToken`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  return await response.json();
 };
 export const getUser = async ({
   signal,

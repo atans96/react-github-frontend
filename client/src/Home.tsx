@@ -283,10 +283,10 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           });
       } else if (dataPrefetch.current && dataPrefetch.current.dataOne.length > 0) {
         let userNameTransformed: string[];
-        if (!Array.isArray(stateShared.username)) {
-          userNameTransformed = [stateShared.username];
+        if (!Array.isArray(stateShared.queryUsername)) {
+          userNameTransformed = [stateShared.queryUsername];
         } else {
-          userNameTransformed = stateShared.username;
+          userNameTransformed = stateShared.queryUsername;
         }
         userNameTransformed.forEach((user) => {
           const temp = prefetch(user, axiosCancel);
@@ -302,10 +302,10 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     isFetchFinish.current = false;
     setNotification('');
     let userNameTransformed: string[];
-    if (!Array.isArray(stateShared.username)) {
-      userNameTransformed = [stateShared.username];
+    if (!Array.isArray(stateShared.queryUsername)) {
+      userNameTransformed = [stateShared.queryUsername];
     } else {
-      userNameTransformed = stateShared.username;
+      userNameTransformed = stateShared.queryUsername;
     }
     const promises: Promise<void>[] = [];
     let paginationInfo = 0;
@@ -512,30 +512,35 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   useDeepCompareEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-    if (stateShared.username.length > 0 && state.mergedData.length === 0 && location.pathname === '/' && !isFinished) {
-      // we want to preserve stateShared.username so that when the user navigate away from Home, then go back again, and do the scroll again,
-      // we still want to retain the memory of username so that's why we use reducer of stateShared.username.
-      // However, as the component unmount, stateShared.username is not "", thus causing fetchUser to fire in useEffect
+    if (
+      stateShared.queryUsername.length > 0 &&
+      state.mergedData.length === 0 &&
+      location.pathname === '/' &&
+      !isFinished
+    ) {
+      // we want to preserve stateShared.queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
+      // we still want to retain the memory of username so that's why we use reducer of stateShared.queryUsername.
+      // However, as the component unmount, stateShared.queryUsername is not "", thus causing fetchUser to fire in useEffect
       // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
-      // otherwise, don't re-fetch. in this way, stateShared.username and state.mergedData are still preserved
+      // otherwise, don't re-fetch. in this way, stateShared.queryUsername and state.mergedData are still preserved
       fetchUser();
       return () => {
         isFinished = true;
       };
     }
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
-    // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.username] so stateShared.username not change so not execute
+    // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.queryUsername] so stateShared.queryUsername not change so not execute
     // so you need another dependency of stateShared.perPage
     // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.username, stateShared.perPage, state.mergedData, axiosCancel]);
+  }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel]);
 
   useEffect(() => {
     let isFinished = false;
     if (location.pathname === '/' && !isFinished) {
-      if (stateShared.username.length > 0) {
+      if (stateShared.queryUsername.length > 0) {
         fetchUserMore();
-      } else if (stateShared.username.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
+      } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         fetchUserMore();
       }
       return () => {
@@ -552,7 +557,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     } else {
       axiosCancel = false; // back to default when in '/' path
     }
-  }, [location.pathname, stateShared.username]);
+  }, [location.pathname, stateShared.queryUsername]);
 
   useEffect(() => {
     let isFinished = false;
@@ -676,7 +681,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 const response = await crawlerPython({
                   signal: abortController.signal,
                   data: obj,
-                  topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+                  topic: Array.isArray(stateShared.queryUsername)
+                    ? stateShared.queryUsername[0]
+                    : stateShared.queryUsername,
                   page: state.page,
                   token,
                 });
@@ -710,7 +717,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 const response = await getRepoImages({
                   signal: abortController.signal,
                   data: obj,
-                  topic: Array.isArray(stateShared.username) ? stateShared.username[0] : stateShared.username,
+                  topic: Array.isArray(stateShared.queryUsername)
+                    ? stateShared.queryUsername[0]
+                    : stateShared.queryUsername,
                   page: state.page,
                   token,
                   axiosCancel,
@@ -782,9 +791,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           type: 'REMOVE_ALL',
         });
         dispatchShared({
-          type: 'USERNAME_ADDED',
+          type: 'QUERY_USERNAME',
           payload: {
-            username: '',
+            queryUsername: '',
           },
         });
         isFetchFinish.current = false;
@@ -935,9 +944,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                   Please wait while fetching your query of:{' '}
                   <p>
                     <a className={'underlining'}>
-                      {Array.isArray(stateShared.username) && stateShared.username.length > 0
-                        ? stateShared.username.join(', ')
-                        : stateShared.username}
+                      {Array.isArray(stateShared.queryUsername) && stateShared.queryUsername.length > 0
+                        ? stateShared.queryUsername.join(', ')
+                        : stateShared.queryUsername}
                     </a>
                   </p>
                 </h3>
