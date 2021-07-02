@@ -48,10 +48,6 @@ export interface ActionResolvePromise {
   prefetch?: (x: string) => void;
 }
 
-export interface ActionResolvePromiseOutput {
-  actionResolvePromise: ({ args }: ActionResolvePromise) => Output;
-}
-
 export interface IAction<T> {
   type: T;
   payload?: any;

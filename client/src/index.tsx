@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { BrowserRouter as Router, Redirect, useHistory, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
-import { allowedRoutes, fastFilter, readEnvironmentVariable } from './util';
+import { fastFilter, readEnvironmentVariable } from './util';
 import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
 import { getFile, getTokenGQL, getValidGQLProperties, session } from './services';
 import {
@@ -22,7 +22,6 @@ import Home from './Home';
 import {
   StateDiscoverProvider,
   StateProvider,
-  StateRateLimitProvider,
   StateSharedProvider,
   StateStargazersProvider,
   useTrackedState,
@@ -38,16 +37,11 @@ import eye from './new_16-2.gif';
 import { Then } from './util/react-if/Then';
 import loadable from '@loadable/component';
 import { createRenderElement } from './Layout/MasonryLayout';
-import NotFound from './NotFound';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { WebSocketLink } from '@apollo/client/link/ws';
 import ComposeProviders from './Layout/ComposeProviders';
 // const ManageProfile = React.lazy(() => import('./ManageProfile'));
-const Discover = loadable(() => import('./Discover'));
-const ManageProfile = loadable(() => import('./ManageProfile'));
-const SearchBarDiscover = loadable(() => import('./SearchBarDiscover'));
-const Login = loadable(() => import('./Login'));
-const Details = loadable(() => import('./Details'));
+const AsyncPage = loadable((props: { page: string }) => import(`./${props.page}`));
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
 let apolloCacheData = {};
 
@@ -313,16 +307,6 @@ const App = () => {
       <If condition={!loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError}>
         <Then>
           <KeepMountedLayout
-            mountedCondition={location.pathname === '/profile'}
-            render={() => {
-              if (stateShared.isLoggedIn) {
-                return createRenderElement(ManageProfile, {});
-              } else {
-                return <Redirect to={'/login'} from={'/profile'} />;
-              }
-            }}
-          />
-          <KeepMountedLayout
             mountedCondition={location.pathname === '/'}
             render={() => {
               return (
@@ -333,49 +317,15 @@ const App = () => {
               );
             }}
           />
+          <AsyncPage page={'Login'} />
 
-          <KeepMountedLayout
-            mountedCondition={/detail/.test(location.pathname)}
-            render={() => {
-              if (stateShared.isLoggedIn) {
-                return createRenderElement(Details, {});
-              } else {
-                return <Redirect to={'/login'} from={'/detail/:id'} />;
-              }
-            }}
-          />
+          <AsyncPage page={'Discover'} />
 
-          <KeepMountedLayout
-            mountedCondition={location.pathname === '/discover'}
-            render={() => {
-              if (stateShared.isLoggedIn) {
-                return (
-                  <React.Fragment>
-                    {createRenderElement(SearchBarDiscover, {})}
-                    {createRenderElement(Discover, { actionResolvePromise })}
-                  </React.Fragment>
-                );
-              } else {
-                return <Redirect to={'/login'} from={'/discover'} />;
-              }
-            }}
-          />
-          <KeepMountedLayout
-            mountedCondition={location.pathname === '/login'}
-            render={() => {
-              if (!stateShared.isLoggedIn) {
-                return <StateRateLimitProvider>{createRenderElement(Login, {})}</StateRateLimitProvider>;
-              } else {
-                return <Redirect to={'/'} from={'/login'} />;
-              }
-            }}
-          />
-          <KeepMountedLayout
-            mountedCondition={!/detail/.test(location.pathname) && !allowedRoutes.includes(location.pathname)}
-            render={() => {
-              return <NotFound />;
-            }}
-          />
+          <AsyncPage page={'Details'} />
+
+          <AsyncPage page={'ManageProfile'} />
+
+          <AsyncPage page={'NotFound'} />
         </Then>
       </If>
     </div>

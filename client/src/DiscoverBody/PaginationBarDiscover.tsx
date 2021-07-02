@@ -34,28 +34,32 @@ const useStyles = makeStyles<Theme>((theme) => ({
   },
 }));
 
-const PaginationBarDiscover = React.memo(() => {
+const PaginationBarDiscover = ({ drawerWidth = 0 }) => {
   const classes = useStyles();
   const [stateDiscover] = useTrackedStateDiscover();
-  return (
-    <AppBar position="fixed" color="primary" className={classes.appBar}>
-      <Toolbar>
-        <If condition={stateDiscover.lastPageDiscover > 0}>
-          <Then>
-            <div className={classes.paginationInfo}>
-              <Pagination
-                className={classes.buttonPagination}
-                page={stateDiscover.pageDiscover}
-                count={stateDiscover.lastPageDiscover}
-                color="secondary"
-              />
-            </div>
-          </Then>
-        </If>
-        <div className={classes.grow} />
-      </Toolbar>
-    </AppBar>
-  );
-});
+  if (drawerWidth > 1200) {
+    return (
+      <AppBar position="fixed" color="primary" className={classes.appBar}>
+        <Toolbar>
+          <If condition={stateDiscover.lastPageDiscover > 0}>
+            <Then>
+              <div className={classes.paginationInfo}>
+                <Pagination
+                  className={classes.buttonPagination}
+                  page={stateDiscover.pageDiscover}
+                  count={stateDiscover.lastPageDiscover}
+                  color="secondary"
+                />
+              </div>
+            </Then>
+          </If>
+          <div className={classes.grow} />
+        </Toolbar>
+      </AppBar>
+    );
+  } else {
+    return <></>;
+  }
+};
 PaginationBarDiscover.displayName = 'PaginationBarDiscover';
 export default PaginationBarDiscover;

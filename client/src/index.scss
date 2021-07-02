@@ -902,14 +902,6 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
     }
   }
 }
-.language-github-color {
-  @import 'languageGithubColor';
-  @include color-or-background(true);
-}
-.language-github-background-color {
-  @import 'languageGithubColor';
-  @include color-or-background(false);
-}
 .repo-info {
   background-color: transparent;
   transition: all 0.1s ease-in;
