@@ -5,8 +5,9 @@ import '../../../Login.scss';
 import { requestGithubGraphQLLogin, setTokenGQL } from '../../../services';
 import { Nullable } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
-import { noop } from '../../../util/util';
+import { logoutAction, noop } from '../../../util/util';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
+import { useHistory } from 'react-router-dom';
 
 interface LoginGQLProps {
   style: CSSProperties;
@@ -19,22 +20,28 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, style 
   const [notification, setNotification] = useState('');
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const [stateShared, dispatch] = useTrackedStateShared();
+  const history = useHistory();
   const verifyTokenGQL = async () => {
-    await requestGithubGraphQLLogin(token).then((res) => {
-      if (res.success) {
-        setTokenGQL(token, stateShared.username).then(noop);
-        dispatch({
-          type: 'TOKEN_ADDED',
-          payload: {
-            tokenGQL: token,
-          },
-        });
-        setVisible(false);
-      } else {
-        setNotification('Token is not valid, try again!');
-        setData({ ...data, isLoading: false });
-      }
-    });
+    await requestGithubGraphQLLogin(token)
+      .then((res) => {
+        if (res.success) {
+          setTokenGQL(token, stateShared.username).then(noop);
+          dispatch({
+            type: 'TOKEN_ADDED',
+            payload: {
+              tokenGQL: token,
+            },
+          });
+          setVisible(false);
+        } else {
+          setNotification('Token is not valid, try again!');
+          setData({ ...data, isLoading: false });
+        }
+      })
+      .catch(() => {
+        logoutAction(history, dispatch);
+        window.alert('Your token has expired. We will logout you out.');
+      });
   };
 
   useClickOutside(loginLayoutRef, () => setVisible(false));

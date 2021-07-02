@@ -207,8 +207,8 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   };
 
   const handleClickStar = async () => {
-    if (stateShared.tokenGQL !== '' && !starClicked) {
-      await setStarredMe(data.full_name, stateShared.tokenGQL).then(() => {
+    if (!starClicked) {
+      await setStarredMe(data.full_name).then(() => {
         if (stateShared.isLoggedIn) {
           addedStarredMe({
             getUserInfoStarred: {
@@ -217,8 +217,8 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
           }).then(noop);
         }
       });
-    } else if (stateShared.tokenGQL !== '' && starClicked) {
-      await removeStarredMe(data.full_name, stateShared.tokenGQL).then(() => {
+    } else if (starClicked) {
+      await removeStarredMe(data.full_name).then(() => {
         if (stateShared.isLoggedIn) {
           removeStarred({
             removeStarred: data.id,

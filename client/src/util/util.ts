@@ -2,7 +2,7 @@ import React, { RefObject, useCallback, useDebugValue, useEffect, useLayoutEffec
 import warning from 'tiny-warning';
 import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
-import { removeToken, removeTokenGQL } from '../services';
+import { removeToken, removeTokenGQL, session } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
@@ -431,8 +431,9 @@ export function logoutAction(history: any, dispatch: React.Dispatch<IAction<Acti
   navigator?.serviceWorker?.controller?.postMessage({
     type: 'logout',
   });
+  session(true).then(noop);
   removeTokenGQL().then(noop);
-  removeToken().then(noop);
+  removeToken().then(() => {});
   dispatch({ type: 'LOGOUT' });
-  window.location.reload(false); // full refresh to reset everything at all components
+  window.location.reload(false);
 }

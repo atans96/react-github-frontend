@@ -46,10 +46,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
               isLoading: true,
             },
           });
-          getSearchUsers(
-            username.toString().trim(),
-            userData && userData.getUserData ? userData.getUserData.token : ''
-          ).then((data) => {
+          getSearchUsers(username.toString().trim()).then((data) => {
             dispatch({
               type: 'SEARCH_USERS',
               payload: {

@@ -10,27 +10,27 @@ export const getAllGraphQLNavBar = async (username: string) => {
   );
   return await response.json();
 };
-export const getTopContributors = async (fullName: string, token: string | null | undefined) => {
+export const getTopContributors = async (fullName: string) => {
   const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}&token=${token}`,
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}`,
     {
       method: 'GET',
     }
   );
   return await response.json();
 };
-export const removeStarredMe = async (repoFullName: string, token: string | null | undefined) => {
+export const removeStarredMe = async (repoFullName: string) => {
   const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/removeStarredMe?repoFullName=${repoFullName}&token=${token}`,
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/removeStarredMe?repoFullName=${repoFullName}`,
     {
       method: 'GET',
     }
   );
   return await response.json();
 };
-export const setStarredMe = async (repoFullName: string, token: string | null | undefined) => {
+export const setStarredMe = async (repoFullName: string) => {
   const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setStarredMe?repoFullName=${repoFullName}&token=${token}`,
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setStarredMe?repoFullName=${repoFullName}`,
     {
       method: 'GET',
     }
@@ -71,21 +71,19 @@ export const getUser = async ({
   username,
   perPage,
   page,
-  token,
   axiosCancel = false,
 }: {
   signal: any | undefined;
   username: string;
   perPage: number;
   page: number;
-  token: string | null | undefined;
   axiosCancel: boolean;
 }) => {
   if (username !== '') {
     const response = await fetch(
       `${readEnvironmentVariable(
         'UWEBSOCKET_ADDRESS'
-      )}/users?username=${username}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
+      )}/users?username=${username}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
         signal,
@@ -99,21 +97,19 @@ export const getOrg = async ({
   org,
   perPage,
   page,
-  token,
   axiosCancel = false,
 }: {
   signal: any | undefined;
   org: string;
   perPage: number;
   page: number;
-  token: string | null | undefined;
   axiosCancel: boolean;
 }) => {
   if (org !== '') {
     const response = await fetch(
       `${readEnvironmentVariable(
         'UWEBSOCKET_ADDRESS'
-      )}/org?org=${org}&page=${page}&per_page=${perPage}&token=${token}&axiosCancel=${axiosCancel}`,
+      )}/org?org=${org}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
         signal,
@@ -128,9 +124,9 @@ export const getValidGQLProperties = async () => {
   });
   return await response.json();
 };
-export const markdownParsing = async (full_name: string, branch: string, token: string | null | undefined) => {
+export const markdownParsing = async (full_name: string, branch: string) => {
   const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/markdown?full_name=${full_name}&branch=${branch}&token=${token}`,
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/markdown?full_name=${full_name}&branch=${branch}`,
     {
       method: 'GET',
     }
@@ -144,14 +140,11 @@ export const session = async (end: boolean) => {
   });
   return await response.json();
 };
-export const getRateLimitInfo = async (token: string | null | undefined) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/get_rate_limit?token=${token === null ? '' : token}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-    }
-  );
+export const getRateLimitInfo = async () => {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/get_rate_limit`, {
+    method: 'GET',
+    credentials: 'include',
+  });
   return await response.json();
 };
 export const verifyJWTToken = async (token: string, username: string, isLoggedIn: boolean) => {
@@ -174,30 +167,23 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
   });
   return await response.json();
 };
-export const getSearchUsers = async (query: string, token: string | null | undefined) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_users?username=${query}&token=${token}`,
-    {
-      method: 'GET',
-    }
-  );
+export const getSearchUsers = async (query: string) => {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_users?username=${query}`, {
+    method: 'GET',
+  });
   return (await response.json()) as SearchUser;
 };
 export const getSearchTopics = async ({
   axiosCancel = false,
   signal,
   topic,
-  token,
 }: {
   axiosCancel: boolean;
   signal: any | undefined;
   topic: string;
-  token: string | null | undefined;
 }) => {
   const response = await fetch(
-    `${readEnvironmentVariable(
-      'UWEBSOCKET_ADDRESS'
-    )}/search_topics?topic=${topic}&token=${token}&axiosCancel=${axiosCancel}`,
+    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_topics?topic=${topic}&axiosCancel=${axiosCancel}`,
     {
       method: 'GET',
       signal,
@@ -250,21 +236,19 @@ export const getRepoImages = async ({
   data,
   topic,
   page,
-  token,
 }: {
   axiosCancel: boolean;
   signal: any | undefined;
   data: any[];
   topic: string;
   page: number;
-  token: string | null | undefined;
 }) => {
   //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
   //must contain a different URL to save each request
   const response = await fetch(
     `${readEnvironmentVariable(
       'UWEBSOCKET_ADDRESS'
-    )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}&token=${token}`,
+    )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
     {
       method: 'POST',
       keepalive: true,
@@ -286,25 +270,20 @@ export const crawlerPython = async ({
   data,
   topic,
   page,
-  token,
 }: {
   signal: any | undefined;
   data: any[];
   topic: string;
   page: number;
-  token: string | null | undefined;
 }) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}&token=${token}`,
-    {
-      method: 'POST',
-      keepalive: true,
-      credentials: 'include',
-      body: JSON.stringify({
-        data: data,
-      }),
-      signal,
-    }
-  );
+  const response = await fetch(`${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}`, {
+    method: 'POST',
+    keepalive: true,
+    credentials: 'include',
+    body: JSON.stringify({
+      data: data,
+    }),
+    signal,
+  });
   return await response.json();
 };

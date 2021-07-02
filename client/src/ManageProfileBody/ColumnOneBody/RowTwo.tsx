@@ -88,10 +88,6 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
           username: location?.state?.data?.userData?.getUserData?.userName,
           perPage: +readEnvironmentVariable('QUERY_GITHUB_API')!,
           page: 1,
-          token:
-            location?.state?.data?.userData && location?.state?.data?.userData?.getUserData
-              ? location?.state?.data?.userData?.getUserData.token
-              : '',
           axiosCancel,
         }).then((data) => {
           if (data && data.error_403) {
@@ -137,7 +133,7 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
                       if (timeout > 0) {
                         timeout = 0; //clear the timeout
                       }
-                      await getTopContributors(obj.fullName, location?.state?.data?.userData?.getUserData.token)
+                      await getTopContributors(obj.fullName)
                         .then((res) => {
                           if (res.error_403) {
                             timeout = epochToJsDate(res.rateLimit.reset);

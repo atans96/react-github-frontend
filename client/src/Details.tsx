@@ -11,7 +11,6 @@ import { useHistory } from 'react-router-dom';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
-import { useApolloFactory } from './hooks/useApolloFactory';
 
 interface StateProps {
   data: {
@@ -27,10 +26,6 @@ interface StateProps {
   path: string;
 }
 const Details: React.FC = () => {
-  const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
-  const { userData } = useApolloFactory(displayName!).query.getUserData();
-  const token = userData.getUserData.token || '';
-
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
   const [data, setData] = useState<Nullable<StateProps>>(null);
@@ -77,7 +72,7 @@ const Details: React.FC = () => {
     () => {
       let isFinished = false;
       if (!isFinished && /detail/.test(location.pathname) && !!data) {
-        markdownParsing(data.data.full_name, data.data.default_branch, token).then((dataStarRanking) => {
+        markdownParsing(data.data.full_name, data.data.default_branch).then((dataStarRanking) => {
           if (_isMounted.current) {
             setReadme(dataStarRanking.readme);
           }

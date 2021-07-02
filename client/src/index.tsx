@@ -281,6 +281,10 @@ const App = () => {
     });
     session(false).then((data) => {
       dispatchShared({
+        type: 'SET_USERNAME',
+        payload: { username: data.username },
+      });
+      dispatchShared({
         type: 'LOGIN',
         payload: {
           isLoggedIn: data.data,
@@ -419,6 +423,7 @@ const CustomApolloProvider = ({ children }: any) => {
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
       uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql`,
+      headers: { origin: `http://localhost:3000` },
       fetchOptions: {
         credentials: 'include',
       },
@@ -427,7 +432,6 @@ const CustomApolloProvider = ({ children }: any) => {
       return {
         headers: {
           ...headers,
-          ...(stateShared.tokenGQL.trim().length > 0 ? { authorization: stateShared.tokenGQL } : {}),
         },
         query: {
           ...query,
@@ -479,34 +483,38 @@ const CustomApolloProvider = ({ children }: any) => {
       onError(({ graphQLErrors, networkError }) => {
         if (graphQLErrors) {
           graphQLErrors.map(async ({ message, locations, path }) => {
-            let property: any = '';
-            const messaages = message.split(' ');
-            while (messaages) {
-              const str = messaages.shift();
-              if (str === 'property') {
-                property = messaages.shift()!.match(/'(.*?)'/)![1];
-                break;
+            if (message.includes('property')) {
+              let property: any = '';
+              const messaages = message.split(' ');
+              while (messaages) {
+                const str = messaages.shift();
+                if (str === 'property') {
+                  property = messaages.shift()!.match(/'(.*?)'/)![1];
+                  break;
+                }
               }
-            }
-            console.log(`[GraphQL error]: Message: ${message}, Path: ${path}`);
-            const validGQLProperties = await getValidGQLProperties();
-            if (
-              property &&
-              property.length > 0 &&
-              validGQLProperties.data.includes(property) &&
-              isLoggedInRef.current
-            ) {
-              // if no data exist when the user logged-in
-              if (path) {
-                dispatchShared({
-                  type: 'NO_DATA_FETCH',
-                  payload: {
-                    path: path[0],
-                  },
-                });
+              console.log(`[GraphQL error]: Message: ${message}, Path: ${path}`);
+              const validGQLProperties = await getValidGQLProperties();
+              if (
+                property &&
+                property.length > 0 &&
+                validGQLProperties.data.includes(property) &&
+                isLoggedInRef.current
+              ) {
+                // if no data exist when the user logged-in
+                if (path) {
+                  dispatchShared({
+                    type: 'NO_DATA_FETCH',
+                    payload: {
+                      path: path[0],
+                    },
+                  });
+                }
               }
             } else if (message.includes('Unauthorized')) {
               unAuthorizedAction();
+            } else {
+              throw new Error(message);
             }
           });
         }
@@ -528,7 +536,7 @@ const CustomApolloProvider = ({ children }: any) => {
       link: link,
       cache: cache,
     });
-  }, [stateShared.tokenGQL, stateShared.isLoggedIn]);
+  }, [stateShared.username, stateShared.isLoggedIn]);
 
   const ApolloContext = getApolloContext();
   const value = React.useMemo(

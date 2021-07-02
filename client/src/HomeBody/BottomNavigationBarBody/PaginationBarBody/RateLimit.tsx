@@ -26,7 +26,7 @@ const RateLimit = () => {
             rateLimitAnimationAdded: false,
           },
         });
-        getRateLimitInfo((!userDataLoading && !userDataError && userData?.getUserData?.token) || '').then((data) => {
+        getRateLimitInfo().then((data) => {
           if (data.rateLimit && data.rateLimitGQL) {
             dispatchRateLimit({
               type: 'RATE_LIMIT_ADDED',
