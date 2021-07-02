@@ -118,7 +118,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const windowScreenRef = useRef<HTMLDivElement>(null);
-  const token = userData?.getUserData?.token || '';
   const isDataExists = (data: Nullable<IDataOne>) => {
     if (data === undefined || data?.dataOne === undefined) {
       return [[], []];
@@ -209,7 +208,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       username: name,
       perPage: stateShared.perPage,
       page: state.page + 1,
-      token,
       axiosCancel,
     })
       .then((data: IDataOne) => {
@@ -219,7 +217,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             org: name,
             perPage: stateShared.perPage,
             page: state.page + 1,
-            token,
             axiosCancel,
           })
             .then((data: IDataOne) => {
@@ -265,7 +262,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         getSearchTopics({
           signal: abortController.signal,
           topic: clickedGQLTopic.queryTopic,
-          token: userDataRef.current!,
           axiosCancel,
         })
           .then((res: IDataOne) => {
@@ -317,7 +313,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           perPage: stateShared.perPage,
           page: 1,
           axiosCancel,
-          token,
         })
           .then((data: IDataOne) => {
             const callback = () =>
@@ -327,7 +322,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 perPage: stateShared.perPage,
                 page: 1,
                 axiosCancel,
-                token,
               })
                 .then((data: IDataOne) => {
                   paginationInfo += data.paginationInfoData;
@@ -685,7 +679,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                     ? stateShared.queryUsername[0]
                     : stateShared.queryUsername,
                   page: state.page,
-                  token,
                 });
                 const output = Object.assign(
                   {},
@@ -721,7 +714,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                     ? stateShared.queryUsername[0]
                     : stateShared.queryUsername,
                   page: state.page,
-                  token,
                   axiosCancel,
                 });
                 if (response.length > 0) {
@@ -768,21 +760,9 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     [state.shouldFetchImages, isMergedDataExist, axiosCancel]
   );
 
-  const userDataRef = useRef<string>();
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/') {
-      userDataRef.current = token;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
-
   const onClickTopic = useCallback(
     async ({ variables }) => {
-      if (stateShared.tokenGQL !== '' && userDataRef.current && state.filterBySeen) {
+      if (stateShared.tokenGQL !== '' && state.filterBySeen) {
         setLoading(true);
         dispatch({
           type: 'REMOVE_ALL',
@@ -805,7 +785,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         return getSearchTopics({
           signal: abortController.signal,
           topic: variables.queryTopic,
-          token: userDataRef.current!,
           axiosCancel,
         })
           .then((result: IDataOne) => {
@@ -831,7 +810,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.tokenGQL, userDataRef.current, state.filterBySeen, axiosCancel] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
+    [stateShared.tokenGQL, state.filterBySeen, axiosCancel] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
   );
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 

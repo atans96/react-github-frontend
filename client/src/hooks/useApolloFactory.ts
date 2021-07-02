@@ -28,8 +28,7 @@ function pushConsumers(property: string, path: string) {
     consumers[path] = [property];
   }
 }
-
-export function useApolloFactory(path: string) {
+export const useApolloFactory = (path: string) => {
   const client = useApolloClient();
   const seenAdded = async (data: SeenProps[]) => {
     const oldData: GraphQLSeenData | null = (await client.cache.readQuery({ query: GET_SEEN })) || null;
@@ -244,4 +243,4 @@ export function useApolloFactory(path: string) {
       },
     },
   };
-}
+};

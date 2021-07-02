@@ -16,10 +16,6 @@ interface DetailsProps {
 }
 
 const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) => {
-  const displayName: string | undefined = (Details as React.ComponentType<any>).displayName;
-  const { userData } = useApolloFactory(displayName!).query.getUserData();
-  const token = userData.getUserData.token || '';
-
   const _isMounted = useRef(true);
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
@@ -29,7 +25,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
     () => {
       if (location.pathname === '/profile' || location.pathname === '/detail') {
         _isMounted.current = true;
-        markdownParsing(fullName, branch, token).then((data) => {
+        markdownParsing(fullName, branch).then((data) => {
           if (_isMounted.current) {
             setReadme(data.readme);
           }

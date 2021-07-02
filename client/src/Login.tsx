@@ -52,7 +52,7 @@ const Login = () => {
                 type: 'SET_USERNAME',
                 payload: { username: response.data.login },
               });
-              getRateLimitInfo(response.token).then((data) => {
+              getRateLimitInfo().then((data) => {
                 if (data.rateLimit && data.rateLimitGQL) {
                   dispatchRateLimit({
                     type: 'RATE_LIMIT_ADDED',
@@ -80,7 +80,7 @@ const Login = () => {
                 }
               });
               history.push('/');
-              window.location.reload(false);
+              // window.location.reload(false);
             } else {
               setData({
                 isLoading: false,
