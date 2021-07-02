@@ -3,9 +3,15 @@ import { getRateLimitInfo, requestGithubLogin } from './services';
 import LoginLayout from './Layout/LoginLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import './Login.scss';
-import { useLocation, useHistory } from 'react-router-dom';
-import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
+import { useLocation, useHistory, Redirect } from 'react-router-dom';
+import {
+  StateRateLimitProvider,
+  useTrackedStateRateLimit,
+  useTrackedStateShared,
+} from './selectors/stateContextSelector';
 import { v1 } from 'uuid';
+import { createRenderElement } from './Layout/MasonryLayout';
+import KeepMountedLayout from './Layout/KeepMountedLayout';
 
 const Login = () => {
   const [stateShared, dispatchShared] = useTrackedStateShared();
@@ -121,4 +127,18 @@ const Login = () => {
   );
 };
 Login.displayName = 'Login';
-export default Login;
+const LoginRender = ({ isLoggedIn = false }) => {
+  return (
+    <KeepMountedLayout
+      mountedCondition={location.pathname === '/login'}
+      render={() => {
+        if (!isLoggedIn) {
+          return <StateRateLimitProvider>{createRenderElement(Login, {})}</StateRateLimitProvider>;
+        } else {
+          return <Redirect to={'/'} from={'/login'} />;
+        }
+      }}
+    />
+  );
+};
+export default LoginRender;

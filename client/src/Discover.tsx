@@ -6,59 +6,75 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { isEqualObjects } from './util';
-import { useLocation } from 'react-router-dom';
+import { Redirect, useLocation } from 'react-router-dom';
 import CardDiscover from './DiscoverBody/CardDiscover';
 import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
-
-import PaginationBarDiscover from './DiscoverBody/PaginationBarDiscover';
-import { ActionResolvePromiseOutput, IStateDiscover, IStateShared, StaticState } from './typing/interface';
+import { ActionResolvePromise, IAction, IStateDiscover, Output, StaticState } from './typing/interface';
 import { Fab } from '@material-ui/core';
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import { useScrollSaver } from './hooks/useScrollSaver';
+import KeepMountedLayout from './Layout/KeepMountedLayout';
+import SearchBarDiscover from './SearchBarDiscover';
+import loadable from '@loadable/component';
+import { ActionShared } from './store/Shared/reducer';
+import { ActionDiscover } from './store/Discover/reducer';
+const PaginationBarDiscover = loadable(() => import('./DiscoverBody/PaginationBarDiscover'));
 
 interface MasonryLayoutMemo {
   children: any;
   data: IStateDiscover['mergedDataDiscover'];
-  stateDiscover: IStateDiscover;
-  stateShared: IStateShared;
   sorted: string;
+  imagesDataDiscover: { mapData: Map<number, RenderImages>; arrayData: [RenderImages] | any[] } | Map<any, any>;
 }
 
-const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
-  ({ children, data, stateDiscover, stateShared }) => {
-    let columnCount = 0;
-    let increment = 300;
-    const baseWidth = 760;
-    if (stateShared.width > 760) {
-      while (baseWidth + increment <= stateShared.width) {
-        columnCount += 1;
-        increment += 300;
-      }
+const MasonryLayoutMemo: React.FC<MasonryLayoutMemo> = ({ children, data, sorted, imagesDataDiscover }) => {
+  const [stateShared] = useTrackedStateShared();
+  const [stateDiscover] = useTrackedStateDiscover();
+  let columnCount = 0;
+  let increment = 300;
+  const baseWidth = 760;
+  if (stateShared.width > 760) {
+    while (baseWidth + increment <= stateShared.width) {
+      columnCount += 1;
+      increment += 300;
     }
-    return <MasonryLayout columns={columnCount}>{children(columnCount)}</MasonryLayout>;
-  },
-  (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.data.length, nextProps.data.length) &&
-      isEqualObjects(prevProps.stateDiscover.imagesDataDiscover, nextProps.stateDiscover.imagesDataDiscover) &&
-      isEqualObjects(prevProps.stateDiscover.mergedDataDiscover, nextProps.stateDiscover.mergedDataDiscover) &&
-      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width) &&
-      isEqualObjects(prevProps.sorted, nextProps.sorted)
-    ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
-    // it needs to get re-render to get new data.
   }
-);
+  return React.useMemo(() => <MasonryLayout columns={columnCount}>{children(columnCount)}</MasonryLayout>, [
+    data.length,
+    imagesDataDiscover,
+    stateDiscover.mergedDataDiscover,
+    stateShared.width,
+    sorted,
+  ]);
+};
 MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
-
-const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResolvePromise }) => {
-  const [stateShared, dispatchShared] = useTrackedStateShared();
-  const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
+interface DiscoverProps {
+  actionResolvePromise: (args: ActionResolvePromise) => Output;
+  perPage: number;
+  stateDiscover: Pick<
+    IStateDiscover,
+    | 'visibleDiscover'
+    | 'pageDiscover'
+    | 'mergedDataDiscover'
+    | 'isLoadingDiscover'
+    | 'notificationDiscover'
+    | 'filterMergedDataDiscover'
+  >;
+  dispatchShared: React.Dispatch<IAction<ActionShared>>;
+  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
+}
+const Discover: React.FC<DiscoverProps> = ({
+  stateDiscover,
+  actionResolvePromise,
+  dispatchShared,
+  dispatchDiscover,
+  perPage,
+}) => {
   const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
   const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
@@ -67,7 +83,7 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
   const location = useLocation();
   // useState is used when the HTML depends on it directly to render something
   const [isLoading, setLoading] = useState(false);
-  const paginationRef = useRef(stateShared.perPage);
+  const paginationRef = useRef(perPage);
   const sortedDataRef = useRef([]);
   const [notification, setNotification] = useState('');
   const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
@@ -75,8 +91,8 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
   const fetchUserMore = () => {
     if (!isFetchFinish.current && stateDiscover.pageDiscover > 1 && sortedDataRef?.current?.length > 0) {
       setLoading(true); // spawn loading spinner at bottom page
-      paginationRef.current += stateShared.perPage;
-      if (sortedDataRef.current.slice(paginationRef.current + stateShared.perPage).length === 0) {
+      paginationRef.current += perPage;
+      if (sortedDataRef.current.slice(paginationRef.current + perPage).length === 0) {
         isFetchFinish.current = actionResolvePromise({
           action: ActionResolvedPromise.noData,
           setLoading,
@@ -91,7 +107,7 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
           setNotification,
           isFetchFinish: isFetchFinish.current,
           displayName: displayName!,
-          data: sortedDataRef.current.slice(paginationRef.current, paginationRef.current + stateShared.perPage),
+          data: sortedDataRef.current.slice(paginationRef.current, paginationRef.current + perPage),
         });
       }
     }
@@ -107,12 +123,10 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
     dispatchDiscover({
       type: 'LAST_PAGE_DISCOVER',
       payload: {
-        lastPageDiscover: Math.ceil(
-          (suggestedData.getSuggestedRepo.repoInfoSuggested.length || 0) / stateShared.perPage
-        ),
+        lastPageDiscover: Math.ceil((suggestedData.getSuggestedRepo.repoInfoSuggested.length || 0) / perPage),
       },
     });
-    if (sortedDataRef.current.slice(stateShared.perPage).length === 0) {
+    if (sortedDataRef.current.slice(perPage).length === 0) {
       isFetchFinish.current = actionResolvePromise({
         action: ActionResolvedPromise.noData,
         setLoading,
@@ -422,12 +436,7 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
         </header>
         <If condition={notification === '' && whichToUse()?.length > 0}>
           <Then>
-            <MasonryLayoutMemo
-              data={whichToUse()}
-              stateDiscover={stateDiscover}
-              sorted={sortedClicked}
-              stateShared={stateShared}
-            >
+            <MasonryLayoutMemo data={whichToUse()} imagesDataDiscover={imagesDataDiscover} sorted={sortedClicked}>
               {(columnCount: number) => {
                 return Object.keys(whichToUse()).map((key, idx) =>
                   createRenderElement(CardDiscover, {
@@ -486,11 +495,43 @@ const Discover: React.FC<ActionResolvePromiseOutput> = React.memo(({ actionResol
           <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
         </Fab>
       </ScrollTopLayout>
-      <If condition={stateShared.width > 1100}>
-        <Then>{createRenderElement(PaginationBarDiscover, {})}</Then>
-      </If>
     </React.Fragment>
   );
-});
+};
 Discover.displayName = 'Discover';
-export default Discover;
+const DiscoverRender = () => {
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
+  return (
+    <KeepMountedLayout
+      mountedCondition={location.pathname === '/discover'}
+      render={() => {
+        if (stateShared.isLoggedIn) {
+          return (
+            <React.Fragment>
+              {createRenderElement(SearchBarDiscover, {})}
+              {createRenderElement(Discover, {
+                perPage: stateShared.perPage,
+                stateDiscover: {
+                  pageDiscover: stateDiscover.pageDiscover,
+                  mergedDataDiscover: stateDiscover.mergedDataDiscover,
+                  isLoadingDiscover: stateDiscover.isLoadingDiscover,
+                  notificationDiscover: stateDiscover.notificationDiscover,
+                  filterMergedDataDiscover: stateDiscover.filterMergedDataDiscover,
+                  visibleDiscover: stateDiscover.visibleDiscover,
+                },
+                actionResolvePromise,
+                dispatchShared,
+                dispatchDiscover,
+              })}
+              {createRenderElement(PaginationBarDiscover, { drawerWidth: stateShared.drawerWidth })}
+            </React.Fragment>
+          );
+        } else {
+          return <Redirect to={'/login'} from={'/discover'} />;
+        }
+      }}
+    />
+  );
+};
+export default DiscoverRender;

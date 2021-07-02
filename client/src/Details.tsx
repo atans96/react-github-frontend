@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { Redirect, useLocation } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import { markdownParsing } from './services';
 import { GoBook } from 'react-icons/go';
@@ -11,6 +11,9 @@ import { useHistory } from 'react-router-dom';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
+import { createRenderElement } from './Layout/MasonryLayout';
+import KeepMountedLayout from './Layout/KeepMountedLayout';
+import { Location } from 'history';
 
 interface StateProps {
   data: {
@@ -25,12 +28,11 @@ interface StateProps {
   };
   path: string;
 }
-const Details: React.FC = () => {
+const Details: React.FC = ({ location }: any) => {
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
   const [data, setData] = useState<Nullable<StateProps>>(null);
   const [dataStarRanking, setDataStarRanking] = useState<any>();
-  const location = useLocation<any>();
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
     (state: StaticState) => state.StarRanking
   );
@@ -139,4 +141,19 @@ const Details: React.FC = () => {
   );
 };
 Details.displayName = 'Details';
-export default Details;
+const DetailsRender = ({ isLoggedIn = false }) => {
+  const location = useLocation<Location>();
+  return (
+    <KeepMountedLayout
+      mountedCondition={/detail/.test(location.pathname)}
+      render={() => {
+        if (isLoggedIn) {
+          return createRenderElement(Details, { location });
+        } else {
+          return <Redirect to={'/login'} from={'/detail/:id'} />;
+        }
+      }}
+    />
+  );
+};
+export default DetailsRender;

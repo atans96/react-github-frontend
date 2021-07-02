@@ -1,15 +1,16 @@
 import React from 'react';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
+import { allowedRoutes } from './util';
+import KeepMountedLayout from './Layout/KeepMountedLayout';
 
-const NotFound = () => {
-  const [stateShared] = useTrackedStateShared();
+const NotFound = ({ drawerWidth = 0 }) => {
   return (
     //  use display: grid so that when PureNotFound is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
     <div
       style={{
-        marginLeft: `${stateShared.drawerWidth > 60 ? `${stateShared.drawerWidth}px` : `${5}rem`}`,
+        marginLeft: `${drawerWidth > 60 ? `${drawerWidth}px` : `${5}rem`}`,
         display: 'grid',
         marginTop: '30rem',
         textAlign: 'center',
@@ -28,4 +29,16 @@ const NotFound = () => {
   );
 };
 NotFound.displayName = 'NotFound';
-export default NotFound;
+const NotFoundRender = () => {
+  const location = useLocation<Location>();
+  const [stateShared] = useTrackedStateShared();
+  return (
+    <KeepMountedLayout
+      mountedCondition={!/detail/.test(location.pathname) && !allowedRoutes.includes(location.pathname)}
+      render={() => {
+        return <NotFound drawerWidth={stateShared.drawerWidth} />;
+      }}
+    />
+  );
+};
+export default NotFoundRender;

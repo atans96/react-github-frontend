@@ -6,6 +6,8 @@ import ColumnTwo from './ManageProfileBody/ColumnTwo';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { StateManageProfileProvider } from './selectors/stateContextSelector';
 import { createRenderElement } from './Layout/MasonryLayout';
+import { Redirect } from 'react-router-dom';
+import KeepMountedLayout from './Layout/KeepMountedLayout';
 
 const ManageProfile = () => {
   const [, dispatch] = useTrackedStateShared();
@@ -44,4 +46,18 @@ const ManageProfile = () => {
   );
 };
 ManageProfile.displayName = 'ManageProfile';
-export default ManageProfile;
+const ManageProfileRender = ({ isLoggedIn = false }) => {
+  return (
+    <KeepMountedLayout
+      mountedCondition={location.pathname === '/profile'}
+      render={() => {
+        if (isLoggedIn) {
+          return createRenderElement(ManageProfile, {});
+        } else {
+          return <Redirect to={'/login'} from={'/profile'} />;
+        }
+      }}
+    />
+  );
+};
+export default ManageProfileRender;
