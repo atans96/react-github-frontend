@@ -13,15 +13,15 @@ import { MergedDataProps } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
-import { useDeepMemo } from '../../hooks/useDeepMemo';
 import { createRenderElement } from '../../Layout/MasonryLayout';
 import { LocationGraphQL } from '../../typing/interface';
 
 interface RowTwoProps {
   handleLanguageFilter: (...args: any) => void;
 }
+
 let axiosCancel = false;
-const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
+const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
   const [, dispatchManageProfile] = useTrackedStateManageProfile();
   const [stateShared, dispatchStateShared] = useTrackedStateShared();
   const location = useLocation<LocationGraphQL>();
@@ -229,7 +229,7 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
               }}
             >
               <thead>
-                {useDeepMemo(() => {
+                {React.useMemo(() => {
                   return languageStarsInfo.map((languageStar) => {
                     return createRenderElement(LanguageStarsInfo, {
                       languageStar,
@@ -248,6 +248,6 @@ const RowTwo = React.memo<RowTwoProps>(({ handleLanguageFilter }) => {
       </If>
     </List>
   );
-});
+};
 RowTwo.displayName = 'LanguageStars';
 export default RowTwo;

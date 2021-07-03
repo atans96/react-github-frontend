@@ -1,9 +1,19 @@
 import React, { useCallback } from 'react';
-import PureSearchBarDiscover from './SearchBarBody/PureSearchBarDiscover';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
+import { loadable } from './loadable';
 import { createRenderElement } from './Layout/MasonryLayout';
+
+const PureSearchBarDiscover = (args: { stateShared: any }) =>
+  loadable({
+    importFn: () =>
+      import('./SearchBarBody/PureSearchBarDiscover').then((module) =>
+        createRenderElement(module.default, { ...args })
+      ),
+    cacheId: 'PureSearchBarDiscover',
+    empty: () => <></>,
+  });
 
 const SearchBarDiscover = () => {
   const [stateShared] = useTrackedStateShared();
@@ -41,7 +51,7 @@ const SearchBarDiscover = () => {
         marginTop: '10rem',
       }}
     >
-      {createRenderElement(PureSearchBarDiscover, { stateShared: PureSearchBarDataMemoized() })}
+      {PureSearchBarDiscover({ stateShared: PureSearchBarDataMemoized() })}
     </div>
   );
 };

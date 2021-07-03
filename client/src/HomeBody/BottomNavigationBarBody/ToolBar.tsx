@@ -3,9 +3,9 @@ import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
-import { If } from '../../../util/react-if/If';
-import { Then } from '../../../util/react-if/Then';
-import { useTrackedState } from '../../../selectors/stateContextSelector';
+import { If } from '../../util/react-if/If';
+import { Then } from '../../util/react-if/Then';
+import { useTrackedState } from '../../selectors/stateContextSelector';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {

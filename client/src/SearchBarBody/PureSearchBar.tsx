@@ -1,16 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import Results from './PureSearchBarBody/Results';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
-import { PureInput } from './PureInput';
-import { MergedDataProps, StargazerProps } from '../typing/type';
-import { Then } from '../util/react-if/Then';
-import { If } from '../util/react-if/If';
-import Result from './PureSearchBarBody/ResultsBody/Result';
-import { Typography } from '@material-ui/core';
-import { useUserCardStyles } from '../DiscoverBody/CardDiscoverBody/UserCardStyle';
-import HistoryIcon from '@material-ui/icons/History';
-import { fastFilter, Loading } from '../util';
+import { MergedDataProps, Searches, StargazerProps } from '../typing/type';
+import { fastFilter } from '../util';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
@@ -19,6 +11,58 @@ import ButtonQuestion from './PureSearchBarBody/ButtonQuestion';
 import ButtonPageSetting from './PureSearchBarBody/ButtonPageSetting';
 import ButtonTags from './PureSearchBarBody/ButtonTags';
 import { noop } from '../util/util';
+import { loadable } from '../loadable';
+
+interface ResultRender {
+  searches: Searches[];
+  filter: any;
+  valueRef: string;
+  getRootProps: any;
+  width: number;
+  isLoading: boolean;
+  stateSearchUsers: Array<{ [x: string]: string }>;
+}
+const ResultRenderer = (condition: boolean, args: ResultRender) =>
+  loadable({
+    importFn: () =>
+      import('./PureSearchBarBody/ResultsBody/ResultRenderer').then((module) =>
+        createRenderElement(module.default, { ...args })
+      ),
+    cacheId: 'ResultRenderer',
+    empty: () => <></>,
+    condition,
+  });
+
+interface Results {
+  isLoading: boolean;
+  style: React.CSSProperties;
+  data: { [key: string]: string }[];
+  getRootProps: any;
+  ref: React.Ref<HTMLDivElement>;
+}
+const Results = (condition: boolean, args: Results) =>
+  loadable({
+    importFn: () =>
+      import('./PureSearchBarBody/Results').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'Results',
+    empty: () => <></>,
+    condition,
+  });
+
+interface PureInput {
+  setVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  visibleSearchesHistory: any;
+  setVisibleSearchesHistory: React.Dispatch<React.SetStateAction<boolean>>;
+  style: any;
+  handleChange: any;
+  ref: any;
+}
+const PureInput = (args: PureInput) =>
+  loadable({
+    importFn: () => import('./PureInput').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'PureInput',
+    empty: () => <></>,
+  });
 
 interface SearchBarProps {
   portalExpandable: any;
@@ -32,7 +76,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const { searchesData } = useApolloFactory(displayName!).query.getSearchesData();
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
   const username = useRef<any>();
-  const classes = useUserCardStyles({ avatarSize: 20 });
   const size = {
     width: '500px',
     minWidth: '100px',
@@ -124,26 +167,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     }
     username.current.clearState();
   };
-
-  const onClickCb = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setVisible(false);
-    setValue('');
-    dispatch({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_QUEUE',
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // the purpose of getRootProps is to execute all eventhandlers from both parent and their children who're using it together
-  // with the state at their respective component without the need to pass the state to the children.
-  const { getRootProps } = useEventHandlerComposer({ onClickCb });
 
   const location = useLocation();
 
@@ -273,6 +296,26 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     }
     return result;
   };
+  const onClickCb = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setVisible(false);
+    setValue('');
+    dispatch({
+      type: 'REMOVE_ALL',
+    });
+    dispatchStargazers({
+      type: 'REMOVE_ALL',
+    });
+    dispatchStargazers({
+      type: 'REMOVE_QUEUE',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // the purpose of getRootProps is to execute all eventhandlers from both parent and their children who're using it together
+  // with the state at their respective component without the need to pass the state to the children.
+  const { getRootProps } = useEventHandlerComposer({ onClickCb });
+
   return (
     <SearchBarLayout style={{ width: `${stateShared.width}px` }} onSubmit={handleSubmit}>
       {(portal) => (
@@ -280,7 +323,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           {/* we separate this as new component since UI need to be updated as soon as possible
             thus causing heavy rendering. To prevent setState takes effect of rendering the children component
             to Home.tsx, we put it in new component */}
-          {createRenderElement(PureInput, {
+          {PureInput({
             setVisible,
             visibleSearchesHistory,
             setVisibleSearchesHistory,
@@ -289,88 +332,31 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             ref: username,
           })}
 
-          <If
-            condition={
-              searchesData &&
+          {ResultRenderer(
+            searchesData &&
               searchesData.getSearches !== null &&
               searchesData.getSearches.searches.length > 0 &&
               valueRef.length > 0 &&
               visibleSearchesHistory &&
-              filter(searchesData?.getSearches?.searches, valueRef).length > 0
+              filter(searchesData?.getSearches?.searches, valueRef).length > 0,
+            {
+              searches: searchesData?.getSearches?.searches,
+              filter,
+              valueRef,
+              getRootProps,
+              isLoading: state.isLoading,
+              width: stateShared.width,
+              stateSearchUsers: state.searchUsers,
             }
-          >
-            <Then>
-              <div className="resultsContainer" style={style} ref={resultsRef}>
-                <ul className={'results'}>
-                  {filter(searchesData?.getSearches?.searches, valueRef)
-                    .sort((a, b) => b.count - a.count) //the most frequent searches at the top
-                    .map((search: { search: string; count: number; updatedAt: Date }, idx) => {
-                      const newBody = search.search.replace(
-                        new RegExp(valueRef.toLowerCase(), 'gi'),
-                        (match: string) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
-                      );
-                      return (
-                        <Result getRootProps={getRootProps} userName={search.search} key={idx}>
-                          <div className={classes.wrapper} style={{ borderBottom: 0 }}>
-                            <HistoryIcon style={{ transform: 'scale(1.5)' }} />
-                            <div className={classes.nameWrapper}>
-                              <Typography variant="subtitle2" className={classes.typography}>
-                                <div dangerouslySetInnerHTML={{ __html: newBody }} />
-                              </Typography>
-                            </div>
-                          </div>
-                        </Result>
-                      );
-                    })}
-                  <If condition={state.isLoading}>
-                    <Then>
-                      <li className={'clearfix'}>
-                        <Loading />
-                      </li>
-                    </Then>
-                  </If>
-                  <If condition={!state.isLoading}>
-                    <Then>
-                      {fastFilter((search: Array<{ search: string; count: number; updatedAt: Date }>) => {
-                        const temp =
-                          searchesData?.getSearches?.searches.reduce(
-                            (acc: any, obj: { search: string; count: number; updatedAt: Date }) => {
-                              acc.push(obj.search);
-                              return acc;
-                            },
-                            []
-                          ) ?? [];
-                        return !temp.includes(Object.keys(search)[0]);
-                      }, state.searchUsers).map((result, idx) => (
-                        <Result getRootProps={getRootProps} userName={Object.keys(result).toString()} key={idx}>
-                          <div className={classes.wrapper} style={{ borderBottom: 0 }}>
-                            <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
-                            <div className={classes.nameWrapper}>
-                              <Typography variant="subtitle2" className={classes.typography}>
-                                {Object.keys(result)}
-                              </Typography>
-                            </div>
-                          </div>
-                        </Result>
-                      ))}
-                    </Then>
-                  </If>
-                </ul>
-              </div>
-            </Then>
-          </If>
+          )}
 
-          <If condition={visible && filter(searchesData?.getSearches?.searches, valueRef).length === 0}>
-            <Then>
-              {createRenderElement(Results, {
-                getRootProps,
-                data: state.searchUsers,
-                isLoading: state.isLoading,
-                style,
-                ref: resultsRef,
-              })}
-            </Then>
-          </If>
+          {Results(visible && filter(searchesData?.getSearches?.searches, valueRef).length === 0, {
+            getRootProps,
+            data: state.searchUsers,
+            isLoading: state.isLoading,
+            style,
+            ref: resultsRef,
+          })}
 
           <div className="input-group-btn">
             {/* we need to use div instead of button because if we use button again

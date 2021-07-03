@@ -1,12 +1,24 @@
 import React from 'react';
-import Result from './ResultsBody/Result';
 import { Typography } from '@material-ui/core';
 import { useUserCardStyles } from '../../DiscoverBody/CardDiscoverBody/UserCardStyle';
-import { Loading } from '../../util';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import { Else } from '../../util/react-if/Else';
+import { LoadingSmall } from '../../LoadingSmall';
+import { loadable } from '../../loadable';
+import { createRenderElement } from '../../Layout/MasonryLayout';
 
+interface Result {
+  children: React.ReactNode;
+  userName: string;
+  getRootProps: any;
+}
+const Result = (args: Result) =>
+  loadable({
+    importFn: () => import('./ResultsBody/Result').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'Result',
+    empty: () => <></>,
+  });
 interface Results {
   isLoading: boolean;
   style: React.CSSProperties;
@@ -14,10 +26,20 @@ interface Results {
   getRootProps: any;
   ref: React.Ref<HTMLDivElement>;
 }
-
-const avatarSize = 20;
+const Child = ({ result }: any) => {
+  const classes = useUserCardStyles({ avatarSize: 20 });
+  return (
+    <div className={classes.wrapper} style={{ borderBottom: 0 }}>
+      <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
+      <div className={classes.nameWrapper}>
+        <Typography variant="subtitle2" className={classes.typography}>
+          {Object.keys(result)}
+        </Typography>
+      </div>
+    </div>
+  );
+};
 const Results: React.FC<Results> = React.forwardRef(({ data, isLoading, style, getRootProps }, ref) => {
-  const classes = useUserCardStyles({ avatarSize });
   return (
     <>
       <If condition={isLoading}>
@@ -25,7 +47,7 @@ const Results: React.FC<Results> = React.forwardRef(({ data, isLoading, style, g
           <div className="resultsContainer" style={style} ref={ref}>
             <ul className={'results'}>
               <li className={'clearfix'}>
-                <Loading />
+                <LoadingSmall />
               </li>
             </ul>
           </div>
@@ -38,18 +60,9 @@ const Results: React.FC<Results> = React.forwardRef(({ data, isLoading, style, g
             <If condition={data && data.length > 0}>
               <Then>
                 <ul className={'results'}>
-                  {data.map((result, idx) => (
-                    <Result getRootProps={getRootProps} userName={Object.keys(result).toString()} key={idx}>
-                      <div className={classes.wrapper} style={{ borderBottom: 0 }}>
-                        <img alt="avatar" className="avatar-img" src={Object.values(result).toString()} />
-                        <div className={classes.nameWrapper}>
-                          <Typography variant="subtitle2" className={classes.typography}>
-                            {Object.keys(result)}
-                          </Typography>
-                        </div>
-                      </div>
-                    </Result>
-                  ))}
+                  {data.map((result, idx) =>
+                    Result({ children: Child({ result }), userName: Object.keys(result).toString(), getRootProps })
+                  )}
                 </ul>
               </Then>
 

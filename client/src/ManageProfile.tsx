@@ -1,13 +1,27 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { fastFilter } from './util';
-import ColumnOne from './ManageProfileBody/ColumnOne';
 import { useResizeHandler } from './hooks/hooks';
-import ColumnTwo from './ManageProfileBody/ColumnTwo';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { StateManageProfileProvider } from './selectors/stateContextSelector';
 import { createRenderElement } from './Layout/MasonryLayout';
-import { Redirect } from 'react-router-dom';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
+import { loadable } from './loadable';
+
+const ColumnOne = (args: { handleLanguageFilter: any }) =>
+  loadable({
+    importFn: () =>
+      import('./ManageProfileBody/ColumnOne').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'ColumnOne',
+    empty: () => <></>,
+  });
+
+const ColumnTwo = (args: { languageFilter: string[] }) =>
+  loadable({
+    importFn: () =>
+      import('./ManageProfileBody/ColumnTwo').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'ColumnTwo',
+    empty: () => <></>,
+  });
 
 const ManageProfile = () => {
   const [, dispatch] = useTrackedStateShared();
@@ -39,25 +53,14 @@ const ManageProfile = () => {
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <StateManageProfileProvider>
-        {createRenderElement(ColumnOne, { handleLanguageFilter })}
-        {createRenderElement(ColumnTwo, { languageFilter })}
+        {ColumnOne({ handleLanguageFilter })}
+        {ColumnTwo({ languageFilter })}
       </StateManageProfileProvider>
     </div>
   );
 };
 ManageProfile.displayName = 'ManageProfile';
-const ManageProfileRender = ({ isLoggedIn = false }) => {
-  return (
-    <KeepMountedLayout
-      mountedCondition={location.pathname === '/profile'}
-      render={() => {
-        if (isLoggedIn) {
-          return createRenderElement(ManageProfile, {});
-        } else {
-          return <Redirect to={'/login'} from={'/profile'} />;
-        }
-      }}
-    />
-  );
+const ManageProfileRender = () => {
+  return <KeepMountedLayout mountedCondition={location.pathname === '/profile'} render={() => ManageProfile} />;
 };
 export default ManageProfileRender;

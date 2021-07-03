@@ -4,10 +4,10 @@ import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
 import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
-import { useDraggable } from '../hooks/useDraggable';
+import { useDraggable } from '../../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
 import { useLocation } from 'react-router-dom';
-import { useTrackedStateShared } from '../selectors/stateContextSelector';
+import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 
 interface StyleProps {
   drawerWidth: string;
@@ -124,4 +124,5 @@ const DrawerBar = () => {
     </React.Fragment>
   );
 };
+DrawerBar.displayName = 'DrawerBar';
 export default DrawerBar;

@@ -1,8 +1,15 @@
 import React, { useRef } from 'react';
-import PureSearchBar from './SearchBarBody/PureSearchBar';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
+import { loadable } from './loadable';
 import { createRenderElement } from './Layout/MasonryLayout';
 
+const PureSearchBar = (args: { portalExpandable: any }) =>
+  loadable({
+    importFn: () =>
+      import('./SearchBarBody/PureSearchBar').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'PureSearchBar',
+    empty: () => <></>,
+  });
 const SearchBar = () => {
   const [stateShared] = useTrackedStateShared();
   const portalExpandable = useRef<any>();
@@ -19,7 +26,7 @@ const SearchBar = () => {
       <div className="title-horizontal-center" style={{ width: `${stateShared.width}px` }}>
         <h1>Github Fetcher Dashboard</h1>
       </div>
-      {createRenderElement(PureSearchBar, { portalExpandable })}
+      {PureSearchBar({ portalExpandable })}
       <div
         className="portal-expandable"
         ref={portalExpandable}

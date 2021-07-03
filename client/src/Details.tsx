@@ -1,4 +1,4 @@
-import { Redirect, useLocation } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 import React, { useEffect, useRef, useState } from 'react';
 import { markdownParsing } from './services';
 import { GoBook } from 'react-icons/go';
@@ -7,7 +7,6 @@ import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import { CircularProgress } from '@material-ui/core';
 import { TrendsCard } from './DetailsBody/TrendsCard';
-import { useHistory } from 'react-router-dom';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
@@ -28,7 +27,9 @@ interface StateProps {
   };
   path: string;
 }
-const Details: React.FC = ({ location }: any) => {
+
+const Details: React.FC = () => {
+  const location = useLocation<any>();
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
   const [data, setData] = useState<Nullable<StateProps>>(null);
@@ -141,19 +142,4 @@ const Details: React.FC = ({ location }: any) => {
   );
 };
 Details.displayName = 'Details';
-const DetailsRender = ({ isLoggedIn = false }) => {
-  const location = useLocation<Location>();
-  return (
-    <KeepMountedLayout
-      mountedCondition={/detail/.test(location.pathname)}
-      render={() => {
-        if (isLoggedIn) {
-          return createRenderElement(Details, { location });
-        } else {
-          return <Redirect to={'/login'} from={'/detail/:id'} />;
-        }
-      }}
-    />
-  );
-};
-export default DetailsRender;
+export default Details;

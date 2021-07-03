@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getRateLimitInfo, requestGithubLogin } from './services';
 import LoginLayout from './Layout/LoginLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
@@ -9,18 +9,16 @@ import {
   useTrackedStateRateLimit,
   useTrackedStateShared,
 } from './selectors/stateContextSelector';
-import { v1 } from 'uuid';
 import { createRenderElement } from './Layout/MasonryLayout';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
 
-const Login = () => {
+const Login = ({ location = '/' }) => {
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const history = useHistory();
-  const location = useLocation();
   useEffect(() => {
-    if (location.pathname === '/login') {
+    if (location === '/login') {
       // After requesting Github access by logging using user account's Github
       // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
       const url = window.location.href;
@@ -127,18 +125,4 @@ const Login = () => {
   );
 };
 Login.displayName = 'Login';
-const LoginRender = ({ isLoggedIn = false }) => {
-  return (
-    <KeepMountedLayout
-      mountedCondition={location.pathname === '/login'}
-      render={() => {
-        if (!isLoggedIn) {
-          return <StateRateLimitProvider>{createRenderElement(Login, {})}</StateRateLimitProvider>;
-        } else {
-          return <Redirect to={'/'} from={'/login'} />;
-        }
-      }}
-    />
-  );
-};
-export default LoginRender;
+export default Login;

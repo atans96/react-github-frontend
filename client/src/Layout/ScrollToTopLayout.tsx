@@ -1,9 +1,7 @@
-import { useScrollTrigger, Zoom } from '@material-ui/core';
+import { Fab, useScrollTrigger, Zoom } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import React from 'react';
-interface ScrollTopProps {
-  children: any;
-}
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
 const useStyles = makeStyles((theme) => ({
   root: {
     position: 'fixed',
@@ -11,28 +9,30 @@ const useStyles = makeStyles((theme) => ({
     right: theme.spacing(2),
   },
 }));
-export const ScrollTopLayout: React.FC<ScrollTopProps> = React.forwardRef<React.Ref<HTMLDivElement>, ScrollTopProps>(
-  ({ children }, ref) => {
-    const classes = useStyles();
-    const trigger = useScrollTrigger({
-      disableHysteresis: true,
-      threshold: 100,
-    });
+const ScrollTopLayout = () => {
+  const classes = useStyles();
+  const trigger = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 100,
+  });
 
-    const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      const anchor = (event.currentTarget.ownerDocument || document).querySelector('.top');
-      if (anchor) {
-        anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    };
+  const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const anchor = (event.currentTarget.ownerDocument || document).querySelector('.top');
+    if (anchor) {
+      anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
 
-    return (
-      <Zoom in={trigger}>
-        <div onClick={handleClick} role="presentation" className={classes.root}>
-          {children}
-        </div>
-      </Zoom>
-    );
-  }
-);
+  return (
+    <Zoom in={trigger}>
+      <div onClick={handleClick} role="presentation" className={classes.root}>
+        <Fab color="secondary" size="small" aria-label="scroll back to top">
+          <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
+        </Fab>
+      </div>
+    </Zoom>
+  );
+};
+ScrollTopLayout.displayName = 'ScrollTopLayout';
+export default ScrollTopLayout;
