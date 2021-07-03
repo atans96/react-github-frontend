@@ -216,26 +216,6 @@ export function isImageExists(url) {
 
   return imgPromise;
 }
-export const Loading = () => {
-  return (
-    <React.Fragment>
-      <div
-        className="loading-spinner"
-        style={{
-          height: 'auto',
-          margin: '0 auto',
-          padding: '10px',
-          position: 'relative',
-        }}
-      />
-      <h6>
-        Loading<span className="one">.</span>
-        <span className="two">.</span>
-        <span className="three">.</span>
-      </h6>
-    </React.Fragment>
-  );
-};
 const hasElementType = typeof Element !== 'undefined';
 const hasMap = typeof Map === 'function';
 const hasSet = typeof Set === 'function';

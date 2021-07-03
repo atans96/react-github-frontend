@@ -1,13 +1,42 @@
 import React from 'react';
-import DrawerBar from '../DiscoverBody/DrawerBar';
 import { makeStyles } from '@material-ui/core/styles';
 import { Theme } from '@material-ui/core';
-import ToolBar from './BottomNavigationBarBody/PaginationBarBody/ToolBar';
-import RepoStat from './BottomNavigationBarBody/PaginationBarBody/RepoStat';
-import RateLimit from './BottomNavigationBarBody/PaginationBarBody/RateLimit';
 import AppBar from '@material-ui/core/AppBar';
 import { StateRateLimitProvider } from '../selectors/stateContextSelector';
+import { loadable } from '../loadable';
 import { createRenderElement } from '../Layout/MasonryLayout';
+
+const ToolBar = () =>
+  loadable({
+    importFn: () =>
+      import('./BottomNavigationBarBody/ToolBar').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'ToolBar',
+    empty: () => <></>,
+  });
+const RepoStat = () =>
+  loadable({
+    importFn: () =>
+      import('./BottomNavigationBarBody/RepoStat').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'RepoStat',
+    empty: () => <></>,
+  });
+
+const RateLimit = () =>
+  loadable({
+    importFn: () =>
+      import('./BottomNavigationBarBody/RateLimit').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'RateLimit',
+    empty: () => <></>,
+  });
+
+const DrawerBar = () =>
+  loadable({
+    importFn: () =>
+      import('./BottomNavigationBarBody/DrawerBar').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'DrawerBar',
+    empty: () => <></>,
+  });
+
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
     '& .MuiPaginationItem-root': {
@@ -38,11 +67,11 @@ const BottomNavigationBar = () => {
   return (
     <React.Fragment>
       <AppBar position="fixed" color="primary" className={classes.appBar}>
-        {createRenderElement(ToolBar, {})}
-        {createRenderElement(RepoStat, {})}
-        <StateRateLimitProvider>{createRenderElement(RateLimit, {})}</StateRateLimitProvider>
+        {ToolBar()}
+        {RepoStat()}
+        <StateRateLimitProvider>{RateLimit()}</StateRateLimitProvider>
       </AppBar>
-      {createRenderElement(DrawerBar, {})}
+      {DrawerBar()}
     </React.Fragment>
   );
 };

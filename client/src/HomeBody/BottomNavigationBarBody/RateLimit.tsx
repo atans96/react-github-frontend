@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import RateLimitInfo from './RateLimitInfoBody/RateLimitInfo';
-import { getRateLimitInfo } from '../../../services';
-import { useApolloFactory } from '../../../hooks/useApolloFactory';
+import { getRateLimitInfo } from '../../services';
+import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
-import { useTrackedState, useTrackedStateRateLimit } from '../../../selectors/stateContextSelector';
+import { useTrackedState, useTrackedStateRateLimit } from '../../selectors/stateContextSelector';
 
-import { createRenderElement } from '../../../Layout/MasonryLayout';
+import { loadable } from '../../loadable';
+import { createRenderElement } from '../../Layout/MasonryLayout';
+const RateLimitInfo = (args: { setRefetch: any }) =>
+  loadable({
+    importFn: () =>
+      import('./RateLimitInfoBody/RateLimitInfo').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'RateLimitInfo',
+    empty: () => <></>,
+  });
 
 const RateLimit = () => {
   const [state] = useTrackedState();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [refetch, setRefetch] = useState(true);
-  const displayName: string | undefined = (RateLimit as React.ComponentType<any>).displayName;
+  const displayName: string | undefined = ((RateLimit as unknown) as React.ComponentType<any>).displayName;
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const location = useLocation();
   useEffect(
@@ -62,7 +69,7 @@ const RateLimit = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [refetch, state.mergedData.length, state.searchUsers.length, userDataError, userDataLoading, userData]
   );
-  return createRenderElement(RateLimitInfo, { setRefetch });
+  return RateLimitInfo({ setRefetch });
 };
 RateLimit.displayName = 'RateLimit';
 export default RateLimit;

@@ -1,220 +1,96 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import './hamburgers.css';
-import { BrowserRouter as Router, useHistory, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Redirect, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { setContext } from '@apollo/client/link/context';
-import { fastFilter, readEnvironmentVariable } from './util';
-import { filterActionResolvedPromiseData, logoutAction, noop } from './util/util';
+import { allowedRoutes, readEnvironmentVariable } from './util';
+import { logoutAction } from './util/util';
 import { getFile, getTokenGQL, getValidGQLProperties, session } from './services';
-import {
-  alreadySeenCardSelector,
-  StarRankingContainer,
-  SuggestedRepoContainer,
-  SuggestedRepoImagesContainer,
-} from './selectors/stateSelector';
+import { StarRankingContainer, SuggestedRepoContainer, SuggestedRepoImagesContainer } from './selectors/stateSelector';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
-import SearchBar from './SearchBar';
-import Home from './Home';
 import {
   StateDiscoverProvider,
   StateProvider,
   StateSharedProvider,
-  StateStargazersProvider,
-  useTrackedState,
-  useTrackedStateDiscover,
   useTrackedStateShared,
 } from './selectors/stateContextSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
-
-import { LanguagePreference, MergedDataProps } from './typing/type';
-import { IDataOne } from './typing/interface';
 import { If } from './util/react-if/If';
-import eye from './new_16-2.gif';
 import { Then } from './util/react-if/Then';
-import loadable from '@loadable/component';
 import { createRenderElement } from './Layout/MasonryLayout';
-import { getMainDefinition } from '@apollo/client/utilities';
-import { WebSocketLink } from '@apollo/client/link/ws';
 import ComposeProviders from './Layout/ComposeProviders';
+import { LoadingBig } from './LoadingBig';
+import { loadable } from './loadable';
+
+const HomeRenderer = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./HomeRenderer').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'HomeRenderer',
+    condition: condition,
+    loading: () => LoadingBig,
+    empty: () => <></>,
+  });
+const Login = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./LoginRenderer').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'Login',
+    condition: condition,
+    loading: () => LoadingBig,
+    empty: () => <></>,
+    redirect: () => <Redirect to={'/404'} from={'/login'} />,
+  });
+const DiscoverRenderer = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./DiscoverRenderer').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'DiscoverRenderer',
+    condition: condition,
+    loading: () => LoadingBig,
+    empty: () => <></>,
+    redirect: () => <Redirect to={'/login'} from={'/discover'} />,
+  });
+const Details = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./Details'),
+    cacheId: 'Details',
+    condition: condition,
+    empty: () => <></>,
+    redirect: () => <Redirect to={'/login'} from={'/detail/:id'} />,
+  });
+const ManageProfile = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./ManageProfile').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'ManageProfile',
+    condition: condition,
+    loading: () => LoadingBig,
+    empty: () => <></>,
+    redirect: () => <Redirect to={'/login'} from={'/profile'} />,
+  });
+const NotFound = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./NotFound'),
+    cacheId: 'NotFound',
+    condition: condition,
+    loading: () => LoadingBig,
+    empty: () => <></>,
+  });
+
 // const ManageProfile = React.lazy(() => import('./ManageProfile'));
-const AsyncPage = loadable((props: { page: string }) => import(`./${props.page}`));
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
-let apolloCacheData = {};
-
 const App = () => {
+  const apolloCacheData = useRef<Object>({});
+  const [, dispatchShared] = useTrackedStateShared();
+  const [stateShared] = useTrackedStateShared();
   const location = useLocation();
-  const [state, dispatch] = useTrackedState();
-  const [stateShared, dispatchShared] = useTrackedStateShared();
-  const [, dispatchDiscover] = useTrackedStateDiscover();
-  const { userData } = useApolloFactory(Function.name).query.getUserData();
-  const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
-    Function.name
-  ).query.getUserInfoStarred();
-  const { seenData, seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
-  const alreadySeenCards: number[] = React.useMemo(() => {
-    //Every time Global re-renders and nothing is memoized because each render re creates the selector.
-    // To solve this we can use React.useMemo. Here is the correct way to use createSelectItemById.
-    return alreadySeenCardSelector(seenData?.getSeen?.seenCards ?? []);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seenData?.getSeen?.seenCards]);
-
-  const languagePreference = React.useMemo(() => {
-    return new Map(
-      userData?.getUserData?.languagePreference.map((obj: LanguagePreference) => [obj.language, obj]) || []
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData?.getUserData?.languagePreference]);
-
-  const languagePreferenceRef = useRef(languagePreference);
-  const userStarredRef = useRef(userStarred?.getUserInfoStarred?.starred);
-  const alreadySeenCardsRef = useRef<number[]>([]);
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      alreadySeenCardsRef.current = [...alreadySeenCards];
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      languagePreferenceRef.current = languagePreference;
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      userStarredRef.current = userStarred?.getUserInfoStarred?.starred;
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
-
-  const actionAppend = (data: IDataOne | any, displayName: string) => {
-    if (state.filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
-      return new Promise(function (resolve, reject) {
-        switch (displayName) {
-          case displayName.match(/^discover/gi) && displayName!.match(/^discover/gi)![0].length > 0
-            ? displayName
-            : undefined: {
-            let filter1 = fastFilter(
-              (obj: MergedDataProps) =>
-                filterActionResolvedPromiseData(
-                  obj,
-                  !alreadySeenCardsRef?.current?.includes(obj.id) && !userStarredRef?.current?.includes(obj.id),
-                  !!languagePreferenceRef?.current?.get(obj.language)?.checked
-                ),
-              data
-            );
-            if (filter1.length > 0) {
-              dispatchDiscover({
-                type: 'MERGED_DATA_APPEND_DISCOVER',
-                payload: {
-                  data: filter1,
-                },
-              });
-            } else if (filter1.length === 0) {
-              dispatchDiscover({
-                type: 'ADVANCE_PAGE_DISCOVER',
-              });
-            }
-            resolve();
-            break;
-          }
-          case 'Home': {
-            const filter1 = fastFilter(
-              (obj: MergedDataProps) =>
-                filterActionResolvedPromiseData(
-                  obj,
-                  !alreadySeenCardsRef?.current?.includes(obj.id),
-                  !!languagePreferenceRef?.current?.get(obj.language)
-                ),
-              data.dataOne
-            );
-            dispatch({
-              type: 'MERGED_DATA_APPEND',
-              payload: {
-                data: filter1,
-              },
-            });
-            if (filter1.length === 0) {
-              dispatch({
-                type: 'ADVANCE_PAGE',
-              });
-            } else {
-              const temp = data.dataOne || data;
-              temp.map((obj: MergedDataProps) => {
-                obj['isQueue'] = false;
-                return obj;
-              });
-              dispatch({
-                type: 'MERGED_DATA_APPEND',
-                payload: {
-                  data: temp,
-                },
-              });
-            }
-            resolve();
-            break;
-          }
-          default: {
-            throw new Error('No valid component found!');
-          }
-        }
-      });
-    }
-  };
-  const actionResolvePromise = useCallback(
-    ({
-      action,
-      data = undefined,
-      setLoading,
-      isFetchFinish,
-      displayName,
-      setNotification,
-      error = undefined,
-      prefetch = noop,
-    }) => {
-      if (!loadingUserStarred && !errorUserStarred && !seenDataLoading && !seenDataError) {
-        setLoading(false);
-        if (data && action === 'append') {
-          actionAppend(data, displayName)!.then(() => prefetch());
-        }
-        if (action === 'noData') {
-          isFetchFinish = true;
-          setNotification(`Sorry, no more data found for ${stateShared.queryUsername}`);
-        }
-        if (action === 'error' && error) {
-          throw new Error(`Something wrong at ${displayName} ${error}`);
-        }
-        if (data && data.error_404) {
-          setNotification(`Sorry, no data found for ${stateShared.queryUsername}`);
-        } else if (data && data.error_403) {
-          isFetchFinish = true;
-          setNotification('Sorry, API rate limit exceeded.');
-        } else if (data && data.error_message) {
-          throw new Error(`Something wrong at ${displayName} ${data.error_message}`);
-        }
-      }
-      return { isFetchFinish };
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.queryUsername, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
-  );
+  const { loadingUserStarred, errorUserStarred } = useApolloFactory(Function.name).query.getUserInfoStarred();
+  const { seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
   const cacheData: any = useApolloClient().cache.extract();
   useEffect(() => {
     if (cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
-      apolloCacheData = cacheData.ROOT_QUERY;
+      apolloCacheData.current = cacheData.ROOT_QUERY;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData]);
@@ -254,6 +130,7 @@ const App = () => {
   //   }
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, [stateShared.isLoggedIn, apolloCacheData]);
+
   useEffect(() => {
     getFile('languages.json').then((githubLanguages) => {
       dispatchShared({
@@ -286,46 +163,29 @@ const App = () => {
       });
     });
   }, []);
+  const [clickedNavBar, setClickedNavBar] = useState('');
+  const ClickedNavBar = useCallback((value: string) => setClickedNavBar(value), []);
   return (
     <div>
       <KeepMountedLayout
         mountedCondition={true}
         render={() => {
-          return createRenderElement(NavBar, {});
+          return createRenderElement(NavBar, { ClickedNavBar });
         }}
       />
       <If condition={loadingUserStarred && seenDataLoading}>
         <Then>
-          <div style={{ textAlign: 'center' }}>
-            <img src={eye} style={{ width: '100px' }} />
-            <div style={{ textAlign: 'center' }}>
-              <h3>Please wait while fetching your data</h3>
-            </div>
-          </div>
+          <LoadingBig />
         </Then>
       </If>
       <If condition={!loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError}>
         <Then>
-          <KeepMountedLayout
-            mountedCondition={location.pathname === '/'}
-            render={() => {
-              return (
-                <StateStargazersProvider>
-                  {createRenderElement(SearchBar, {})}
-                  {createRenderElement(Home, { actionResolvePromise })}
-                </StateStargazersProvider>
-              );
-            }}
-          />
-          <AsyncPage page={'Login'} />
-
-          <AsyncPage page={'Discover'} />
-
-          <AsyncPage page={'Details'} />
-
-          <AsyncPage page={'ManageProfile'} />
-
-          <AsyncPage page={'NotFound'} />
+          {HomeRenderer(!stateShared.isLoggedIn && clickedNavBar === 'Home')}
+          {Login(!stateShared.isLoggedIn && clickedNavBar === 'Login')}
+          {DiscoverRenderer(stateShared.isLoggedIn && clickedNavBar === 'Discover')}
+          {Details(clickedNavBar === 'Details')}
+          {ManageProfile(stateShared.isLoggedIn && clickedNavBar === 'ManageProfile')}
+          {NotFound(allowedRoutes.includes(location.pathname))}
         </Then>
       </If>
     </div>

@@ -2,13 +2,24 @@ import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } 
 import { getSearchUsers } from '../services';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
-import { MultiValueSearch } from './PureInputBody/MultiValueSearch';
+
 import { StargazerProps } from '../typing/type';
-import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { debounce_lodash } from '../util';
+import { loadable } from '../loadable';
+import { createRenderElement } from '../Layout/MasonryLayout';
 
+interface MultiValueSearch {
+  stargazer: StargazerProps;
+}
+const MultiValueSearch = (args: MultiValueSearch) =>
+  loadable({
+    importFn: () =>
+      import('./PureInputBody/MultiValueSearch').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'MultiValueSearch',
+    empty: () => <></>,
+  });
 interface SearchBarProps {
   setVisible: any;
   style: React.CSSProperties;
@@ -17,14 +28,11 @@ interface SearchBarProps {
   visibleSearchesHistory: any;
   setVisibleSearchesHistory: any;
 }
-
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
-export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
+const PureInput: React.FC<SearchBarProps> = React.forwardRef(
   ({ visibleSearchesHistory, setVisibleSearchesHistory, setVisible, handleChange, style }, ref) => {
     const [state, dispatch] = useTrackedState();
     const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
-    const displayName: string | undefined = (PureInput as React.ComponentType<any>).displayName;
-    const { userData } = useApolloFactory(displayName!).query.getUserData();
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
     const handler = useCallback(
@@ -175,7 +183,7 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         <If condition={stateStargazers.stargazersQueueData.length > 0}>
           <Then>
             {stateStargazers.stargazersQueueData.map((obj: StargazerProps, idx) => {
-              return <MultiValueSearch key={idx} stargazer={obj} />;
+              return MultiValueSearch({ stargazer: obj });
             })}
           </Then>
         </If>
@@ -208,3 +216,4 @@ export const PureInput: React.FC<SearchBarProps> = React.forwardRef(
   }
 );
 PureInput.displayName = 'PureInput';
+export default PureInput;

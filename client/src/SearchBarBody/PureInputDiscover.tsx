@@ -22,7 +22,7 @@ type SearchesData = {
   result: Array<{ full_name: string }>;
 };
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
-export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatchDiscover }, ref) => {
+const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatchDiscover }, ref) => {
   const [query, setQuery] = useState('');
   const [visible, setVisible] = useState(false);
   const [searchesData, setSearches] = useState<SearchesData>();
@@ -146,3 +146,4 @@ export const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ s
   );
 });
 PureInputDiscover.displayName = 'PureInputDiscover';
+export default PureInputDiscover;

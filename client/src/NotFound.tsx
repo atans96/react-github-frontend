@@ -34,7 +34,7 @@ const NotFoundRender = () => {
   const [stateShared] = useTrackedStateShared();
   return (
     <KeepMountedLayout
-      mountedCondition={!/detail/.test(location.pathname) && !allowedRoutes.includes(location.pathname)}
+      mountedCondition={!/detail/.test(location.pathname) || !allowedRoutes.includes(location.pathname)}
       render={() => {
         return <NotFound drawerWidth={stateShared.drawerWidth} />;
       }}

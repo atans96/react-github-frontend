@@ -1,59 +1,46 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
 import { useResizeHandler } from './hooks/hooks';
 import { ActionResolvedPromise, MergedDataProps, RenderImages, SeenProps } from './typing/type';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
-import { Redirect, useLocation } from 'react-router-dom';
-import CardDiscover from './DiscoverBody/CardDiscover';
 import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
-import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import { ActionResolvePromise, IAction, IStateDiscover, Output, StaticState } from './typing/interface';
-import { Fab } from '@material-ui/core';
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
-import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
 import { useScrollSaver } from './hooks/useScrollSaver';
-import KeepMountedLayout from './Layout/KeepMountedLayout';
-import SearchBarDiscover from './SearchBarDiscover';
-import loadable from '@loadable/component';
+import { loadable } from './loadable';
 import { ActionShared } from './store/Shared/reducer';
 import { ActionDiscover } from './store/Discover/reducer';
-const PaginationBarDiscover = loadable(() => import('./DiscoverBody/PaginationBarDiscover'));
+import { createRenderElement } from './Layout/MasonryLayout';
 
-interface MasonryLayoutMemo {
-  children: any;
-  data: IStateDiscover['mergedDataDiscover'];
-  sorted: string;
-  imagesDataDiscover: { mapData: Map<number, RenderImages>; arrayData: [RenderImages] | any[] } | Map<any, any>;
+const ScrollToTopLayout = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./Layout/ScrollToTopLayout'),
+    cacheId: 'ScrollToTopLayoutDiscover',
+    condition: condition,
+    empty: () => <></>,
+  });
+
+interface MasonryCard {
+  data: MergedDataProps[];
+  imagesDataDiscover: { mapData: Map<number, RenderImages>; arrayData: [RenderImages] | any[] };
+  sorted: any;
 }
 
-const MasonryLayoutMemo: React.FC<MasonryLayoutMemo> = ({ children, data, sorted, imagesDataDiscover }) => {
-  const [stateShared] = useTrackedStateShared();
-  const [stateDiscover] = useTrackedStateDiscover();
-  let columnCount = 0;
-  let increment = 300;
-  const baseWidth = 760;
-  if (stateShared.width > 760) {
-    while (baseWidth + increment <= stateShared.width) {
-      columnCount += 1;
-      increment += 300;
-    }
-  }
-  return React.useMemo(() => <MasonryLayout columns={columnCount}>{children(columnCount)}</MasonryLayout>, [
-    data.length,
-    imagesDataDiscover,
-    stateDiscover.mergedDataDiscover,
-    stateShared.width,
-    sorted,
-  ]);
-};
-MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
+const MasonryCard = (condition: boolean, args: MasonryCard) =>
+  loadable({
+    importFn: () =>
+      import('./DiscoverBody/MasonryCard').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'MasonryCardDiscover',
+    condition: condition,
+    empty: () => <></>,
+  });
+
 interface DiscoverProps {
+  location: string;
   actionResolvePromise: (args: ActionResolvePromise) => Output;
   perPage: number;
   stateDiscover: Pick<
@@ -68,19 +55,20 @@ interface DiscoverProps {
   dispatchShared: React.Dispatch<IAction<ActionShared>>;
   dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
 }
+
 const Discover: React.FC<DiscoverProps> = ({
   stateDiscover,
   actionResolvePromise,
   dispatchShared,
   dispatchDiscover,
   perPage,
+  location,
 }) => {
   const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
   const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
     (data: StaticState) => data.SuggestedRepo
   );
-  const location = useLocation();
   // useState is used when the HTML depends on it directly to render something
   const [isLoading, setLoading] = useState(false);
   const paginationRef = useRef(perPage);
@@ -175,7 +163,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
+    if (location === '/discover' && !isFinished) {
       mergedDataRef.current = stateDiscover.mergedDataDiscover;
       return () => {
         isFinished = true;
@@ -186,7 +174,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
+    if (location === '/discover' && !isFinished) {
       isLoadingRef.current = isLoading;
       return () => {
         isFinished = true;
@@ -197,7 +185,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
+    if (location === '/discover' && !isFinished) {
       notificationRef.current = notification;
       return () => {
         isFinished = true;
@@ -208,7 +196,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
+    if (location === '/discover' && !isFinished) {
       imagesDataDiscoverRef.current = imagesDataDiscover;
       return () => {
         isFinished = true;
@@ -218,7 +206,7 @@ const Discover: React.FC<DiscoverProps> = ({
   }, [imagesDataDiscover]);
   const locationRef = useRef('/discover');
   useEffect(() => {
-    locationRef.current = location.pathname;
+    locationRef.current = location;
   });
   const handleBottomHit = useCallback(
     () => {
@@ -293,7 +281,7 @@ const Discover: React.FC<DiscoverProps> = ({
       !suggestedDataLoading &&
       !!suggestedData?.getSuggestedRepo &&
       !suggestedDataError &&
-      location.pathname === '/discover' &&
+      location === '/discover' &&
       !isFinished
     ) {
       fetchUser();
@@ -339,7 +327,7 @@ const Discover: React.FC<DiscoverProps> = ({
   };
   //TODO: only show image if size is....https://github.com/ShogunPanda/fastimage at backend
 
-  useScrollSaver(location.pathname, '/discover');
+  useScrollSaver(location, '/discover');
 
   return (
     <React.Fragment>
@@ -434,23 +422,13 @@ const Discover: React.FC<DiscoverProps> = ({
             </li>
           </nav>
         </header>
-        <If condition={notification === '' && whichToUse()?.length > 0}>
-          <Then>
-            <MasonryLayoutMemo data={whichToUse()} imagesDataDiscover={imagesDataDiscover} sorted={sortedClicked}>
-              {(columnCount: number) => {
-                return Object.keys(whichToUse()).map((key, idx) =>
-                  createRenderElement(CardDiscover, {
-                    key: whichToUse()[idx].id,
-                    columnCount,
-                    imagesMapDataDiscover: imagesDataDiscover.mapData,
-                    index: whichToUse()[idx].id,
-                    githubData: whichToUse()[idx],
-                  })
-                );
-              }}
-            </MasonryLayoutMemo>
-          </Then>
-        </If>
+
+        {MasonryCard(notification === '' && whichToUse()?.length > 0, {
+          data: whichToUse(),
+          imagesDataDiscover: imagesDataDiscover,
+          sorted: sortedClicked,
+        })}
+
         <If
           condition={
             !suggestedDataError &&
@@ -490,48 +468,9 @@ const Discover: React.FC<DiscoverProps> = ({
           </Then>
         </If>
       </div>
-      <ScrollTopLayout>
-        <Fab color="secondary" size="small" aria-label="scroll back to top">
-          <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
-        </Fab>
-      </ScrollTopLayout>
+      {ScrollToTopLayout(whichToUse()?.length > 0)}
     </React.Fragment>
   );
 };
 Discover.displayName = 'Discover';
-const DiscoverRender = () => {
-  const [stateShared, dispatchShared] = useTrackedStateShared();
-  const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
-  return (
-    <KeepMountedLayout
-      mountedCondition={location.pathname === '/discover'}
-      render={() => {
-        if (stateShared.isLoggedIn) {
-          return (
-            <React.Fragment>
-              {createRenderElement(SearchBarDiscover, {})}
-              {createRenderElement(Discover, {
-                perPage: stateShared.perPage,
-                stateDiscover: {
-                  pageDiscover: stateDiscover.pageDiscover,
-                  mergedDataDiscover: stateDiscover.mergedDataDiscover,
-                  isLoadingDiscover: stateDiscover.isLoadingDiscover,
-                  notificationDiscover: stateDiscover.notificationDiscover,
-                  filterMergedDataDiscover: stateDiscover.filterMergedDataDiscover,
-                  visibleDiscover: stateDiscover.visibleDiscover,
-                },
-                actionResolvePromise,
-                dispatchShared,
-                dispatchDiscover,
-              })}
-              {createRenderElement(PaginationBarDiscover, { drawerWidth: stateShared.drawerWidth })}
-            </React.Fragment>
-          );
-        } else {
-          return <Redirect to={'/login'} from={'/discover'} />;
-        }
-      }}
-    />
-  );
-};
-export default DiscoverRender;
+export default Discover;

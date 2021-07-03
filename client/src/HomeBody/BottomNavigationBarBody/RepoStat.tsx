@@ -1,7 +1,7 @@
 import React from 'react';
 import './RepoStat.css';
 
-import { useTrackedState } from '../../../selectors/stateContextSelector';
+import { useTrackedState } from '../../selectors/stateContextSelector';
 
 const RepoStat = () => {
   const [state] = useTrackedState();

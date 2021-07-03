@@ -1,107 +1,73 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActionResolvePromiseOutput, IDataOne, IState, IStateShared } from './typing/interface';
-import CardSkeleton from './HomeBody/CardSkeleton';
-import { getOrg, getRepoImages, getSearchTopics, getUser, crawlerPython } from './services';
-import MasonryLayout, { createRenderElement } from './Layout/MasonryLayout';
-import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
-import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, SeenProps } from './typing/type';
-import Card from './HomeBody/Card';
-import { Then } from './util/react-if/Then';
-import { If } from './util/react-if/If';
-import clsx from 'clsx';
-import useBottomHit from './hooks/useBottomHit';
-import { Counter, fastFilter, isEqualObjects, pMap } from './util';
-import useDeepCompareEffect from './hooks/useDeepCompareEffect';
-import BottomNavigationBar from './HomeBody/BottomNavigationBar';
-import { useApolloFactory } from './hooks/useApolloFactory';
-import { noop } from './util/util';
-import eye from './new_16-2.gif';
-import { useLocation } from 'react-router-dom';
+import { ActionResolvePromiseOutput, IDataOne } from './typing/interface';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from './selectors/stateContextSelector';
-
-import { Fab } from '@material-ui/core';
-import { ScrollTopLayout } from './Layout/ScrollToTopLayout';
-import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
-import { Masonry } from './util/masonic/masonry';
+import { useApolloFactory } from './hooks/useApolloFactory';
+import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { noop } from './util/util';
+import { Counter, fastFilter, pMap } from './util';
+import { crawlerPython, getOrg, getRepoImages, getSearchTopics, getUser } from './services';
+import useBottomHit from './hooks/useBottomHit';
+import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
+import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import { useScrollSaver } from './hooks/useScrollSaver';
-
-// only re-render Card component when mergedData and idx changes
-// Memo: given the same/always same props, always render the same output
-// A common situation that makes a component render with the same props is being forced to render by a parent component.
-interface MasonryLayoutMemo {
-  children: any;
+import clsx from 'clsx';
+import { If } from './util/react-if/If';
+import { Then } from './util/react-if/Then';
+import { loadable } from './loadable';
+import { createRenderElement } from './Layout/MasonryLayout';
+interface MasonryMemo {
+  getRootProps: any;
   data: MergedDataProps[];
-  state: IState;
-  stateShared: IStateShared;
+}
+interface MasonryLoading {
+  data: MergedDataProps[];
   cardWidth?: number;
   gutter?: number;
 }
-
-// if you only include isEqualObjects(prevProps.mergedData.length, nextProps.mergedData.length) as
-// propsAreEqual condition checker, the child of Masonry's Card won't get updated state like new tokenGQL when the user logged in using
-// LoginGQL component from StargazersCard. We want to memoize masonry since it involves expensive DOM manipulation
-const MasonryLayoutMemo = React.memo<MasonryLayoutMemo>(
-  ({ children, data, state, stateShared, cardWidth = 370, gutter = 8 }) => {
-    const columnCount = Math.floor(stateShared.width / (cardWidth + gutter)) || 1;
-    return <MasonryLayout columns={columnCount}>{children(columnCount)}</MasonryLayout>;
-  },
-  (prevProps: any, nextProps: any) => {
-    return (
-      isEqualObjects(prevProps.data.length, nextProps.data.length) &&
-      isEqualObjects(prevProps.stateShared.tokenGQL, nextProps.stateShared.tokenGQL) &&
-      isEqualObjects(prevProps.stateShared.isLoggedIn, nextProps.stateShared.isLoggedIn) &&
-      isEqualObjects(prevProps.state.imagesData, nextProps.state.imagesData) &&
-      isEqualObjects(prevProps.stateShared.perPage, nextProps.stateShared.perPage) &&
-      isEqualObjects(prevProps.stateShared.width, nextProps.stateShared.width)
-    ); // when the component receives updated data from state such as load more, or clicked to login to access graphql
-    // it needs to get re-render to get new data.
-  }
-);
-MasonryLayoutMemo.displayName = 'MasonryLayoutMemo';
-
-interface MasonryLayoutMemo {
-  children: any;
-  data: MergedDataProps[];
-  state: IState;
-  stateShared: IStateShared;
+interface LoadingEye {
+  queryUsername: string[] | string;
 }
-interface MasonryMemo extends MasonryLayoutMemo {
-  getRootProps: any;
-}
-const MasonryMemo = React.memo<Omit<MasonryMemo, 'children' | 'state' | 'stateShared'>>(
-  ({ data, getRootProps }) => {
-    const length = useRef<number>(0);
-    let key = 0;
-    if (data.length < length.current) {
-      key = 1;
-    }
-    length.current = data.length;
-    return (
-      <div className={'masonic'}>
-        <Masonry
-          key={key}
-          items={data}
-          args={{ getRootProps }}
-          columnGutter={10}
-          columnWidth={370}
-          overscanBy={10}
-          render={Card}
-        />
-      </div>
-    );
-  },
-  (prevProps: any, nextProps: any) => {
-    return isEqualObjects(prevProps.data.length, nextProps.data.length); // when the component receives updated data from state such as load more, or clicked to login to access graphql
-    // it needs to get re-render to get new data.
-  }
-);
-MasonryMemo.displayName = 'MasonryMemo';
-let axiosCancel = false;
-const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) => {
+const MasonryCard = (condition: boolean, args: MasonryMemo) =>
+  loadable({
+    importFn: () => import('./HomeBody/MasonryCard').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'MasonryCardHome',
+    condition: condition,
+    empty: () => <></>,
+  });
+const MasonryLoading = (condition: boolean, args: MasonryLoading) =>
+  loadable({
+    importFn: () => import('./HomeBody/MasonryLoading').then((module) => module.default({ ...args })),
+    cacheId: 'MasonryLoading',
+    condition: condition,
+    empty: () => <></>,
+  });
+const LoadingEye = (condition: boolean, args: LoadingEye) =>
+  loadable({
+    importFn: () => import('./LoadingEye').then((module) => module.default({ ...args })),
+    cacheId: 'LoadingEye',
+    condition: condition,
+    empty: () => <></>,
+  });
+const BottomNavigationBar = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./HomeBody/BottomNavigationBar').then((module) => createRenderElement(module.default, {})),
+    cacheId: 'BottomNavigationBar',
+    condition: condition,
+    empty: () => <></>,
+  });
+const ScrollToTopLayout = (condition: boolean) =>
+  loadable({
+    importFn: () => import('./Layout/ScrollToTopLayout'),
+    cacheId: 'ScrollToTopLayoutHome',
+    condition: condition,
+    empty: () => <></>,
+  });
+
+const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, location }) => {
+  const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchStargazers] = useTrackedStateStargazers();
-  const location = useLocation();
   const abortController = new AbortController();
   const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
   const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
@@ -262,7 +228,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         getSearchTopics({
           signal: abortController.signal,
           topic: clickedGQLTopic.queryTopic,
-          axiosCancel,
+          axiosCancel: axiosCancel.current,
         })
           .then((res: IDataOne) => {
             actionController(res);
@@ -285,7 +251,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           userNameTransformed = stateShared.queryUsername;
         }
         userNameTransformed.forEach((user) => {
-          const temp = prefetch(user, axiosCancel);
+          const temp = prefetch(user, axiosCancel.current);
           const clone = JSON.parse(JSON.stringify(dataPrefetch.current));
           actionController(clone, temp);
         });
@@ -293,6 +259,71 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       }
     }
   };
+  const mergedDataRef = useRef<MergedDataProps[]>([]);
+  const isLoadingRef = useRef<boolean>(false);
+  const imagesDataRef = useRef<ImagesDataProps[]>([]);
+  const filterBySeenRef = useRef<boolean>(state.filterBySeen);
+  const notificationRef = useRef<string>('');
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location === '/' && !isFinished) {
+      mergedDataRef.current = state.mergedData;
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.mergedData]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location === '/' && !isFinished) {
+      isLoadingRef.current = isLoading;
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location === '/' && !isFinished) {
+      notificationRef.current = notification;
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notification]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location === '/' && !isFinished) {
+      imagesDataRef.current = state.imagesData;
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.imagesData]);
+
+  useEffect(() => {
+    let isFinished = false;
+    if (location === '/' && !isFinished) {
+      filterBySeenRef.current = state.filterBySeen;
+      return () => {
+        isFinished = true;
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.filterBySeen]);
+
+  const locationRef = useRef('/');
+  useEffect(() => {
+    locationRef.current = location;
+  });
   const fetchUser = () => {
     setLoading(true);
     isFetchFinish.current = false;
@@ -312,7 +343,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           username: name,
           perPage: stateShared.perPage,
           page: 1,
-          axiosCancel,
+          axiosCancel: axiosCancel.current,
         })
           .then((data: IDataOne) => {
             const callback = () =>
@@ -321,7 +352,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 org: name,
                 perPage: stateShared.perPage,
                 page: 1,
-                axiosCancel,
+                axiosCancel: axiosCancel.current,
               })
                 .then((data: IDataOne) => {
                   paginationInfo += data.paginationInfoData;
@@ -331,7 +362,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                       lastPage: paginationInfo,
                     },
                   });
-                  const temp = prefetch(name, axiosCancel);
+                  const temp = prefetch(name, axiosCancel.current);
                   actionController(data, temp);
                 })
                 .catch((error) => {
@@ -351,7 +382,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                 lastPage: paginationInfo,
               },
             });
-            const temp = prefetch(name, axiosCancel);
+            const temp = prefetch(name, axiosCancel.current);
             actionController(data, temp, callback);
           })
           .catch((error) => {
@@ -368,71 +399,6 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     });
     promises.forEach((promise) => promise.then(noop));
   };
-  const mergedDataRef = useRef<MergedDataProps[]>([]);
-  const isLoadingRef = useRef<boolean>(false);
-  const imagesDataRef = useRef<ImagesDataProps[]>([]);
-  const filterBySeenRef = useRef<boolean>(state.filterBySeen);
-  const notificationRef = useRef<string>('');
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      mergedDataRef.current = state.mergedData;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.mergedData]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      isLoadingRef.current = isLoading;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      notificationRef.current = notification;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notification]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      imagesDataRef.current = state.imagesData;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.imagesData]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      filterBySeenRef.current = state.filterBySeen;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.filterBySeen]);
-
-  const locationRef = useRef('/');
-  useEffect(() => {
-    locationRef.current = location.pathname;
-  });
 
   const handleBottomHit = useCallback(() => {
     if (
@@ -506,12 +472,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   useDeepCompareEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-    if (
-      stateShared.queryUsername.length > 0 &&
-      state.mergedData.length === 0 &&
-      location.pathname === '/' &&
-      !isFinished
-    ) {
+    if (stateShared.queryUsername.length > 0 && state.mergedData.length === 0 && location === '/' && !isFinished) {
       // we want to preserve stateShared.queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
       // we still want to retain the memory of username so that's why we use reducer of stateShared.queryUsername.
       // However, as the component unmount, stateShared.queryUsername is not "", thus causing fetchUser to fire in useEffect
@@ -527,11 +488,11 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     // so you need another dependency of stateShared.perPage
     // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel]);
+  }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel.current]);
 
   useEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
+    if (location === '/' && !isFinished) {
       if (stateShared.queryUsername.length > 0) {
         fetchUserMore();
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
@@ -542,20 +503,20 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.page, axiosCancel]);
+  }, [state.page, axiosCancel.current]);
 
   useEffect(() => {
-    if (location.pathname !== '/') {
+    if (location !== '/') {
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
-      axiosCancel = true;
+      axiosCancel.current = true;
     } else {
-      axiosCancel = false; // back to default when in '/' path
+      axiosCancel.current = false; // back to default when in '/' path
     }
-  }, [location.pathname, stateShared.queryUsername]);
+  }, [location, stateShared.queryUsername]);
 
   useEffect(() => {
     let isFinished = false;
-    if (isTokenRSSExist && location.pathname === '/') {
+    if (isTokenRSSExist && location === '/') {
       dispatchShared({
         type: 'TOKEN_RSS_ADDED',
         payload: {
@@ -572,7 +533,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
   useEffect(() => {
     let isFinished = false;
     setNotification('');
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
+    if (isSeenCardsExist && location === '/' && !isFinished && state.filterBySeen) {
       const ids = state.undisplayMergedData.reduce((acc, obj) => {
         acc.push(obj.id);
         return acc;
@@ -600,7 +561,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
 
   useEffect(() => {
     let isFinished = false;
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
+    if (isSeenCardsExist && location === '/' && !isFinished && !state.filterBySeen) {
       dispatch({
         type: 'UNDISPLAY_MERGED_DATA',
         payload: {
@@ -637,12 +598,12 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seenDataLoading, seenDataError, seenData, location.pathname, state.filterBySeen]);
+  }, [seenDataLoading, seenDataError, seenData, location, state.filterBySeen]);
 
   useEffect(
     () => {
       let isFinished = false;
-      if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/' && !isFinished) {
+      if (isMergedDataExist && state.shouldFetchImages && location === '/' && !isFinished) {
         // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
         dispatch({
           type: 'SHOULD_IMAGES_DATA_ADDED',
@@ -714,7 +675,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
                     ? stateShared.queryUsername[0]
                     : stateShared.queryUsername,
                   page: state.page,
-                  axiosCancel,
+                  axiosCancel: axiosCancel.current,
                 });
                 if (response.length > 0) {
                   dispatch({
@@ -785,7 +746,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
         return getSearchTopics({
           signal: abortController.signal,
           topic: variables.queryTopic,
-          axiosCancel,
+          axiosCancel: axiosCancel.current,
         })
           .then((result: IDataOne) => {
             paginationInfo += result.paginationInfoData;
@@ -822,56 +783,7 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
     }
     return state.mergedData; // return this if filteredTopics.length === 0
   };
-
-  useScrollSaver(location.pathname, '/');
-
-  // TODO: put the color of each card to change as the user scroll to the bottom to see it: https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API
-  // and put delay at each Card so that as if the animation is at random
-
-  // TODO: show related topics that you get from queries.ts
-
-  // TODO: sortable cards based on topics, and when clicked to the topic section
-  // it should show effect: https://codyhouse.co/ds/components/app/looping-tabs
-
-  //TODO: handle the case where the user revoke his token
-
-  //TODO: disable inspect element when in production
-
-  //TODO: show the history of the user + statistic of what languages they browse
-
-  //TODO: test brutal requests the reslience of handling requests (use https://marmelab.com/blog/2018/04/03/how-to-track-and-fix-memory-leak-with-nodejs.html#first-code-example)
-
-  //TODO: create button on card: "Do you want the stargazers to be analyzed?" and will display the most relevant users' repos showed in "Discover" section
-
-  //TODO: show all function in code base and where it uses the function. need to differentiate between returning jsx and not returning jsx
-
-  //TODO: https://github.com/asilvas/node-image-steam,
-  // https://swc.rs/docs/usage-swc-loader
-
-  //TODO: after Details is rendered, show related repo from author and contributors sorted based on stargazers.
-
-  //TODO: if the user is new, guide them using https://shepherdjs.dev/
-
-  //TODO: recommend based on comment and thread comments. For example if you want to search for serviceworker, show them the git
-
-  //TODO: search code using AST or sourcegraph so that if we want to search for uwebsocket and csrf (implement csrf in uwebsocket server), rank the search based on the document that appears from the queries in the repo
-  // take into account in filename or folder or comment or package.json name also such as middleware
-
-  //TODO: if you want to search for react sw.js create-react-app, create multiple searchboxes for each queries.
-
-  //TODO: separate between Trending (popularity content) and For you (personalized content) tabs
-
-  //TODO: if the setting is to load 1000 cards, instead of waiting 1000 cards, render in batch so that the user can interact immediately using request module for stream URL then use ndjson as a pipe
-  // (https://medium.com/@Jekrb/process-streaming-json-with-node-js-d6530cde72e9 https://github.com/maxogden/ndjson https://github.com/FdezRomero/request-image-size/blob/master/index.js) and use http response stream
-
-  //TODO: (not related to react-github). Scatter articles in your social media accounts. To easily search, you can copy link of your bookmark, Netflix Medium Blog URL, etc and let use elasticsearch to search keyword for your query
-
-  //TODO: optimize Apollo Cache using: https://stackoverflow.com/questions/54307214/how-to-tell-apollo-client-to-not-apply-normalization-on-specific-fields or
-  // https://stackoverflow.com/questions/50626652/apollo-inmemorycache-performance-strategies-for-large-data-set-react or https://www.apollographql.com/docs/react/caching/cache-configuration/#disabling-normalization
-
-  // TODO: if you follow the user logged-in to your platform, you can see their browsing history and display the gists where the case they don't starred the git.
-
-  //TODO: store JSON data at https://developer.mozilla.org/en-US/docs/Web/API/IDBObjectStore at user disk
+  useScrollSaver(location, '/');
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
@@ -899,40 +811,11 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
             </div>
           </Then>
         </If>
-        <If condition={isMergedDataExist}>
-          <Then>
-            <MasonryMemo data={whichToUse()} getRootProps={getRootProps} />
-          </Then>
-        </If>
-        <If condition={!isMergedDataExist}>
-          <Then>
-            <MasonryLayoutMemo data={whichToUse()} state={state} stateShared={stateShared}>
-              {() => {
-                return Object.keys(state.mergedData).map((_, idx) => createRenderElement(CardSkeleton, { key: idx }));
-              }}
-            </MasonryLayoutMemo>
-          </Then>
-        </If>
+        {MasonryCard(isMergedDataExist, { data: whichToUse(), getRootProps })}
 
-        <If condition={isLoading}>
-          <Then>
-            <div style={{ textAlign: 'center' }}>
-              <img src={eye} style={{ width: '100px' }} />
-              <div style={{ textAlign: 'center' }}>
-                <h3>
-                  Please wait while fetching your query of:{' '}
-                  <p>
-                    <a className={'underlining'}>
-                      {Array.isArray(stateShared.queryUsername) && stateShared.queryUsername.length > 0
-                        ? stateShared.queryUsername.join(', ')
-                        : stateShared.queryUsername}
-                    </a>
-                  </p>
-                </h3>
-              </div>
-            </div>
-          </Then>
-        </If>
+        {MasonryLoading(!isMergedDataExist, { data: whichToUse() })}
+
+        {LoadingEye(isLoading, { queryUsername: stateShared.queryUsername })}
 
         <If condition={notification}>
           <Then>
@@ -946,16 +829,11 @@ const Home = React.memo<ActionResolvePromiseOutput>(({ actionResolvePromise }) =
           </Then>
         </If>
       </div>
-      <ScrollTopLayout>
-        <Fab color="secondary" size="small" aria-label="scroll back to top">
-          <KeyboardArrowUpIcon style={{ transform: 'scale(1.5)' }} />
-        </Fab>
-      </ScrollTopLayout>
-      <If condition={stateShared.width > 1100}>
-        <Then>{createRenderElement(BottomNavigationBar, {})}</Then>
-      </If>
+      {ScrollToTopLayout(isMergedDataExist)}
+
+      {BottomNavigationBar(stateShared.width > 1100)}
     </React.Fragment>
   );
-});
+};
 Home.displayName = 'Home';
 export default Home;

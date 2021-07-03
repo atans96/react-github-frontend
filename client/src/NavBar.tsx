@@ -31,7 +31,7 @@ const directionNotLogin = new Map(
   ].map((i) => [i.path, { index: i.index, explored: i.explored }])
 );
 
-const NavBar = React.memo(() => {
+const NavBar = ({ ClickedNavBar }: any) => {
   const [state, dispatch] = useTrackedStateShared();
   const [active, setActiveBar] = useState<any>('');
   const navBarRef = useRef<HTMLDivElement>(null);
@@ -64,6 +64,7 @@ const NavBar = React.memo(() => {
   const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     const res = event.currentTarget.id;
+    ClickedNavBar(event.currentTarget.id);
     setActiveBar((prevState: string) => {
       previousActive.current = prevState;
       return res;
@@ -345,6 +346,6 @@ const NavBar = React.memo(() => {
       </ul>
     </div>
   );
-});
+};
 NavBar.displayName = 'NavBar';
 export default NavBar;

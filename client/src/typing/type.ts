@@ -1,9 +1,20 @@
-import { PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
+import { RouteProps } from 'react-router-dom';
+import { ApolloClient } from '@apollo/client';
+export type Client = ApolloClient<Record<string, any>>;
 export type Pick2<T, K1 extends keyof T, K2 extends keyof T[K1]> = {
   //https://gist.github.com/staltz/368866ea6b8a167fbdac58cddf79c1bf
   [P1 in K1]: {
     [P2 in K2]: T[K1][P2];
   };
+};
+export type Route = Omit<RouteProps, 'component' | 'render'> & {
+  name: string;
+  children?: Route[];
+  lazy?: boolean;
+  component: React.ComponentType<any>;
+  meta?: Record<string, any>;
+  render?: (custom: any) => RouteProps['render'];
 };
 export type RepoInfoProps = {
   fullName: string;

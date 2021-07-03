@@ -23,7 +23,21 @@ import {
   UserData,
   UserInfoData,
 } from './type';
+export interface ActionResolvePromise {
+  action: ActionResolvedPromise;
+  setLoading: any;
+  setNotification: any;
+  isFetchFinish: boolean;
+  displayName: string;
+  data?: Nullable<IDataOne | any>;
+  error?: string;
+  prefetch?: (x: string) => void;
+}
 
+export interface ActionResolvePromiseOutput {
+  actionResolvePromise: ({ args }: ActionResolvePromise) => Output;
+  location: string;
+}
 export interface LocationGraphQL {
   //follow NavBar.tsx at getAllGraphQLData
   data: {

@@ -18,8 +18,6 @@ import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { noop } from '../../util/util';
 import { LanguagePreference } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
-
-import { useDeepMemo } from '../../hooks/useDeepMemo';
 import { LocationGraphQL } from '../../typing/interface';
 
 interface StyleProps {
@@ -49,7 +47,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     margin: theme.spacing(3),
   },
 }));
-const RowOne = React.memo(() => {
+const RowOne = () => {
   const [openLanguages, setOpenLanguages] = useState(false);
   const classes = useStyles({ drawerWidth: '250px' });
   const handleOpenLanguages = (e: React.MouseEvent) => {
@@ -136,7 +134,7 @@ const RowOne = React.memo(() => {
         <div className="SelectMenu-list" style={{ background: 'var(--background-theme-color)', maxHeight: '300px' }}>
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup>
-              {useDeepMemo(() => {
+              {React.useMemo(() => {
                 return languagePreferences.map((obj: LanguagePreference) => {
                   return (
                     <FormControlLabel
@@ -153,6 +151,6 @@ const RowOne = React.memo(() => {
       </Collapse>
     </List>
   );
-});
+};
 RowOne.displayName = 'LanguagePreference';
 export default RowOne;
