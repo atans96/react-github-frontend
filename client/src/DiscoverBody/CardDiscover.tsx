@@ -10,6 +10,17 @@ import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
 import { StateStargazersProvider, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useViewportSpy } from '../hooks/use-viewport-spy';
 import { createRenderElement } from '../Layout/MasonryLayout';
+import { loadable } from '../loadable';
+
+const ImagesCardDiscoverRenderer = (args: { index: any; imagesMapDataDiscover: any }) =>
+  loadable({
+    importFn: () =>
+      import('./CardDiscoverBody/ImagesCardDiscoverRenderer').then((module) =>
+        createRenderElement(module.default, { ...args })
+      ),
+    cacheId: 'ImagesCardDiscoverRenderer',
+    empty: () => <></>,
+  });
 
 export interface Card {
   index: number;
@@ -83,8 +94,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
         },
       }).then(noop);
     };
-    const isVisibleRef = useRef<HTMLDivElement>(null);
-    const isVisible = useViewportSpy(isVisibleRef);
     const location = useLocation();
     if (!githubData) return <p>No githubData, sorry</p>;
     return (
@@ -92,7 +101,6 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
         className={clsx('card bg-light fade-in', {
           'card-width-mobile': columnCount === 1,
         })}
-        ref={isVisibleRef}
       >
         <StateStargazersProvider>
           {createRenderElement(UserCardDiscover, { data: userCardMemoizedData(), sorted })}
@@ -100,7 +108,7 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
         <h3 style={{ textAlign: 'center' }}>
           <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
         </h3>
-        {createRenderElement(ImagesCardDiscover, { index: index, visible: isVisible || false, imagesMapDataDiscover })}
+        {ImagesCardDiscoverRenderer({ index: index, imagesMapDataDiscover })}
         <div className="trunctuatedTexts">
           <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
         </div>

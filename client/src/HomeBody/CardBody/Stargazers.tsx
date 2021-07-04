@@ -17,11 +17,44 @@ import StarBorderIcon from '@material-ui/icons/StarBorder';
 import { SEARCH_FOR_REPOS } from '../../graphql/queries';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { createPortal } from 'react-dom';
-import StargazersInfo from './StargazersCardBody/StargazersInfo';
 import { NavLink } from 'react-router-dom';
-import LoginGQL from './StargazersCardBody/LoginGQL';
 import { removeStarredMe, setStarredMe } from '../../services';
 import { createRenderElement } from '../../Layout/MasonryLayout';
+import { loadable } from '../../loadable';
+
+const StargazersInfo = (
+  condition: boolean,
+  args: {
+    setVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    modalWidth: string;
+    isLoading: boolean;
+    getRootProps: any;
+    getRootPropsCard: any;
+    stargazers_count: number;
+    GQL_VARIABLES: any;
+  }
+) =>
+  loadable({
+    importFn: () =>
+      import('./StargazersCardBody/StargazersInfo').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'StargazersInfo',
+    condition: condition,
+    empty: () => <></>,
+  });
+const LoginGQL = (
+  condition: boolean,
+  args: {
+    setVisible: React.Dispatch<React.SetStateAction<boolean>>;
+    style: { display: string; width: string };
+  }
+) =>
+  loadable({
+    importFn: () =>
+      import('./StargazersCardBody/LoginGQL').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'LoginGQL',
+    condition: condition,
+    empty: () => <></>,
+  });
 
 interface StargazersProps {
   data: MergedDataProps;
@@ -123,11 +156,10 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
               position: 'absolute',
             }}
           >
-            {createRenderElement(StargazersInfo, {
+            {StargazersInfo(visible && stateShared.tokenGQL.length > 0 && stateShared.isLoggedIn, {
               setVisible,
               getRootProps,
               getRootPropsCard,
-              boundingRect: starCountsContainerRef?.current?.getBoundingClientRect(),
               modalWidth: modalWidth.current,
               stargazers_count: data.stargazers_count,
               isLoading,
@@ -167,7 +199,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
             }}
             ref={notLoggedInRef}
           >
-            {createRenderElement(LoginGQL, {
+            {LoginGQL(visible && stateShared.tokenGQL.length === 0, {
               setVisible,
               style: { display: 'absolute', width: 'fit-content' },
             })}
