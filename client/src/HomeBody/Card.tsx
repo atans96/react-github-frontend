@@ -14,6 +14,8 @@ import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { createRenderElement } from '../Layout/MasonryLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
+import { loadable } from '../loadable';
+import { LoadingBig } from '../LoadingBig';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -21,6 +23,14 @@ export interface CardProps {
   index: number;
   getRootProps?: any;
 }
+const ImagesCardRenderer = (args: { index: number }) =>
+  loadable({
+    importFn: () =>
+      import('./CardBody/ImagesCardRenderer').then((module) => createRenderElement(module.default, { ...args })),
+    cacheId: 'ImagesCardRenderer',
+    empty: () => <></>,
+  });
+
 const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) => {
   // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
@@ -121,7 +131,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
     >
       {createRenderElement(UserCard, { data: userCardMemoizedData() })}
       {createRenderElement(CardTitle, { data: cardTitleMemoize() })}
-      {createRenderElement(ImagesCard, { index: index })}
+      {ImagesCardRenderer({ index: index })}
       <div className="trunctuatedTexts">
         <h4 style={{ textAlign: 'center' }}>{data.description}</h4>
       </div>

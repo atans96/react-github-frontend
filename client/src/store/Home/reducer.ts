@@ -47,6 +47,8 @@ export const initialState: IState = {
 };
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
+    //TODO: instead of blindly comparing each object at Component level, use metadata to tell object comparer to compare specific state
+    // that contains mutation
     case 'REPO_STAT': {
       return {
         ...state,

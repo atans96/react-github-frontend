@@ -9,7 +9,7 @@ interface ImageComponentProps {
   handleClick: (arg: any) => void;
 }
 
-export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, handleClick }) => {
+const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, handleClick }) => {
   const { src, isLoading, error, height, width } = useImage({
     srcList: urlLink,
     useSuspense: false,
@@ -42,3 +42,4 @@ export const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, h
   );
 };
 ImageComponentLayout.displayName = 'ImageComponentLayout';
+export default ImageComponentLayout;
