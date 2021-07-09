@@ -14,7 +14,6 @@ const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, handleCl
     srcList: urlLink,
     useSuspense: false,
   });
-  const imgRef = React.createRef<HTMLDivElement>();
   return (
     <React.Fragment>
       <If condition={isLoading}>
@@ -24,7 +23,7 @@ const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, handleCl
       </If>
       <If condition={!isLoading && !error && src !== undefined && src?.original?.length > 0}>
         <Then>
-          <div onClick={handleClick} ref={imgRef}>
+          <div onClick={handleClick}>
             <SideBySideMagnifier
               classNameImage={'img-loaded'}
               width={width}

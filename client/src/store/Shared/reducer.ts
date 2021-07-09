@@ -17,12 +17,14 @@ export type ActionShared =
   | 'QUERY_USERNAME'
   | 'SET_USERNAME'
   | 'TOKEN_RSS_ADDED'
+  | 'SET_SHOULD_RENDER'
   | 'SET_DRAWER_WIDTH'
   | 'SET_CARD_ENHANCEMENT'
   | 'NO_DATA_FETCH';
 
 export const initialStateShared: IStateShared = {
   width: window.innerWidth,
+  shouldRender: '',
   githubLanguages: new Map<string, GithubLanguages>(),
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
@@ -48,6 +50,12 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateStargazers,
         ...initialStateManageProfile,
         ...initialStateRateLimit,
+      };
+    }
+    case 'SET_SHOULD_RENDER': {
+      return {
+        ...state,
+        shouldRender: action.payload.shouldRender,
       };
     }
     case 'SET_USERNAME': {

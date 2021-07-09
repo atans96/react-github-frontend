@@ -1,7 +1,6 @@
 import React from 'react';
 import { useUserCardStyles } from './UserCardStyle';
 import { Typography } from '@material-ui/core';
-import { isEqualObjects } from '../../util';
 import { MergedDataProps } from '../../typing/type';
 import { useHistory } from 'react-router-dom';
 import {
@@ -15,7 +14,7 @@ interface UserCardDiscover {
   sorted: string;
 }
 
-const UserCardDiscover = React.memo<UserCardDiscover>(
+const UserCardDiscover: React.FC<UserCardDiscover> = React.memo(
   ({ data, sorted }) => {
     const classes = useUserCardStyles();
     const { login, avatar_url, html_url } = data.owner;
@@ -66,7 +65,7 @@ const UserCardDiscover = React.memo<UserCardDiscover>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return isEqualObjects(prevProps.data, nextProps.data) && isEqualObjects(prevProps.sorted, nextProps.sorted);
+    return prevProps.data.owner.avatar_url === nextProps.data.owner.avatar_url && prevProps.sorted === nextProps.sorted;
   }
 );
 UserCardDiscover.displayName = 'UserCardDiscover';

@@ -1,26 +1,22 @@
-import React, { useCallback, useRef } from 'react';
+import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { MergedDataProps } from '../typing/type';
 import clsx from 'clsx';
-import ImagesCardDiscover from './CardDiscoverBody/ImagesCardDiscover';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import UserCardDiscover from './CardDiscoverBody/UserCardDiscover';
 import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
-import { StateStargazersProvider, useTrackedStateShared } from '../selectors/stateContextSelector';
-import { useViewportSpy } from '../hooks/use-viewport-spy';
-import { createRenderElement } from '../Layout/MasonryLayout';
-import { loadable } from '../loadable';
+import { useTrackedStateShared } from '../selectors/stateContextSelector';
+import Loadable from 'react-loadable';
+import { LoadingBig } from '../LoadingBig';
+import { useStableCallback } from '../util';
+import './CardDiscover.scss';
 
-const ImagesCardDiscoverRenderer = (args: { index: any; imagesMapDataDiscover: any }) =>
-  loadable({
-    importFn: () =>
-      import('./CardDiscoverBody/ImagesCardDiscoverRenderer').then((module) =>
-        createRenderElement(module.default, { ...args })
-      ),
-    cacheId: 'ImagesCardDiscoverRenderer',
-    empty: () => <></>,
-  });
+const ImagesCardDiscover = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "ImagesCardDiscover" */ './CardDiscoverBody/ImagesCardDiscover'),
+});
 
 export interface Card {
   index: number;
@@ -37,15 +33,9 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
   ({ githubData, index, columnCount, imagesMapDataDiscover, sorted }, ref) => {
     // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
     // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
-    const userCardMemoizedData = useCallback(() => {
-      return githubData;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [githubData.owner, githubData.trends, sorted]);
+    const userCardMemoizedData = useStableCallback(() => githubData);
     const [stateShared] = useTrackedStateShared();
-    const stargazersMemoizedGithubData = useCallback(() => {
-      return githubData;
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [githubData.name, githubData.owner.login, githubData.full_name, githubData.id, githubData.stargazers_count]);
+    const stargazersMemoizedGithubData = useStableCallback(() => githubData);
 
     const displayName: string | undefined = (CardDiscover as React.ComponentType<any>).displayName;
     const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
@@ -102,17 +92,18 @@ const CardDiscover: React.FC<CardRef> = React.forwardRef(
           'card-width-mobile': columnCount === 1,
         })}
       >
-        <StateStargazersProvider>
-          {createRenderElement(UserCardDiscover, { data: userCardMemoizedData(), sorted })}
-        </StateStargazersProvider>
+        <UserCardDiscover data={userCardMemoizedData()} sorted={sorted} />
         <h3 style={{ textAlign: 'center' }}>
           <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
         </h3>
-        {ImagesCardDiscoverRenderer({ index: index, imagesMapDataDiscover })}
+        {imagesMapDataDiscover.size > 0 && (
+          <ImagesCardDiscover index={index} imagesMapDataDiscover={imagesMapDataDiscover} />
+        )}
+
         <div className="trunctuatedTexts">
           <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
         </div>
-        {createRenderElement(StargazersDiscover, { data: stargazersMemoizedGithubData() })}
+        <StargazersDiscover data={stargazersMemoizedGithubData()} />
         <div>
           <ul
             className={`language}`}

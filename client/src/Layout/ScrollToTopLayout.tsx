@@ -9,7 +9,7 @@ const useStyles = makeStyles((theme) => ({
     right: theme.spacing(2),
   },
 }));
-const ScrollTopLayout = () => {
+const ScrollTopLayout = React.memo(() => {
   const classes = useStyles();
   const trigger = useScrollTrigger({
     disableHysteresis: true,
@@ -33,6 +33,6 @@ const ScrollTopLayout = () => {
       </div>
     </Zoom>
   );
-};
+});
 ScrollTopLayout.displayName = 'ScrollTopLayout';
 export default ScrollTopLayout;

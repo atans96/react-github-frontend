@@ -3,25 +3,21 @@ import SearchBarLayout from '../Layout/SearchBarLayout';
 import { getElasticSearchBert } from '../services';
 import { IStateShared } from '../typing/interface';
 import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
-import { createRenderElement } from '../Layout/MasonryLayout';
-import { loadable } from '../loadable';
+import Loadable from 'react-loadable';
+import { LoadingBig } from '../LoadingBig';
+import { Pick2 } from '../typing/type';
 
-const PureInputDiscover = (args: {
-  ref: React.MutableRefObject<any | undefined>;
-  dispatchDiscover: any;
-  style: React.CSSProperties;
-}) =>
-  loadable({
-    importFn: () => import('./PureInputDiscover').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'PureInputDiscover',
-    empty: () => <></>,
-  });
+const PureInputDiscover = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "PureInputDiscover" */ './PureInputDiscover'),
+});
 
 export interface SearchBarProps {
-  stateShared: IStateShared;
+  width: number;
 }
 
-const SearchBarDiscover: React.FC<SearchBarProps> = ({ stateShared }) => {
+const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
   const [, dispatchDiscover] = useTrackedStateDiscover();
   const size = {
     width: '500px',
@@ -29,8 +25,8 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ stateShared }) => {
     maxWidth: '100%',
   };
   let style: React.CSSProperties;
-  if (stateShared.width < 711) {
-    style = { width: `${stateShared.width - 200}px` };
+  if (width < 711) {
+    style = { width: `${width - 200}px` };
   } else {
     style = {
       maxWidth: size.maxWidth,
@@ -54,8 +50,12 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ stateShared }) => {
     });
   };
   return (
-    <SearchBarLayout style={{ width: `${stateShared.width}px` }} onSubmit={handleSubmit}>
-      {() => <React.Fragment>{PureInputDiscover({ style, dispatchDiscover, ref: query })}</React.Fragment>}
+    <SearchBarLayout style={{ width: `${width}px` }} onSubmit={handleSubmit}>
+      {() => (
+        <React.Fragment>
+          <PureInputDiscover style={style} dispatchDiscover={dispatchDiscover} ref={query} />
+        </React.Fragment>
+      )}
     </SearchBarLayout>
   );
 };

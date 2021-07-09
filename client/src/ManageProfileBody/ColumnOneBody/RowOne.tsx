@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Checkbox,
   Collapse,
@@ -19,6 +19,7 @@ import { noop } from '../../util/util';
 import { LanguagePreference } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 import { LocationGraphQL } from '../../typing/interface';
+import { useStableCallback } from '../../util';
 
 interface StyleProps {
   drawerWidth: string;
@@ -101,26 +102,22 @@ const RowOne = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languagePreferences]);
 
-  const handleCheckboxChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      event.preventDefault();
-      setLanguagePreferences(
-        [...languagePreferencesRef.current].map((obj) => {
-          if (obj.language === event.target.name) {
-            return {
-              ...obj,
-              language: event.target.name,
-              checked: event.target.checked,
-            };
-          } else {
-            return obj;
-          }
-        })
-      );
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [languagePreferencesRef.current]
-  );
+  const handleCheckboxChange = useStableCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    setLanguagePreferences(
+      [...languagePreferencesRef.current].map((obj) => {
+        if (obj.language === event.target.name) {
+          return {
+            ...obj,
+            language: event.target.name,
+            checked: event.target.checked,
+          };
+        } else {
+          return obj;
+        }
+      })
+    );
+  });
 
   return (
     <List>

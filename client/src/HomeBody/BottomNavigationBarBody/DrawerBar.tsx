@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
@@ -8,6 +8,7 @@ import { useDraggable } from '../../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
 import { useLocation } from 'react-router-dom';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
+import { useStableCallback } from '../../util';
 
 interface StyleProps {
   drawerWidth: string;
@@ -56,15 +57,15 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
 }));
 
-const DrawerBar = () => {
+const DrawerBar = React.memo(() => {
   const [open, setOpen] = useState(false);
   const [drawerWidth, dragHandlers, drawerRef] = useDraggable({});
   const classes = useStyles({ drawerWidth: open ? `${drawerWidth}px` : '0px' });
   const [, dispatch] = useTrackedStateShared();
-  const handleClick = useCallback((e: React.MouseEvent) => {
+  const handleClick = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setOpen((prev) => !prev);
-  }, []);
+  });
   const location = useLocation();
   useEffect(() => {
     if (location.pathname === '/') {
@@ -123,6 +124,6 @@ const DrawerBar = () => {
       </Drawer>
     </React.Fragment>
   );
-};
+});
 DrawerBar.displayName = 'DrawerBar';
 export default DrawerBar;

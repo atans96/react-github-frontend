@@ -11,7 +11,7 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 
 interface UserCard {
-  data: { owner: OwnerProps; id: number; cardEnhancement: Map<number, CardEnhancement> };
+  data: { owner: OwnerProps; id: number };
 }
 
 const UserCard: React.FC<UserCard> = ({ data }) => {

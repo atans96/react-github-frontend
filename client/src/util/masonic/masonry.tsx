@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useRef, useEffect, createElement } from 'react';
 import { useWindowSize } from '@react-hook/window-size';
 import { MasonryScroller } from './masonry-scroller';
 import type { MasonryScrollerProps } from './masonry-scroller';
@@ -17,7 +17,7 @@ import type { UseScrollToIndexOptions } from './use-scroll-to-index';
  */
 export function Masonry<Item>(props: MasonryProps<Item>) {
   //re-render when containerRef is not null
-  const containerRef = React.useRef<null | HTMLElement>(null);
+  const containerRef = useRef<null | HTMLElement>(null);
   const windowSize = useWindowSize({
     initialWidth: props.ssrWidth,
     initialHeight: props.ssrHeight,
@@ -42,14 +42,14 @@ export function Masonry<Item>(props: MasonryProps<Item>) {
   const index =
     props.scrollToIndex && (typeof props.scrollToIndex === 'number' ? props.scrollToIndex : props.scrollToIndex.index);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (index !== void 0) {
       //won't do anything if props.scrollToIndex not provided
       scrollToIndex(index);
     }
   }, [index, scrollToIndex]);
 
-  return React.createElement(MasonryScroller, nextProps);
+  return createElement(MasonryScroller, nextProps);
 }
 
 export interface MasonryProps<Item>

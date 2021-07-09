@@ -227,6 +227,7 @@ export const convertToWebP = async (imgUrl: string) => {
 export const getFile = async (filename: string) => {
   const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_github_languages?filename=${filename}`, {
     method: 'GET',
+    headers: { 'Accept-Encoding': 'gzip' },
   });
   return await response.json();
 };

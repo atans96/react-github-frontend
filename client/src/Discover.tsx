@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useResizeHandler } from './hooks/hooks';
-import { ActionResolvedPromise, MergedDataProps, RenderImages, SeenProps } from './typing/type';
+import React, { useEffect, useRef, useState } from 'react';
+import { MergedDataProps, RenderImages, SeenProps } from './typing/type';
 import { Then } from './util/react-if/Then';
 import { If } from './util/react-if/If';
 import clsx from 'clsx';
@@ -9,135 +8,64 @@ import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { noop } from './util/util';
 import eye from './new_16-2.gif';
-import { ActionResolvePromise, IAction, IStateDiscover, Output, StaticState } from './typing/interface';
+import { StaticState } from './typing/interface';
 import { useScrollSaver } from './hooks/useScrollSaver';
-import { loadable } from './loadable';
-import { ActionShared } from './store/Shared/reducer';
-import { ActionDiscover } from './store/Discover/reducer';
-import { createRenderElement } from './Layout/MasonryLayout';
+import useResizeObserver from './hooks/useResizeObserver';
+import Loadable from 'react-loadable';
+import { LoadingBig } from './LoadingBig';
+import useFetchUser from './hooks/useFetcnUserDiscover';
+import { Redirect, useLocation } from 'react-router-dom';
+import { useStableCallback } from './util';
+import { useDeepMemo } from './hooks/useDeepMemo';
+import './Discover.scss';
 
-const ScrollToTopLayout = (condition: boolean) =>
-  loadable({
-    importFn: () => import('./Layout/ScrollToTopLayout'),
-    cacheId: 'ScrollToTopLayoutDiscover',
-    condition: condition,
-    empty: () => <></>,
+const ScrollToTopLayout = Loadable({
+  loading: LoadingBig,
+  loader: () => import(/* webpackChunkName: "ScrollToTopLayoutDiscover" */ './Layout/ScrollToTopLayout'),
+  delay: 300,
+});
+
+const MasonryCard = Loadable({
+  loading: LoadingBig,
+  loader: () => import(/* webpackChunkName: "MasonryCardDiscover" */ './DiscoverBody/MasonryCard'),
+  delay: 300,
+});
+
+const Discover = () => {
+  const location = useLocation();
+  const {
+    fetchUserMore,
+    fetchUser,
+    isLoading,
+    notification,
+    setNotification,
+    setLoading,
+    stateDiscover,
+    dispatchDiscover,
+    dispatchShared,
+    stateShared,
+  } = useFetchUser({
+    component: 'Discover',
   });
-
-interface MasonryCard {
-  data: MergedDataProps[];
-  imagesDataDiscover: { mapData: Map<number, RenderImages>; arrayData: [RenderImages] | any[] };
-  sorted: any;
-}
-
-const MasonryCard = (condition: boolean, args: MasonryCard) =>
-  loadable({
-    importFn: () =>
-      import('./DiscoverBody/MasonryCard').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'MasonryCardDiscover',
-    condition: condition,
-    empty: () => <></>,
-  });
-
-interface DiscoverProps {
-  location: string;
-  actionResolvePromise: (args: ActionResolvePromise) => Output;
-  perPage: number;
-  stateDiscover: Pick<
-    IStateDiscover,
-    | 'visibleDiscover'
-    | 'pageDiscover'
-    | 'mergedDataDiscover'
-    | 'isLoadingDiscover'
-    | 'notificationDiscover'
-    | 'filterMergedDataDiscover'
-  >;
-  dispatchShared: React.Dispatch<IAction<ActionShared>>;
-  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
-}
-
-const Discover: React.FC<DiscoverProps> = ({
-  stateDiscover,
-  actionResolvePromise,
-  dispatchShared,
-  dispatchDiscover,
-  perPage,
-  location,
-}) => {
   const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
   const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
     (data: StaticState) => data.SuggestedRepo
   );
   // useState is used when the HTML depends on it directly to render something
-  const [isLoading, setLoading] = useState(false);
-  const paginationRef = useRef(perPage);
   const sortedDataRef = useRef([]);
-  const [notification, setNotification] = useState('');
   const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const windowScreenRef = useRef<HTMLDivElement>(null);
-  const fetchUserMore = () => {
-    if (!isFetchFinish.current && stateDiscover.pageDiscover > 1 && sortedDataRef?.current?.length > 0) {
-      setLoading(true); // spawn loading spinner at bottom page
-      paginationRef.current += perPage;
-      if (sortedDataRef.current.slice(paginationRef.current + perPage).length === 0) {
-        isFetchFinish.current = actionResolvePromise({
-          action: ActionResolvedPromise.noData,
-          setLoading,
-          setNotification,
-          isFetchFinish: isFetchFinish.current,
-          displayName: displayName!,
-        }).isFetchFinish;
-      } else {
-        actionResolvePromise({
-          action: ActionResolvedPromise.append,
-          setLoading,
-          setNotification,
-          isFetchFinish: isFetchFinish.current,
-          displayName: displayName!,
-          data: sortedDataRef.current.slice(paginationRef.current, paginationRef.current + perPage),
-        });
-      }
-    }
-  };
 
   const [sortedClicked, setSortedClicked] = useState('Daily');
   const starRankingFiltered: any[] = useSelector(starRankingFilteredSelector(sortedClicked));
   sortedDataRef.current = useSelector(sortedRepoInfoSelector(starRankingFiltered, sortedClicked));
 
-  const fetchUser = () => {
-    isFetchFinish.current = false;
-    setLoading(true);
-    dispatchDiscover({
-      type: 'LAST_PAGE_DISCOVER',
-      payload: {
-        lastPageDiscover: Math.ceil((suggestedData.getSuggestedRepo.repoInfoSuggested.length || 0) / perPage),
-      },
-    });
-    if (sortedDataRef.current.slice(perPage).length === 0) {
-      isFetchFinish.current = actionResolvePromise({
-        action: ActionResolvedPromise.noData,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
-        displayName: displayName!,
-      }).isFetchFinish;
-    } else {
-      actionResolvePromise({
-        action: ActionResolvedPromise.append,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
-        displayName: displayName!,
-        data: sortedDataRef.current.slice(0, paginationRef.current),
-      });
-    }
-  };
-
   const suggestedDataImages = useSelector((data: StaticState) => data.SuggestedRepoImages);
-  const imagesDataDiscover:
-    | { mapData: Map<number, RenderImages>; arrayData: [RenderImages] | any[] }
-    | Map<any, any> = React.useMemo(() => {
+  const imagesDataDiscover: {
+    mapData: Map<number, RenderImages>;
+    arrayData: [RenderImages] | any[];
+  } = useDeepMemo(() => {
     //return it to hashMap
     if (
       !(suggestedDataImages.suggestedDataImagesError || suggestedDataImages.suggestedDataImagesLoading) &&
@@ -154,7 +82,7 @@ const Discover: React.FC<DiscoverProps> = ({
       };
     }
     return { mapData: new Map(), arrayData: [] };
-  }, [suggestedDataImages]);
+  }, [suggestedDataImages?.suggestedDataImages?.getSuggestedRepoImages?.renderImages]);
 
   const isLoadingRef = useRef<boolean>(true);
   const mergedDataRef = useRef<any[]>([]);
@@ -163,7 +91,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/discover' && !isFinished) {
+    if (location.pathname === '/discover' && !isFinished) {
       mergedDataRef.current = stateDiscover.mergedDataDiscover;
       return () => {
         isFinished = true;
@@ -174,7 +102,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/discover' && !isFinished) {
+    if (location.pathname === '/discover' && !isFinished) {
       isLoadingRef.current = isLoading;
       return () => {
         isFinished = true;
@@ -185,7 +113,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/discover' && !isFinished) {
+    if (location.pathname === '/discover' && !isFinished) {
       notificationRef.current = notification;
       return () => {
         isFinished = true;
@@ -196,7 +124,7 @@ const Discover: React.FC<DiscoverProps> = ({
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/discover' && !isFinished) {
+    if (location.pathname === '/discover' && !isFinished) {
       imagesDataDiscoverRef.current = imagesDataDiscover;
       return () => {
         isFinished = true;
@@ -206,54 +134,51 @@ const Discover: React.FC<DiscoverProps> = ({
   }, [imagesDataDiscover]);
   const locationRef = useRef('/discover');
   useEffect(() => {
-    locationRef.current = location;
+    locationRef.current = location.pathname;
   });
-  const handleBottomHit = useCallback(
-    () => {
-      if (
-        !isFetchFinish.current &&
-        mergedDataRef.current.length > 0 &&
-        !isLoadingRef.current &&
-        locationRef.current === '/discover' &&
-        notificationRef.current === ''
-      ) {
-        dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
-        const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
-          const temp = Object.assign(
-            {},
-            {
-              stargazers_count: obj.stargazers_count,
-              full_name: obj.full_name,
-              default_branch: obj.default_branch,
-              owner: {
-                login: obj.owner.login,
-                avatar_url: obj.owner.avatar_url,
-                html_url: obj.owner.html_url,
-              },
-              description: obj.description,
-              language: obj.language,
-              topics: obj.topics,
-              html_url: obj.html_url,
-              id: obj.id,
-              imagesData:
-                imagesDataDiscoverRef.current.arrayData
-                  .filter((xx: RenderImages) => xx.id === obj.id)
-                  .map((obj: RenderImages) => [...obj.value])[0] ?? [],
-              name: obj.name,
-              is_queried: false,
-            }
-          );
-          acc.push(temp);
-          return acc;
-        }, [] as SeenProps[]);
-        if (result.length > 0 && imagesDataDiscoverRef.current.mapData.size > 0) {
-          //don't add to database yet when imagesData still loading.
-          seenAdded(result).then(noop);
-        }
+  const handleBottomHit = useStableCallback(() => {
+    if (
+      !isFetchFinish.current &&
+      mergedDataRef.current.length > 0 &&
+      !isLoadingRef.current &&
+      locationRef.current === '/discover' &&
+      notificationRef.current === ''
+    ) {
+      dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
+      const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
+        const temp = Object.assign(
+          {},
+          {
+            stargazers_count: obj.stargazers_count,
+            full_name: obj.full_name,
+            default_branch: obj.default_branch,
+            owner: {
+              login: obj.owner.login,
+              avatar_url: obj.owner.avatar_url,
+              html_url: obj.owner.html_url,
+            },
+            description: obj.description,
+            language: obj.language,
+            topics: obj.topics,
+            html_url: obj.html_url,
+            id: obj.id,
+            imagesData:
+              imagesDataDiscoverRef.current.arrayData
+                .filter((xx: RenderImages) => xx.id === obj.id)
+                .map((obj: RenderImages) => [...obj.value])[0] ?? [],
+            name: obj.name,
+            is_queried: false,
+          }
+        );
+        acc.push(temp);
+        return acc;
+      }, [] as SeenProps[]);
+      if (result.length > 0 && imagesDataDiscoverRef.current.mapData.size > 0) {
+        //don't add to database yet when imagesData still loading.
+        seenAdded(result).then(noop);
       }
-    }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locationRef.current, isFetchFinish.current, mergedDataRef.current, isLoadingRef.current, notificationRef.current]
-  );
+    }
+  });
 
   useBottomHit(
     windowScreenRef,
@@ -261,18 +186,19 @@ const Discover: React.FC<DiscoverProps> = ({
     isLoading || isFetchFinish.current // include isFetchFinish to indicate not to listen anymore
   );
 
-  function handleResize() {
-    dispatchShared({
-      type: 'SET_WIDTH',
-      payload: {
-        width: window.innerWidth,
-      },
-    });
-  }
-
-  useResizeHandler(windowScreenRef, handleResize);
+  useResizeObserver(windowScreenRef, (entry: any) => {
+    if (stateShared.width !== entry.contentRect.width) {
+      dispatchShared({
+        type: 'SET_WIDTH',
+        payload: {
+          width: entry.contentRect.width,
+        },
+      });
+    }
+  });
   useEffect(() => {
     dispatchDiscover({ type: 'MERGED_DATA_APPEND_DISCOVER_EMPTY' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedClicked]);
   useEffect(() => {
     let isFinished = false;
@@ -281,7 +207,7 @@ const Discover: React.FC<DiscoverProps> = ({
       !suggestedDataLoading &&
       !!suggestedData?.getSuggestedRepo &&
       !suggestedDataError &&
-      location === '/discover' &&
+      location.pathname === '/discover' &&
       !isFinished
     ) {
       fetchUser();
@@ -326,9 +252,8 @@ const Discover: React.FC<DiscoverProps> = ({
     return stateDiscover.mergedDataDiscover; // return this if filteredTopics.length === 0
   };
   //TODO: only show image if size is....https://github.com/ShogunPanda/fastimage at backend
-
-  useScrollSaver(location, '/discover');
-
+  useScrollSaver(location.pathname, '/discover');
+  if (stateShared.isLoggedIn) return <Redirect to={'/login'} from={'/discover'} />;
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
@@ -422,12 +347,14 @@ const Discover: React.FC<DiscoverProps> = ({
             </li>
           </nav>
         </header>
-
-        {MasonryCard(notification === '' && whichToUse()?.length > 0, {
-          data: whichToUse(),
-          imagesDataDiscover: imagesDataDiscover,
-          sorted: sortedClicked,
-        })}
+        {notification === '' && whichToUse()?.length > 0 && (
+          <MasonryCard
+            data={whichToUse()}
+            imagesDataDiscover={imagesDataDiscover}
+            sorted={sortedClicked}
+            width={stateShared.width}
+          />
+        )}
 
         <If
           condition={
@@ -468,7 +395,7 @@ const Discover: React.FC<DiscoverProps> = ({
           </Then>
         </If>
       </div>
-      {ScrollToTopLayout(whichToUse()?.length > 0)}
+      {whichToUse()?.length > 0 && <ScrollToTopLayout />}
     </React.Fragment>
   );
 };

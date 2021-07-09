@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { Masonry } from './masonry';
 import type { MasonryProps } from './masonry';
 

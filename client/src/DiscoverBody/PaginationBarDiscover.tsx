@@ -6,7 +6,7 @@ import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
-import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
+import { useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -34,10 +34,11 @@ const useStyles = makeStyles<Theme>((theme) => ({
   },
 }));
 
-const PaginationBarDiscover = ({ drawerWidth = 0 }) => {
+const PaginationBarDiscover = React.memo(() => {
   const classes = useStyles();
   const [stateDiscover] = useTrackedStateDiscover();
-  if (drawerWidth > 1200) {
+  const [stateShared] = useTrackedStateShared();
+  if (stateShared.drawerWidth > 1200) {
     return (
       <AppBar position="fixed" color="primary" className={classes.appBar}>
         <Toolbar>
@@ -60,6 +61,6 @@ const PaginationBarDiscover = ({ drawerWidth = 0 }) => {
   } else {
     return <></>;
   }
-};
+});
 PaginationBarDiscover.displayName = 'PaginationBarDiscover';
 export default PaginationBarDiscover;

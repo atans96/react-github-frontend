@@ -1,9 +1,9 @@
 import { useRef } from 'react';
-import { isEqualObjects } from '../util';
+import { deepEqual } from 'fast-equals';
 
 export function useDeepMemo(memoFn: (...args: any) => Record<string, any>, key: any) {
   const ref = useRef<any>();
-  if (!ref.current || !isEqualObjects(key, ref.current.key)) {
+  if (!ref.current || !deepEqual(key, ref.current.key)) {
     ref.current = { key, value: memoFn() };
   }
 

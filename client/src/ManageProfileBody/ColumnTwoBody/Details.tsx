@@ -6,7 +6,6 @@ import { markdownParsing } from '../../services';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { useLocation } from 'react-router-dom';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
 
 interface DetailsProps {
   branch: string;

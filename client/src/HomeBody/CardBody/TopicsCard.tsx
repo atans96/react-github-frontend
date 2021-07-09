@@ -1,6 +1,5 @@
 import React from 'react';
 import Topic from './TopicsCardBody/Topic';
-import { createRenderElement } from '../../Layout/MasonryLayout';
 
 interface TopicsCard {
   data: string[];
@@ -10,7 +9,9 @@ interface TopicsCard {
 const TopicsCard: React.FC<TopicsCard> = ({ data, getRootProps }) => {
   return (
     <ul className="topic space-center">
-      {data?.map((topic, idx) => createRenderElement(Topic, { key: idx, idx, topic, getRootProps }))}
+      {data?.map((topic, idx) => (
+        <Topic key={idx} topic={topic} getRootProps={getRootProps} idx={idx} />
+      ))}
     </ul>
   );
 };

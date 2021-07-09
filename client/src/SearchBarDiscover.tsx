@@ -1,27 +1,22 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
-import { loadable } from './loadable';
-import { createRenderElement } from './Layout/MasonryLayout';
+import Loadable from 'react-loadable';
+import { LoadingBig } from './LoadingBig';
+import { useStableCallback } from './util';
 
-const PureSearchBarDiscover = (args: { stateShared: any }) =>
-  loadable({
-    importFn: () =>
-      import('./SearchBarBody/PureSearchBarDiscover').then((module) =>
-        createRenderElement(module.default, { ...args })
-      ),
-    cacheId: 'PureSearchBarDiscover',
-    empty: () => <></>,
-  });
-
-const SearchBarDiscover = () => {
+const PureSearchBarDiscover = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "PureSearchBarDiscover" */ './SearchBarBody/PureSearchBarDiscover'),
+});
+const SearchBarDiscover = React.memo(() => {
   const [stateShared] = useTrackedStateShared();
   const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
-  const PureSearchBarDataMemoized = useCallback(() => {
-    return stateShared;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.width]);
+  const PureSearchBarDataMemoized = useStableCallback(() => {
+    return stateShared.width;
+  });
 
   const location = useLocation();
   useDeepCompareEffect(() => {
@@ -51,9 +46,9 @@ const SearchBarDiscover = () => {
         marginTop: '10rem',
       }}
     >
-      {PureSearchBarDiscover({ stateShared: PureSearchBarDataMemoized() })}
+      <PureSearchBarDiscover width={PureSearchBarDataMemoized()} />
     </div>
   );
-};
+});
 SearchBarDiscover.displayName = 'SearchBarDiscover';
 export default SearchBarDiscover;
