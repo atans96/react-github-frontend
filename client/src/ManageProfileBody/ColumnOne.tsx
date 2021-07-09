@@ -1,28 +1,22 @@
 import React from 'react';
 import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import { createRenderElement } from '../Layout/MasonryLayout';
-import { GraphQLUserData, GraphQLUserInfoData } from '../typing/interface';
-import { loadable } from '../loadable';
+import Loadable from 'react-loadable';
+import { LoadingBig } from '../LoadingBig';
+const RowOne = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "RowOne" */ './ColumnOneBody/RowOne'),
+});
 
-const RowOne = () =>
-  loadable({
-    importFn: () => import('./ColumnOneBody/RowOne').then((module) => createRenderElement(module.default, {})),
-    cacheId: 'RowOne',
-    empty: () => <></>,
-  });
-
-const RowTwo = (args: { handleLanguageFilter: any }) =>
-  loadable({
-    importFn: () => import('./ColumnOneBody/RowTwo').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'RowTwo',
-    empty: () => <></>,
-  });
+const RowTwo = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "RowTwo" */ './ColumnOneBody/RowTwo'),
+});
 
 interface ColumnOneProps {
   handleLanguageFilter: (args?: string) => void;
-  userData: GraphQLUserData;
-  userInfoData: GraphQLUserInfoData;
 }
 
 interface StyleProps {
@@ -64,9 +58,9 @@ const ColumnOne: React.FC<ColumnOneProps> = React.memo(({ handleLanguageFilter }
     <React.Fragment>
       <Drawer variant="permanent" className={classes.drawer} open={true}>
         <div className={classes.toolbar} />
-        {RowOne()}
+        <RowOne />
         <Divider />
-        {RowTwo({ handleLanguageFilter })}
+        <RowTwo handleLanguageFilter={handleLanguageFilter} />
       </Drawer>
     </React.Fragment>
   );

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import useScrollPosition from '@react-hook/window-scroll';
 import { requestTimeout, clearRequestTimeout } from '@essentials/request-timeout';
 
@@ -16,10 +16,10 @@ import { requestTimeout, clearRequestTimeout } from '@essentials/request-timeout
  */
 export function useScroller(offset = 0, fps = 12): { scrollTop: number; isScrolling: boolean } {
   const scrollTop = useScrollPosition(fps);
-  const [isScrolling, setIsScrolling] = React.useState(false);
-  const didMount = React.useRef(0);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const didMount = useRef(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (didMount.current === 1) setIsScrolling(true);
     const to = requestTimeout(() => {
       // This is here to prevent premature bail outs while maintaining high resolution

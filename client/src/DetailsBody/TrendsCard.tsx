@@ -5,6 +5,7 @@ import MonthlyTrends from './TrendsCardBody/MonthlyTrends';
 import { HeatMapContainer } from './TrendsCardBody/HeatMapContainer';
 import { fastFilter } from '../util';
 import { starRanking } from '../typing/type';
+import '../Details.scss';
 
 interface TrendsCardProps {
   project: starRanking;

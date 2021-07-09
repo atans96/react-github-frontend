@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { MergedDataProps } from '../../typing/type';
 import { useApolloClient } from '@apollo/client';
 import { useClickOutside, useEventHandlerComposer } from '../../hooks/hooks';
@@ -19,43 +19,20 @@ import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
 import { removeStarredMe, setStarredMe } from '../../services';
-import { createRenderElement } from '../../Layout/MasonryLayout';
-import { loadable } from '../../loadable';
+import Loadable from 'react-loadable';
+import { LoadingBig } from '../../LoadingBig';
+import { useStableCallback } from '../../util';
+const StargazersInfo = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "StargazersInfo" */ './StargazersCardBody/StargazersInfo'),
+});
 
-const StargazersInfo = (
-  condition: boolean,
-  args: {
-    setVisible: React.Dispatch<React.SetStateAction<boolean>>;
-    modalWidth: string;
-    isLoading: boolean;
-    getRootProps: any;
-    getRootPropsCard: any;
-    stargazers_count: number;
-    GQL_VARIABLES: any;
-  }
-) =>
-  loadable({
-    importFn: () =>
-      import('./StargazersCardBody/StargazersInfo').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'StargazersInfo',
-    condition: condition,
-    empty: () => <></>,
-  });
-const LoginGQL = (
-  condition: boolean,
-  args: {
-    setVisible: React.Dispatch<React.SetStateAction<boolean>>;
-    style: { display: string; width: string };
-  }
-) =>
-  loadable({
-    importFn: () =>
-      import('./StargazersCardBody/LoginGQL').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'LoginGQL',
-    condition: condition,
-    empty: () => <></>,
-  });
-
+const LoginGQL = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "LoginGQL" */ './StargazersCardBody/LoginGQL'),
+});
 interface StargazersProps {
   data: MergedDataProps;
 }
@@ -83,38 +60,34 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
     starredRepoCount: stateStargazers.stargazersUsersStarredRepositories,
     after: stateStargazers.hasNextPage.endCursor,
   };
-  const onClickCb = useCallback(
-    async ({ query, variables }) => {
-      if (stateShared.tokenGQL !== '') {
-        return await client // return Promise
-          .query({
-            query: query,
-            variables: variables,
-            context: { clientName: 'github' },
-          })
-          .then((result) => {
-            result.data.repository.stargazers.nodes.map((node: any) => {
-              const newNode = { ...node };
-              newNode['isQueue'] = false;
-              return dispatchStargazers({
-                type: 'STARGAZERS_ADDED',
-                payload: {
-                  stargazersData: newNode,
-                },
-              });
-            });
-            dispatchStargazers({
-              type: 'STARGAZERS_HAS_NEXT_PAGE',
+  const onClickCb = useStableCallback(async ({ query, variables }: any) => {
+    if (stateShared.tokenGQL !== '') {
+      return await client // return Promise
+        .query({
+          query: query,
+          variables: variables,
+          context: { clientName: 'github' },
+        })
+        .then((result) => {
+          result.data.repository.stargazers.nodes.map((node: any) => {
+            const newNode = { ...node };
+            newNode['isQueue'] = false;
+            return dispatchStargazers({
+              type: 'STARGAZERS_ADDED',
               payload: {
-                hasNextPage: result.data.repository.stargazers.pageInfo || {},
+                stargazersData: newNode,
               },
             });
           });
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.tokenGQL] // if not specified, tokenGQL !== '' will always true when you click it again, even though tokenGQL already updated
-  );
+          dispatchStargazers({
+            type: 'STARGAZERS_HAS_NEXT_PAGE',
+            payload: {
+              hasNextPage: result.data.repository.stargazers.pageInfo || {},
+            },
+          });
+        });
+    }
+  });
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickCb });
   const displayName: string | undefined = (Stargazers as React.ComponentType<any>).displayName;
   const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
@@ -128,7 +101,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const starCountsContainerRef = useRef<HTMLDivElement>(null);
 
-  const onClicked = useCallback(() => {
+  const onClicked = useStableCallback(() => {
     setVisible(false);
     dispatch({
       type: 'REMOVE_ALL',
@@ -136,7 +109,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
     dispatchStargazers({
       type: 'REMOVE_ALL',
     });
-  }, []);
+  });
 
   const { getRootProps: getRootPropsCard } = useEventHandlerComposer({ onClickCb: onClicked });
   const notLoggedInRef = useRef<HTMLDivElement>(null);
@@ -145,7 +118,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
     e.preventDefault();
     setVisible(false);
   };
-  const returnPortal = useCallback(() => {
+  const returnPortal = useStableCallback(() => {
     switch (visible) {
       case stateShared.tokenGQL.length > 0 && stateShared.isLoggedIn: {
         return createPortal(
@@ -156,15 +129,17 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
               position: 'absolute',
             }}
           >
-            {StargazersInfo(visible && stateShared.tokenGQL.length > 0 && stateShared.isLoggedIn, {
-              setVisible,
-              getRootProps,
-              getRootPropsCard,
-              modalWidth: modalWidth.current,
-              stargazers_count: data.stargazers_count,
-              isLoading,
-              GQL_VARIABLES: { GQL_variables, GQL_pagination_variables },
-            })}
+            {visible && stateShared.tokenGQL.length > 0 && stateShared.isLoggedIn && (
+              <StargazersInfo
+                setVisible={setVisible}
+                getRootProps={getRootProps}
+                getRootPropsCard={getRootPropsCard}
+                modalWidth={modalWidth.current}
+                stargazers_count={data.stargazers_count}
+                isLoading={isLoading}
+                GQL_VARIABLES={{ GQL_variables, GQL_pagination_variables }}
+              />
+            )}
           </div>,
           document.body
         );
@@ -199,10 +174,9 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
             }}
             ref={notLoggedInRef}
           >
-            {LoginGQL(visible && stateShared.tokenGQL.length === 0, {
-              setVisible,
-              style: { display: 'absolute', width: 'fit-content' },
-            })}
+            {visible && stateShared.tokenGQL.length === 0 && (
+              <LoginGQL setVisible={setVisible} style={{ display: 'absolute', width: 'fit-content' }} />
+            )}
           </div>,
           document.body
         );
@@ -210,17 +184,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
       default:
         return <></>;
     }
-    // isLoading need to be in dependency array, otherwise we can't send isLoading state to StargazersInfo inside
-    // returnPortal callback here
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    stateShared.tokenGQL.length,
-    visible,
-    isLoading,
-    stateShared.isLoggedIn,
-    GQL_variables,
-    GQL_pagination_variables,
-  ]);
+  });
 
   const handleClickStargazers = (event: React.MouseEvent<HTMLElement>) => {
     setVisible(true); // spawn modal of StargazersInfo

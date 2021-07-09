@@ -5,12 +5,11 @@ import clsx from 'clsx';
 import useImage from '../hooks/useImage';
 import SliderImage from './SliderImage';
 import { useClickOutside } from '../hooks/hooks';
-import { createRenderElement } from './MasonryLayout';
 import { LoadingSmall } from '../LoadingSmall';
 
 interface ImagesModalLayoutProps {
   clicked: boolean;
-  renderImages: any;
+  renderImages: string[];
   ref?: any;
   handleClick: (args: any) => void;
 }
@@ -86,13 +85,9 @@ const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = React.forwardRef(
             }}
           >
             <div className={'slides-inner'} ref={sliderInner}>
-              {renderImages.map((image: string, idx: number) => {
-                return createRenderElement(ImageModal, {
-                  urlLink: image,
-                  loader: <LoadingSmall />,
-                  key: idx,
-                });
-              })}
+              {renderImages.map((image: string, idx: number) => (
+                <ImageModal urlLink={image} loader={<LoadingSmall />} key={idx} />
+              ))}
             </div>
           </div>
         </React.Fragment>

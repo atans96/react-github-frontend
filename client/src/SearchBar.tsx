@@ -1,16 +1,14 @@
 import React, { useRef } from 'react';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
-import { loadable } from './loadable';
-import { createRenderElement } from './Layout/MasonryLayout';
+import Loadable from 'react-loadable';
+import Empty from './Layout/EmptyLayout';
 
-const PureSearchBar = (args: { portalExpandable: any }) =>
-  loadable({
-    importFn: () =>
-      import('./SearchBarBody/PureSearchBar').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'PureSearchBar',
-    empty: () => <></>,
-  });
-const SearchBar = () => {
+const PureSearchBar = Loadable({
+  loading: Empty,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "PureSearchBar" */ './SearchBarBody/PureSearchBar'),
+});
+const SearchBar = React.memo(() => {
   const [stateShared] = useTrackedStateShared();
   const portalExpandable = useRef<any>();
   return (
@@ -20,13 +18,13 @@ const SearchBar = () => {
       style={{
         marginLeft: `${stateShared.drawerWidth > 60 ? `${stateShared.drawerWidth}px` : `${5}rem`}`,
         display: 'grid',
-        marginTop: '10rem',
+        justifyContent: 'center',
       }}
     >
       <div className="title-horizontal-center" style={{ width: `${stateShared.width}px` }}>
         <h1>Github Fetcher Dashboard</h1>
       </div>
-      {PureSearchBar({ portalExpandable })}
+      <PureSearchBar portalExpandable={portalExpandable} />
       <div
         className="portal-expandable"
         ref={portalExpandable}
@@ -38,6 +36,6 @@ const SearchBar = () => {
       />
     </div>
   );
-};
+});
 SearchBar.displayName = 'SearchBar';
 export default SearchBar;

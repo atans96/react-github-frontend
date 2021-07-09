@@ -19,7 +19,7 @@ export interface StargazersInfo {
   getRootProps: any;
   GQL_VARIABLES: any;
   isLoading: boolean;
-  stargazers_count: string;
+  stargazers_count: number;
   modalWidth: string;
   setVisible: any;
 }

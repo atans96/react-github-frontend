@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useRef, DependencyList } from 'react';
 import { createIntervalTree } from './interval-tree';
 
 /**
@@ -13,18 +13,18 @@ import { createIntervalTree } from './interval-tree';
  */
 export function usePositioner(
   { width, columnWidth = 200, columnGutter = 0, columnCount }: UsePositionerOptions,
-  deps: React.DependencyList = emptyArr
+  deps: DependencyList = emptyArr
 ): Positioner {
   const initPositioner = (): Positioner => {
     const [, computedColumnCount] = getColumns(width, columnWidth, columnGutter, columnCount);
     return createPositioner(computedColumnCount, columnWidth, columnGutter);
   };
-  const positionerRef = React.useRef<Positioner>();
+  const positionerRef = useRef<Positioner>();
   if (positionerRef.current === undefined) positionerRef.current = initPositioner();
 
-  const prevDeps = React.useRef(deps);
+  const prevDeps = useRef(deps);
   const opts = [width, columnWidth, columnGutter, columnCount];
-  const prevOpts = React.useRef(opts);
+  const prevOpts = useRef(opts);
   const optsChanged = !opts.every((item, i) => prevOpts.current[i] === item);
 
   if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {

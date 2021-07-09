@@ -13,7 +13,6 @@ import { MergedDataProps } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
-import { createRenderElement } from '../../Layout/MasonryLayout';
 import { LocationGraphQL } from '../../typing/interface';
 
 interface RowTwoProps {
@@ -230,13 +229,13 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
             >
               <thead>
                 {React.useMemo(() => {
-                  return languageStarsInfo.map((languageStar) => {
-                    return createRenderElement(LanguageStarsInfo, {
-                      languageStar,
-                      key: languageStar[0],
-                      onClickLanguageStarInfo,
-                    });
-                  });
+                  return languageStarsInfo.map((languageStar) => (
+                    <LanguageStarsInfo
+                      languageStar={languageStar}
+                      onClickLanguageStarInfo={onClickLanguageStarInfo}
+                      key={languageStar[0]}
+                    />
+                  ));
                 }, [languageStarsInfo.length])}
               </thead>
             </table>

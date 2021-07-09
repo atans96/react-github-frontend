@@ -1,24 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { getRateLimitInfo, requestGithubLogin } from './services';
-import LoginLayout from './Layout/LoginLayout';
+import { Redirect, useHistory, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
 import GitHubIcon from '@material-ui/icons/GitHub';
-import './Login.scss';
-import { useLocation, useHistory, Redirect } from 'react-router-dom';
-import {
-  StateRateLimitProvider,
-  useTrackedStateRateLimit,
-  useTrackedStateShared,
-} from './selectors/stateContextSelector';
-import { createRenderElement } from './Layout/MasonryLayout';
-import KeepMountedLayout from './Layout/KeepMountedLayout';
+import LoginLayout from './Layout/LoginLayout';
+import { getRateLimitInfo, requestGithubLogin } from './services';
 
-const Login = ({ location = '/' }) => {
+const Login = () => {
+  const location = useLocation();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const history = useHistory();
   useEffect(() => {
-    if (location === '/login') {
+    if (location.pathname === '/login') {
       // After requesting Github access by logging using user account's Github
       // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
       const url = window.location.href;
@@ -102,26 +96,24 @@ const Login = ({ location = '/' }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
-
+  if (stateShared.isLoggedIn) return <Redirect to={'/'} from={'/login'} />;
   return (
-    <React.Fragment>
-      <LoginLayout data={data} apiType={'API'} notification="">
-        {() => (
-          <div className={'login-link-container'}>
-            <a
-              className="login-link"
-              href={`https://github.com/login/oauth/authorize?scope=user&client_id=${stateShared.client_id}&redirect_uri=${stateShared.redirect_uri}`}
-              onClick={() => {
-                setData({ ...data, errorMessage: '' });
-              }}
-            >
-              <GitHubIcon />
-              <span>Login with GitHub</span>
-            </a>
-          </div>
-        )}
-      </LoginLayout>
-    </React.Fragment>
+    <LoginLayout data={data} apiType={'API'} notification="">
+      {() => (
+        <div className={'login-link-container'}>
+          <a
+            className="login-link"
+            href={`https://github.com/login/oauth/authorize?scope=user&client_id=${stateShared.client_id}&redirect_uri=${stateShared.redirect_uri}`}
+            onClick={() => {
+              setData({ ...data, errorMessage: '' });
+            }}
+          >
+            <GitHubIcon />
+            <span>Login with GitHub</span>
+          </a>
+        </div>
+      )}
+    </LoginLayout>
   );
 };
 Login.displayName = 'Login';

@@ -1,26 +1,21 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { composeEventHandlers, composeParamsHandler } from '../util';
-import ResizeObserver from 'resize-observer-polyfill';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { composeEventHandlers, composeParamsHandler, useStableCallback } from '../util';
 import useResizeObserver from './useResizeObserver';
 
 export function useClickOutside(ref, handler, exception = []) {
-  const handleClickOutside = useCallback(
-    (event) => {
-      if (
-        !ref?.current ||
-        ref?.current.contains(event.target) ||
-        exception.some((substring) => {
-          //at least there's one true for this regex pattern
-          return new RegExp(substring).test(event?.target?.parentElement?.className);
-        })
-      ) {
-        return;
-      }
-      handler(event);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [ref, exception]
-  );
+  const handleClickOutside = useStableCallback((event) => {
+    if (
+      !ref?.current ||
+      ref?.current.contains(event.target) ||
+      exception.some((substring) => {
+        //at least there's one true for this regex pattern
+        return new RegExp(substring).test(event?.target?.parentElement?.className);
+      })
+    ) {
+      return;
+    }
+    handler(event);
+  });
   useEffect(() => {
     // Bind the event listener
     document.addEventListener('mousedown', handleClickOutside);
@@ -91,24 +86,6 @@ export function useResizeObserverWithRAF(opts, ...args) {
   });
 
   return { size, ref };
-}
-
-export function useResizeHandler(windowScreenRef, callback) {
-  useEffect(() => {
-    const el = windowScreenRef.current;
-    if (el === undefined) {
-      return;
-    }
-
-    // resize observer is a tool you can use to watch for size changes efficiently
-    const resizeObserver = new ResizeObserver(callback);
-    resizeObserver.observe(el);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 }
 export function useCheckStateExists(state, callback = (state) => state.length > 0) {
   const [exist, setExist] = useState(false);

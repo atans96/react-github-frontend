@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { DebounceOptions, useInterval } from './useInterval';
 import { debounce_lodash } from '../util';
+import useLatest from '@react-hook/latest';
 
 function useBottomHit<T extends HTMLDivElement>(
   containerRef: any,

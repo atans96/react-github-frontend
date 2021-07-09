@@ -7,7 +7,6 @@ import { ActionShared } from '../store/Shared/reducer';
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
-
 class SinglyLinkedListNode<T> {
   data: T | any;
   next: SinglyLinkedListNode<T> | null;

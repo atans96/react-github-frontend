@@ -7,22 +7,13 @@ import { Then } from '../../../util/react-if/Then';
 import { LoadingSmall } from '../../../LoadingSmall';
 import { fastFilter } from '../../../util';
 import { Searches } from '../../../typing/type';
-import { loadable } from '../../../loadable';
-import { createRenderElement } from '../../../Layout/MasonryLayout';
-
-interface Result {
-  children: React.ReactNode;
-  userName: string;
-  getRootProps: any;
-}
-
-const Result = (args: Result) =>
-  loadable({
-    importFn: () => import('./Result').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'Result',
-    empty: () => <></>,
-  });
-
+import Loadable from 'react-loadable';
+import Empty from '../../../Layout/EmptyLayout';
+const Result = Loadable({
+  loading: Empty,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "Result" */ './Result'),
+});
 interface ResultRender {
   searches: Searches[];
   filter: any;
@@ -94,7 +85,9 @@ const ResultRender: React.FC<ResultRender> = ({
               new RegExp(valueRef.toLowerCase(), 'gi'),
               (match: string) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
             );
-            return Result({ children: Child({ newBody }), userName: search.search, getRootProps });
+            return (
+              <Result key={idx} children={Child({ newBody })} getRootProps={getRootProps} userName={search.search} />
+            );
           })}
         <If condition={isLoading}>
           <Then>
@@ -112,13 +105,14 @@ const ResultRender: React.FC<ResultRender> = ({
                   return acc;
                 }, []) ?? [];
               return !temp.includes(Object.keys(search)[0]);
-            }, stateSearchUsers).map((result, idx) => {
-              return Result({
-                children: Child1({ result }),
-                userName: Object.keys(result).toString(),
-                getRootProps,
-              });
-            })}
+            }, stateSearchUsers).map((result, idx) => (
+              <Result
+                key={idx}
+                children={Child1({ result })}
+                getRootProps={getRootProps}
+                userName={Object.keys(result).toString()}
+              />
+            ))}
           </Then>
         </If>
       </ul>

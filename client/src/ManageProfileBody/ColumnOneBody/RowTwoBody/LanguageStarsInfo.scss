@@ -1,0 +1,20 @@
+.language-stars-info {
+  text-align: center;
+  color: var(--textSecondaryColor);
+  &:hover {
+    text-align: center;
+    color: red;
+    cursor: pointer;
+  }
+  .badge.language {
+    text-align: center;
+    font-size: 14px;
+    border-radius: 10em;
+    min-width: 1.5em;
+    font-weight: bold;
+    color: white;
+    &:hover {
+      color: yellow;
+    }
+  }
+}

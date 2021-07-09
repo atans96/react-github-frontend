@@ -1,32 +1,25 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { fastFilter } from './util';
-import { useResizeHandler } from './hooks/hooks';
-import { useTrackedStateShared } from './selectors/stateContextSelector';
-import { StateManageProfileProvider } from './selectors/stateContextSelector';
-import { createRenderElement } from './Layout/MasonryLayout';
+import React, { useRef, useState } from 'react';
+import { fastFilter, useStableCallback } from './util';
+import { StateManageProfileProvider, useTrackedStateShared } from './selectors/stateContextSelector';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
-import { loadable } from './loadable';
-
-const ColumnOne = (args: { handleLanguageFilter: any }) =>
-  loadable({
-    importFn: () =>
-      import('./ManageProfileBody/ColumnOne').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'ColumnOne',
-    empty: () => <></>,
-  });
-
-const ColumnTwo = (args: { languageFilter: string[] }) =>
-  loadable({
-    importFn: () =>
-      import('./ManageProfileBody/ColumnTwo').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'ColumnTwo',
-    empty: () => <></>,
-  });
-
-const ManageProfile = () => {
-  const [, dispatch] = useTrackedStateShared();
+import { Redirect, useLocation } from 'react-router-dom';
+import useResizeObserver from './hooks/useResizeObserver';
+import Loadable from 'react-loadable';
+import { LoadingBig } from './LoadingBig';
+const ColumnOne = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "ColumnOne" */ './ManageProfileBody/ColumnOne'),
+});
+const ColumnTwo = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "ColumnTwo" */ './ManageProfileBody/ColumnTwo'),
+});
+const ManageProfile = React.memo(() => {
+  const [state, dispatch] = useTrackedStateShared();
   const [languageFilter, setLanguageFilter] = useState<string[]>([]);
-  const handleLanguageFilter = useCallback((language, remove = false) => {
+  const handleLanguageFilter = useStableCallback((language: string, remove = false) => {
     if (language && !remove) {
       setLanguageFilter((prevState) => {
         return [...prevState, language];
@@ -36,31 +29,30 @@ const ManageProfile = () => {
         return fastFilter((obj: any) => obj !== language, prevState);
       });
     }
-  }, []);
+  });
 
   const manageProfileRef = useRef<HTMLDivElement>(null);
 
-  function handleResize() {
-    dispatch({
-      type: 'SET_WIDTH',
-      payload: {
-        width: window.innerWidth,
-      },
-    });
-  }
-  useResizeHandler(manageProfileRef, handleResize);
+  useResizeObserver(manageProfileRef, (entry: any) => {
+    if (state.width !== entry.contentRect.width) {
+      dispatch({
+        type: 'SET_WIDTH',
+        payload: {
+          width: entry.contentRect.width,
+        },
+      });
+    }
+  });
+  if (state.isLoggedIn) return <Redirect to={'/login'} from={'/profile'} />;
   //TODO: highlight the search word in markdown using: https://github.com/jonschlinkert/remarkable (highlight.js)
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <StateManageProfileProvider>
-        {ColumnOne({ handleLanguageFilter })}
-        {ColumnTwo({ languageFilter })}
+        <ColumnOne handleLanguageFilter={handleLanguageFilter} />
+        <ColumnTwo languageFilter={languageFilter} />
       </StateManageProfileProvider>
     </div>
   );
-};
+});
 ManageProfile.displayName = 'ManageProfile';
-const ManageProfileRender = () => {
-  return <KeepMountedLayout mountedCondition={location.pathname === '/profile'} render={() => ManageProfile} />;
-};
-export default ManageProfileRender;
+export default ManageProfile;

@@ -1,34 +1,24 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import Search from './ColumnTwoBody/Search';
 import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../typing/type';
-import { If } from '../util/react-if/If';
-import { Then } from '../util/react-if/Then';
-import { debounce_lodash, fastFilter } from '../util';
+import { debounce_lodash, fastFilter, useStableCallback } from '../util';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useDeepMemo } from '../hooks/useDeepMemo';
-import { createRenderElement } from '../Layout/MasonryLayout';
-import { loadable } from '../loadable';
+import Loadable from 'react-loadable';
+import { LoadingBig } from '../LoadingBig';
 
-const Details = (args: { html_url: string; width: number; fullName: string; branch: string }) =>
-  loadable({
-    importFn: () =>
-      import('./ColumnTwoBody/Details').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'Details',
-    empty: () => <></>,
-  });
-const RepoInfo = (args: {
-  obj: RepoInfoProps;
-  onClickRepoInfo: (e: React.MouseEvent) => (fullName: string, branch: string, html: string) => void;
-  active: string;
-  key: number;
-}) =>
-  loadable({
-    importFn: () =>
-      import('./ColumnTwoBody/RepoInfo').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'RepoInfo',
-    empty: () => <></>,
-  });
+const Details = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "Details" */ './ColumnTwoBody/Details'),
+});
+
+const RepoInfo = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "RepoInfo" */ './ColumnTwoBody/RepoInfo'),
+});
 
 interface ColumnTwoProps {
   languageFilter: string[];
@@ -43,16 +33,14 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
   const [fullName, setFullName] = useState('');
   const [branch, setBranch] = useState('');
   const [htmlUrl, setHtmlUrl] = useState('');
-  const onClickRepoInfo = useCallback(
+  const onClickRepoInfo = useStableCallback(
     (e: React.MouseEvent) => (fullName: string, branch: string, html: string) => {
       e.preventDefault();
       setFullName(fullName);
       setBranch(branch);
       setHtmlUrl(html);
       setActive(fullName);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    }
   );
   const handleCheckboxClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCheckedItems({ ...checkedItems, [event.target.name]: event.target.checked });
@@ -63,12 +51,10 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
     event.persist();
     debounceInputChange(event.currentTarget.value);
   };
-  const debounceInputChange = useCallback(
+  const debounceInputChange = useStableCallback(
     debounce_lodash(function (typed: string) {
       setTypedFilter(typed);
-    }, 500),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    }, 500)
   );
   //TODO: below ColumnTwo, show infinite scroll sliding window to show trending users/gists
   const render = () => {
@@ -103,15 +89,9 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
         <thead>
           <tr>
             <th>
-              {Search({
-                handleInputChange,
-                width: 350,
-              })}
+              <Search handleInputChange={handleInputChange} width={350} />
               <p>Search in:</p>
-              {Checkboxes({
-                checkedItems,
-                handleCheckboxClick,
-              })}
+              <Checkboxes checkedItems={checkedItems} handleCheckboxClick={handleCheckboxClick} />
             </th>
           </tr>
         </thead>
@@ -128,28 +108,16 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
                 }}
               >
                 {useDeepMemo(() => {
-                  return render().map((obj: RepoInfoProps, idx) => {
-                    return RepoInfo({
-                      active,
-                      obj,
-                      key: idx,
-                      onClickRepoInfo,
-                    });
-                  });
+                  return render().map((obj: RepoInfoProps, idx) => (
+                    <RepoInfo active={active} obj={obj} key={idx} onClickRepoInfo={onClickRepoInfo} />
+                  ));
                 }, [state.repoInfo, checkedItems, languageFilter])}
               </div>
             </td>
             <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
-              <If condition={fullName !== '' && stateShared.width > 850}>
-                <Then>
-                  {Details({
-                    fullName,
-                    branch,
-                    html_url: htmlUrl,
-                    width: stateShared.width,
-                  })}
-                </Then>
-              </If>
+              {fullName !== '' && stateShared.width > 850 && (
+                <Details fullName={fullName} branch={branch} html_url={htmlUrl} width={stateShared.width} />
+              )}
             </td>
           </tr>
         </tbody>

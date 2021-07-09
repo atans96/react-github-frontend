@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect } from 'react';
 import trieMemoize from 'trie-memoize';
 import ResizeObserver from 'resize-observer-polyfill';
 import rafSchd from 'raf-schd';
@@ -17,7 +17,7 @@ export function useResizeObserver(positioner: Positioner) {
   const resizeObserver = createResizeObserver(positioner, forceUpdate);
   // Cleans up the resize observers when they change or the
   // component unmounts
-  React.useEffect(() => () => resizeObserver.disconnect(), [resizeObserver]);
+  useEffect(() => () => resizeObserver.disconnect(), [resizeObserver]);
   return resizeObserver;
 }
 

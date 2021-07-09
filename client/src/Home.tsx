@@ -1,264 +1,81 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ActionResolvePromiseOutput, IDataOne } from './typing/interface';
-import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from './selectors/stateContextSelector';
+import React, { useEffect, useRef } from 'react';
+import { useTrackedState, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { ActionResolvedPromise, ImagesDataProps, MergedDataProps, Nullable, SeenProps } from './typing/type';
+import { ImagesDataProps, MergedDataProps, SeenProps } from './typing/type';
 import { noop } from './util/util';
-import { Counter, fastFilter, pMap } from './util';
-import { crawlerPython, getOrg, getRepoImages, getSearchTopics, getUser } from './services';
+import { fastFilter, pMap, useStableCallback } from './util';
+import { crawlerPython, getRepoImages } from './services';
 import useBottomHit from './hooks/useBottomHit';
-import { useEventHandlerComposer, useResizeHandler } from './hooks/hooks';
+import { useEventHandlerComposer } from './hooks/hooks';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import { useScrollSaver } from './hooks/useScrollSaver';
 import clsx from 'clsx';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
-import { loadable } from './loadable';
-import { createRenderElement } from './Layout/MasonryLayout';
-interface MasonryMemo {
-  getRootProps: any;
-  data: MergedDataProps[];
-}
-interface MasonryLoading {
-  data: MergedDataProps[];
-  cardWidth?: number;
-  gutter?: number;
-}
-interface LoadingEye {
-  queryUsername: string[] | string;
-}
-const MasonryCard = (condition: boolean, args: MasonryMemo) =>
-  loadable({
-    importFn: () => import('./HomeBody/MasonryCard').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'MasonryCardHome',
-    condition: condition,
-    empty: () => <></>,
-  });
-const MasonryLoading = (condition: boolean, args: MasonryLoading) =>
-  loadable({
-    importFn: () => import('./HomeBody/MasonryLoading').then((module) => module.default({ ...args })),
-    cacheId: 'MasonryLoading',
-    condition: condition,
-    empty: () => <></>,
-  });
-const LoadingEye = (condition: boolean, args: LoadingEye) =>
-  loadable({
-    importFn: () => import('./LoadingEye').then((module) => module.default({ ...args })),
-    cacheId: 'LoadingEye',
-    condition: condition,
-    empty: () => <></>,
-  });
-const BottomNavigationBar = (condition: boolean) =>
-  loadable({
-    importFn: () => import('./HomeBody/BottomNavigationBar').then((module) => createRenderElement(module.default, {})),
-    cacheId: 'BottomNavigationBar',
-    condition: condition,
-    empty: () => <></>,
-  });
-const ScrollToTopLayout = (condition: boolean) =>
-  loadable({
-    importFn: () => import('./Layout/ScrollToTopLayout'),
-    cacheId: 'ScrollToTopLayoutHome',
-    condition: condition,
-    empty: () => <></>,
-  });
+import useResizeObserver from './hooks/useResizeObserver';
+import Loadable from 'react-loadable';
+import { LoadingBig } from './LoadingBig';
+import { useLocation } from 'react-router-dom';
+import useFetchUser from './hooks/useFetchUser';
 
-const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, location }) => {
+const MasonryCard = Loadable({
+  loader: () => import(/* webpackChunkName: "MasonryCard" */ './HomeBody/MasonryCard'),
+  loading: LoadingBig,
+  delay: 300, // 0.3 seconds
+});
+const MasonryLoading = Loadable({
+  loading: LoadingBig,
+  loader: () => import(/* webpackChunkName: "MasonryLoading" */ './HomeBody/MasonryLoading'),
+  delay: 300, // 0.3 seconds
+});
+
+const LoadingEye = Loadable({
+  loading: LoadingBig,
+  loader: () => import(/* webpackChunkName: "LoadingEye" */ './LoadingEye'),
+  delay: 300, // 0.3 seconds
+});
+
+const BottomNavigationBar = Loadable({
+  loading: LoadingBig,
+  loader: () => import(/* webpackChunkName: "BottomNavigationBar" */ './HomeBody/BottomNavigationBar'),
+  delay: 300, // 0.3 seconds
+});
+const ScrollToTopLayout = Loadable({
+  loading: LoadingBig,
+  loader: () => import(/* webpackChunkName: "ScrollToTopLayout" */ './Layout/ScrollToTopLayout'),
+  delay: 300, // 0.3 seconds
+});
+
+const Home = React.memo(() => {
+  const {
+    fetchUserMore,
+    fetchUser,
+    isLoading,
+    notification,
+    setNotification,
+    onClickTopic,
+    clickedGQLTopic,
+  } = useFetchUser({ component: 'Home' });
+  const location = useLocation();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
-  const [, dispatchStargazers] = useTrackedStateStargazers();
   const abortController = new AbortController();
   const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
   const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
-  // useState is used when the HTML depends on it directly to render something
-  const [isLoading, setLoading] = useState(false);
-  const [notification, setNotification] = useState('');
-  const [clickedGQLTopic, setGQLTopic] = useState({
-    variables: '',
-  } as any);
   // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const windowScreenRef = useRef<HTMLDivElement>(null);
-  const isDataExists = (data: Nullable<IDataOne>) => {
-    if (data === undefined || data?.dataOne === undefined) {
-      return [[], []];
-    }
-    const oldID: number[] = [];
-    const newID: number[] = [];
-    state.mergedData.map((obj) => {
-      return oldID.push(obj.id);
-    });
-    data.dataOne.map((obj: MergedDataProps) => {
-      return newID.push(obj.id);
-    });
-
-    return newID.length > 0 && !([...new Set([...oldID, ...newID])].length === oldID.length);
-  };
   const isMergedDataExist = state.mergedData.length > 0;
   const isSeenCardsExist =
     (seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError) ||
     false;
   const isTokenRSSExist = userData?.getUserData?.tokenRSS?.length > 0 && !userDataLoading && !userDataError;
-  const isFunction = (value: () => void) =>
-    value && (Object.prototype.toString.call(value) === '[object Function]' || 'function' === typeof value || true)
-      ? value()
-      : new Error('Not valid function!');
 
-  const actionController = (res: IDataOne, prefetch = noop, callback?: Promise<any> | any) => {
-    // compare new with old data, if they differ, that means it still has data to fetch
-    const promiseOrNot = () => {
-      callback() instanceof Promise && res !== undefined && (res.error_404 || res.error_403)
-        ? callback()
-        : isFunction(callback);
-    };
-    if (isDataExists(res)) {
-      const ja = Counter(res.dataOne, 'language');
-      const repoStat = Object.entries(ja)
-        .slice(0, 5)
-        .map((arr: any) => {
-          const ja = state.repoStat.find((xx) => xx[0] === arr[0]) || [0, 0];
-          return [arr[0], ja[1] + arr[1]];
-        });
-      dispatch({
-        type: 'SHOULD_IMAGES_DATA_ADDED',
-        payload: {
-          shouldFetchImages: true,
-        },
-      });
-      dispatch({
-        type: 'REPO_STAT',
-        payload: {
-          repoStat: repoStat,
-        },
-      });
-      actionResolvePromise({
-        action: ActionResolvedPromise.append,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
-        displayName: displayName!,
-        data: res,
-        prefetch,
-      });
-    } else if (res !== undefined && (res.error_404 || res.error_403)) {
-      callback
-        ? promiseOrNot()
-        : actionResolvePromise({
-            action: ActionResolvedPromise.error,
-            setLoading,
-            setNotification,
-            isFetchFinish: isFetchFinish.current,
-            displayName: displayName!,
-            data: res,
-          });
-    } else {
-      isFetchFinish.current = actionResolvePromise({
-        action: ActionResolvedPromise.noData,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
-        displayName: displayName!,
-        data: res,
-      }).isFetchFinish;
-    }
-  };
-  const dataPrefetch = useRef<IDataOne | undefined>();
-  const prefetch = (name: string, axiosCancel: boolean) => () => {
-    getUser({
-      signal: undefined,
-      username: name,
-      perPage: stateShared.perPage,
-      page: state.page + 1,
-      axiosCancel,
-    })
-      .then((data: IDataOne) => {
-        if (!!data && (data.error_404 || data.error_403)) {
-          getOrg({
-            signal: undefined,
-            org: name,
-            perPage: stateShared.perPage,
-            page: state.page + 1,
-            axiosCancel,
-          })
-            .then((data: IDataOne) => {
-              dataPrefetch.current = data;
-            })
-            .catch((error) => {
-              actionResolvePromise({
-                action: ActionResolvedPromise.error,
-                setLoading,
-                setNotification,
-                isFetchFinish: isFetchFinish.current,
-                displayName: displayName!,
-                error,
-              });
-            });
-        } else {
-          dataPrefetch.current = data;
-        }
-      })
-      .catch((error) => {
-        actionResolvePromise({
-          action: ActionResolvedPromise.error,
-          setLoading,
-          setNotification,
-          isFetchFinish: isFetchFinish.current,
-          displayName: displayName!,
-          error,
-        });
-      });
-  };
-  const fetchUserMore = () => {
-    // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
-    // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
-    // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
-    // to prevent that, we need to reset the Home.js is unmounted.
-    if (!isFetchFinish.current && state.page > 1) {
-      // it's possible the user click Details.js and go back to Home.js again and find out that
-      // that the previous page.current is already 2, but when he/she navigates aways from Home.js, it go back to page.current=1 again
-      // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
-      setLoading(true); // spawn loading spinner at bottom page
-      setNotification('');
-      if (clickedGQLTopic.queryTopic !== undefined) {
-        getSearchTopics({
-          signal: abortController.signal,
-          topic: clickedGQLTopic.queryTopic,
-          axiosCancel: axiosCancel.current,
-        })
-          .then((res: IDataOne) => {
-            actionController(res);
-          })
-          .catch((error) => {
-            actionResolvePromise({
-              action: ActionResolvedPromise.error,
-              setLoading,
-              setNotification,
-              isFetchFinish: isFetchFinish.current,
-              error: error,
-              displayName: displayName!,
-            });
-          });
-      } else if (dataPrefetch.current && dataPrefetch.current.dataOne.length > 0) {
-        let userNameTransformed: string[];
-        if (!Array.isArray(stateShared.queryUsername)) {
-          userNameTransformed = [stateShared.queryUsername];
-        } else {
-          userNameTransformed = stateShared.queryUsername;
-        }
-        userNameTransformed.forEach((user) => {
-          const temp = prefetch(user, axiosCancel.current);
-          const clone = JSON.parse(JSON.stringify(dataPrefetch.current));
-          actionController(clone, temp);
-        });
-        dataPrefetch.current = undefined;
-      }
-    }
-  };
   const mergedDataRef = useRef<MergedDataProps[]>([]);
   const isLoadingRef = useRef<boolean>(false);
   const imagesDataRef = useRef<ImagesDataProps[]>([]);
@@ -267,7 +84,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished) {
       mergedDataRef.current = state.mergedData;
       return () => {
         isFinished = true;
@@ -278,7 +95,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished) {
       isLoadingRef.current = isLoading;
       return () => {
         isFinished = true;
@@ -289,7 +106,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished) {
       notificationRef.current = notification;
       return () => {
         isFinished = true;
@@ -300,7 +117,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished) {
       imagesDataRef.current = state.imagesData;
       return () => {
         isFinished = true;
@@ -311,7 +128,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished) {
       filterBySeenRef.current = state.filterBySeen;
       return () => {
         isFinished = true;
@@ -322,85 +139,10 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   const locationRef = useRef('/');
   useEffect(() => {
-    locationRef.current = location;
+    locationRef.current = location.pathname;
   });
-  const fetchUser = () => {
-    setLoading(true);
-    isFetchFinish.current = false;
-    setNotification('');
-    let userNameTransformed: string[];
-    if (!Array.isArray(stateShared.queryUsername)) {
-      userNameTransformed = [stateShared.queryUsername];
-    } else {
-      userNameTransformed = stateShared.queryUsername;
-    }
-    const promises: Promise<void>[] = [];
-    let paginationInfo = 0;
-    userNameTransformed.forEach((name) => {
-      promises.push(
-        getUser({
-          signal: abortController.signal,
-          username: name,
-          perPage: stateShared.perPage,
-          page: 1,
-          axiosCancel: axiosCancel.current,
-        })
-          .then((data: IDataOne) => {
-            const callback = () =>
-              getOrg({
-                signal: abortController.signal,
-                org: name,
-                perPage: stateShared.perPage,
-                page: 1,
-                axiosCancel: axiosCancel.current,
-              })
-                .then((data: IDataOne) => {
-                  paginationInfo += data.paginationInfoData;
-                  dispatch({
-                    type: 'LAST_PAGE',
-                    payload: {
-                      lastPage: paginationInfo,
-                    },
-                  });
-                  const temp = prefetch(name, axiosCancel.current);
-                  actionController(data, temp);
-                })
-                .catch((error) => {
-                  actionResolvePromise({
-                    action: ActionResolvedPromise.error,
-                    setLoading,
-                    setNotification,
-                    isFetchFinish: isFetchFinish.current,
-                    displayName: displayName!,
-                    error,
-                  });
-                });
-            paginationInfo += data.paginationInfoData;
-            dispatch({
-              type: 'LAST_PAGE',
-              payload: {
-                lastPage: paginationInfo,
-              },
-            });
-            const temp = prefetch(name, axiosCancel.current);
-            actionController(data, temp, callback);
-          })
-          .catch((error) => {
-            actionResolvePromise({
-              action: ActionResolvedPromise.error,
-              setLoading,
-              setNotification,
-              isFetchFinish: isFetchFinish.current,
-              displayName: displayName!,
-              error,
-            });
-          })
-      );
-    });
-    promises.forEach((promise) => promise.then(noop));
-  };
 
-  const handleBottomHit = useCallback(() => {
+  const handleBottomHit = useStableCallback(() => {
     if (
       !isFetchFinish.current &&
       mergedDataRef.current.length > 0 &&
@@ -441,16 +183,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
         seenAdded(result).then(noop);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    stateShared.isLoggedIn,
-    isFetchFinish.current,
-    mergedDataRef.current.length,
-    isLoadingRef.current,
-    notificationRef.current,
-    filterBySeenRef.current,
-    locationRef.current,
-  ]);
+  });
 
   useBottomHit(
     windowScreenRef,
@@ -458,21 +191,26 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
     isLoading || !isMergedDataExist || isFetchFinish.current // include isFetchFinish to indicate not to listen anymore
   );
 
-  function handleResize() {
-    dispatchShared({
-      type: 'SET_WIDTH',
-      payload: {
-        width: window.innerWidth,
-      },
-    });
-  }
-
-  useResizeHandler(windowScreenRef, handleResize);
+  useResizeObserver(windowScreenRef, (entry: any) => {
+    if (stateShared.width !== entry.contentRect.width) {
+      dispatchShared({
+        type: 'SET_WIDTH',
+        payload: {
+          width: entry.contentRect.width,
+        },
+      });
+    }
+  });
 
   useDeepCompareEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-    if (stateShared.queryUsername.length > 0 && state.mergedData.length === 0 && location === '/' && !isFinished) {
+    if (
+      stateShared.queryUsername.length > 0 &&
+      state.mergedData.length === 0 &&
+      location.pathname === '/' &&
+      !isFinished
+    ) {
       // we want to preserve stateShared.queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
       // we still want to retain the memory of username so that's why we use reducer of stateShared.queryUsername.
       // However, as the component unmount, stateShared.queryUsername is not "", thus causing fetchUser to fire in useEffect
@@ -492,7 +230,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (location === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished) {
       if (stateShared.queryUsername.length > 0) {
         fetchUserMore();
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
@@ -506,7 +244,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
   }, [state.page, axiosCancel.current]);
 
   useEffect(() => {
-    if (location !== '/') {
+    if (location.pathname !== '/') {
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
       axiosCancel.current = true;
     } else {
@@ -516,7 +254,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (isTokenRSSExist && location === '/') {
+    if (isTokenRSSExist && location.pathname === '/') {
       dispatchShared({
         type: 'TOKEN_RSS_ADDED',
         payload: {
@@ -533,7 +271,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
   useEffect(() => {
     let isFinished = false;
     setNotification('');
-    if (isSeenCardsExist && location === '/' && !isFinished && state.filterBySeen) {
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
       const ids = state.undisplayMergedData.reduce((acc, obj) => {
         acc.push(obj.id);
         return acc;
@@ -561,7 +299,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
 
   useEffect(() => {
     let isFinished = false;
-    if (isSeenCardsExist && location === '/' && !isFinished && !state.filterBySeen) {
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
       dispatch({
         type: 'UNDISPLAY_MERGED_DATA',
         payload: {
@@ -603,7 +341,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
   useEffect(
     () => {
       let isFinished = false;
-      if (isMergedDataExist && state.shouldFetchImages && location === '/' && !isFinished) {
+      if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/' && !isFinished) {
         // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
         dispatch({
           type: 'SHOULD_IMAGES_DATA_ADDED',
@@ -720,59 +458,6 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.shouldFetchImages, isMergedDataExist, axiosCancel]
   );
-
-  const onClickTopic = useCallback(
-    async ({ variables }) => {
-      if (stateShared.tokenGQL !== '' && state.filterBySeen) {
-        setLoading(true);
-        dispatch({
-          type: 'REMOVE_ALL',
-        });
-        dispatchStargazers({
-          type: 'REMOVE_ALL',
-        });
-        dispatchShared({
-          type: 'QUERY_USERNAME',
-          payload: {
-            queryUsername: '',
-          },
-        });
-        isFetchFinish.current = false;
-        setNotification('');
-        setGQLTopic({
-          variables,
-        });
-        let paginationInfo = 0;
-        return getSearchTopics({
-          signal: abortController.signal,
-          topic: variables.queryTopic,
-          axiosCancel: axiosCancel.current,
-        })
-          .then((result: IDataOne) => {
-            paginationInfo += result.paginationInfoData;
-            dispatch({
-              type: 'LAST_PAGE',
-              payload: {
-                lastPage: paginationInfo,
-              },
-            });
-            actionController(result);
-          })
-          .catch((error) => {
-            actionResolvePromise({
-              action: ActionResolvedPromise.error,
-              setLoading,
-              setNotification,
-              isFetchFinish: isFetchFinish.current,
-              displayName: displayName!,
-              error,
-            });
-          });
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.tokenGQL, state.filterBySeen, axiosCancel] // if not specified, stateShared.tokenGQL !== '' will always true when you click it again, even though stateShared.tokenGQL already updated
-  );
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
   const whichToUse = () => {
@@ -783,7 +468,7 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
     }
     return state.mergedData; // return this if filteredTopics.length === 0
   };
-  useScrollSaver(location, '/');
+  useScrollSaver(location.pathname, '/');
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
@@ -811,11 +496,22 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
             </div>
           </Then>
         </If>
-        {MasonryCard(isMergedDataExist, { data: whichToUse(), getRootProps })}
-
-        {MasonryLoading(!isMergedDataExist, { data: whichToUse() })}
-
-        {LoadingEye(isLoading, { queryUsername: stateShared.queryUsername })}
+        <If condition={!isMergedDataExist}>
+          <Then>
+            <MasonryLoading data={whichToUse()} />
+          </Then>
+        </If>
+        <If condition={isMergedDataExist}>
+          <Then>
+            <MasonryCard data={whichToUse()} getRootProps={getRootProps} />
+            <ScrollToTopLayout />
+          </Then>
+        </If>
+        <If condition={isLoading}>
+          <Then>
+            <LoadingEye queryUsername={stateShared.queryUsername} />
+          </Then>
+        </If>
 
         <If condition={notification}>
           <Then>
@@ -829,11 +525,9 @@ const Home: React.FC<ActionResolvePromiseOutput> = ({ actionResolvePromise, loca
           </Then>
         </If>
       </div>
-      {ScrollToTopLayout(isMergedDataExist)}
-
-      {BottomNavigationBar(stateShared.width > 1100)}
+      {/*{BottomNavigationBar(stateShared.width > 1100)}*/}
     </React.Fragment>
   );
-};
+});
 Home.displayName = 'Home';
 export default Home;

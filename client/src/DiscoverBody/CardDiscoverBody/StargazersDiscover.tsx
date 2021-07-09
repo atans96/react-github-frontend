@@ -11,27 +11,15 @@ import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { useClickOutside } from '../../hooks/hooks';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
-
-import { createRenderElement } from '../../Layout/MasonryLayout';
-import { loadable } from '../../loadable';
-
-const LoginGQL = (
-  condition: boolean,
-  args: {
-    setVisible: React.Dispatch<React.SetStateAction<boolean>>;
-    style: { display: string; width: string };
-  }
-) =>
-  loadable({
-    importFn: () =>
-      import('../../HomeBody/CardBody/StargazersCardBody/LoginGQL').then((module) =>
-        createRenderElement(module.default, { ...args })
-      ),
-    cacheId: 'LoginGQL',
-    condition: condition,
-    empty: () => <></>,
-  });
-
+import Loadable from 'react-loadable';
+import { LoadingBig } from '../../LoadingBig';
+import { useStableCallback } from '../../util';
+const LoginGQL = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () =>
+    import(/* webpackChunkName: "LoginGQLDiscover" */ '../../HomeBody/CardBody/StargazersCardBody/LoginGQL'),
+});
 interface StargazerDiscover {
   data: MergedDataProps;
 }
@@ -47,14 +35,13 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
   const [visible, setVisible] = useState(false);
   const modalWidth = useRef('400px');
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-  const [isLoading, setIsLoading] = useState(false);
 
   const notLoggedInRef = useRef<HTMLDivElement>(null);
   useClickOutside(notLoggedInRef, () => setVisible(false));
 
   const [stateShared] = useTrackedStateShared();
 
-  const returnPortal = useCallback(() => {
+  const returnPortal = useStableCallback(() => {
     switch (visible) {
       case stateShared.tokenGQL.length === 0: {
         return createPortal(
@@ -66,10 +53,9 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
             }}
             ref={notLoggedInRef}
           >
-            {LoginGQL(visible && stateShared.tokenGQL.length === 0, {
-              setVisible,
-              style: { display: 'absolute', width: 'fit-content' },
-            })}
+            {visible && stateShared.tokenGQL.length === 0 && (
+              <LoginGQL setVisible={setVisible} style={{ display: 'absolute', width: 'fit-content' }} />
+            )}
           </div>,
           document.body
         );
@@ -77,10 +63,7 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
       default:
         return <></>;
     }
-    // isLoading need to be in dependency array, otherwise we can't send isLoading state to StargazersInfo inside
-    // returnPortal callback here
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.tokenGQL.length, visible, isLoading, stateShared.isLoggedIn]);
+  });
 
   const handleClickStargazers = (event: React.MouseEvent<HTMLElement>) => {
     setVisible(true); // spawn modal of StargazersInfo
@@ -92,7 +75,6 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
     } else {
       setCursorPosition({ x: event.pageX, y: event.pageY });
     }
-    setIsLoading(true);
   };
   const handleClickStar = async () => {
     if (!starClicked) {

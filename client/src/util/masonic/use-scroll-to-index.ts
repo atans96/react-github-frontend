@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useReducer, useRef, RefObject, useEffect } from 'react';
 import useLatest from '@react-hook/latest';
 import useEvent from '@react-hook/event';
 import { useThrottleCallback } from '@react-hook/throttle';
@@ -25,11 +25,11 @@ export function useScrollToIndex(positioner: Positioner, options: UseScrollToInd
     offset,
     height,
   } as const);
-  const getTarget = React.useRef(() => {
+  const getTarget = useRef(() => {
     const latestElement = latestOptions.current.element;
     return latestElement && 'current' in latestElement ? latestElement.current : latestElement;
   }).current;
-  const [state, dispatch] = React.useReducer(
+  const [state, dispatch] = useReducer(
     (
       state: {
         position: PositionerItem | undefined;
@@ -85,7 +85,7 @@ export function useScrollToIndex(positioner: Positioner, options: UseScrollToInd
   // want to keep following it.
   const currentTop = state.index !== void 0 && latestOptions.current.positioner.get(state.index)?.top;
 
-  React.useEffect(() => {
+  useEffect(() => {
     const target = getTarget();
     if (!target) return;
     const { height, align, offset, positioner } = latestOptions.current;
@@ -118,7 +118,7 @@ export function useScrollToIndex(positioner: Positioner, options: UseScrollToInd
     }
   }, [currentTop, state, latestOptions, getTarget, throttledDispatch]);
 
-  return React.useRef((index: number) => {
+  return useRef((index: number) => {
     dispatch({ type: 'scrollToIndex', value: index });
   }).current;
 }
@@ -135,7 +135,7 @@ export type UseScrollToIndexOptions = {
    * this is the grid container.
    * @default window
    */
-  element?: Window | HTMLElement | React.RefObject<HTMLElement> | null;
+  element?: Window | HTMLElement | RefObject<HTMLElement> | null;
   /**
    * Sets the vertical alignment of the cell within the grid container.
    * @default "top"

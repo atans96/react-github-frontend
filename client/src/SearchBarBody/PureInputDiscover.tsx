@@ -9,7 +9,7 @@ import { useSelector } from '../selectors/stateSelector';
 import { IAction, StaticState } from '../typing/interface';
 import { RepoInfoSuggested } from '../typing/type';
 import { ActionDiscover } from '../store/Discover/reducer';
-import { debounce_lodash } from '../util';
+import { debounce_lodash, useStableCallback } from '../util';
 
 interface SearchBarProps {
   style: React.CSSProperties;
@@ -48,7 +48,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
       payload: { visible: false },
     });
   });
-  const handler = useCallback(
+  const handler = useStableCallback(
     debounce_lodash(function (query: string) {
       if (query.trim().length > 0) {
         getElasticSearchBertAutocomplete(query.trim()).then((data) => {
@@ -65,9 +65,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
           });
         });
       }
-    }, 200),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    }, 200)
   );
   const onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     e.preventDefault();

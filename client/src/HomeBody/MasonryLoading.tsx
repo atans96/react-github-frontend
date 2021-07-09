@@ -3,7 +3,7 @@
 // A common situation that makes a component render with the same props is being forced to render by a parent component.
 import { MergedDataProps } from '../typing/type';
 import React from 'react';
-import MasonryLayout, { createRenderElement } from '../Layout/MasonryLayout';
+import MasonryLayout from '../Layout/MasonryLayout';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import CardSkeleton from './CardSkeleton';
 
@@ -23,7 +23,9 @@ const MasonryLoading: React.FC<MasonryLoading> = ({ data, cardWidth = 370, gutte
   return React.useMemo(
     () => (
       <MasonryLayout columns={columnCount}>
-        {Object.keys(state.mergedData).map((_, idx) => createRenderElement(CardSkeleton, { key: idx }))}
+        {Object.keys(state.mergedData).map((_, idx) => (
+          <CardSkeleton key={idx} />
+        ))}
       </MasonryLayout>
     ),
     [

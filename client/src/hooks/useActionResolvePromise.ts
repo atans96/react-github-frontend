@@ -1,47 +1,30 @@
+import { ActionResolvePromise, IDataOne, Output } from '../typing/interface';
+import { fastFilter, useStableCallback } from '../util';
+import { LanguagePreference, MergedDataProps } from '../typing/type';
+import { filterActionResolvedPromiseData, noop } from '../util/util';
 import React, { useCallback, useEffect, useRef } from 'react';
-import { IDataOne } from './typing/interface';
-import { createRenderElement } from './Layout/MasonryLayout';
-import { LanguagePreference, MergedDataProps } from './typing/type';
-import { fastFilter } from './util';
-import { useApolloFactory } from './hooks/useApolloFactory';
-import { filterActionResolvedPromiseData, noop } from './util/util';
+import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
+import { useApolloFactory } from './useApolloFactory';
+import { alreadySeenCardSelector } from '../selectors/stateSelector';
 import { useLocation } from 'react-router-dom';
-import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
-import KeepMountedLayout from './Layout/KeepMountedLayout';
-import { alreadySeenCardSelector } from './selectors/stateSelector';
-import { loadable } from './loadable';
 
-interface Home {
-  actionResolvePromise: any;
-  location: string;
-}
-const Home = (condition: boolean, args: Home) =>
-  loadable({
-    importFn: () => import('./Home').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'Home',
-    condition: condition,
-    empty: () => <></>,
-  });
-
-const SearchBar = (condition: boolean) =>
-  loadable({
-    importFn: () => import('./SearchBar').then((module) => createRenderElement(module.default, {})),
-    cacheId: 'SearchBar',
-    condition: condition,
-    empty: () => <></>,
-  });
-
-const HomeRender = () => {
+const useActionResolvePromise = () => {
+  const location = useLocation();
   const [stateShared] = useTrackedStateShared();
   const [, dispatchDiscover] = useTrackedStateDiscover();
   const [state, dispatch] = useTrackedState();
-  const location = useLocation();
-  const locationRef = useRef(location.pathname);
-  const { userData } = useApolloFactory(Function.name).query.getUserData();
+  const { seenData } = useApolloFactory(Function.name).query.getSeen();
   const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
     Function.name
   ).query.getUserInfoStarred();
-  const { seenData, seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
+  const { seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
+  const { userData } = useApolloFactory(Function.name).query.getUserData();
+  const languagePreference = React.useMemo(() => {
+    return new Map(
+      userData?.getUserData?.languagePreference.map((obj: LanguagePreference) => [obj.language, obj]) || []
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData?.getUserData?.languagePreference]);
   const alreadySeenCards: number[] = React.useMemo(() => {
     //Every time Global re-renders and nothing is memoized because each render re creates the selector.
     // To solve this we can use React.useMemo. Here is the correct way to use createSelectItemById.
@@ -49,43 +32,9 @@ const HomeRender = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenData?.getSeen?.seenCards]);
 
-  const languagePreference = React.useMemo(() => {
-    return new Map(
-      userData?.getUserData?.languagePreference.map((obj: LanguagePreference) => [obj.language, obj]) || []
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData?.getUserData?.languagePreference]);
-
   const languagePreferenceRef = useRef(languagePreference);
   const userStarredRef = useRef(userStarred?.getUserInfoStarred?.starred);
   const alreadySeenCardsRef = useRef<number[]>([]);
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      alreadySeenCardsRef.current = [...alreadySeenCards];
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      languagePreferenceRef.current = languagePreference;
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      userStarredRef.current = userStarred?.getUserInfoStarred?.starred;
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (state.filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
       return new Promise(function (resolve, reject) {
@@ -160,7 +109,7 @@ const HomeRender = () => {
       });
     }
   };
-  const actionResolvePromise = useCallback(
+  const actionResolvePromise = useStableCallback(
     ({
       action,
       data = undefined,
@@ -170,7 +119,7 @@ const HomeRender = () => {
       setNotification,
       error = undefined,
       prefetch = noop,
-    }) => {
+    }: ActionResolvePromise): Output => {
       if (!loadingUserStarred && !errorUserStarred && !seenDataLoading && !seenDataError) {
         setLoading(false);
         if (data && action === 'append') {
@@ -193,25 +142,35 @@ const HomeRender = () => {
         }
       }
       return { isFetchFinish };
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.queryUsername, userStarred, loadingUserStarred, errorUserStarred, seenDataLoading, seenDataError]
+    }
   );
-  return (
-    <KeepMountedLayout
-      mountedCondition={location.pathname === '/'}
-      render={() => {
-        return (
-          <React.Fragment>
-            {SearchBar(location.pathname === '/')}
-            {Home(location.pathname === '/', {
-              actionResolvePromise,
-              location: locationRef.current,
-            })}
-          </React.Fragment>
-        );
-      }}
-    />
-  );
+  useEffect(() => {
+    let isFinished = false;
+    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
+      alreadySeenCardsRef.current = [...alreadySeenCards];
+      return () => {
+        isFinished = true;
+      };
+    }
+  });
+  useEffect(() => {
+    let isFinished = false;
+    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
+      languagePreferenceRef.current = languagePreference;
+      return () => {
+        isFinished = true;
+      };
+    }
+  });
+  useEffect(() => {
+    let isFinished = false;
+    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
+      userStarredRef.current = userStarred?.getUserInfoStarred?.starred;
+      return () => {
+        isFinished = true;
+      };
+    }
+  });
+  return { actionResolvePromise };
 };
-export default HomeRender;
+export default useActionResolvePromise;

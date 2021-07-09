@@ -18,7 +18,7 @@ interface LoginLayout {
 const LoginLayout: React.FC<LoginLayout> = ({ style, notification, data, apiType, children }) => {
   return (
     <section className="container" style={style?.display ? { display: style?.display } : { display: 'flex' }}>
-      <div style={{ backgroundColor: 'white' }}>
+      <div style={{ backgroundColor: 'white', textAlign: 'center' }}>
         <img
           alt=""
           style={{ maxWidth: '100%', maxHeight: '100%' }}

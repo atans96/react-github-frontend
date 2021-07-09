@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import trieMemoize from 'trie-memoize';
 import OneKeyMap from '@essentials/one-key-map';
 import memoizeOne from '@essentials/memoize-one';
@@ -6,6 +6,7 @@ import useLatest from '@react-hook/latest';
 import { elementsCache } from './elements-cache';
 import { useForceUpdate } from './use-force-update';
 import type { Positioner } from './use-positioner';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 /**
  * This hook handles the render phases of the masonry layout and returns the grid as a React element.

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getSearchUsers } from '../services';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
@@ -6,20 +6,15 @@ import { If } from '../util/react-if/If';
 import { StargazerProps } from '../typing/type';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateStargazers } from '../selectors/stateContextSelector';
-import { debounce_lodash } from '../util';
-import { loadable } from '../loadable';
-import { createRenderElement } from '../Layout/MasonryLayout';
+import { debounce_lodash, useStableCallback } from '../util';
+import Loadable from 'react-loadable';
+import Empty from '../Layout/EmptyLayout';
 
-interface MultiValueSearch {
-  stargazer: StargazerProps;
-}
-const MultiValueSearch = (args: MultiValueSearch) =>
-  loadable({
-    importFn: () =>
-      import('./PureInputBody/MultiValueSearch').then((module) => createRenderElement(module.default, { ...args })),
-    cacheId: 'MultiValueSearch',
-    empty: () => <></>,
-  });
+const MultiValueSearch = Loadable({
+  loading: Empty,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "MultiValueSearch" */ './PureInputBody/MultiValueSearch'),
+});
 interface SearchBarProps {
   setVisible: any;
   style: React.CSSProperties;
@@ -35,7 +30,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
-    const handler = useCallback(
+    const handler = useStableCallback(
       debounce_lodash(function (username: string) {
         if (username.toString().trim().length > 0) {
           setVisible(true); // show the autocomplete
@@ -69,9 +64,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             });
           });
         }
-      }, 1500),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      []
+      }, 1500)
     );
     useImperativeHandle(
       ref,
@@ -182,9 +175,9 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       <div className={'input-bar-container-control-searchbar'} style={style}>
         <If condition={stateStargazers.stargazersQueueData.length > 0}>
           <Then>
-            {stateStargazers.stargazersQueueData.map((obj: StargazerProps, idx) => {
-              return MultiValueSearch({ stargazer: obj });
-            })}
+            {stateStargazers.stargazersQueueData.map((obj: StargazerProps, idx) => (
+              <MultiValueSearch key={idx} stargazer={obj} />
+            ))}
           </Then>
         </If>
         <div style={{ display: 'inline-block' }}>

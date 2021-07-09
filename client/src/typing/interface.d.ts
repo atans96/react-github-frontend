@@ -31,12 +31,7 @@ export interface ActionResolvePromise {
   displayName: string;
   data?: Nullable<IDataOne | any>;
   error?: string;
-  prefetch?: (x: string) => void;
-}
-
-export interface ActionResolvePromiseOutput {
-  actionResolvePromise: ({ args }: ActionResolvePromise) => Output;
-  location: string;
+  prefetch?: (...args) => void;
 }
 export interface LocationGraphQL {
   //follow NavBar.tsx at getAllGraphQLData
@@ -83,9 +78,9 @@ export interface IStateStargazers {
   stargazersUsers: number;
   stargazersUsersStarredRepositories: number;
 }
-
 export interface IStateShared {
   width: number;
+  shouldRender: string;
   perPage: number;
   fetchDataPath: string;
   githubLanguages: Map<string, GithubLanguages>;

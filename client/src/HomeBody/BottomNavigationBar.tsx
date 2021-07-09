@@ -3,40 +3,33 @@ import { makeStyles } from '@material-ui/core/styles';
 import { Theme } from '@material-ui/core';
 import AppBar from '@material-ui/core/AppBar';
 import { StateRateLimitProvider } from '../selectors/stateContextSelector';
-import { loadable } from '../loadable';
-import { createRenderElement } from '../Layout/MasonryLayout';
+import Loadable from 'react-loadable';
+import { LoadingBig } from '../LoadingBig';
+import '../hamburgers.css';
 
-const ToolBar = () =>
-  loadable({
-    importFn: () =>
-      import('./BottomNavigationBarBody/ToolBar').then((module) => createRenderElement(module.default, {})),
-    cacheId: 'ToolBar',
-    empty: () => <></>,
-  });
-const RepoStat = () =>
-  loadable({
-    importFn: () =>
-      import('./BottomNavigationBarBody/RepoStat').then((module) => createRenderElement(module.default, {})),
-    cacheId: 'RepoStat',
-    empty: () => <></>,
-  });
+const ToolBar = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "ToolBar" */ './BottomNavigationBarBody/ToolBar'),
+});
 
-const RateLimit = () =>
-  loadable({
-    importFn: () =>
-      import('./BottomNavigationBarBody/RateLimit').then((module) => createRenderElement(module.default, {})),
-    cacheId: 'RateLimit',
-    empty: () => <></>,
-  });
+const RepoStat = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "RepoStat" */ './BottomNavigationBarBody/RepoStat'),
+});
 
-const DrawerBar = () =>
-  loadable({
-    importFn: () =>
-      import('./BottomNavigationBarBody/DrawerBar').then((module) => createRenderElement(module.default, {})),
-    cacheId: 'DrawerBar',
-    empty: () => <></>,
-  });
+const RateLimit = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "RateLimit" */ './BottomNavigationBarBody/RateLimit'),
+});
 
+const DrawerBar = Loadable({
+  loading: LoadingBig,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "DrawerBar" */ './BottomNavigationBarBody/DrawerBar'),
+});
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
     '& .MuiPaginationItem-root': {
@@ -67,11 +60,14 @@ const BottomNavigationBar = () => {
   return (
     <React.Fragment>
       <AppBar position="fixed" color="primary" className={classes.appBar}>
-        {ToolBar()}
-        {RepoStat()}
-        <StateRateLimitProvider>{RateLimit()}</StateRateLimitProvider>
+        <ToolBar />
+        <RepoStat />
+
+        <StateRateLimitProvider>
+          <RateLimit />
+        </StateRateLimitProvider>
       </AppBar>
-      {DrawerBar()}
+      <DrawerBar />
     </React.Fragment>
   );
 };

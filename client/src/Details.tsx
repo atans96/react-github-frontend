@@ -10,9 +10,7 @@ import { TrendsCard } from './DetailsBody/TrendsCard';
 import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
-import { createRenderElement } from './Layout/MasonryLayout';
-import KeepMountedLayout from './Layout/KeepMountedLayout';
-import { Location } from 'history';
+import './Details.scss';
 
 interface StateProps {
   data: {
@@ -28,7 +26,7 @@ interface StateProps {
   path: string;
 }
 
-const Details: React.FC = () => {
+const Details: React.FC = React.memo(() => {
   const location = useLocation<any>();
   const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
@@ -140,6 +138,6 @@ const Details: React.FC = () => {
       </div>
     </React.Fragment>
   );
-};
+});
 Details.displayName = 'Details';
 export default Details;

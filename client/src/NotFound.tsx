@@ -3,8 +3,8 @@ import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { NavLink, useLocation } from 'react-router-dom';
 import { allowedRoutes } from './util';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
-
-const NotFound = ({ drawerWidth = 0 }) => {
+import './Not-Found.scss';
+const NotFound = React.memo(({ drawerWidth = 0 }: any) => {
   return (
     //  use display: grid so that when PureNotFound is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
@@ -27,7 +27,7 @@ const NotFound = ({ drawerWidth = 0 }) => {
       </NavLink>
     </div>
   );
-};
+});
 NotFound.displayName = 'NotFound';
 const NotFoundRender = () => {
   const location = useLocation<Location>();

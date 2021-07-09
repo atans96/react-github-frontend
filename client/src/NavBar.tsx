@@ -14,6 +14,7 @@ import { Then } from './util/react-if/Then';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { getAllGraphQLNavBar } from './services';
+import { useStableCallback } from './util';
 
 //why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
 const directionLogin = new Map(
@@ -31,7 +32,7 @@ const directionNotLogin = new Map(
   ].map((i) => [i.path, { index: i.index, explored: i.explored }])
 );
 
-const NavBar = ({ ClickedNavBar }: any) => {
+const NavBar = React.memo(() => {
   const [state, dispatch] = useTrackedStateShared();
   const [active, setActiveBar] = useState<any>('');
   const navBarRef = useRef<HTMLDivElement>(null);
@@ -61,10 +62,15 @@ const NavBar = ({ ClickedNavBar }: any) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const handleClick = useCallback((event: React.MouseEvent<HTMLElement>) => {
+  const handleClick = useStableCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     const res = event.currentTarget.id;
-    ClickedNavBar(event.currentTarget.id);
+    dispatch({
+      type: 'SET_SHOULD_RENDER',
+      payload: {
+        shouldRender: res,
+      },
+    });
     setActiveBar((prevState: string) => {
       previousActive.current = prevState;
       return res;
@@ -90,8 +96,7 @@ const NavBar = ({ ClickedNavBar }: any) => {
         return res;
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  });
 
   useEffect(() => {
     if (state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
@@ -346,6 +351,6 @@ const NavBar = ({ ClickedNavBar }: any) => {
       </ul>
     </div>
   );
-};
+});
 NavBar.displayName = 'NavBar';
 export default NavBar;
