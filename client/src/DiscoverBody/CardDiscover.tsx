@@ -8,12 +8,12 @@ import UserCardDiscover from './CardDiscoverBody/UserCardDiscover';
 import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../LoadingBig';
 import { useStableCallback } from '../util';
 import './CardDiscover.scss';
+import Empty from '../Layout/EmptyLayout';
 
 const ImagesCardDiscover = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ImagesCardDiscover" */ './CardDiscoverBody/ImagesCardDiscover'),
 });

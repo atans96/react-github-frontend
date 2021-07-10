@@ -22,23 +22,6 @@ addEventListener('install', (e) => {
     })
   );
 });
-function readDB() {
-  try {
-    fetch(`${process.env.REACT_APP_GRAPHQL_ADDRESS}/end_of_session?username=${username}`, {
-      method: 'POST',
-      body: JSON.stringify(cacheData),
-      keepalive: true,
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).then(() => {
-      console.log('[Service Worker]: /api/end_of_session SUCCESS');
-    });
-  } catch (e) {
-    console.log(e);
-  }
-}
 addEventListener('activate', (event) => {
   event.waitUntil(
     self.clients.claim().then(() => {
@@ -59,16 +42,11 @@ addEventListener('message', (event) => {
     case 'username':
       username = event.data.username;
       break;
-    case 'apolloCacheData':
-      cacheData = event.data.cacheData;
-      break;
     case 'SKIP_WAITING':
       self.skipWaiting().then(() => {});
       break;
-    case 'execute':
-      readDB();
-      break;
     case 'logout':
+      console.log('logout');
       caches.keys().then((cacheNames) => {
         return Promise.all(cacheNames.map((cache) => caches.delete(cache))).then(() => {
           self.registration

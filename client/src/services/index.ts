@@ -10,6 +10,16 @@ export const getAllGraphQLNavBar = async (username: string) => {
   );
   return await response.json();
 };
+export const endOfSession = async (username: string, cacheData: any) => {
+  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/end_of_session?username=${username}`, {
+    method: 'POST',
+    body: JSON.stringify({ data: cacheData }),
+    keepalive: true,
+    credentials: 'include',
+  });
+  return await response.json();
+};
+
 export const getTopContributors = async (fullName: string) => {
   const response = await fetch(
     `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}`,
@@ -137,6 +147,7 @@ export const session = async (end: boolean) => {
   const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/start?&end=${end}`, {
     method: 'GET',
     credentials: 'include',
+    keepalive: true,
   });
   return await response.json();
 };

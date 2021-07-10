@@ -12,10 +12,10 @@ import clsx from 'clsx';
 import { useClickOutside } from '../../hooks/hooks';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../../LoadingBig';
 import { useStableCallback } from '../../util';
+import Empty from '../../Layout/EmptyLayout';
 const LoginGQL = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () =>
     import(/* webpackChunkName: "LoginGQLDiscover" */ '../../HomeBody/CardBody/StargazersCardBody/LoginGQL'),

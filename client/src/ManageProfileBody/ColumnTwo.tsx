@@ -6,16 +6,16 @@ import { debounce_lodash, fastFilter, useStableCallback } from '../util';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useDeepMemo } from '../hooks/useDeepMemo';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../LoadingBig';
+import Empty from '../Layout/EmptyLayout';
 
 const Details = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "Details" */ './ColumnTwoBody/Details'),
 });
 
 const RepoInfo = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "RepoInfo" */ './ColumnTwoBody/RepoInfo'),
 });

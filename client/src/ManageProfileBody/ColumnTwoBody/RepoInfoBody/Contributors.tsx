@@ -7,12 +7,14 @@ import { useTrackedStateManageProfile } from '../../../selectors/stateContextSel
 import { ContributorProps, ContributorsProps } from '../../../typing/type';
 import { useLocation } from 'react-router-dom';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../../../LoadingBig';
+import Empty from '../../../Layout/EmptyLayout';
+
 const Contributor = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "Contributor" */ './ContributorsBody/Contributor'),
 });
+
 interface Props {
   fullName: string;
   openContributors: boolean;

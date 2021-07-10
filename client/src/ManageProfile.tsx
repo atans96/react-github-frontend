@@ -1,18 +1,18 @@
 import React, { useRef, useState } from 'react';
 import { fastFilter, useStableCallback } from './util';
 import { StateManageProfileProvider, useTrackedStateShared } from './selectors/stateContextSelector';
-import KeepMountedLayout from './Layout/KeepMountedLayout';
-import { Redirect, useLocation } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import useResizeObserver from './hooks/useResizeObserver';
 import Loadable from 'react-loadable';
-import { LoadingBig } from './LoadingBig';
+import Empty from './Layout/EmptyLayout';
+
 const ColumnOne = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ColumnOne" */ './ManageProfileBody/ColumnOne'),
 });
 const ColumnTwo = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ColumnTwo" */ './ManageProfileBody/ColumnTwo'),
 });

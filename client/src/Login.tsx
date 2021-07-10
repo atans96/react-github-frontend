@@ -4,6 +4,7 @@ import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/sta
 import GitHubIcon from '@material-ui/icons/GitHub';
 import LoginLayout from './Layout/LoginLayout';
 import { getRateLimitInfo, requestGithubLogin } from './services';
+import sysend from 'sysend';
 
 const Login = () => {
   const location = useLocation();
@@ -36,6 +37,7 @@ const Login = () => {
         requestGithubLogin(`${proxy_url}?&end=false`, requestData)
           .then((response) => {
             if (response.data) {
+              sysend.broadcast('foo', { data: true });
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },

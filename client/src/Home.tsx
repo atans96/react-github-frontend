@@ -14,34 +14,34 @@ import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
 import useResizeObserver from './hooks/useResizeObserver';
 import Loadable from 'react-loadable';
-import { LoadingBig } from './LoadingBig';
 import { useLocation } from 'react-router-dom';
 import useFetchUser from './hooks/useFetchUser';
+import Empty from './Layout/EmptyLayout';
 
 const MasonryCard = Loadable({
   loader: () => import(/* webpackChunkName: "MasonryCard" */ './HomeBody/MasonryCard'),
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300, // 0.3 seconds
 });
 const MasonryLoading = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   loader: () => import(/* webpackChunkName: "MasonryLoading" */ './HomeBody/MasonryLoading'),
   delay: 300, // 0.3 seconds
 });
 
 const LoadingEye = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   loader: () => import(/* webpackChunkName: "LoadingEye" */ './LoadingEye'),
   delay: 300, // 0.3 seconds
 });
 
 const BottomNavigationBar = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   loader: () => import(/* webpackChunkName: "BottomNavigationBar" */ './HomeBody/BottomNavigationBar'),
   delay: 300, // 0.3 seconds
 });
 const ScrollToTopLayout = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   loader: () => import(/* webpackChunkName: "ScrollToTopLayout" */ './Layout/ScrollToTopLayout'),
   delay: 300, // 0.3 seconds
 });

@@ -4,29 +4,29 @@ import { Theme } from '@material-ui/core';
 import AppBar from '@material-ui/core/AppBar';
 import { StateRateLimitProvider } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../LoadingBig';
 import '../hamburgers.css';
+import Empty from '../Layout/EmptyLayout';
 
 const ToolBar = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ToolBar" */ './BottomNavigationBarBody/ToolBar'),
 });
 
 const RepoStat = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "RepoStat" */ './BottomNavigationBarBody/RepoStat'),
 });
 
 const RateLimit = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "RateLimit" */ './BottomNavigationBarBody/RateLimit'),
 });
 
 const DrawerBar = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "DrawerBar" */ './BottomNavigationBarBody/DrawerBar'),
 });
