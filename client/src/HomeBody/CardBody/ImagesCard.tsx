@@ -8,19 +8,19 @@ import ExpandMore from '@material-ui/icons/ExpandMore';
 import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import useCollapse from '../../hooks/useCollapse';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../../LoadingBig';
 import { useStableCallback } from '../../util';
 import { useTrackedState } from '../../selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
+import Empty from '../../Layout/EmptyLayout';
 
 const ImageComponentLayout = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ImageComponentLayoutHome" */ '../../Layout/ImageComponentLayout'),
 });
 
 const ImagesModalLayout = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ImagesModalLayoutHome" */ '../../Layout/ImagesModalLayout'),
 });

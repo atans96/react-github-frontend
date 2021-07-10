@@ -5,10 +5,9 @@ import { BrowserRouter as Router, Route, Switch, useHistory, useLocation } from 
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
-import { setContext } from '@apollo/client/link/context';
 import { readEnvironmentVariable, useStableCallback } from './util';
-import { logoutAction } from './util/util';
-import { getFile, getTokenGQL, getValidGQLProperties, session } from './services';
+import { logoutAction, noop } from './util/util';
+import { endOfSession, getFile, getTokenGQL, getValidGQLProperties, session } from './services';
 import { StarRankingContainer, SuggestedRepoContainer, SuggestedRepoImagesContainer } from './selectors/stateSelector';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
 import {
@@ -27,6 +26,8 @@ import { LoadingBig } from './LoadingBig';
 import Loadable from 'react-loadable';
 import { shallowEqual } from 'fast-equals';
 import { ShouldRender } from './typing/enum';
+import sysend from 'sysend';
+import DbCtx from './db/db.ctx';
 
 const Home = Loadable({
   loading: LoadingBig,
@@ -167,9 +168,13 @@ const AppRoutes = React.memo(
   }
 );
 const MiddleAppRoute = () => {
+  const { db } = DbCtx.useContainer();
   const apolloCacheData = useRef<Object>({});
   const [, dispatchShared] = useTrackedStateShared();
   const [stateShared] = useTrackedStateShared();
+  sysend.on('foo', function (data) {
+    console.log(data.message);
+  });
   const location = useLocation();
   const { loadingUserStarred, errorUserStarred } = useApolloFactory(Function.name).query.getUserInfoStarred();
   const { seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
@@ -180,42 +185,44 @@ const MiddleAppRoute = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData]);
+  useEffect(() => {
+    if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
+      navigator.serviceWorker
+        .register('sw.js')
+        .then(() => navigator.serviceWorker.ready)
+        .then((reg) => {
+          reg.onupdatefound = () => {
+            const waitingServiceWorker = reg.waiting;
+            if (waitingServiceWorker) {
+              waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          };
+          // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+          navigator?.serviceWorker?.controller?.postMessage({
+            type: 'username',
+            username: stateShared.username,
+          });
+          return (window.onbeforeunload = () => {
+            Promise.all([
+              db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
+              endOfSession(stateShared.username, apolloCacheData),
+              session(true),
+            ]).then(noop);
+            return window.close();
+          });
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateShared.isLoggedIn, apolloCacheData]);
 
-  // useEffect(() => {
-  //   if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
-  //     navigator.serviceWorker
-  //       .register('sw.js')
-  //       .then(() => navigator.serviceWorker.ready)
-  //       .then((reg) => {
-  //         reg.onupdatefound = () => {
-  //           const waitingServiceWorker = reg.waiting;
-  //           if (waitingServiceWorker) {
-  //             waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
-  //           }
-  //         };
-  //         // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-  //         navigator?.serviceWorker?.controller?.postMessage({
-  //           type: 'username',
-  //           username: stateShared.username,
-  //         });
-  //         return (window.onbeforeunload = () => {
-  //           session(true).then(noop);
-  //           // you cannot use reg.sync here as it returns Promise but we need to immediately close window tab when X is clicked
-  //           // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-  //           navigator?.serviceWorker?.controller?.postMessage({
-  //             type: 'apolloCacheData',
-  //             cacheData: apolloCacheData,
-  //           });
-  //           // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-  //           navigator?.serviceWorker?.controller?.postMessage({
-  //             type: 'execute',
-  //           });
-  //           return window.close();
-  //         });
-  //       });
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [stateShared.isLoggedIn, apolloCacheData]);
+  window.onbeforeunload = () => {
+    Promise.all([
+      db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
+      endOfSession(stateShared.username, apolloCacheData),
+      session(true),
+    ]).then(noop);
+    return window.close();
+  };
 
   useEffect(() => {
     getFile('languages.json').then((githubLanguages) => {
@@ -309,18 +316,6 @@ const CustomApolloProvider = ({ children }: any) => {
         credentials: 'include',
       },
     });
-    const authLink = setContext((_, { headers, query, ...context }) => {
-      return {
-        headers: {
-          ...headers,
-        },
-        query: {
-          ...query,
-          username: stateShared.username,
-        },
-        ...context,
-      };
-    });
     const cache = new InMemoryCache({
       addTypename: false,
       typePolicies: {
@@ -410,7 +405,7 @@ const CustomApolloProvider = ({ children }: any) => {
         //returns true for the first link and false for the second link
         (operation) => operation.getContext().clientName === 'github',
         githubGateway,
-        authLink.concat(mongoGateway)
+        mongoGateway
       ),
     ]);
     return new ApolloClient({
@@ -441,6 +436,7 @@ const Main = () => {
                   SuggestedRepoImagesContainer.Provider,
                   SuggestedRepoContainer.Provider,
                   StarRankingContainer.Provider,
+                  DbCtx.Provider,
                 ]}
               >
                 <MiddleAppRoute />

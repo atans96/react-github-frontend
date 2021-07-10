@@ -1,14 +1,12 @@
 import React, { useRef } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { getElasticSearchBert } from '../services';
-import { IStateShared } from '../typing/interface';
 import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../LoadingBig';
-import { Pick2 } from '../typing/type';
+import Empty from '../Layout/EmptyLayout';
 
 const PureInputDiscover = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "PureInputDiscover" */ './PureInputDiscover'),
 });

@@ -20,16 +20,16 @@ import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
 import { removeStarredMe, setStarredMe } from '../../services';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../../LoadingBig';
 import { useStableCallback } from '../../util';
+import Empty from '../../Layout/EmptyLayout';
 const StargazersInfo = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "StargazersInfo" */ './StargazersCardBody/StargazersInfo'),
 });
 
 const LoginGQL = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "LoginGQL" */ './StargazersCardBody/LoginGQL'),
 });

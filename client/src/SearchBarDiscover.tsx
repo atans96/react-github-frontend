@@ -3,11 +3,11 @@ import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
 import Loadable from 'react-loadable';
-import { LoadingBig } from './LoadingBig';
 import { useStableCallback } from './util';
+import Empty from './Layout/EmptyLayout';
 
 const PureSearchBarDiscover = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "PureSearchBarDiscover" */ './SearchBarBody/PureSearchBarDiscover'),
 });

@@ -12,9 +12,9 @@ import { noop } from '../util/util';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../LoadingBig';
 import { useStableCallback } from '../util';
 import './Card.scss';
+import Empty from '../Layout/EmptyLayout';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -23,11 +23,11 @@ export interface CardProps {
   getRootProps?: any;
 }
 const ImagesCard = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   loader: () => import(/* webpackChunkName: "ImagesCard" */ './CardBody/ImagesCard'),
 });
 const Stargazers = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "Stargazers" */ './CardBody/Stargazers'),
 });

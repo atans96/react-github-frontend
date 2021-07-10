@@ -9,19 +9,21 @@ import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../../LoadingBig';
 import { useStableCallback } from '../../util';
+import Empty from '../../Layout/EmptyLayout';
 
 const Contributors = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "Contributors" */ './RepoInfoBody/Contributors'),
 });
+
 interface Props {
   obj: RepoInfoProps;
   onClickRepoInfo: any;
   active: string;
 }
+
 const useStyles = makeStyles<Theme>(() => ({
   typography: {
     '& .MuiTypography-root': {

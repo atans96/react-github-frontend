@@ -9,19 +9,19 @@ import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import useCollapse from '../../hooks/useCollapse';
 import { useLocation } from 'react-router-dom';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../../LoadingBig';
 import { useStableCallback } from '../../util';
 import { useDeepMemo } from '../../hooks/useDeepMemo';
 import { RepoInfoProps } from '../../typing/type';
+import Empty from '../../Layout/EmptyLayout';
 
 const ImageComponentLayout = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ImageComponentLayoutDiscover" */ '../../Layout/ImageComponentLayout'),
 });
 
 const ImagesModalLayout = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ImagesModalLayoutDiscover" */ '../../Layout/ImagesModalLayout'),
 });

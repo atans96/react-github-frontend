@@ -12,21 +12,21 @@ import { StaticState } from './typing/interface';
 import { useScrollSaver } from './hooks/useScrollSaver';
 import useResizeObserver from './hooks/useResizeObserver';
 import Loadable from 'react-loadable';
-import { LoadingBig } from './LoadingBig';
 import useFetchUser from './hooks/useFetcnUserDiscover';
 import { Redirect, useLocation } from 'react-router-dom';
 import { useStableCallback } from './util';
 import { useDeepMemo } from './hooks/useDeepMemo';
 import './Discover.scss';
+import Empty from './Layout/EmptyLayout';
 
 const ScrollToTopLayout = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   loader: () => import(/* webpackChunkName: "ScrollToTopLayoutDiscover" */ './Layout/ScrollToTopLayout'),
   delay: 300,
 });
 
 const MasonryCard = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   loader: () => import(/* webpackChunkName: "MasonryCardDiscover" */ './DiscoverBody/MasonryCard'),
   delay: 300,
 });

@@ -2,15 +2,16 @@ import React from 'react';
 import { Divider, Drawer, Theme } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import Loadable from 'react-loadable';
-import { LoadingBig } from '../LoadingBig';
+import Empty from '../Layout/EmptyLayout';
+
 const RowOne = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "RowOne" */ './ColumnOneBody/RowOne'),
 });
 
 const RowTwo = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "RowTwo" */ './ColumnOneBody/RowTwo'),
 });
