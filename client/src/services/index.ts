@@ -19,7 +19,6 @@ export const endOfSession = async (username: string, cacheData: any) => {
   });
   return await response.json();
 };
-
 export const getTopContributors = async (fullName: string) => {
   const response = await fetch(
     `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}`,
@@ -158,6 +157,7 @@ export const getRateLimitInfo = async () => {
   });
   return await response.json();
 };
+
 export const verifyJWTToken = async (token: string, username: string, isLoggedIn: boolean) => {
   const response = await fetch(
     `${readEnvironmentVariable(
