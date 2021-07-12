@@ -38,10 +38,6 @@ class Encryption {
     return new Uint8Array(exportedRandomKey);
   }
 
-  static save({ salt, encryptedKey, iv }: any) {
-    //TODO: don't save to localStorage, but to backend
-  }
-
   static async encryptKey(keyBuffer: any, password: string) {
     // generate key from password  to use in encryption
     const keyMaterial = await Encryption.getKeyMaterial(password);
@@ -64,13 +60,13 @@ class Encryption {
       encryptedKey: JSON.stringify(Array.from(encryptedKeyArray)),
       iv: JSON.stringify(Array.from(iv)),
     };
-    this.save(temp);
+    localStorage.setItem('encryptedSymmetricKey', JSON.stringify(Array.from(encryptedKeyArray)));
+    localStorage.setItem('iv', JSON.stringify(Array.from(iv)));
+    localStorage.setItem('salt', JSON.stringify(Array.from(salt)));
     return temp;
   }
 
   static async decryptKey(password: string) {
-    //TODO: retrieve from backend, not localStorage
-
     const encryptedSymmetricKeyString = localStorage.getItem('encryptedSymmetricKey');
     const ivString = localStorage.getItem('iv');
     const saltString = localStorage.getItem('salt');
@@ -88,7 +84,7 @@ class Encryption {
         iv: new Uint8Array(ivArray),
       },
       masterKey,
-      encryptedSymmetricKeyArray
+      new Uint8Array(encryptedSymmetricKeyArray)
     );
 
     return new Uint8Array(decryptedSymmetricKey);

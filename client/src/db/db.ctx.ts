@@ -6,13 +6,14 @@ import { readEnvironmentVariable } from '../util';
 import Encryption from './Encryption';
 import Dexie from 'dexie';
 import { noop } from '../util/util';
+import { useTrackedStateShared } from '../selectors/stateContextSelector';
 
 const DbCtx = createContainer(() => {
   const [db, setDb] = useState<ApolloCacheDB | null>(null);
-
+  const [stateShared] = useTrackedStateShared();
   const handleOpenDb = async () => {
     let symmetricKey;
-    if (await Dexie.exists('APOLLO_CACHE')) {
+    if (await Dexie.exists('ApolloCacheDB')) {
       try {
         symmetricKey = await Encryption.decryptKey(readEnvironmentVariable('DB_KEY')!);
       } catch (error) {
@@ -45,11 +46,11 @@ const DbCtx = createContainer(() => {
     await conn.open();
     setDb(conn);
   };
-
   useEffect(() => {
-    handleOpenDb().then(noop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (stateShared.isLoggedIn) {
+      handleOpenDb().then(noop); // eslint-disable-next-line react-hooks/exhaustive-deps
+    }
+  }, [stateShared.isLoggedIn]);
 
   // avoid ts async
   return { db: db as ApolloCacheDB };
