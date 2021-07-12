@@ -172,8 +172,15 @@ const MiddleAppRoute = () => {
   const apolloCacheData = useRef<Object>({});
   const [, dispatchShared] = useTrackedStateShared();
   const [stateShared] = useTrackedStateShared();
-  sysend.on('foo', function (data) {
-    console.log(data.message);
+  sysend.on('Login', function (fn) {
+    dispatchShared({
+      type: 'LOGIN',
+      payload: { isLoggedIn: true },
+    });
+    dispatchShared({
+      type: 'SET_USERNAME',
+      payload: { username: fn.username },
+    });
   });
   const location = useLocation();
   const { loadingUserStarred, errorUserStarred } = useApolloFactory(Function.name).query.getUserInfoStarred();
@@ -214,15 +221,6 @@ const MiddleAppRoute = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn, apolloCacheData]);
-
-  window.onbeforeunload = () => {
-    Promise.all([
-      db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
-      endOfSession(stateShared.username, apolloCacheData),
-      session(true),
-    ]).then(noop);
-    return window.close();
-  };
 
   useEffect(() => {
     getFile('languages.json').then((githubLanguages) => {
@@ -311,7 +309,7 @@ const CustomApolloProvider = ({ children }: any) => {
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
       uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql`,
-      headers: { origin: `http://localhost:3000` },
+      headers: { origin: `https://localhost:3000` },
       fetchOptions: {
         credentials: 'include',
       },

@@ -37,7 +37,6 @@ const Login = () => {
         requestGithubLogin(`${proxy_url}?&end=false`, requestData)
           .then((response) => {
             if (response.data) {
-              sysend.broadcast('foo', { data: true });
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },
@@ -76,6 +75,9 @@ const Login = () => {
                       used: data.rateLimitGQL.used,
                       reset: data.rateLimitGQL.reset,
                     },
+                  });
+                  sysend.broadcast('Login', {
+                    username: response.data.login,
                   });
                 }
               });
