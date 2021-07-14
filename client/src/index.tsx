@@ -308,7 +308,7 @@ const CustomApolloProvider = ({ children }: any) => {
     });
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
-      uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql`,
+      uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql/`,
       headers: { origin: `https://localhost:3000` },
       fetchOptions: {
         credentials: 'include',

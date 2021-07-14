@@ -1,6 +1,5 @@
 import { readEnvironmentVariable } from '../util';
 import { SearchUser } from '../typing/interface';
-
 export const getAllGraphQLNavBar = async (username: string) => {
   const response = await fetch(
     `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/graphqlUserData?username=${username}`,
@@ -24,6 +23,7 @@ export const getTopContributors = async (fullName: string) => {
     `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}`,
     {
       method: 'GET',
+      credentials: 'include',
     }
   );
   return await response.json();
@@ -95,6 +95,7 @@ export const getUser = async ({
       )}/users?username=${username}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
+        credentials: 'include',
         signal,
       }
     );
@@ -121,6 +122,7 @@ export const getOrg = async ({
       )}/org?org=${org}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
+        credentials: 'include',
         signal,
       }
     );
@@ -181,6 +183,7 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
 export const getSearchUsers = async (query: string) => {
   const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_users?username=${query}`, {
     method: 'GET',
+    credentials: 'include',
   });
   return (await response.json()) as SearchUser;
 };
@@ -197,6 +200,7 @@ export const getSearchTopics = async ({
     `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_topics?topic=${topic}&axiosCancel=${axiosCancel}`,
     {
       method: 'GET',
+      credentials: 'include',
       signal,
     }
   );
