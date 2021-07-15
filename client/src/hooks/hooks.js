@@ -6,7 +6,7 @@ export function useClickOutside(ref, handler, exception = []) {
   const handleClickOutside = useStableCallback((event) => {
     if (
       !ref?.current ||
-      ref?.current.contains(event.target) ||
+      ref?.current?.contains(event.target) ||
       exception.some((substring) => {
         //at least there's one true for this regex pattern
         return new RegExp(substring).test(event?.target?.parentElement?.className);
@@ -29,26 +29,28 @@ export function useClickOutside(ref, handler, exception = []) {
 export function useEventHandlerComposer({ onClickCb } = {}) {
   const rootRef = useRef(null);
   const getRootProps = useMemo(
-    () => ({
-      refKey = 'ref', // if refKey not supplied, the default is 'ref'
-      onClick,
-      params = undefined,
-      firstCallback = undefined,
-      lastCallback = undefined,
-      ...rest
-    } = {}) => ({
-      onClick: composeEventHandlers(onClick, composeParamsHandler(onClickCb, params, firstCallback, lastCallback)),
-      [refKey]: rootRef,
-      ...rest,
-    }),
+    () =>
+      ({
+        refKey = 'ref', // if refKey not supplied, the default is 'ref'
+        onClick,
+        params = undefined,
+        firstCallback = undefined,
+        lastCallback = undefined,
+        ...rest
+      } = {}) => ({
+        onClick: composeEventHandlers(onClick, composeParamsHandler(onClickCb, params, firstCallback, lastCallback)),
+        [refKey]: rootRef,
+        ...rest,
+      }),
     [rootRef, onClickCb]
   );
   const getInputProps = useMemo(
-    () => ({ refKey = 'ref', ...rest } = {}) => {
-      return {
-        ...rest,
-      };
-    },
+    () =>
+      ({ refKey = 'ref', ...rest } = {}) => {
+        return {
+          ...rest,
+        };
+      },
     []
   );
   return {

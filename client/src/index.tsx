@@ -3,7 +3,7 @@ import './index.scss';
 import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './NavBar';
-import { ApolloClient, ApolloLink, getApolloContext, HttpLink, InMemoryCache, useApolloClient } from '@apollo/client';
+import { ApolloClient, ApolloLink, getApolloContext, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import { readEnvironmentVariable, useStableCallback } from './util';
 import { logoutAction, noop } from './util/util';
@@ -28,6 +28,7 @@ import { shallowEqual } from 'fast-equals';
 import { ShouldRender } from './typing/enum';
 import sysend from 'sysend';
 import DbCtx from './db/db.ctx';
+import { HttpLink } from './link/http/HttpLink';
 
 const Home = Loadable({
   loading: LoadingBig,
@@ -105,23 +106,19 @@ const AppRoutes = React.memo(
                 path="/"
                 exact
                 render={() => (
-                  <StateStargazersProvider>
-                    <SearchBar />
-                  </StateStargazersProvider>
-                )}
-              />
-              <Route
-                path="/"
-                exact
-                render={() => (
-                  <KeepMountedLayout
-                    mountedCondition={shouldRender === ShouldRender.Home}
-                    render={() => (
-                      <StateStargazersProvider>
-                        <Home />
-                      </StateStargazersProvider>
-                    )}
-                  />
+                  <>
+                    <StateStargazersProvider>
+                      <SearchBar />
+                    </StateStargazersProvider>
+                    <KeepMountedLayout
+                      mountedCondition={shouldRender === ShouldRender.Home}
+                      render={() => (
+                        <StateStargazersProvider>
+                          <Home />
+                        </StateStargazersProvider>
+                      )}
+                    />
+                  </>
                 )}
               />
               <Route path="/login" exact component={LoginLoadable} />
@@ -194,30 +191,30 @@ const MiddleAppRoute = () => {
   }, [cacheData]);
   useEffect(() => {
     if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
-      navigator.serviceWorker
-        .register('sw.js')
-        .then(() => navigator.serviceWorker.ready)
-        .then((reg) => {
-          reg.onupdatefound = () => {
-            const waitingServiceWorker = reg.waiting;
-            if (waitingServiceWorker) {
-              waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
-            }
-          };
-          // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-          navigator?.serviceWorker?.controller?.postMessage({
-            type: 'username',
-            username: stateShared.username,
-          });
-          return (window.onbeforeunload = () => {
-            Promise.all([
-              db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
-              endOfSession(stateShared.username, apolloCacheData),
-              session(true),
-            ]).then(noop);
-            return window.close();
-          });
-        });
+      // navigator.serviceWorker
+      //   .register('sw.js')
+      //   .then(() => navigator.serviceWorker.ready)
+      //   .then((reg) => {
+      //     reg.onupdatefound = () => {
+      //       const waitingServiceWorker = reg.waiting;
+      //       if (waitingServiceWorker) {
+      //         waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+      //       }
+      //     };
+      //     // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+      //     navigator?.serviceWorker?.controller?.postMessage({
+      //       type: 'username',
+      //       username: stateShared.username,
+      //     });
+      //     return (window.onbeforeunload = () => {
+      //       Promise.all([
+      //         db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
+      //         endOfSession(stateShared.username, apolloCacheData),
+      //         session(true),
+      //       ]).then(noop);
+      //       return window.close();
+      //     });
+      //   });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn, apolloCacheData]);
@@ -305,7 +302,7 @@ const CustomApolloProvider = ({ children }: any) => {
       headers: {
         Authorization: `Bearer ${stateShared.tokenGQL}`,
       },
-    });
+    }) as unknown as ApolloLink;
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
       uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql/`,
@@ -313,7 +310,7 @@ const CustomApolloProvider = ({ children }: any) => {
       fetchOptions: {
         credentials: 'include',
       },
-    });
+    }) as unknown as ApolloLink;
     const cache = new InMemoryCache({
       addTypename: false,
       typePolicies: {

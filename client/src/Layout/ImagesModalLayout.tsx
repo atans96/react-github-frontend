@@ -35,65 +35,63 @@ const ImageModal: React.FC<ImageComponentProps> = ({ urlLink }) => {
   }
   return <></>;
 };
-const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = React.forwardRef(
-  ({ handleClick, clicked, renderImages }, ref) => {
-    const [mouseGrabbing, setMouseGrabbing] = useState(false);
-    const sliderInner = useRef<HTMLDivElement | null>(null);
-    const sliderContainer = useRef<HTMLDivElement | null>(null);
-    useClickOutside(sliderContainer, (e: any) => handleClick(e));
-    const [render, setRender] = useState(false);
+const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = ({ handleClick, clicked, renderImages }) => {
+  const [mouseGrabbing, setMouseGrabbing] = useState(false);
+  const sliderInner = useRef<HTMLDivElement | null>(null);
+  const sliderContainer = useRef<HTMLDivElement | null>(null);
+  useClickOutside(sliderContainer, (e: any) => handleClick(e));
+  const [render, setRender] = useState(false);
 
-    useEffect(() => {
-      if (sliderContainer.current && sliderInner.current) {
-        const slider = new SliderImage({
-          slider: sliderContainer.current,
-          sliderInner: sliderInner.current,
-          slide: sliderInner.current.querySelectorAll('.slide'),
-        });
-        slider.init();
-        return () => {
-          sliderContainer.current = null;
-          sliderInner.current = null;
-          slider.destroy();
-        };
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [render]);
+  useEffect(() => {
+    if (sliderContainer.current && sliderInner.current) {
+      const slider = new SliderImage({
+        slider: sliderContainer.current,
+        sliderInner: sliderInner.current,
+        slide: sliderInner.current.querySelectorAll('.slide'),
+      });
+      slider.init();
+      return () => {
+        sliderContainer.current = null;
+        sliderInner.current = null;
+        slider.destroy();
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [render]);
 
-    useEffect(() => {
-      setRender(!render); //if not re-render, sliderContainer.current will still be null after spawning modal
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clicked]);
-    return (
-      <Modal open={clicked}>
-        <React.Fragment>
-          <div className="slide-close-button">
-            <CloseIcon style={{ display: 'block', margin: 'auto', transform: 'scale(3.5)' }} />
+  useEffect(() => {
+    setRender(!render); //if not re-render, sliderContainer.current will still be null after spawning modal
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clicked]);
+  return (
+    <Modal open={clicked}>
+      <React.Fragment>
+        <div className="slide-close-button">
+          <CloseIcon style={{ display: 'block', margin: 'auto', transform: 'scale(3.5)' }} />
+        </div>
+        <div
+          ref={sliderContainer}
+          className={clsx('slides', {
+            grabbing: mouseGrabbing,
+          })}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setMouseGrabbing(true);
+          }}
+          onMouseUp={(e) => {
+            e.preventDefault();
+            setMouseGrabbing(false);
+          }}
+        >
+          <div className={'slides-inner'} ref={sliderInner}>
+            {renderImages.map((image: string, idx: number) => (
+              <ImageModal urlLink={image} loader={<LoadingSmall />} key={idx} />
+            ))}
           </div>
-          <div
-            ref={sliderContainer}
-            className={clsx('slides', {
-              grabbing: mouseGrabbing,
-            })}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setMouseGrabbing(true);
-            }}
-            onMouseUp={(e) => {
-              e.preventDefault();
-              setMouseGrabbing(false);
-            }}
-          >
-            <div className={'slides-inner'} ref={sliderInner}>
-              {renderImages.map((image: string, idx: number) => (
-                <ImageModal urlLink={image} loader={<LoadingSmall />} key={idx} />
-              ))}
-            </div>
-          </div>
-        </React.Fragment>
-      </Modal>
-    );
-  }
-);
+        </div>
+      </React.Fragment>
+    </Modal>
+  );
+};
 ImagesModalLayout.displayName = 'ImagesModalLayout';
 export default ImagesModalLayout;

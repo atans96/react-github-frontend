@@ -6,9 +6,9 @@ import { If } from '../util/react-if/If';
 import { StargazerProps } from '../typing/type';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateStargazers } from '../selectors/stateContextSelector';
-import { debounce_lodash, useStableCallback } from '../util';
 import Loadable from 'react-loadable';
 import Empty from '../Layout/EmptyLayout';
+import { useDebouncedValue } from '../util/util';
 
 const MultiValueSearch = Loadable({
   loading: Empty,
@@ -30,48 +30,47 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
-    const handler = useStableCallback(
-      debounce_lodash(function (username: string) {
-        if (username.toString().trim().length > 0) {
-          setVisible(true); // show the autocomplete
-          dispatch({
-            type: 'VISIBLE',
-            payload: {
-              visible: true,
-            },
-          }); // need this to set zIndex for Masonry Layout at Home.js
+    const debouncedValue = useDebouncedValue(username, 1500); // this value will pick real time value, but will change it's result only when it's seattled for 500ms
 
-          // as you won't get to see the loading spinner when you first enter query to do autocomplete
-          // since you need to wait API response to come before setting dispatchSearchUsers(data.users, true, dispatch); below
+    useEffect(() => {
+      if (username.toString().trim().length > 0) {
+        setVisible(true); // show the autocomplete
+        dispatch({
+          type: 'VISIBLE',
+          payload: {
+            visible: true,
+          },
+        }); // need this to set zIndex for Masonry Layout at Home.js
+
+        // as you won't get to see the loading spinner when you first enter query to do autocomplete
+        // since you need to wait API response to come before setting dispatchSearchUsers(data.users, true, dispatch); below
+        dispatch({
+          type: 'LOADING',
+          payload: {
+            isLoading: true,
+          },
+        });
+        getSearchUsers(username.toString().trim()).then((data) => {
+          dispatch({
+            type: 'SEARCH_USERS',
+            payload: {
+              data: data.users,
+            },
+          });
           dispatch({
             type: 'LOADING',
             payload: {
-              isLoading: true,
+              isLoading: false,
             },
           });
-          getSearchUsers(username.toString().trim()).then((data) => {
-            dispatch({
-              type: 'SEARCH_USERS',
-              payload: {
-                data: data.users,
-              },
-            });
-            dispatch({
-              type: 'LOADING',
-              payload: {
-                isLoading: false,
-              },
-            });
-          });
-        }
-      }, 1500)
-    );
+        });
+      }
+    }, [debouncedValue]);
     useImperativeHandle(
       ref,
       () => ({
         clearState() {
           setUsername('');
-          handler('');
         },
         getState() {
           return username.trim();
@@ -97,7 +96,6 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
           },
         });
       }
-      handler(e.currentTarget.value);
     };
     const handleKey = (e: any) => {
       if (
@@ -188,10 +186,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             value={username}
             onChange={onInputChange}
             ref={isInputFocused}
-            onBlur={() => {
-              handler('');
-              setUsername('');
-            }}
+            onBlur={() => setUsername('')}
             style={
               username.length > 0 || stateStargazers.stargazersQueueData.length > 0
                 ? { width: `${65 + username.length * 2}px` }

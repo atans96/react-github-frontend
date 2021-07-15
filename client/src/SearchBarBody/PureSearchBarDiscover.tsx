@@ -2,14 +2,7 @@ import React, { useRef } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { getElasticSearchBert } from '../services';
 import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
-import Loadable from 'react-loadable';
-import Empty from '../Layout/EmptyLayout';
-
-const PureInputDiscover = Loadable({
-  loading: Empty,
-  delay: 300,
-  loader: () => import(/* webpackChunkName: "PureInputDiscover" */ './PureInputDiscover'),
-});
+import PureInputDiscover from './PureInputDiscover';
 
 export interface SearchBarProps {
   width: number;

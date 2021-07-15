@@ -4,6 +4,22 @@ import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
 import { removeToken, removeTokenGQL, session } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
+export function useDebouncedValue<T>(input: T, time = 1500) {
+  const [debouncedValue, setDebouncedValue] = useState(input);
+
+  // every time input value has changed - set interval before it's actually commited
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedValue(input);
+    }, time);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [input, time]);
+
+  return debouncedValue;
+}
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
@@ -89,9 +105,7 @@ export class SinglyLinkedList<T> {
    * ```
    * @param f A function to be applied to the data of each node
    */
-  public findNodeIndex(
-    f: TTestFunction<T>
-  ):
+  public findNodeIndex(f: TTestFunction<T>):
     | {
         node: SinglyLinkedListNode<T>;
         index: number;
@@ -264,7 +278,10 @@ export function getElementHeight(el: RefObject<HTMLElement> | { current?: { scro
 }
 
 // Helper function for render props. Sets a function to be called, plus any additional functions passed in
-export const callAll = (...fns: AnyFunction[]) => (...args: any[]): void => fns.forEach((fn) => fn && fn(...args));
+export const callAll =
+  (...fns: AnyFunction[]) =>
+  (...args: any[]): void =>
+    fns.forEach((fn) => fn && fn(...args));
 // https://github.com/mui-org/material-ui/blob/da362266f7c137bf671d7e8c44c84ad5cfc0e9e2/packages/material-ui/src/styles/transitions.js#L89-L98
 export function getAutoHeightDuration(height: number | string): number {
   if (!height || typeof height === 'string') {

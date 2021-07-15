@@ -71,6 +71,7 @@ addEventListener('fetch', function (event) {
   }
   if (
     event.request.url.includes('/server') ||
+    event.request.url.includes('/graphql') ||
     event.request.url.includes('chrome-extension') ||
     event.request.url.includes('hot-update.js')
   ) {

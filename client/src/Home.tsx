@@ -47,19 +47,13 @@ const ScrollToTopLayout = Loadable({
 });
 
 const Home = React.memo(() => {
-  const {
-    fetchUserMore,
-    fetchUser,
-    isLoading,
-    notification,
-    setNotification,
-    onClickTopic,
-    clickedGQLTopic,
-  } = useFetchUser({ component: 'Home' });
+  const { fetchUserMore, fetchUser, isLoading, notification, setNotification, onClickTopic, clickedGQLTopic } =
+    useFetchUser({ component: 'Home' });
   const location = useLocation();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
-  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [, dispatchShared] = useTrackedStateShared();
+  const [stateShared] = useTrackedStateShared();
   const abortController = new AbortController();
   const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
   const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
@@ -201,7 +195,6 @@ const Home = React.memo(() => {
       });
     }
   });
-
   useDeepCompareEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
@@ -525,7 +518,7 @@ const Home = React.memo(() => {
           </Then>
         </If>
       </div>
-      {/*{BottomNavigationBar(stateShared.width > 1100)}*/}
+      {stateShared.width > 1100 && <BottomNavigationBar />}
     </React.Fragment>
   );
 });
