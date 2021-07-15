@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { StarIcon } from '../../util/icons';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import { If } from '../../util/react-if/If';

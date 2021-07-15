@@ -9,6 +9,13 @@ import { DraggableCore } from 'react-draggable';
 import { useLocation } from 'react-router-dom';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useStableCallback } from '../../util';
+import Loadable from 'react-loadable';
+import Empty from '../../Layout/EmptyLayout';
+const RSSFeed = Loadable({
+  loading: Empty,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "RSSFeed" */ './DrawerBarBody/RSSFeed'),
+});
 
 interface StyleProps {
   drawerWidth: string;
@@ -111,15 +118,17 @@ const DrawerBar = React.memo(() => {
         <div className={classes.toolbar}>
           <IconButton onClick={handleClick}>{!open ? <ChevronRightIcon /> : <ChevronLeftIcon />}</IconButton>
         </div>
-        {/*{RSSFeed()}*/}
         {open && (
-          <DraggableCore key="drawerBar" {...dragHandlers}>
-            <div style={{ height: '100vh', width: '0px', position: 'fixed' }}>
-              <div className={'dragger'} style={{ top: '40%', left: `${drawerWidth}px` }}>
-                <span />
+          <>
+            <RSSFeed />
+            <DraggableCore key="drawerBar" {...dragHandlers}>
+              <div style={{ height: '100vh', width: '0px', position: 'fixed' }}>
+                <div className={'dragger'} style={{ top: '40%', left: `${drawerWidth}px` }}>
+                  <span />
+                </div>
               </div>
-            </div>
-          </DraggableCore>
+            </DraggableCore>
+          </>
         )}
       </Drawer>
     </React.Fragment>

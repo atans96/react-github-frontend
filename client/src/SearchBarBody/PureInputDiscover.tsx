@@ -1,4 +1,4 @@
-import React, { useCallback, useImperativeHandle, useRef, useState } from 'react';
+import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { getElasticSearchBertAutocomplete } from '../services';
 import { Then } from '../util/react-if/Then';
 import { Typography } from '@material-ui/core';
@@ -9,7 +9,7 @@ import { useSelector } from '../selectors/stateSelector';
 import { IAction, StaticState } from '../typing/interface';
 import { RepoInfoSuggested } from '../typing/type';
 import { ActionDiscover } from '../store/Discover/reducer';
-import { debounce_lodash, useStableCallback } from '../util';
+import { useDebouncedValue } from '../util/util';
 
 interface SearchBarProps {
   style: React.CSSProperties;
@@ -28,6 +28,24 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
   const [searchesData, setSearches] = useState<SearchesData>();
   const isInputFocused = useRef<HTMLInputElement>(null);
   const resultsRef = useRef(null);
+  const debouncedValue = useDebouncedValue(query, 1000);
+  useEffect(() => {
+    if (query.trim().length > 0) {
+      getElasticSearchBertAutocomplete(query.trim()).then((data) => {
+        if (data.isSuggested.status) {
+          data.result.unshift(
+            Object.assign({}, { full_name: `No result found for ${query}. Did you mean ${data.isSuggested.text}?` })
+          );
+        }
+        setSearches(data);
+        setVisible(true);
+        dispatchDiscover({
+          type: 'VISIBLE',
+          payload: { visible: true },
+        });
+      });
+    }
+  }, [debouncedValue]);
   useImperativeHandle(
     ref,
     () => ({
@@ -48,31 +66,11 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
       payload: { visible: false },
     });
   });
-  const handler = useStableCallback(
-    debounce_lodash(function (query: string) {
-      if (query.trim().length > 0) {
-        getElasticSearchBertAutocomplete(query.trim()).then((data) => {
-          if (data.isSuggested.status) {
-            data.result.unshift(
-              Object.assign({}, { full_name: `No result found for ${query}. Did you mean ${data.isSuggested.text}?` })
-            );
-          }
-          setSearches(data);
-          setVisible(true);
-          dispatchDiscover({
-            type: 'VISIBLE',
-            payload: { visible: true },
-          });
-        });
-      }
-    }, 200)
-  );
   const onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
     e.persist();
     setQuery(e.currentTarget.value);
-    handler(e.currentTarget.value);
   };
   const repoInfo = useSelector(
     (state: StaticState) => state.SuggestedRepo.suggestedData.getSuggestedRepo.repoInfoSuggested

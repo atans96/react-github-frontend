@@ -15,6 +15,11 @@ export const endOfSession = async (username: string, cacheData: any) => {
     body: JSON.stringify({ data: cacheData }),
     keepalive: true,
     credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'same-origin',
+    },
   });
   return await response.json();
 };
@@ -159,23 +164,17 @@ export const getRateLimitInfo = async () => {
   });
   return await response.json();
 };
-
-export const verifyJWTToken = async (token: string, username: string, isLoggedIn: boolean) => {
-  const response = await fetch(
-    `${readEnvironmentVariable(
-      'UWEBSOCKET_ADDRESS'
-    )}/verifyJWTToken?token=${token}&username=${username}&isLoggedIn=${isLoggedIn}`,
-    {
-      method: 'GET',
-    }
-  );
-  return await response.json();
-};
 export const requestGithubLogin = async (proxy_url: string, data: any) => {
   const response = await fetch(proxy_url, {
     method: 'POST',
     keepalive: true,
     credentials: 'include',
+    headers: {
+      //trigger preflight request to browser
+      'Content-Type': 'application/json',
+      'Sec-Fetch-Site': 'same-origin',
+      'Sec-Fetch-Mode': 'cors',
+    },
     body: JSON.stringify(data),
   });
   return await response.json();
@@ -227,6 +226,11 @@ export const requestGithubGraphQLLogin = async (token: string) => {
     method: 'POST',
     keepalive: true,
     credentials: 'include',
+    headers: {
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'same-origin',
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
       token: token,
     }),
@@ -267,6 +271,11 @@ export const getRepoImages = async ({
     )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
     {
       method: 'POST',
+      headers: {
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'Content-Type': 'application/json',
+      },
       keepalive: true,
       body: JSON.stringify({
         data: data,
@@ -296,6 +305,11 @@ export const crawlerPython = async ({
     method: 'POST',
     keepalive: true,
     credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'same-origin',
+    },
     body: JSON.stringify({
       data: data,
     }),

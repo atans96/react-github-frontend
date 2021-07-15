@@ -34,7 +34,7 @@ const Login = () => {
         };
 
         // Use code parameter and other parameters to make POST request to proxy_server
-        requestGithubLogin(`${proxy_url}?&end=false`, requestData)
+        requestGithubLogin(`${proxy_url}`, requestData)
           .then((response) => {
             if (response.data) {
               dispatchShared({

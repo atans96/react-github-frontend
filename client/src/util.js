@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 // import deepKeys from 'deep-keys';
 // import imagesLoaded from 'imagesloaded';
 export const detectBrowser = () => {

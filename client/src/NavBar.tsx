@@ -113,6 +113,7 @@ const NavBar = React.memo(() => {
         } else if (active === 'logout') {
           logoutAction(history, dispatch);
         } else {
+          //TODO: don't push state to history for RowTwo and RowOne.
           history.push({ pathname: `/${active.toLowerCase()}`, state: { data, previousPath: location.pathname } });
         }
       });

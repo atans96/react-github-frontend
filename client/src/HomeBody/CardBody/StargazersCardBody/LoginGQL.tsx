@@ -14,7 +14,7 @@ interface LoginGQLProps {
   setVisible: any;
 }
 
-const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, style }, ref) => {
+const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   const [token, setToken] = useState('');
   const [loginLayoutRef, setRef] = useState<Nullable<React.RefObject<HTMLDivElement>>>(null);
   const [notification, setNotification] = useState('');
@@ -104,5 +104,5 @@ const LoginGQL: React.FC<LoginGQLProps> = React.forwardRef(({ setVisible, style 
       )}
     </LoginLayout>
   );
-});
+};
 export default LoginGQL;
