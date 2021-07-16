@@ -165,7 +165,7 @@ const AppRoutes = React.memo(
   }
 );
 const MiddleAppRoute = () => {
-  const { db } = DbCtx.useContainer();
+  const { db, clear } = DbCtx.useContainer();
   const apolloCacheData = useRef<Object>({});
   const [, dispatchShared] = useTrackedStateShared();
   const [stateShared] = useTrackedStateShared();
@@ -241,6 +241,10 @@ const MiddleAppRoute = () => {
       });
     }
     session(false).then((data) => {
+      if (!data.data) {
+        localStorage.clear();
+        clear();
+      }
       dispatchShared({
         type: 'SET_USERNAME',
         payload: { username: data.username },
@@ -382,8 +386,6 @@ const CustomApolloProvider = ({ children }: any) => {
                   });
                 }
               }
-            } else if (message.includes('Unauthorized')) {
-              unAuthorizedAction();
             } else {
               throw new Error(message);
             }

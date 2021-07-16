@@ -11,6 +11,7 @@ import { useTrackedStateShared } from '../selectors/stateContextSelector';
 const DbCtx = createContainer(() => {
   const [db, setDb] = useState<ApolloCacheDB | null>(null);
   const [stateShared] = useTrackedStateShared();
+  const conn = new ApolloCacheDB();
   const handleOpenDb = async () => {
     let symmetricKey;
     if (await Dexie.exists('ApolloCacheDB')) {
@@ -28,8 +29,6 @@ const DbCtx = createContainer(() => {
       await Encryption.encryptKey(symmetricKey, readEnvironmentVariable('DB_KEY')!);
     }
 
-    const conn = new ApolloCacheDB();
-
     applyEncryptionMiddleware(
       conn,
       symmetricKey,
@@ -41,7 +40,6 @@ const DbCtx = createContainer(() => {
       },
       async (db) => clearAllTables(db)
     );
-
     // Dexie does not wait for all hooks to be subscribed (bug?).
     await conn.open();
     setDb(conn);
@@ -53,7 +51,10 @@ const DbCtx = createContainer(() => {
   }, [stateShared.isLoggedIn]);
 
   // avoid ts async
-  return { db: db as ApolloCacheDB };
+  return {
+    db: db as ApolloCacheDB,
+    clear: () => indexedDB.deleteDatabase('ApolloCacheDB'),
+  };
 });
 
 export default DbCtx;

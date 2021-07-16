@@ -99,14 +99,20 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
         {renderImages.length > 0 &&
           renderImages
             .slice(0, 2)
-            .map((image: string, idx) => <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />)}
+            .map(
+              (image: string, idx) =>
+                image.length > 0 && <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />
+            )}
       </div>
       <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
         {renderChildren &&
           renderImages.length > 0 &&
           renderImages
             .slice(2)
-            .map((image: string, idx) => <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />)}
+            .map(
+              (image: string, idx) =>
+                image.length > 0 && <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />
+            )}
       </div>
       <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
         <ListItemIcon>
