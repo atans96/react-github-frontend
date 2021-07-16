@@ -271,6 +271,7 @@ export const getRepoImages = async ({
     )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
     {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Sec-Fetch-Mode': 'cors',
         'Sec-Fetch-Site': 'same-origin',

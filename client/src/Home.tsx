@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { ImagesDataProps, MergedDataProps, SeenProps } from './typing/type';
@@ -21,11 +21,6 @@ import Empty from './Layout/EmptyLayout';
 const MasonryCard = Loadable({
   loader: () => import(/* webpackChunkName: "MasonryCard" */ './HomeBody/MasonryCard'),
   loading: Empty,
-  delay: 300, // 0.3 seconds
-});
-const MasonryLoading = Loadable({
-  loading: Empty,
-  loader: () => import(/* webpackChunkName: "MasonryLoading" */ './HomeBody/MasonryLoading'),
   delay: 300, // 0.3 seconds
 });
 
@@ -462,6 +457,19 @@ const Home = React.memo(() => {
     return state.mergedData; // return this if filteredTopics.length === 0
   };
   useScrollSaver(location.pathname, '/');
+  const [renderLoading, setRenderLoading] = useState(false);
+  useEffect(() => {
+    if (isLoading) {
+      const timeout = setTimeout(() => {
+        if (isLoading) {
+          setRenderLoading(isLoading);
+        }
+      }, 1000);
+      return () => {
+        clearTimeout(timeout);
+      };
+    }
+  }, [isLoading]);
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
@@ -489,18 +497,15 @@ const Home = React.memo(() => {
             </div>
           </Then>
         </If>
-        <If condition={!isMergedDataExist}>
-          <Then>
-            <MasonryLoading data={whichToUse()} />
-          </Then>
-        </If>
+
         <If condition={isMergedDataExist}>
           <Then>
             <MasonryCard data={whichToUse()} getRootProps={getRootProps} />
             <ScrollToTopLayout />
           </Then>
         </If>
-        <If condition={isLoading}>
+
+        <If condition={isLoading && renderLoading}>
           <Then>
             <LoadingEye queryUsername={stateShared.queryUsername} />
           </Then>

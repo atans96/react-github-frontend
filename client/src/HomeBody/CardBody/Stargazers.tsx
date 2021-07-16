@@ -94,7 +94,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
   const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
   const modalWidth = useRef('400px');
-  const [starClicked, setStarClicked] = useState(userStarred.getUserInfoStarred.starred.includes(data.id));
+  const [starClicked, setStarClicked] = useState(userStarred?.getUserInfoStarred?.starred?.includes(data.id));
 
   const [visible, setVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
