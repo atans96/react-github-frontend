@@ -321,6 +321,15 @@ const useFetchUser = ({ component }: useFetchUser) => {
       }
     }
   };
-  return { fetchUserMore, fetchUser, isLoading, notification, setNotification, onClickTopic, clickedGQLTopic };
+  return {
+    fetchUserMore,
+    fetchUser,
+    isLoading,
+    notification,
+    setNotification,
+    onClickTopic,
+    clickedGQLTopic,
+    isFetchFinish: isFetchFinish.current,
+  };
 };
 export default useFetchUser;

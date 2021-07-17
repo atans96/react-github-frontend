@@ -1,84 +1,123 @@
 import { readEnvironmentVariable } from '../util';
 import { SearchUser } from '../typing/interface';
 export const getAllGraphQLNavBar = async (username: string) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/graphqlUserData?username=${username}`,
-    {
-      method: 'GET',
-    }
-  );
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/graphqlUserData?username=${username}`,
+      {
+        method: 'GET',
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const endOfSession = async (username: string, cacheData: any) => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/end_of_session?username=${username}`, {
-    method: 'POST',
-    body: JSON.stringify({ data: cacheData }),
-    keepalive: true,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'same-origin',
-    },
-  });
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/end_of_session?username=${username}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ data: cacheData }),
+        keepalive: true,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-origin',
+        },
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getTopContributors = async (fullName: string) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-    }
-  );
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const removeStarredMe = async (repoFullName: string) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/removeStarredMe?repoFullName=${repoFullName}`,
-    {
-      method: 'GET',
-    }
-  );
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/removeStarredMe?repoFullName=${repoFullName}`,
+      {
+        method: 'GET',
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const setStarredMe = async (repoFullName: string) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setStarredMe?repoFullName=${repoFullName}`,
-    {
-      method: 'GET',
-    }
-  );
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setStarredMe?repoFullName=${repoFullName}`,
+      {
+        method: 'GET',
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const setTokenGQL = async (tokenGQL: string, username: string) => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setTokenGQL?username=${username}`, {
-    method: 'GET',
-    headers: {
-      Authorization: `${tokenGQL}`,
-    },
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setTokenGQL?username=${username}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `${tokenGQL}`,
+      },
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getTokenGQL = async () => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTokenGQL`, {
-    method: 'GET',
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTokenGQL`, {
+      method: 'GET',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const removeTokenGQL = async () => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyTokenGQL`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyTokenGQL`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const removeToken = async () => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyToken`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyToken`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getUser = async ({
   signal,
@@ -93,18 +132,22 @@ export const getUser = async ({
   page: number;
   axiosCancel: boolean;
 }) => {
-  if (username !== '') {
-    const response = await fetch(
-      `${readEnvironmentVariable(
-        'UWEBSOCKET_ADDRESS'
-      )}/users?username=${username}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        signal,
-      }
-    );
-    return await response.json();
+  try {
+    if (username !== '') {
+      const response = await fetch(
+        `${readEnvironmentVariable(
+          'UWEBSOCKET_ADDRESS'
+        )}/users?username=${username}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          signal,
+        }
+      );
+      return await response.json();
+    }
+  } catch (e) {
+    console.log(e);
   }
 };
 export const getOrg = async ({
@@ -120,71 +163,99 @@ export const getOrg = async ({
   page: number;
   axiosCancel: boolean;
 }) => {
-  if (org !== '') {
-    const response = await fetch(
-      `${readEnvironmentVariable(
-        'UWEBSOCKET_ADDRESS'
-      )}/org?org=${org}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        signal,
-      }
-    );
-    return await response.json();
+  try {
+    if (org !== '') {
+      const response = await fetch(
+        `${readEnvironmentVariable(
+          'UWEBSOCKET_ADDRESS'
+        )}/org?org=${org}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          signal,
+        }
+      );
+      return await response.json();
+    }
+  } catch (e) {
+    console.log(e);
   }
 };
 export const getValidGQLProperties = async () => {
-  const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_gql_properties`, {
-    method: 'GET',
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_gql_properties`, {
+      method: 'GET',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const markdownParsing = async (full_name: string, branch: string) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/markdown?full_name=${full_name}&branch=${branch}`,
-    {
-      method: 'GET',
-    }
-  );
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/markdown?full_name=${full_name}&branch=${branch}`,
+      {
+        method: 'GET',
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const session = async (end: boolean) => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/start?&end=${end}`, {
-    method: 'GET',
-    credentials: 'include',
-    keepalive: true,
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/start?&end=${end}`, {
+      method: 'GET',
+      credentials: 'include',
+      keepalive: true,
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getRateLimitInfo = async () => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/get_rate_limit`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/get_rate_limit`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const requestGithubLogin = async (proxy_url: string, data: any) => {
-  const response = await fetch(proxy_url, {
-    method: 'POST',
-    keepalive: true,
-    credentials: 'include',
-    headers: {
-      //trigger preflight request to browser
-      'Content-Type': 'application/json',
-      'Sec-Fetch-Site': 'same-origin',
-      'Sec-Fetch-Mode': 'cors',
-    },
-    body: JSON.stringify(data),
-  });
-  return await response.json();
+  try {
+    const response = await fetch(proxy_url, {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'include',
+      headers: {
+        //trigger preflight request to browser
+        'Content-Type': 'application/json',
+        'Sec-Fetch-Site': 'same-origin',
+        'Sec-Fetch-Mode': 'cors',
+      },
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getSearchUsers = async (query: string) => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_users?username=${query}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-  return (await response.json()) as SearchUser;
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_users?username=${query}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    return (await response.json()) as SearchUser;
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getSearchTopics = async ({
   axiosCancel = false,
@@ -195,60 +266,84 @@ export const getSearchTopics = async ({
   signal: any | undefined;
   topic: string;
 }) => {
-  const response = await fetch(
-    `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_topics?topic=${topic}&axiosCancel=${axiosCancel}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      signal,
-    }
-  );
-  return await response.json();
+  try {
+    const response = await fetch(
+      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_topics?topic=${topic}&axiosCancel=${axiosCancel}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        signal,
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getElasticSearchBertAutocomplete = async (query: string) => {
-  //TODO: instead of hitting the server all the time, use Redis https://www.linkedin.com/pulse/complete-guide-lighting-fast-autocomplete-search-suggestion-arya/ as buffer
-  // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
-  const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT_AUTOCOMPLETE')}?q=${query}&docName=github`, {
-    method: 'GET',
-  });
-  return await response.json();
+  try {
+    //TODO: instead of hitting the server all the time, use Redis https://www.linkedin.com/pulse/complete-guide-lighting-fast-autocomplete-search-suggestion-arya/ as buffer
+    // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
+    const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT_AUTOCOMPLETE')}?q=${query}&docName=github`, {
+      method: 'GET',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getElasticSearchBert = async (query: string) => {
-  //TODO: instead of hitting the server all the time, use Redis https://www.linkedin.com/pulse/complete-guide-lighting-fast-autocomplete-search-suggestion-arya/ as buffer
-  // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
-  const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT')}?q=${query}&docName=github`, {
-    method: 'GET',
-  });
-  return await response.json();
+  try {
+    //TODO: instead of hitting the server all the time, use Redis https://www.linkedin.com/pulse/complete-guide-lighting-fast-autocomplete-search-suggestion-arya/ as buffer
+    // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
+    const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT')}?q=${query}&docName=github`, {
+      method: 'GET',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const requestGithubGraphQLLogin = async (token: string) => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/auth_graphql`, {
-    method: 'POST',
-    keepalive: true,
-    credentials: 'include',
-    headers: {
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'same-origin',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      token: token,
-    }),
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/auth_graphql`, {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'include',
+      headers: {
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        token: token,
+      }),
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const convertToWebP = async (imgUrl: string) => {
-  const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/convert_to_webp?imgUrl=${imgUrl}`, {
-    method: 'GET',
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/convert_to_webp?imgUrl=${imgUrl}`, {
+      method: 'GET',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getFile = async (filename: string) => {
-  const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_github_languages?filename=${filename}`, {
-    method: 'GET',
-    headers: { 'Accept-Encoding': 'gzip' },
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_github_languages?filename=${filename}`, {
+      method: 'GET',
+      headers: { 'Accept-Encoding': 'gzip' },
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const getRepoImages = async ({
   axiosCancel = false,
@@ -263,33 +358,37 @@ export const getRepoImages = async ({
   topic: string;
   page: number;
 }) => {
-  //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
-  //must contain a different URL to save each request
-  const response = await fetch(
-    `${readEnvironmentVariable(
-      'UWEBSOCKET_ADDRESS'
-    )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
-    {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'Content-Type': 'application/json',
-      },
-      keepalive: true,
-      body: JSON.stringify({
-        data: data,
-      }),
-      //Fastify not only supports async functions for use as controller code,
-      // but it also automatically parses incoming requests into JSON if the Content-Type header suggests
-      // the body is JSON. Thus, when using fetch request to Fastify, we need to use headers of content-type
-      // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
-      // headers: new Headers({ 'content-type': 'application/json' }),
-      signal,
-    }
-  );
-  return await response.json();
+  try {
+    //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
+    //must contain a different URL to save each request
+    const response = await fetch(
+      `${readEnvironmentVariable(
+        'UWEBSOCKET_ADDRESS'
+      )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-origin',
+          'Content-Type': 'application/json',
+        },
+        keepalive: true,
+        body: JSON.stringify({
+          data: data,
+        }),
+        //Fastify not only supports async functions for use as controller code,
+        // but it also automatically parses incoming requests into JSON if the Content-Type header suggests
+        // the body is JSON. Thus, when using fetch request to Fastify, we need to use headers of content-type
+        // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
+        // headers: new Headers({ 'content-type': 'application/json' }),
+        signal,
+      }
+    );
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };
 export const crawlerPython = async ({
   signal,
@@ -302,19 +401,23 @@ export const crawlerPython = async ({
   topic: string;
   page: number;
 }) => {
-  const response = await fetch(`${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}`, {
-    method: 'POST',
-    keepalive: true,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'same-origin',
-    },
-    body: JSON.stringify({
-      data: data,
-    }),
-    signal,
-  });
-  return await response.json();
+  try {
+    const response = await fetch(`${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}`, {
+      method: 'POST',
+      keepalive: true,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+      },
+      body: JSON.stringify({
+        data: data,
+      }),
+      signal,
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
 };

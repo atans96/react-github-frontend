@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
-import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
+import { createTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import { useTrackedState, useTrackedStateShared } from '../../selectors/stateContextSelector';
@@ -10,8 +10,8 @@ import { Tags } from './Tags';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 
-const defaultTheme = createMuiTheme();
-const theme = createMuiTheme({
+const defaultTheme = createTheme();
+const theme = createTheme({
   overrides: {
     MuiTooltip: {
       tooltip: {

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
-import { createMuiTheme, MuiThemeProvider } from '@material-ui/core/styles';
+import { createTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import InputSlider from '../../Layout/SliderLayout';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 
-const defaultTheme = createMuiTheme();
-const theme = createMuiTheme({
+const defaultTheme = createTheme();
+const theme = createTheme({
   overrides: {
     MuiTooltip: {
       tooltip: {

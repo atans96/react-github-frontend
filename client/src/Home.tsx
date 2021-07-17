@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
-import { ImagesDataProps, MergedDataProps, SeenProps } from './typing/type';
+import { MergedDataProps, SeenProps } from './typing/type';
 import { noop } from './util/util';
 import { fastFilter, pMap, useStableCallback } from './util';
 import { crawlerPython, getRepoImages } from './services';
@@ -42,8 +42,16 @@ const ScrollToTopLayout = Loadable({
 });
 
 const Home = React.memo(() => {
-  const { fetchUserMore, fetchUser, isLoading, notification, setNotification, onClickTopic, clickedGQLTopic } =
-    useFetchUser({ component: 'Home' });
+  const {
+    fetchUserMore,
+    fetchUser,
+    isLoading,
+    notification,
+    setNotification,
+    onClickTopic,
+    clickedGQLTopic,
+    isFetchFinish,
+  } = useFetchUser({ component: 'Home' });
   const location = useLocation();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
@@ -57,7 +65,6 @@ const Home = React.memo(() => {
   // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
-  const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const windowScreenRef = useRef<HTMLDivElement>(null);
   const isMergedDataExist = state.mergedData.length > 0;
   const isSeenCardsExist =
@@ -65,85 +72,19 @@ const Home = React.memo(() => {
     false;
   const isTokenRSSExist = userData?.getUserData?.tokenRSS?.length > 0 && !userDataLoading && !userDataError;
 
-  const mergedDataRef = useRef<MergedDataProps[]>([]);
-  const isLoadingRef = useRef<boolean>(false);
-  const imagesDataRef = useRef<ImagesDataProps[]>([]);
-  const filterBySeenRef = useRef<boolean>(state.filterBySeen);
-  const notificationRef = useRef<string>('');
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      mergedDataRef.current = state.mergedData;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.mergedData]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      isLoadingRef.current = isLoading;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      notificationRef.current = notification;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notification]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      imagesDataRef.current = state.imagesData;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.imagesData]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
-      filterBySeenRef.current = state.filterBySeen;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.filterBySeen]);
-
-  const locationRef = useRef('/');
-  useEffect(() => {
-    locationRef.current = location.pathname;
-  });
-
   const handleBottomHit = useStableCallback(() => {
     if (
-      !isFetchFinish.current &&
-      mergedDataRef.current.length > 0 &&
-      !isLoadingRef.current &&
-      locationRef.current === '/' &&
-      notificationRef.current === '' &&
-      filterBySeenRef.current
+      !isFetchFinish &&
+      state.mergedData.length > 0 &&
+      !isLoading &&
+      location.pathname === '/' &&
+      notification === '' &&
+      state.filterBySeen
     ) {
       dispatch({
         type: 'ADVANCE_PAGE',
       });
-      const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
+      const result = state.mergedData.reduce((acc, obj: MergedDataProps) => {
         const temp = Object.assign(
           {},
           {
@@ -160,7 +101,7 @@ const Home = React.memo(() => {
             topics: obj.topics,
             html_url: obj.html_url,
             id: obj.id,
-            imagesData: imagesDataRef.current.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+            imagesData: state.imagesData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
             name: obj.name,
             is_queried: false,
           }
@@ -168,7 +109,7 @@ const Home = React.memo(() => {
         acc.push(temp);
         return acc;
       }, [] as SeenProps[]);
-      if (result.length > 0 && imagesDataRef.current.length > 0 && stateShared.isLoggedIn) {
+      if (result.length > 0 && state.imagesData.length > 0 && stateShared.isLoggedIn) {
         seenAdded(result).then(noop);
       }
     }
@@ -177,7 +118,7 @@ const Home = React.memo(() => {
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
-    isLoading || !isMergedDataExist || isFetchFinish.current // include isFetchFinish to indicate not to listen anymore
+    isLoading || !isMergedDataExist || isFetchFinish // include isFetchFinish to indicate not to listen anymore
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
@@ -505,11 +446,7 @@ const Home = React.memo(() => {
           </Then>
         </If>
 
-        <If condition={isLoading && renderLoading}>
-          <Then>
-            <LoadingEye queryUsername={stateShared.queryUsername} />
-          </Then>
-        </If>
+        {isLoading && renderLoading && <LoadingEye queryUsername={stateShared.queryUsername} />}
 
         <If condition={notification}>
           <Then>
