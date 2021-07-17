@@ -191,30 +191,30 @@ const MiddleAppRoute = () => {
   }, [cacheData]);
   useEffect(() => {
     if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
-      // navigator.serviceWorker
-      //   .register('sw.js')
-      //   .then(() => navigator.serviceWorker.ready)
-      //   .then((reg) => {
-      //     reg.onupdatefound = () => {
-      //       const waitingServiceWorker = reg.waiting;
-      //       if (waitingServiceWorker) {
-      //         waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
-      //       }
-      //     };
-      //     // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
-      //     navigator?.serviceWorker?.controller?.postMessage({
-      //       type: 'username',
-      //       username: stateShared.username,
-      //     });
-      //     return (window.onbeforeunload = () => {
-      //       Promise.all([
-      //         db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
-      //         endOfSession(stateShared.username, apolloCacheData),
-      //         session(true),
-      //       ]).then(noop);
-      //       return window.close();
-      //     });
-      //   });
+      navigator.serviceWorker
+        .register('sw.js')
+        .then(() => navigator.serviceWorker.ready)
+        .then((reg) => {
+          reg.onupdatefound = () => {
+            const waitingServiceWorker = reg.waiting;
+            if (waitingServiceWorker) {
+              waitingServiceWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+          };
+          // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
+          navigator?.serviceWorker?.controller?.postMessage({
+            type: 'username',
+            username: stateShared.username,
+          });
+          return (window.onbeforeunload = () => {
+            // Promise.all([
+            //   db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
+            //   endOfSession(stateShared.username, apolloCacheData),
+            //   session(true),
+            // ]).then(noop);
+            return window.close();
+          });
+        });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn, apolloCacheData]);
