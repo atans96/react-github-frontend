@@ -2,9 +2,11 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Theme } from '@material-ui/core';
 import AppBar from '@material-ui/core/AppBar';
+import { StateRateLimitProvider } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import '../hamburgers.css';
 import Empty from '../Layout/EmptyLayout';
+import { StateSharedProvider } from '../selectors/stateContextSelector';
 
 const ToolBar = Loadable({
   loading: Empty,
@@ -61,9 +63,14 @@ const BottomNavigationBar = () => {
       <AppBar position="fixed" color="primary" className={classes.appBar}>
         <ToolBar />
         <RepoStat />
-        <RateLimit />
+
+        <StateRateLimitProvider>
+          <RateLimit />
+        </StateRateLimitProvider>
       </AppBar>
-      <DrawerBar />
+      <StateSharedProvider>
+        <DrawerBar />
+      </StateSharedProvider>
     </React.Fragment>
   );
 };

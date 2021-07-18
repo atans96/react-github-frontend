@@ -3,9 +3,11 @@ import { useUserCardStyles } from './UserCardStyle';
 import { Typography } from '@material-ui/core';
 import { MergedDataProps } from '../../typing/type';
 import { useHistory } from 'react-router-dom';
-import { SharedStore } from '../../store/Shared/reducer';
-import { StargazersStore } from '../../store/Staargazers/reducer';
-import { DiscoverStore } from '../../store/Discover/reducer';
+import {
+  useTrackedStateDiscover,
+  useTrackedStateShared,
+  useTrackedStateStargazers,
+} from '../../selectors/stateContextSelector';
 
 interface UserCardDiscover {
   data: MergedDataProps;
@@ -17,18 +19,21 @@ const UserCardDiscover: React.FC<UserCardDiscover> = React.memo(
     const classes = useUserCardStyles();
     const { login, avatar_url, html_url } = data.owner;
     const history = useHistory();
+    const [, dispatchShared] = useTrackedStateShared();
+    const [, dispatchDiscover] = useTrackedStateDiscover();
+    const [, dispatchStargazers] = useTrackedStateStargazers();
 
     function onClick(e: React.MouseEvent) {
       e.preventDefault();
       e.stopPropagation();
       history.push('/');
-      DiscoverStore.dispatch({
+      dispatchDiscover({
         type: 'REMOVE_ALL',
       });
-      StargazersStore.dispatch({
+      dispatchStargazers({
         type: 'REMOVE_ALL',
       });
-      SharedStore.dispatch({
+      dispatchShared({
         type: 'QUERY_USERNAME',
         payload: {
           queryUsername: login,

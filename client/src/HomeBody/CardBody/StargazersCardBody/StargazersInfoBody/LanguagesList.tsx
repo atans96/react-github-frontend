@@ -4,19 +4,19 @@ import { Then } from '../../../../util/react-if/Then';
 import './LanguageListStyle.scss';
 import { StargazerProps } from '../../../../typing/type';
 import { fastFilter } from '../../../../util';
+import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 import { getFile } from '../../../../services';
-import { StargazersStore } from '../../../../store/Staargazers/reducer';
 
 const LanguagesList: React.FC = React.memo(() => {
-  const { language } = StargazersStore.store().Language();
-  const [selectedLanguage, setSelectedLanguage] = useState(language);
+  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
+  const [selectedLanguage, setSelectedLanguage] = useState(stateStargazers.language);
   const evenOdd = useRef(0);
   const [languageInfo, setLanguageInfo] = useState([]);
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     localStorage.setItem('language', e.currentTarget.innerText);
     setSelectedLanguage(e.currentTarget.innerText);
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'SET_LANGUAGE',
       payload: {
         language: e.currentTarget.innerText,
@@ -25,16 +25,14 @@ const LanguagesList: React.FC = React.memo(() => {
   };
   const handleClickSort = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
-    const temp = StargazersStore.store()
-      .StargazersData()
-      .stargazersData.reduce((acc: any[], stargazer: StargazerProps) => {
-        const temp = stargazer.starredRepositories.nodes.map(
-          (obj: any) => obj.languages.nodes.map((obj: any) => obj.name)[0]
-        );
-        const languages = fastFilter((language: string) => language === language, temp);
-        acc.push(Object.assign({}, { id: stargazer.id, languages: languages.length }));
-        return acc;
-      }, []);
+    const temp = stateStargazers.stargazersData.reduce((acc: any[], stargazer: StargazerProps) => {
+      const temp = stargazer.starredRepositories.nodes.map(
+        (obj: any) => obj.languages.nodes.map((obj: any) => obj.name)[0]
+      );
+      const languages = fastFilter((language: string) => language === stateStargazers.language, temp);
+      acc.push(Object.assign({}, { id: stargazer.id, languages: languages.length }));
+      return acc;
+    }, []);
     if (evenOdd.current % 2 === 0) {
       //the first click start at 0 will sort from bigger to smaller
       temp.sort((a: any, b: any) => {
@@ -48,16 +46,14 @@ const LanguagesList: React.FC = React.memo(() => {
     }
     const result: any[] = [];
     temp.forEach((key: any) => {
-      StargazersStore.store()
-        .StargazersData()
-        .stargazersData.forEach((stargazer: StargazerProps) => {
-          if (stargazer.id === key.id) {
-            result.push(stargazer);
-          }
-        });
+      stateStargazers.stargazersData.forEach((stargazer: StargazerProps) => {
+        if (stargazer.id === key.id) {
+          result.push(stargazer);
+        }
+      });
     });
-    StargazersStore.dispatch({
-      type: 'STARGAZERS_UPDATED',
+    dispatchStargazers({
+      type: 'STARGAZERS_SORTED_LANGUAGE',
       payload: {
         stargazersData: result,
       },

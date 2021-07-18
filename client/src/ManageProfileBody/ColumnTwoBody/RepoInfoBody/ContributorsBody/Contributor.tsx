@@ -1,8 +1,7 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
+import { useTrackedState, useTrackedStateShared } from '../../../../selectors/stateContextSelector';
 import { ContributorProps } from '../../../../typing/type';
-import { SharedStore } from '../../../../store/Shared/reducer';
-import { HomeStore } from '../../../../store/Home/reducer';
 
 interface Props {
   obj: ContributorProps;
@@ -10,19 +9,21 @@ interface Props {
 
 const Contributor: React.FC<Props> = ({ obj }) => {
   const history = useHistory();
+  const [, dispatchShared] = useTrackedStateShared();
+  const [, dispatch] = useTrackedState();
   const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
     e.preventDefault();
-    SharedStore.dispatch({
+    dispatchShared({
       type: 'QUERY_USERNAME',
       payload: {
         queryUsername: contributor,
       },
     });
-    HomeStore.dispatch({
+    dispatch({
       type: 'MERGED_DATA_ADDED',
       payload: { data: [] },
     });
-    HomeStore.dispatch({
+    dispatch({
       type: 'LAST_PAGE',
       payload: { lastPage: 0 },
     });

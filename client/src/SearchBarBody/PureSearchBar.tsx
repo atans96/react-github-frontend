@@ -5,6 +5,7 @@ import { MergedDataProps, StargazerProps } from '../typing/type';
 import { fastFilter, useStableCallback } from '../util';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
+import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { noop } from '../util/util';
 import Loadable from 'react-loadable';
 import { Then } from '../util/react-if/Then';
@@ -16,9 +17,6 @@ import ButtonTags from './PureSearchBarBody/ButtonTags';
 import Empty from '../Layout/EmptyLayout';
 import PureInput from './PureInput';
 import Results from './PureSearchBarBody/Results';
-import { SharedStore } from '../store/Shared/reducer';
-import { StargazersStore } from '../store/Staargazers/reducer';
-import { HomeStore } from '../store/Home/reducer';
 
 const ResultRenderer = Loadable({
   loading: Empty,
@@ -31,17 +29,9 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
-  const { topics: Topics } = HomeStore.store().Topics();
-  const { width } = SharedStore.store().Width();
-  const { filteredTopics } = HomeStore.store().FilteredTopics();
-  const { mergedData } = HomeStore.store().MergedData();
-  const { filteredMergedData } = HomeStore.store().FilteredMergedData();
-  const { perPage } = SharedStore.store().PerPage();
-  const { stargazersQueueData } = StargazersStore.store().StargazersQueueData();
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
-  const { isLoading } = HomeStore.store().IsLoading();
-  const { searchUsers } = HomeStore.store().SearchUsers();
-
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
+  const [state, dispatch] = useTrackedState();
   const displayName: string | undefined = (SearchBar as React.ComponentType<any>).displayName;
   const { searchesData } = useApolloFactory(displayName!).query.getSearchesData();
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
@@ -52,8 +42,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     maxWidth: '100%',
   };
   let style: React.CSSProperties;
-  if (width < 711) {
-    style = { width: `${width - 200}px` };
+  if (stateShared.width < 711) {
+    style = { width: `${stateShared.width - 200}px` };
   } else {
     style = {
       maxWidth: size.maxWidth,
@@ -71,7 +61,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     switch (type) {
       case 'search':
         return `Searching GITHUB username will return both the users' starred and watched repos.
-        We will fetch ${perPage} pages per scroll based on your setting.`;
+        We will fetch ${stateShared.perPage} pages per scroll based on your setting.`;
       case 'filterTags':
         return 'Filter data based on topics tags.';
       case 'filterSearchBar':
@@ -94,40 +84,40 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const handleSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     event.stopPropagation();
-    const usernameList = stargazersQueueData.reduce((acc: string[], stargazer: StargazerProps) => {
+    const usernameList = stateStargazers.stargazersQueueData.reduce((acc: string[], stargazer: StargazerProps) => {
       acc.push(stargazer.login);
       return acc;
     }, []);
-    SharedStore.dispatch({
+    dispatchShared({
       type: 'SET_SHOULD_RENDER',
       payload: {
         shouldRender: ShouldRender.Home,
       },
     });
-    SharedStore.dispatch({
+    dispatchShared({
       type: 'QUERY_USERNAME',
       payload: {
         queryUsername: [...usernameList, username.current.getState()].filter((e) => !!e),
       },
     });
-    SharedStore.dispatch({
+    dispatchShared({
       type: 'SET_SHOULD_RENDER',
       payload: {
         shouldRender: ShouldRender.Home,
       },
     });
-    HomeStore.dispatch({
+    dispatch({
       type: 'REMOVE_ALL',
     });
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'REMOVE_ALL',
     });
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'REMOVE_QUEUE',
     });
     setVisible(false);
     setVisibleSearchesHistory(false);
-    if (isLoggedIn) {
+    if (stateShared.isLoggedIn) {
       [...usernameList, username.current.getState()]
         .filter((e) => !!e)
         .forEach((char) => {
@@ -155,8 +145,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   useEffect(() => {
     let isCancelled = false;
     if (location.pathname === '/' && !isCancelled) {
-      if (filteredTopics.length > 0) {
-        HomeStore.dispatch({
+      if (state.filteredTopics.length > 0) {
+        dispatch({
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
             filteredMergedData: fastFilter((x: MergedDataProps) => {
@@ -165,16 +155,16 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                 topics.push(x.language.toLowerCase());
               }
               return (
-                [...topics, ...filteredTopics].reduce((a: any, b: any) => a.filter((c: string) => b.includes(c)))
+                [...topics, ...state.filteredTopics].reduce((a: any, b: any) => a.filter((c: string) => b.includes(c)))
                   .length > 0
               );
-              // return _.intersection(topics, HomeStore.store.FilteredTopics.filteredTopics).length === HomeStore.store.FilteredTopics.filteredTopics.length;
-            }, mergedData),
+              // return _.intersection(topics, state.filteredTopics).length === state.filteredTopics.length;
+            }, state.mergedData),
           },
         });
       } else {
         // TODO: freeze on react
-        HomeStore.dispatch({
+        dispatch({
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
             filteredMergedData: [],
@@ -186,15 +176,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredTopics, mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
+  }, [state.filteredTopics, state.mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
   // being executed at Home.js, thus causing mergedData to change. Now if filteredTopics.length > 0, that means we only display new
   // cards that have been fetched that only match with filteredTopics.
 
   const whichToUse = useStableCallback(() => {
-    if (filteredMergedData.length > 0) {
-      return filteredMergedData;
+    if (state.filteredMergedData.length > 0) {
+      return state.filteredMergedData;
     }
-    return mergedData;
+    return state.mergedData;
   });
 
   const handleChange = useStableCallback((value: string) => setValue(value));
@@ -212,7 +202,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
         }
         const languageAndTopics = [...new Set(topics)];
         languageAndTopics.forEach((topic: string) => {
-          const index = Topics.findIndex((x) => x.topic === topic);
+          const index = state.topics.findIndex((x) => x.topic === topic);
           if (!result.find((obj) => obj.topic === topic)) {
             result.push(
               Object.assign(
@@ -220,7 +210,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                 {
                   topic: topic,
                   count: 1,
-                  clicked: index > -1 ? Topics[index].clicked : false,
+                  clicked: index > -1 ? state.topics[index].clicked : false,
                 }
               )
             );
@@ -231,7 +221,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
         });
       });
       // TODO: freeze on react
-      HomeStore.dispatch({
+      dispatch({
         type: 'SET_TOPICS',
         payload: {
           topics: result,
@@ -239,11 +229,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       });
       return () => {
         isCancelled = true;
-        HomeStore.dispatch({
+        dispatch({
           type: 'VISIBLE',
           payload: { visible: false },
         });
-        HomeStore.dispatch({
+        dispatch({
           type: 'LOADING',
           payload: {
             isLoading: false,
@@ -252,12 +242,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filteredMergedData]);
+  }, [state.filteredMergedData]);
 
   useClickOutside(resultsRef, () => {
     setVisible(false);
     setVisibleSearchesHistory(false);
-    HomeStore.dispatch({
+    dispatch({
       type: 'VISIBLE',
       payload: { visible: false },
     });
@@ -281,13 +271,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     e.preventDefault();
     setVisible(false);
     setValue('');
-    HomeStore.dispatch({
+    dispatch({
       type: 'REMOVE_ALL',
     });
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'REMOVE_ALL',
     });
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'REMOVE_QUEUE',
     });
   });
@@ -297,7 +287,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const { getRootProps } = useEventHandlerComposer({ onClickCb });
 
   return (
-    <SearchBarLayout style={{ width: `${width}px` }} onSubmit={handleSubmit}>
+    <SearchBarLayout style={{ width: `${stateShared.width}px` }} onSubmit={handleSubmit}>
       {(portal) => (
         <React.Fragment>
           {/* we separate this as new component since UI need to be updated as soon as possible
@@ -326,20 +316,20 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                 searches={searchesData?.getSearches?.searches}
                 filter={filter}
                 valueRef={valueRef}
-                isLoading={isLoading}
+                isLoading={state.isLoading}
                 getRootProps={getRootProps}
-                width={width}
-                stateSearchUsers={searchUsers}
+                width={stateShared.width}
+                stateSearchUsers={state.searchUsers}
               />
             </Then>
           </If>
           <If condition={visible && filter(searchesData?.getSearches?.searches, valueRef).length === 0}>
             <Then>
               <Results
-                data={searchUsers}
+                data={state.searchUsers}
                 style={style}
                 ref={resultsRef}
-                isLoading={isLoading}
+                isLoading={state.isLoading}
                 getRootProps={getRootProps}
               />
             </Then>

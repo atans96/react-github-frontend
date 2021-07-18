@@ -1,6 +1,6 @@
 import React from 'react';
 import { TopicsProps } from '../../typing/type';
-import { HomeStore } from '../../store/Home/reducer';
+import { useTrackedState } from '../../selectors/stateContextSelector';
 
 interface TagsProps {
   obj: TopicsProps;
@@ -8,15 +8,14 @@ interface TagsProps {
 }
 
 export const Tags: React.FC<TagsProps> = ({ obj, clicked }) => {
-  const index = HomeStore.store()
-    .Topics()
-    .topics.findIndex((x) => x.topic === obj.topic);
+  const [state, dispatch] = useTrackedState();
+  const index = state.topics.findIndex((x) => x.topic === obj.topic);
   const handleClick = (event: React.MouseEvent) => {
     event.preventDefault();
-    HomeStore.store().Topics().topics[index].clicked = !HomeStore.store().Topics().topics[index].clicked;
-    const isClicked = HomeStore.store().Topics().topics[index].clicked;
-    if (HomeStore.store().FilteredTopics().filteredTopics.length === 0 || isClicked) {
-      HomeStore.dispatch({
+    state.topics[index].clicked = !state.topics[index].clicked;
+    const isClicked = state.topics[index].clicked;
+    if (state.filteredTopics.length === 0 || isClicked) {
+      dispatch({
         type: 'FILTER_SET_TOPICS', // execute spawnTopicTags at PureSearchBar.tsx, then it will show the color actived
         // then execute MERGED_DATA_FILTER_BY_TAGS at PureSearchBar.tsx, then re-render Cards at Home.tsx
         // since parent given higher priority to re-render, then spawnTopicTags at PureSearchbar.tsx, rerender Tags.tsx, then
@@ -25,14 +24,14 @@ export const Tags: React.FC<TagsProps> = ({ obj, clicked }) => {
           filteredTopics: obj.topic,
         },
       });
-      HomeStore.dispatch({
+      dispatch({
         type: 'FILTER_SET_TOPICS',
         payload: {
           filteredTopics: obj.topic,
         },
       });
     } else {
-      HomeStore.dispatch({
+      dispatch({
         type: 'FILTER_SET_TOPICS_REMOVE',
         payload: {
           filteredTopics: obj.topic,

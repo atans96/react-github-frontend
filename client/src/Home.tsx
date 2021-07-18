@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTrackedState, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { MergedDataProps, SeenProps } from './typing/type';
 import { noop } from './util/util';
@@ -16,8 +17,6 @@ import Loadable from 'react-loadable';
 import { useLocation } from 'react-router-dom';
 import useFetchUser from './hooks/useFetchUser';
 import Empty from './Layout/EmptyLayout';
-import { SharedStore } from './store/Shared/reducer';
-import { HomeStore } from './store/Home/reducer';
 
 const MasonryCard = Loadable({
   loader: () => import(/* webpackChunkName: "MasonryCard" */ './HomeBody/MasonryCard'),
@@ -55,6 +54,8 @@ const Home = React.memo(() => {
   } = useFetchUser({ component: 'Home' });
   const location = useLocation();
   const axiosCancel = useRef<boolean>(false);
+  const [state, dispatch] = useTrackedState();
+  const [stateShared, dispatchShared] = useTrackedStateShared();
   const abortController = new AbortController();
   const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
   const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
@@ -64,21 +65,7 @@ const Home = React.memo(() => {
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const windowScreenRef = useRef<HTMLDivElement>(null);
-  const { mergedData } = HomeStore.store().MergedData();
-  const { imagesData } = HomeStore.store().ImagesData();
-  const { undisplayMergedData } = HomeStore.store().UndisplayMergedData();
-  const { shouldFetchImages } = HomeStore.store().ShouldFetchImages();
-  const { page } = HomeStore.store().Page();
-  const { visible } = HomeStore.store().Visible();
-  const { filterBySeen } = HomeStore.store().FilterBySeen();
-  const { filteredMergedData } = HomeStore.store().FilteredMergedData();
-
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
-  const { perPage } = SharedStore.store().PerPage();
-  const { queryUsername } = SharedStore.store().QueryUsername();
-  const { drawerWidth } = SharedStore.store().DrawerWidth();
-  const { width } = SharedStore.store().Width();
-  const isMergedDataExist = mergedData.length > 0;
+  const isMergedDataExist = state.mergedData.length > 0;
   const isSeenCardsExist =
     (seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError) ||
     false;
@@ -87,16 +74,16 @@ const Home = React.memo(() => {
   const handleBottomHit = useStableCallback(() => {
     if (
       !isFetchFinish &&
-      mergedData.length > 0 &&
+      state.mergedData.length > 0 &&
       !isLoading &&
       location.pathname === '/' &&
       notification === '' &&
-      filterBySeen
+      state.filterBySeen
     ) {
-      HomeStore.dispatch({
+      dispatch({
         type: 'ADVANCE_PAGE',
       });
-      const result = mergedData.reduce((acc, obj: MergedDataProps) => {
+      const result = state.mergedData.reduce((acc, obj: MergedDataProps) => {
         const temp = Object.assign(
           {},
           {
@@ -113,7 +100,7 @@ const Home = React.memo(() => {
             topics: obj.topics,
             html_url: obj.html_url,
             id: obj.id,
-            imagesData: imagesData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+            imagesData: state.imagesData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
             name: obj.name,
             is_queried: false,
           }
@@ -121,7 +108,7 @@ const Home = React.memo(() => {
         acc.push(temp);
         return acc;
       }, [] as SeenProps[]);
-      if (result.length > 0 && imagesData.length > 0 && isLoggedIn) {
+      if (result.length > 0 && state.imagesData.length > 0 && stateShared.isLoggedIn) {
         seenAdded(result).then(noop);
       }
     }
@@ -134,8 +121,8 @@ const Home = React.memo(() => {
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
-    if (width !== entry.contentRect.width) {
-      SharedStore.dispatch({
+    if (stateShared.width !== entry.contentRect.width) {
+      dispatchShared({
         type: 'SET_WIDTH',
         payload: {
           width: entry.contentRect.width,
@@ -146,30 +133,35 @@ const Home = React.memo(() => {
   useDeepCompareEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
-    if (queryUsername.length > 0 && mergedData.length === 0 && location.pathname === '/' && !isFinished) {
-      // we want to preserve queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
-      // we still want to retain the memory of username so that's why we use reducer of queryUsername.
-      // However, as the component unmount, queryUsername is not "", thus causing fetchUser to fire in useEffect
-      // to prevent that, use mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
-      // otherwise, don't re-fetch. in this way, queryUsername and mergedData are still preserved
+    if (
+      stateShared.queryUsername.length > 0 &&
+      state.mergedData.length === 0 &&
+      location.pathname === '/' &&
+      !isFinished
+    ) {
+      // we want to preserve stateShared.queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
+      // we still want to retain the memory of username so that's why we use reducer of stateShared.queryUsername.
+      // However, as the component unmount, stateShared.queryUsername is not "", thus causing fetchUser to fire in useEffect
+      // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
+      // otherwise, don't re-fetch. in this way, stateShared.queryUsername and state.mergedData are still preserved
       fetchUser();
       return () => {
         isFinished = true;
       };
     }
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
-    // it cannot fetch because if the dependency array of fetchUser() is only [queryUsername] so queryUsername not change so not execute
-    // so you need another dependency of SharedStore.PerPage.perPage
-    // you also need mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
+    // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.queryUsername] so stateShared.queryUsername not change so not execute
+    // so you need another dependency of stateShared.perPage
+    // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryUsername, perPage, mergedData, axiosCancel.current]);
+  }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel.current]);
 
   useEffect(() => {
     let isFinished = false;
     if (location.pathname === '/' && !isFinished) {
-      if (queryUsername.length > 0) {
+      if (stateShared.queryUsername.length > 0) {
         fetchUserMore();
-      } else if (queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && filterBySeen) {
+      } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         fetchUserMore();
       }
       return () => {
@@ -177,7 +169,7 @@ const Home = React.memo(() => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, axiosCancel.current]);
+  }, [state.page, axiosCancel.current]);
 
   useEffect(() => {
     if (location.pathname !== '/') {
@@ -186,12 +178,12 @@ const Home = React.memo(() => {
     } else {
       axiosCancel.current = false; // back to default when in '/' path
     }
-  }, [location, queryUsername]);
+  }, [location, stateShared.queryUsername]);
 
   useEffect(() => {
     let isFinished = false;
     if (isTokenRSSExist && location.pathname === '/') {
-      SharedStore.dispatch({
+      dispatchShared({
         type: 'TOKEN_RSS_ADDED',
         payload: {
           tokenRSS: userData.getUserData.tokenRSS,
@@ -207,20 +199,20 @@ const Home = React.memo(() => {
   useEffect(() => {
     let isFinished = false;
     setNotification('');
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished && filterBySeen) {
-      const ids = undisplayMergedData.reduce((acc, obj) => {
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
+      const ids = state.undisplayMergedData.reduce((acc, obj) => {
         acc.push(obj.id);
         return acc;
       }, [] as number[]);
-      const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), mergedData);
-      const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), imagesData);
-      HomeStore.dispatch({
+      const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
+      const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), state.imagesData);
+      dispatch({
         type: 'IMAGES_DATA_REPLACE',
         payload: {
           imagesData: images,
         },
       });
-      HomeStore.dispatch({
+      dispatch({
         type: 'MERGED_DATA_ADDED',
         payload: {
           data: temp,
@@ -231,12 +223,12 @@ const Home = React.memo(() => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterBySeen]);
+  }, [state.filterBySeen]);
 
   useEffect(() => {
     let isFinished = false;
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished && !filterBySeen) {
-      HomeStore.dispatch({
+    if (isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
+      dispatch({
         type: 'UNDISPLAY_MERGED_DATA',
         payload: {
           undisplayMergedData: seenData.getSeen.seenCards,
@@ -255,13 +247,13 @@ const Home = React.memo(() => {
         );
         return acc;
       }, [] as SeenProps[]);
-      HomeStore.dispatch({
+      dispatch({
         type: 'IMAGES_DATA_ADDED',
         payload: {
           images: images,
         },
       });
-      HomeStore.dispatch({
+      dispatch({
         type: 'MERGED_DATA_ADDED',
         payload: {
           data: seenData.getSeen.seenCards,
@@ -272,20 +264,20 @@ const Home = React.memo(() => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seenDataLoading, seenDataError, seenData, location, filterBySeen]);
+  }, [seenDataLoading, seenDataError, seenData, location, state.filterBySeen]);
 
   useEffect(
     () => {
       let isFinished = false;
-      if (isMergedDataExist && shouldFetchImages && location.pathname === '/' && !isFinished) {
-        // mergedData.length > 0 && HomeStore.store.ShouldFetchImages.shouldFetchImages will execute after fetchUser() finish getting mergedData
-        HomeStore.dispatch({
+      if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/' && !isFinished) {
+        // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
+        dispatch({
           type: 'SHOULD_IMAGES_DATA_ADDED',
           payload: {
             shouldFetchImages: false,
           },
         });
-        const data = mergedData.reduce((acc, object) => {
+        const data = state.mergedData.reduce((acc, object) => {
           acc.push(
             Object.assign(
               {},
@@ -310,8 +302,10 @@ const Home = React.memo(() => {
                 const response = await crawlerPython({
                   signal: abortController.signal,
                   data: obj,
-                  topic: Array.isArray(queryUsername) ? (queryUsername[0] as string) : (queryUsername as string),
-                  page: page,
+                  topic: Array.isArray(stateShared.queryUsername)
+                    ? stateShared.queryUsername[0]
+                    : stateShared.queryUsername,
+                  page: state.page,
                 });
                 if (response) {
                   const output = Object.assign(
@@ -328,7 +322,7 @@ const Home = React.memo(() => {
                       },
                     }
                   );
-                  HomeStore.dispatch({
+                  dispatch({
                     type: 'SET_CARD_ENHANCEMENT',
                     payload: {
                       cardEnhancement: output,
@@ -349,12 +343,14 @@ const Home = React.memo(() => {
                 const response = await getRepoImages({
                   signal: abortController.signal,
                   data: obj,
-                  topic: Array.isArray(queryUsername) ? (queryUsername[0] as string) : (queryUsername as string),
-                  page: page,
+                  topic: Array.isArray(stateShared.queryUsername)
+                    ? stateShared.queryUsername[0]
+                    : stateShared.queryUsername,
+                  page: state.page,
                   axiosCancel: axiosCancel.current,
                 });
                 if (response && response.length > 0) {
-                  HomeStore.dispatch({
+                  dispatch({
                     type: 'IMAGES_DATA_ADDED',
                     payload: {
                       images: response,
@@ -394,17 +390,17 @@ const Home = React.memo(() => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [shouldFetchImages, isMergedDataExist, axiosCancel]
+    [state.shouldFetchImages, isMergedDataExist, axiosCancel]
   );
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
   const whichToUse = () => {
     // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
     // is not part of the dependencies for the callback.
-    if (filteredMergedData.length > 0) {
-      return filteredMergedData;
+    if (state.filteredMergedData.length > 0) {
+      return state.filteredMergedData;
     }
-    return mergedData; // return this if filteredTopics.length === 0
+    return state.mergedData; // return this if filteredTopics.length === 0
   };
   useScrollSaver(location.pathname, '/');
   const [renderLoading, setRenderLoading] = useState(false);
@@ -431,16 +427,16 @@ const Home = React.memo(() => {
           header: isMergedDataExist,
         })}
         style={{
-          marginLeft: `${drawerWidth > 0 ? 170 : 50}px`,
-          zIndex: visible ? -1 : 0,
+          marginLeft: `${stateShared.drawerWidth > 0 ? 170 : 50}px`,
+          zIndex: state.visible ? -1 : 0,
         }}
       >
         {
           // we want to render Card first and ImagesCard later because it requires more bandwith
-          // so no need to use state.imagesData condition on top of mergedData?.length > 0 && !shouldRenderSkeleton
+          // so no need to use state.imagesData condition on top of state.mergedData?.length > 0 && !shouldRenderSkeleton
           // below, otherwise it's going to slow to wait for ImagesCard as the Card won't get re-render instantly consequently
         }
-        <If condition={!filterBySeen && isSeenCardsExist}>
+        <If condition={!state.filterBySeen && isSeenCardsExist}>
           <Then>
             <div style={{ textAlign: 'center' }}>
               <h3>Your {(seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length) || 0} Card History:</h3>
@@ -455,7 +451,7 @@ const Home = React.memo(() => {
           </Then>
         </If>
 
-        {isLoading && renderLoading && <LoadingEye queryUsername={queryUsername} />}
+        {isLoading && renderLoading && <LoadingEye queryUsername={stateShared.queryUsername} />}
 
         <If condition={notification}>
           <Then>
@@ -469,7 +465,7 @@ const Home = React.memo(() => {
           </Then>
         </If>
       </div>
-      {width > 1100 && <BottomNavigationBar />}
+      {stateShared.width > 1100 && <BottomNavigationBar />}
     </React.Fragment>
   );
 });

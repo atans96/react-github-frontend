@@ -4,7 +4,7 @@ import { createTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import InputSlider from '../../Layout/SliderLayout';
-import { SharedStore } from '../../store/Shared/reducer';
+import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 
 const defaultTheme = createTheme();
 const theme = createTheme({
@@ -23,15 +23,14 @@ interface ButtonPageSettingProps {
 }
 
 const ButtonPageSetting: React.FC<ButtonPageSettingProps> = ({ showTipsText, portal }) => {
-  const { perPage } = SharedStore.store().PerPage();
-
   const [renderSlider, setExpandableSlider] = useState(false);
   const handleClickSlider = (event: React.MouseEvent): void => {
     event.preventDefault();
     setExpandableSlider(!renderSlider);
   };
+  const [stateShared, dispatchShared] = useTrackedStateShared();
   const dispatchPerPage = (perPage: string) => {
-    SharedStore.dispatch({
+    dispatchShared({
       type: 'PER_PAGE',
       payload: {
         perPage: perPage,
@@ -48,7 +47,7 @@ const ButtonPageSetting: React.FC<ButtonPageSettingProps> = ({ showTipsText, por
             type={'perPage'}
             inputWidth={40}
             sliderWidth={480}
-            defaultValue={perPage}
+            defaultValue={stateShared.perPage}
             dispatch={dispatchPerPage}
             maxSliderRange={1000}
           />

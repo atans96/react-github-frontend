@@ -11,10 +11,10 @@ import { useApolloFactory } from './hooks/useApolloFactory';
 import { useHistory } from 'react-router-dom';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
+import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { getAllGraphQLNavBar } from './services';
 import { useStableCallback } from './util';
-import { SharedStore } from './store/Shared/reducer';
 
 //why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
 const directionLogin = new Map(
@@ -33,14 +33,11 @@ const directionNotLogin = new Map(
 );
 
 const NavBar = React.memo(() => {
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
-  const { username } = SharedStore.store().Username();
-  const { drawerWidth } = SharedStore.store().DrawerWidth();
-
+  const [state, dispatch] = useTrackedStateShared();
   const [active, setActiveBar] = useState<any>('');
   const navBarRef = useRef<HTMLDivElement>(null);
-
   const location = useLocation();
+
   const [isHoveredLogin, bindLogin] = useHover();
   const [isHoveredLogout, bindLogout] = useHover();
   const [isHoveredProfile, bindProfile] = useHover();
@@ -48,17 +45,18 @@ const NavBar = React.memo(() => {
   const [isHoveredHome, bindHome] = useHover();
   const Active = location.pathname.split('/');
   const displayName: string | undefined = (NavBar as React.ComponentType<any>).displayName;
-
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
+
   const te = Active[1] !== '' ? Active[1] : 'home';
-  const number = isLoggedIn ? directionLogin?.get(te)?.index : directionNotLogin?.get(te)?.index;
+  const number = state.isLoggedIn ? directionLogin?.get(te)?.index : directionNotLogin?.get(te)?.index;
   const [nextClickedId, setNextClickedId] = useState<number>(number || 0);
   const previousClickedId = useRef<number>(number || 0);
   const previousActive = useRef<string>('');
   const [isFinished, setIsFinished] = useState<boolean>(true);
+  const [stateShared] = useTrackedStateShared();
   const history = useHistory();
   useEffect(() => {
-    if ((isLoggedIn ? directionLogin : directionNotLogin).get(Active[1] !== '' ? Active[1] : 'home')) {
+    if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active[1] !== '' ? Active[1] : 'home')) {
       setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,7 +65,7 @@ const NavBar = React.memo(() => {
   const handleClick = useStableCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     const res = event.currentTarget.id;
-    SharedStore.dispatch({
+    dispatch({
       type: 'SET_SHOULD_RENDER',
       payload: {
         shouldRender: res,
@@ -77,7 +75,7 @@ const NavBar = React.memo(() => {
       previousActive.current = prevState;
       return res;
     });
-    if (!isLoggedIn) {
+    if (!state.isLoggedIn) {
       const res = directionNotLogin?.get(event.currentTarget.id)?.index || -1;
       setNextClickedId((prevState) => {
         previousClickedId.current = prevState;
@@ -86,7 +84,7 @@ const NavBar = React.memo(() => {
       if (event.currentTarget.id === 'home') {
         history.push('/');
       } else if (event.currentTarget.id === 'logout') {
-        logoutAction(history);
+        logoutAction(history, dispatch);
       } else {
         history.push(`/${event.currentTarget.id.toLowerCase()}`);
       }
@@ -101,8 +99,8 @@ const NavBar = React.memo(() => {
   });
 
   useEffect(() => {
-    if (isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
-      getAllGraphQLNavBar(username).then((data) => {
+    if (state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
+      getAllGraphQLNavBar(stateShared.username).then((data) => {
         setIsFinished(true);
         directionLogin.set(
           active.toLowerCase(),
@@ -113,7 +111,7 @@ const NavBar = React.memo(() => {
         if (active === 'home') {
           history.push('/');
         } else if (active === 'logout') {
-          logoutAction(history);
+          logoutAction(history, dispatch);
         } else {
           //TODO: don't push state to history for RowTwo and RowOne.
           history.push({ pathname: `/${active.toLowerCase()}`, state: { data, previousPath: location.pathname } });
@@ -124,7 +122,7 @@ const NavBar = React.memo(() => {
       if (active === 'home') {
         history.push('/');
       } else if (active === 'logout') {
-        logoutAction(history);
+        logoutAction(history, dispatch);
       } else {
         history.push({ pathname: `/${active.toLowerCase()}` });
       }
@@ -137,7 +135,7 @@ const NavBar = React.memo(() => {
       className="navbar"
       ref={navBarRef}
       style={{
-        marginLeft: `${drawerWidth > 60 && location.pathname === '/' ? drawerWidth : 0}px`,
+        marginLeft: `${state.drawerWidth > 60 && location.pathname === '/' ? state.drawerWidth : 0}px`,
       }}
     >
       <ul>
@@ -179,7 +177,7 @@ const NavBar = React.memo(() => {
           )}
         </div>
 
-        <If condition={isLoggedIn}>
+        <If condition={state.isLoggedIn}>
           <Then>
             <div
               style={{
@@ -223,7 +221,7 @@ const NavBar = React.memo(() => {
           </Then>
         </If>
 
-        <If condition={isLoggedIn}>
+        <If condition={state.isLoggedIn}>
           <Then>
             <div
               style={{
@@ -271,7 +269,7 @@ const NavBar = React.memo(() => {
           </Then>
         </If>
 
-        <If condition={isLoggedIn}>
+        <If condition={state.isLoggedIn}>
           <Then>
             <div
               style={{
@@ -308,7 +306,7 @@ const NavBar = React.memo(() => {
           </Then>
         </If>
 
-        <If condition={!isLoggedIn}>
+        <If condition={!state.isLoggedIn}>
           <Then>
             <div
               style={{

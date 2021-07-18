@@ -3,28 +3,20 @@ import { IDataOne } from '../typing/interface';
 import { ActionResolvedPromise, MergedDataProps, Nullable } from '../typing/type';
 import { noop } from '../util/util';
 import { useRef, useState } from 'react';
+import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { Counter, useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
-import { SharedStore } from '../store/Shared/reducer';
-import { StargazersStore } from '../store/Staargazers/reducer';
-import { HomeStore } from '../store/Home/reducer';
 
 interface useFetchUser {
   component: string;
 }
 
 const useFetchUser = ({ component }: useFetchUser) => {
-  const { perPage } = SharedStore.store().PerPage();
-  const { tokenGQL } = SharedStore.store().TokenGQL();
-  const { queryUsername } = SharedStore.store().QueryUsername();
-
-  const { filterBySeen } = HomeStore.store().FilterBySeen();
-  const { repoStat: RepoStat } = HomeStore.store().RepoStat();
-  const { page } = HomeStore.store().Page();
-  const { mergedData } = HomeStore.store().MergedData();
-
   const { actionResolvePromise } = useActionResolvePromise();
   const axiosCancel = useRef<boolean>(false);
+  const [state, dispatch] = useTrackedState();
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [, dispatchStargazers] = useTrackedStateStargazers();
   const abortController = new AbortController();
   // useState is used when the HTML depends on it directly to render something
   const [isLoading, setLoading] = useState(false);
@@ -37,15 +29,15 @@ const useFetchUser = ({ component }: useFetchUser) => {
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const onClickTopic = useStableCallback(async ({ variables }: any) => {
-    if (tokenGQL !== '' && filterBySeen) {
+    if (stateShared.tokenGQL !== '' && state.filterBySeen) {
       setLoading(true);
-      HomeStore.dispatch({
+      dispatch({
         type: 'REMOVE_ALL',
       });
-      StargazersStore.dispatch({
+      dispatchStargazers({
         type: 'REMOVE_ALL',
       });
-      SharedStore.dispatch({
+      dispatchShared({
         type: 'QUERY_USERNAME',
         payload: {
           queryUsername: '',
@@ -65,7 +57,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
         .then((result) => {
           if (result) {
             paginationInfo += result.paginationInfoData;
-            HomeStore.dispatch({
+            dispatch({
               type: 'LAST_PAGE',
               payload: {
                 lastPage: paginationInfo,
@@ -92,7 +84,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
     }
     const oldID: number[] = [];
     const newID: number[] = [];
-    mergedData.map((obj) => {
+    state.mergedData.map((obj) => {
       return oldID.push(obj.id);
     });
     data.dataOne.map((obj: MergedDataProps) => {
@@ -106,8 +98,8 @@ const useFetchUser = ({ component }: useFetchUser) => {
     getUser({
       signal: undefined,
       username: name,
-      perPage: perPage,
-      page: page + 1,
+      perPage: stateShared.perPage,
+      page: state.page + 1,
       axiosCancel,
     })
       .then((data: IDataOne) => {
@@ -115,8 +107,8 @@ const useFetchUser = ({ component }: useFetchUser) => {
           getOrg({
             signal: undefined,
             org: name,
-            perPage: perPage,
-            page: page + 1,
+            perPage: stateShared.perPage,
+            page: state.page + 1,
             axiosCancel,
           })
             .then((data: IDataOne) => {
@@ -163,16 +155,16 @@ const useFetchUser = ({ component }: useFetchUser) => {
       const repoStat = Object.entries(ja)
         .slice(0, 5)
         .map((arr: any) => {
-          const ja = RepoStat.find((xx) => xx[0] === arr[0]) || [0, 0];
+          const ja = state.repoStat.find((xx) => xx[0] === arr[0]) || [0, 0];
           return [arr[0], ja[1] + arr[1]];
         });
-      HomeStore.dispatch({
+      dispatch({
         type: 'SHOULD_IMAGES_DATA_ADDED',
         payload: {
           shouldFetchImages: true,
         },
       });
-      HomeStore.dispatch({
+      dispatch({
         type: 'REPO_STAT',
         payload: {
           repoStat: repoStat,
@@ -215,10 +207,10 @@ const useFetchUser = ({ component }: useFetchUser) => {
     isFetchFinish.current = false;
     setNotification('');
     let userNameTransformed: string[];
-    if (!Array.isArray(queryUsername)) {
-      userNameTransformed = [queryUsername as string];
+    if (!Array.isArray(stateShared.queryUsername)) {
+      userNameTransformed = [stateShared.queryUsername];
     } else {
-      userNameTransformed = queryUsername as string[];
+      userNameTransformed = stateShared.queryUsername;
     }
     const promises: Promise<void>[] = [];
     let paginationInfo = 0;
@@ -227,7 +219,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
         getUser({
           signal: abortController.signal,
           username: name,
-          perPage: perPage,
+          perPage: stateShared.perPage,
           page: 1,
           axiosCancel: axiosCancel.current,
         })
@@ -236,13 +228,13 @@ const useFetchUser = ({ component }: useFetchUser) => {
               getOrg({
                 signal: abortController.signal,
                 org: name,
-                perPage: perPage,
+                perPage: stateShared.perPage,
                 page: 1,
                 axiosCancel: axiosCancel.current,
               })
                 .then((data: IDataOne) => {
                   paginationInfo += data.paginationInfoData;
-                  HomeStore.dispatch({
+                  dispatch({
                     type: 'LAST_PAGE',
                     payload: {
                       lastPage: paginationInfo,
@@ -262,7 +254,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
                   });
                 });
             paginationInfo += data.paginationInfoData;
-            HomeStore.dispatch({
+            dispatch({
               type: 'LAST_PAGE',
               payload: {
                 lastPage: paginationInfo,
@@ -286,14 +278,14 @@ const useFetchUser = ({ component }: useFetchUser) => {
     promises.forEach((promise) => promise.then(noop));
   };
   const fetchUserMore = () => {
-    // we want to preserve page so that when the user navigate away from Home, then go back again, we still want to retain page
-    // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes page > 1
+    // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
+    // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
     // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
     // to prevent that, we need to reset the Home.js is unmounted.
-    if (!isFetchFinish.current && page > 1) {
+    if (!isFetchFinish.current && state.page > 1) {
       // it's possible the user click Details.js and go back to Home.js again and find out that
       // that the previous page.current is already 2, but when he/she navigates aways from Home.js, it go back to page.current=1 again
-      // so the scroll won't get fetch immediately. Thus, we need to persist page using reducer
+      // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
       setLoading(true); // spawn loading spinner at bottom page
       setNotification('');
       if (clickedGQLTopic.queryTopic !== undefined) {
@@ -317,11 +309,10 @@ const useFetchUser = ({ component }: useFetchUser) => {
           });
       } else if (dataPrefetch.current && dataPrefetch.current.dataOne.length > 0) {
         let userNameTransformed: string[];
-        if (!Array.isArray(queryUsername)) {
-          // @ts-ignore
-          userNameTransformed = [queryUsername];
+        if (!Array.isArray(stateShared.queryUsername)) {
+          userNameTransformed = [stateShared.queryUsername];
         } else {
-          userNameTransformed = queryUsername as string[];
+          userNameTransformed = stateShared.queryUsername;
         }
         userNameTransformed.forEach((user) => {
           const temp = prefetch(user, axiosCancel.current);

@@ -19,7 +19,7 @@ import { fastFilter, uniqFast } from '../../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
-import { SharedStore } from '../../../store/Shared/reducer';
+import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -40,10 +40,8 @@ const useStyles = makeStyles<Theme>(() => ({
 }));
 
 const RSSFeed = () => {
-  const { tokenRSS } = SharedStore.store().TokenRSS();
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
-
-  const isTokenRSSExist = tokenRSS.length > 0;
+  const [stateShared, dispatch] = useTrackedStateShared();
+  const isTokenRSSExist = stateShared.tokenRSS.length > 0;
   const classes = useStyles();
   const displayName: string | undefined = (RSSFeed as React.ComponentType<any>).displayName;
   const tokenRSSAdded = useApolloFactory(displayName!).mutation.tokenRSSAdded;
@@ -119,7 +117,7 @@ const RSSFeed = () => {
                   tokenRSS: token,
                 },
               }).then(noop);
-              SharedStore.dispatch({
+              dispatch({
                 type: 'TOKEN_RSS_ADDED',
                 payload: {
                   tokenRSS: token,
@@ -229,7 +227,7 @@ const RSSFeed = () => {
     event.preventDefault();
     event.stopPropagation();
     if (isTokenRSSExist || token !== '') {
-      const tokenAdd = isTokenRSSExist ? tokenRSS : token;
+      const tokenAdd = isTokenRSSExist ? stateShared.tokenRSS : token;
       if (token !== '') {
         setLoading(true);
       }
@@ -241,7 +239,7 @@ const RSSFeed = () => {
   useEffect(() => {
     let isFinished = false;
     if ((isTokenRSSExist || token !== '') && location.pathname === '/' && !isFinished) {
-      const tokenAdd = isTokenRSSExist ? tokenRSS : token;
+      const tokenAdd = isTokenRSSExist ? stateShared.tokenRSS : token;
       if (token !== '') {
         setLoading(true);
       }
@@ -254,7 +252,7 @@ const RSSFeed = () => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokenRSS, token, openRSS]);
+  }, [stateShared.tokenRSS, token, openRSS]);
 
   return (
     <List>
@@ -277,7 +275,7 @@ const RSSFeed = () => {
                 </div>
               </Then>
             </If>
-            <If condition={!loading && isLoggedIn}>
+            <If condition={!loading && stateShared.isLoggedIn}>
               <Then>
                 <form action="#" method="get" className="input-group" style={{ padding: '1em' }}>
                   <div style={{ display: 'flex' }}>
@@ -311,7 +309,7 @@ const RSSFeed = () => {
                 </div>
               </Then>
             </If>
-            <If condition={!loading && !isLoggedIn}>
+            <If condition={!loading && !stateShared.isLoggedIn}>
               <Then>
                 <div style={{ textAlign: 'center' }}>
                   <span>{notification !== '' ? notification : `Please Login to access this feature`}</span>

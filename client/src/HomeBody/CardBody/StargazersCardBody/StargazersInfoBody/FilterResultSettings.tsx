@@ -3,7 +3,7 @@ import InputSlider from '../../../../Layout/SliderLayout';
 import { CheckIcon, PeopleIcon, ReposIcon } from '../../../../util/icons';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import Button from '@material-ui/core/Button';
-import { StargazersStore } from '../../../../store/Staargazers/reducer';
+import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 
 const useStyles = makeStyles((theme) => ({
   button: {
@@ -16,12 +16,10 @@ export interface FilterResultSettings {
 }
 
 const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props }) => {
-  const { stargazersUsers } = StargazersStore.store().StargazersUsers();
-  const { stargazersUsersStarredRepositories } = StargazersStore.store().StargazersUsersStarredRepositories();
-
   const classes = useStyles();
+  const [state, dispatch] = useTrackedStateStargazers();
   const dispatchStargazersUsers = (stargazersUsers: number) => {
-    StargazersStore.dispatch({
+    dispatch({
       type: 'STARGAZERS_USERS',
       payload: {
         stargazersUsers: stargazersUsers,
@@ -29,7 +27,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props
     });
   };
   const dispatchStargazersUsersRepo = (stargazersUsersStarredRepositories: number) => {
-    StargazersStore.dispatch({
+    dispatch({
       type: 'STARGAZERS_USERS_REPOS',
       payload: {
         stargazersUsersStarredRepositories: stargazersUsersStarredRepositories,
@@ -47,7 +45,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props
             type={'users'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={stargazersUsers}
+            defaultValue={state.stargazersUsers}
             dispatch={dispatchStargazersUsers}
             icon={<PeopleIcon />}
           />
@@ -60,7 +58,7 @@ const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props
             type={'repos'}
             inputWidth={30}
             sliderWidth={150}
-            defaultValue={stargazersUsersStarredRepositories}
+            defaultValue={state.stargazersUsersStarredRepositories}
             dispatch={dispatchStargazersUsersRepo}
             icon={<ReposIcon />}
           />
