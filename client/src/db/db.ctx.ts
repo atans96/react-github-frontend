@@ -6,11 +6,11 @@ import { readEnvironmentVariable } from '../util';
 import Encryption from './Encryption';
 import Dexie from 'dexie';
 import { noop } from '../util/util';
-import { SharedStore } from '../store/Shared/reducer';
+import { useTrackedStateShared } from '../selectors/stateContextSelector';
 
 const DbCtx = createContainer(() => {
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
   const [db, setDb] = useState<ApolloCacheDB | null>(null);
+  const [stateShared] = useTrackedStateShared();
   const conn = new ApolloCacheDB();
   const handleOpenDb = async () => {
     let symmetricKey;
@@ -45,10 +45,10 @@ const DbCtx = createContainer(() => {
     setDb(conn);
   };
   useEffect(() => {
-    if (isLoggedIn) {
+    if (stateShared.isLoggedIn) {
       handleOpenDb().then(noop); // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-  }, [isLoggedIn]);
+  }, [stateShared.isLoggedIn]);
 
   // avoid ts async
   return {

@@ -1,10 +1,9 @@
 import React, { RefObject, useCallback, useDebugValue, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import warning from 'tiny-warning';
-import { AssignableRef } from '../typing/interface';
+import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
 import { removeToken, removeTokenGQL, session } from '../services';
-import { SharedStore } from '../store/Shared/reducer';
-
+import { ActionShared } from '../store/Shared/reducer';
 export function useDebouncedValue<T>(input: T, time = 1500) {
   const [debouncedValue, setDebouncedValue] = useState(input);
 
@@ -21,11 +20,9 @@ export function useDebouncedValue<T>(input: T, time = 1500) {
 
   return debouncedValue;
 }
-
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
-
 class SinglyLinkedListNode<T> {
   data: T | any;
   next: SinglyLinkedListNode<T> | null;
@@ -285,7 +282,6 @@ export const callAll =
   (...fns: AnyFunction[]) =>
   (...args: any[]): void =>
     fns.forEach((fn) => fn && fn(...args));
-
 // https://github.com/mui-org/material-ui/blob/da362266f7c137bf671d7e8c44c84ad5cfc0e9e2/packages/material-ui/src/styles/transitions.js#L89-L98
 export function getAutoHeightDuration(height: number | string): number {
   if (!height || typeof height === 'string') {
@@ -445,7 +441,7 @@ export async function addRSSFeed(url: string) {
   }
 }
 
-export function logoutAction(history: any) {
+export function logoutAction(history: any, dispatch: React.Dispatch<IAction<ActionShared>>) {
   history.push('/');
   // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
   navigator?.serviceWorker?.controller?.postMessage({
@@ -454,6 +450,6 @@ export function logoutAction(history: any) {
   session(true).then(noop);
   removeTokenGQL().then(noop);
   removeToken().then(() => {});
-  SharedStore.dispatch({ type: 'LOGOUT' });
+  dispatch({ type: 'LOGOUT' });
   window.location.reload(false);
 }

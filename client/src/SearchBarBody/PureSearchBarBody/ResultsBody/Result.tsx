@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
+import {
+  useTrackedState,
+  useTrackedStateShared,
+  useTrackedStateStargazers,
+} from '../../../selectors/stateContextSelector';
 import { noop } from '../../../util/util';
-import { SharedStore } from '../../../store/Shared/reducer';
-import { StargazersStore } from '../../../store/Staargazers/reducer';
-import { HomeStore } from '../../../store/Home/reducer';
 
 interface Result {
   children: React.ReactNode;
@@ -12,7 +14,9 @@ interface Result {
 }
 
 const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
+  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [, dispatchStargazers] = useTrackedStateStargazers();
+  const [, dispatch] = useTrackedState();
   const [isHovered, setIsHovered] = useState(false);
   const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
@@ -24,19 +28,19 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
   };
   const onClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    HomeStore.dispatch({
+    dispatch({
       type: 'REMOVE_ALL',
     });
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'REMOVE_ALL',
     });
-    SharedStore.dispatch({
+    dispatchShared({
       type: 'QUERY_USERNAME',
       payload: {
         queryUsername: userName,
       },
     });
-    if (isLoggedIn) {
+    if (stateShared.isLoggedIn) {
       searchesAdded({
         getSearches: { searches: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })] },
       }).then(noop);

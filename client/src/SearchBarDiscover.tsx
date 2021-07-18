@@ -1,9 +1,10 @@
 import React from 'react';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
+import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
 import Loadable from 'react-loadable';
+import { useStableCallback } from './util';
 import Empty from './Layout/EmptyLayout';
-import { DiscoverStore } from './store/Discover/reducer';
 
 const PureSearchBarDiscover = Loadable({
   loading: Empty,
@@ -11,12 +12,17 @@ const PureSearchBarDiscover = Loadable({
   loader: () => import(/* webpackChunkName: "PureSearchBarDiscover" */ './SearchBarBody/PureSearchBarDiscover'),
 });
 const SearchBarDiscover = React.memo(() => {
-  const { filterMergedDataDiscover } = DiscoverStore.store().FilterMergedDataDiscover();
+  const [stateShared] = useTrackedStateShared();
+  const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
+  const PureSearchBarDataMemoized = useStableCallback(() => {
+    return stateShared.width;
+  });
+
   const location = useLocation();
   useDeepCompareEffect(() => {
     let isFinished = false;
-    if (filterMergedDataDiscover.length > 0 && location.pathname === '/discover' && !isFinished) {
-      DiscoverStore.dispatch({
+    if (stateDiscover.filterMergedDataDiscover.length > 0 && location.pathname === '/discover' && !isFinished) {
+      dispatchDiscover({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
           data: [],
@@ -28,7 +34,7 @@ const SearchBarDiscover = React.memo(() => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterMergedDataDiscover]);
+  }, [stateDiscover.filterMergedDataDiscover]);
 
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
@@ -40,7 +46,7 @@ const SearchBarDiscover = React.memo(() => {
         marginTop: '10rem',
       }}
     >
-      <PureSearchBarDiscover />
+      <PureSearchBarDiscover width={PureSearchBarDataMemoized()} />
     </div>
   );
 });

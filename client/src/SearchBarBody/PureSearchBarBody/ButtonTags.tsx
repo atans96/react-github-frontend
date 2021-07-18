@@ -3,13 +3,12 @@ import Tooltip from '@material-ui/core/Tooltip';
 import { createTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import clsx from 'clsx';
 import { createPortal } from 'react-dom';
+import { useTrackedState, useTrackedStateShared } from '../../selectors/stateContextSelector';
 import useCollapse from '../../hooks/useCollapse';
 import { TopicsProps } from '../../typing/type';
 import { Tags } from './Tags';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
-import { SharedStore } from '../../store/Shared/reducer';
-import { HomeStore } from '../../store/Home/reducer';
 
 const defaultTheme = createTheme();
 const theme = createTheme({
@@ -28,10 +27,8 @@ interface ButtonTagsProps {
 }
 
 const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable }) => {
-  const { filterBySeen } = HomeStore.store().FilterBySeen();
-  const { mergedData } = HomeStore.store().MergedData();
-  const { topics } = HomeStore.store().Topics();
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
+  const [state, dispatch] = useTrackedState();
+  const [stateShared] = useTrackedStateShared();
   const handleClickSearchTopicTags = (event: React.MouseEvent): void => {
     event.preventDefault();
   };
@@ -51,7 +48,7 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
     } else {
       return createPortal(
         <div className={'tags'} {...collapseTopicTags()}>
-          {topics.map((obj: TopicsProps, idx: number) => {
+          {state.topics.map((obj: TopicsProps, idx: number) => {
             if (renderTopicTags) {
               return <Tags key={idx} obj={obj} clicked={obj.clicked} />;
             }
@@ -65,13 +62,13 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
   const handleClickFilterSeenCards = (event: React.MouseEvent): void => {
     //TODO: when click this, there will be a delay so need to show loading spinner
     event.preventDefault();
-    if (!filterBySeen && renderTopicTags) {
+    if (!state.filterBySeen && renderTopicTags) {
       setExpandableTopicTags(false);
     }
-    HomeStore.dispatch({
+    dispatch({
       type: 'FILTER_CARDS_BY_SEEN',
       payload: {
-        filterBySeen: !filterBySeen,
+        filterBySeen: !state.filterBySeen,
       },
     });
   };
@@ -80,17 +77,17 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
       {renderTopicTags && spawnTopicTags()}
       <MuiThemeProvider theme={defaultTheme}>
         <MuiThemeProvider theme={theme}>
-          <Tooltip title={showTipsText(mergedData.length > 0 ? 'filterTags' : 'noData')}>
+          <Tooltip title={showTipsText(state.mergedData.length > 0 ? 'filterTags' : 'noData')}>
             <div
               {...toogleTopicTags({
                 onClick: handleClickSearchTopicTags,
-                disabled: mergedData.length > 0 ? false : true,
+                disabled: state.mergedData.length > 0 ? false : true,
               })}
               className={clsx('btn', {
                 'btn-success': renderTopicTags,
                 'btn-default': !renderTopicTags,
               })}
-              style={mergedData.length > 0 ? { cursor: 'pointer' } : { cursor: 'not-allowed' }}
+              style={state.mergedData.length > 0 ? { cursor: 'pointer' } : { cursor: 'not-allowed' }}
             >
               <span className="glyphicon glyphicon-tags" />
             </div>
@@ -100,20 +97,20 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
 
       <MuiThemeProvider theme={defaultTheme}>
         <MuiThemeProvider theme={theme}>
-          <If condition={isLoggedIn}>
+          <If condition={stateShared.isLoggedIn}>
             <Then>
-              <Tooltip title={showTipsText(`${filterBySeen ? 'noFilterSeen' : 'filterSeen'}`)}>
+              <Tooltip title={showTipsText(`${state.filterBySeen ? 'noFilterSeen' : 'filterSeen'}`)}>
                 <div onClick={handleClickFilterSeenCards} className="btn" style={{ cursor: 'pointer' }}>
-                  <span className={`glyphicon ${filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`} />
+                  <span className={`glyphicon ${state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`} />
                 </div>
               </Tooltip>
             </Then>
           </If>
-          <If condition={!isLoggedIn}>
+          <If condition={!stateShared.isLoggedIn}>
             <Then>
               <Tooltip title={showTipsText(`login`)}>
                 <div className="btn" style={{ cursor: 'not-allowed', opacity: 0.6 }}>
-                  <span className={`glyphicon ${filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`} />
+                  <span className={`glyphicon ${state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`} />
                 </div>
               </Tooltip>
             </Then>

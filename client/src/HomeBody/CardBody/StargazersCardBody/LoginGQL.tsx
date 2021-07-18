@@ -6,8 +6,8 @@ import { requestGithubGraphQLLogin, setTokenGQL } from '../../../services';
 import { Nullable } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
 import { logoutAction, noop } from '../../../util/util';
+import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import { useHistory } from 'react-router-dom';
-import { SharedStore } from '../../../store/Shared/reducer';
 
 interface LoginGQLProps {
   style: CSSProperties;
@@ -16,17 +16,17 @@ interface LoginGQLProps {
 
 const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   const [token, setToken] = useState('');
-  const { username } = SharedStore.store().Username();
   const [loginLayoutRef, setRef] = useState<Nullable<React.RefObject<HTMLDivElement>>>(null);
   const [notification, setNotification] = useState('');
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
+  const [stateShared, dispatch] = useTrackedStateShared();
   const history = useHistory();
   const verifyTokenGQL = async () => {
     await requestGithubGraphQLLogin(token)
       .then((res) => {
         if (res.success) {
-          setTokenGQL(token, username).then(noop);
-          SharedStore.dispatch({
+          setTokenGQL(token, stateShared.username).then(noop);
+          dispatch({
             type: 'TOKEN_ADDED',
             payload: {
               tokenGQL: token,
@@ -39,7 +39,7 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
         }
       })
       .catch(() => {
-        logoutAction(history);
+        logoutAction(history, dispatch);
         window.alert('Your token has expired. We will logout you out.');
       });
   };

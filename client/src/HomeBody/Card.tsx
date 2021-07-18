@@ -9,13 +9,12 @@ import { Then } from '../util/react-if/Then';
 import clsx from 'clsx';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
+import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../util';
 import './Card.scss';
 import Empty from '../Layout/EmptyLayout';
-import { SharedStore } from '../store/Shared/reducer';
-import { HomeStore } from '../store/Home/reducer';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -33,10 +32,10 @@ const Stargazers = Loadable({
   loader: () => import(/* webpackChunkName: "Stargazers" */ './CardBody/Stargazers'),
 });
 const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) => {
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
-  const { imagesData } = HomeStore.store().ImagesData();
   // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
+  const [stateShared] = useTrackedStateShared();
+  const [state] = useTrackedState();
   const displayName: string | undefined = (Card as React.ComponentType<any>).displayName;
   const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
 
@@ -58,7 +57,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
       localStorage.setItem('detailsData', JSON.stringify({ data: data, path: '/' }));
       // history.push(`/detail/${data.id}`);
       window.open(`/detail/${data.id}`);
-      if (isLoggedIn) {
+      if (stateShared.isLoggedIn) {
         const temp = [
           Object.assign(
             {},
@@ -81,7 +80,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   };
   const handleDetailsClicked = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    if (isLoggedIn) {
+    if (stateShared.isLoggedIn) {
       const temp = [
         Object.assign(
           {},
@@ -121,7 +120,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
     >
       <UserCard data={userCardMemoizedData()} />
       <CardTitle data={cardTitleMemoize()} />
-      {imagesData.length > 0 && <ImagesCard index={index} />}
+      {state.imagesData.length > 0 && <ImagesCard index={index} />}
       <div className="trunctuatedTexts">
         <h4 style={{ textAlign: 'center' }}>{data.description}</h4>
       </div>
@@ -129,11 +128,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
       <div>
         <ul
           className={'language'}
-          style={{
-            color: SharedStore.store()
-              .GithubLanguages()
-              .githubLanguages.get(data?.language?.replace(/\+\+|#|\s/, '-'))?.color,
-          }}
+          style={{ color: stateShared.githubLanguages.get(data?.language?.replace(/\+\+|#|\s/, '-'))?.color }}
         >
           <li className={'language-list'}>
             <h6 style={{ color: 'black', width: 'max-content' }}>{data.language}</h6>

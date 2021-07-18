@@ -5,19 +5,22 @@ import './ResultStyle.scss';
 import '../StargazersInfoStyle.scss';
 import clsx from 'clsx';
 import { StargazerProps } from '../../../../typing/type';
-import { SharedStore } from '../../../../store/Shared/reducer';
-import { StargazersStore } from '../../../../store/Staargazers/reducer';
+
+import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
+import { IStateStargazers } from '../../../../typing/interface';
 
 export interface Result {
   getRootPropsCard: any;
   stargazer: StargazerProps;
+  stateStargazers: IStateStargazers;
 }
 
-const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
+const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard }) => {
+  const [, dispatchShared] = useTrackedStateShared();
+  const [, dispatchStargazers] = useTrackedStateStargazers();
   const [hovered, setHovered] = useState('');
   const classes = useUserCardStyles();
-  const { language } = StargazersStore.store().Language();
-  const { stargazersData } = StargazersStore.store().StargazersData();
+
   const renderStyleEffect = () => {
     let style;
     if (hovered === 'nonDelete') {
@@ -29,13 +32,13 @@ const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
   };
   const onClickQueue = (e: React.MouseEvent) => {
     e.preventDefault();
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'SET_QUEUE_STARGAZERS',
       payload: {
         stargazersQueueData: stargazer,
       },
     });
-    const ja = stargazersData || [];
+    const ja = stateStargazers.stargazersData || [];
     const updatedStargazersData = ja.find((obj: StargazerProps) => obj.id === stargazer.id);
     if (updatedStargazersData !== undefined) {
       try {
@@ -43,11 +46,11 @@ const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
       } catch {
         updatedStargazersData['isQueue'] = false;
       }
-      StargazersStore.dispatch({
+      dispatchStargazers({
         type: 'STARGAZERS_UPDATED',
         payload: {
           stargazersData:
-            stargazersData.map((obj: StargazerProps) => {
+            stateStargazers.stargazersData.map((obj: StargazerProps) => {
               if (obj.id === updatedStargazersData.id) {
                 return updatedStargazersData;
               } else {
@@ -58,7 +61,7 @@ const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
       });
     } else {
       stargazer.isQueue = false;
-      StargazersStore.dispatch({
+      dispatchStargazers({
         type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
         payload: {
           stargazersData: stargazer,
@@ -67,7 +70,7 @@ const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
     }
   };
   const onClick = () => {
-    SharedStore.dispatch({
+    dispatchShared({
       type: 'QUERY_USERNAME',
       payload: {
         queryUsername: stargazer.login,
@@ -121,7 +124,7 @@ const Result: React.FC<Result> = ({ stargazer, getRootPropsCard }) => {
                 stargazer.starredRepositories.nodes
                   .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
                   .map((x: { name: string }) => x && x.name)
-                  .filter((language: string) => language === language).length || 0
+                  .filter((language: string) => language === stateStargazers.language).length || 0
               }
             </Typography>
           </div>

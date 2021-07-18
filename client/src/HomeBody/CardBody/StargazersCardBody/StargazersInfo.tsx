@@ -11,9 +11,8 @@ import { StargazerProps } from '../../../typing/type';
 import { useClickOutside } from '../../../hooks/hooks';
 import { dragMove } from '../../../util';
 import { useLocation } from 'react-router-dom';
+import { useTrackedStateStargazers } from '../../../selectors/stateContextSelector';
 import { useDeepMemo } from '../../../hooks/useDeepMemo';
-import { StargazersStore } from '../../../store/Staargazers/reducer';
-import { Star } from '@material-ui/icons';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -34,16 +33,13 @@ const StargazersInfo = ({
   setVisible,
   modalWidth,
 }: StargazersInfo) => {
-  const { hasNextPage } = StargazersStore.store().HasNextPage();
-  const { stargazersUsers } = StargazersStore.store().StargazersUsers();
-  const { stargazersData } = StargazersStore.store().StargazersData();
-
   const [isLoadingFetchMore, setIsLoadingFetchMore] = useState(false);
   const simulateClick = useRef<HTMLElement>();
   const stargazerModalRef = useRef<HTMLDivElement>(null);
+  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const handleClickFilterResult = () => {
     setIsLoadingFetchMore(true);
-    StargazersStore.dispatch({
+    dispatchStargazers({
       type: 'REMOVE_ALL',
     });
   };
@@ -105,11 +101,16 @@ const StargazersInfo = ({
               <Then>
                 {useDeepMemo(() => {
                   return (
-                    stargazersData.map((stargazer: StargazerProps, idx: number) => (
-                      <Result key={idx} getRootPropsCard={getRootPropsCard} stargazer={stargazer} />
+                    stateStargazers.stargazersData.map((stargazer: StargazerProps, idx: number) => (
+                      <Result
+                        key={idx}
+                        getRootPropsCard={getRootPropsCard}
+                        stargazer={stargazer}
+                        stateStargazers={stateStargazers}
+                      />
                     )) || <></>
                   );
-                }, [stargazersData])}
+                }, [stateStargazers.stargazersData])}
               </Then>
             </If>
           </table>
@@ -139,8 +140,8 @@ const StargazersInfo = ({
         {/*        </th> */}
         {/*        </thead> */}
         {/*        <React.Fragment> */}
-        {/*          {stateStargazers.StargazersStore.store.StargazersData.stargazersData.length > 0 && */}
-        {/*          stateStargazers.StargazersStore.store.StargazersData.stargazersData.map((stargazer, idx) => { */}
+        {/*          {stateStargazers.stateStargazers.stargazersData.length > 0 && */}
+        {/*          stateStargazers.stateStargazers.stargazersData.map((stargazer, idx) => { */}
         {/*            return <Result key={idx} stargazer={stargazer} getRootPropsCard={getRootPropsCard} />; */}
         {/*          })} */}
         {/*        </React.Fragment> */}
@@ -162,8 +163,8 @@ const StargazersInfo = ({
           {...getRootProps({
             onClick: handleClickLoadMore,
             params: {
-              query: hasNextPage.hasNextPage ? SEARCH_FOR_MORE_REPOS : SEARCH_FOR_REPOS,
-              variables: hasNextPage.hasNextPage
+              query: stateStargazers.hasNextPage.hasNextPage ? SEARCH_FOR_MORE_REPOS : SEARCH_FOR_REPOS,
+              variables: stateStargazers.hasNextPage.hasNextPage
                 ? { ...GQL_VARIABLES.GQL_pagination_variables }
                 : { ...GQL_VARIABLES.GQL_variables },
             },
@@ -174,10 +175,10 @@ const StargazersInfo = ({
           style={{ cursor: isLoadingFetchMore ? '' : 'pointer' }}
           ref={simulateClick}
         >
-          Load {hasNextPage.hasNextPage ? `${stargazersUsers}` : 0} More Users
+          Load {stateStargazers.hasNextPage.hasNextPage ? `${stateStargazers.stargazersUsers}` : 0} More Users
         </footer>
         <footer className="SelectMenu-footer">
-          Showing {stargazersData.length} of {stargazers_count} Users
+          Showing {stateStargazers.stargazersData.length} of {stargazers_count} Users
         </footer>
       </div>
     </div>

@@ -18,8 +18,6 @@ import { useStableCallback } from './util';
 import { useDeepMemo } from './hooks/useDeepMemo';
 import './Discover.scss';
 import Empty from './Layout/EmptyLayout';
-import { SharedStore } from './store/Shared/reducer';
-import { DiscoverStore } from './store/Discover/reducer';
 
 const ScrollToTopLayout = Loadable({
   loading: Empty,
@@ -34,18 +32,19 @@ const MasonryCard = Loadable({
 });
 
 const Discover = () => {
-  const { mergedDataDiscover } = DiscoverStore.store().MergedDataDiscover();
-  const { pageDiscover } = DiscoverStore.store().PageDiscover();
-  const { isLoadingDiscover } = DiscoverStore.store().IsLoadingDiscover();
-  const { notificationDiscover } = DiscoverStore.store().NotificationDiscover();
-  const { filterMergedDataDiscover } = DiscoverStore.store().FilterMergedDataDiscover();
-  const { visibleDiscover } = DiscoverStore.store().VisibleDiscover();
-
-  const { width } = SharedStore.store().Width();
-  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
-
   const location = useLocation();
-  const { fetchUserMore, fetchUser, isLoading, notification, setNotification, setLoading } = useFetchUser({
+  const {
+    fetchUserMore,
+    fetchUser,
+    isLoading,
+    notification,
+    setNotification,
+    setLoading,
+    stateDiscover,
+    dispatchDiscover,
+    dispatchShared,
+    stateShared,
+  } = useFetchUser({
     component: 'Discover',
   });
   const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
@@ -93,13 +92,13 @@ const Discover = () => {
   useEffect(() => {
     let isFinished = false;
     if (location.pathname === '/discover' && !isFinished) {
-      mergedDataRef.current = mergedDataDiscover;
+      mergedDataRef.current = stateDiscover.mergedDataDiscover;
       return () => {
         isFinished = true;
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mergedDataDiscover]);
+  }, [stateDiscover.mergedDataDiscover]);
 
   useEffect(() => {
     let isFinished = false;
@@ -145,7 +144,7 @@ const Discover = () => {
       locationRef.current === '/discover' &&
       notificationRef.current === ''
     ) {
-      DiscoverStore.dispatch({ type: 'ADVANCE_PAGE_DISCOVER' });
+      dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
       const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
         const temp = Object.assign(
           {},
@@ -188,8 +187,8 @@ const Discover = () => {
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
-    if (width !== entry.contentRect.width) {
-      SharedStore.dispatch({
+    if (stateShared.width !== entry.contentRect.width) {
+      dispatchShared({
         type: 'SET_WIDTH',
         payload: {
           width: entry.contentRect.width,
@@ -198,7 +197,7 @@ const Discover = () => {
     }
   });
   useEffect(() => {
-    DiscoverStore.dispatch({ type: 'MERGED_DATA_APPEND_DISCOVER_EMPTY' });
+    dispatchDiscover({ type: 'MERGED_DATA_APPEND_DISCOVER_EMPTY' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedClicked]);
   useEffect(() => {
@@ -221,40 +220,40 @@ const Discover = () => {
 
   useEffect(() => {
     let isFinished = false;
-    if (pageDiscover > 1 && notification === '' && !isFinished) {
+    if (stateDiscover.pageDiscover > 1 && notification === '' && !isFinished) {
       fetchUserMore();
       return () => {
         isFinished = true;
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageDiscover]);
+  }, [stateDiscover.pageDiscover]);
 
   useEffect(() => {
     let isFinished = false;
     if (!isFinished) {
-      setLoading(isLoadingDiscover);
-      setNotification(notificationDiscover);
+      setLoading(stateDiscover.isLoadingDiscover);
+      setNotification(stateDiscover.notificationDiscover);
       return () => {
         isFinished = true;
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingDiscover, notificationDiscover]);
+  }, [stateDiscover.isLoadingDiscover, stateDiscover.notificationDiscover]);
 
   const whichToUse = () => {
     // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
     // is not part of the dependencies for the callback.
-    if (filterMergedDataDiscover.length > 0) {
+    if (stateDiscover.filterMergedDataDiscover.length > 0) {
       isFetchFinish.current = true;
-      return filterMergedDataDiscover;
+      return stateDiscover.filterMergedDataDiscover;
     }
     isFetchFinish.current = false;
-    return mergedDataDiscover; // return this if filteredTopics.length === 0
+    return stateDiscover.mergedDataDiscover; // return this if filteredTopics.length === 0
   };
   //TODO: only show image if size is....https://github.com/ShogunPanda/fastimage at backend
   useScrollSaver(location.pathname, '/discover');
-  if (isLoggedIn) return <Redirect to={'/login'} from={'/discover'} />;
+  if (stateShared.isLoggedIn) return <Redirect to={'/login'} from={'/discover'} />;
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
@@ -266,7 +265,7 @@ const Discover = () => {
           header: whichToUse()?.length > 0,
         })}
         style={{
-          zIndex: visibleDiscover ? -1 : 0,
+          zIndex: stateDiscover.visibleDiscover ? -1 : 0,
         }}
       >
         <header className={'header-discover'}>
@@ -349,7 +348,12 @@ const Discover = () => {
           </nav>
         </header>
         {notification === '' && whichToUse()?.length > 0 && (
-          <MasonryCard data={whichToUse()} imagesDataDiscover={imagesDataDiscover} sorted={sortedClicked} />
+          <MasonryCard
+            data={whichToUse()}
+            imagesDataDiscover={imagesDataDiscover}
+            sorted={sortedClicked}
+            width={stateShared.width}
+          />
         )}
 
         <If

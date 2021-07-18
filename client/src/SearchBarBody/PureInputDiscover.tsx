@@ -6,13 +6,14 @@ import { If } from '../util/react-if/If';
 import { useUserCardStyles } from '../DiscoverBody/CardDiscoverBody/UserCardStyle';
 import { useClickOutside } from '../hooks/hooks';
 import { useSelector } from '../selectors/stateSelector';
-import { StaticState } from '../typing/interface';
+import { IAction, StaticState } from '../typing/interface';
 import { RepoInfoSuggested } from '../typing/type';
-import { DiscoverStore } from '../store/Discover/reducer';
+import { ActionDiscover } from '../store/Discover/reducer';
 import { useDebouncedValue } from '../util/util';
 
 interface SearchBarProps {
   style: React.CSSProperties;
+  dispatchDiscover: React.Dispatch<IAction<ActionDiscover>>;
   ref: any;
 }
 
@@ -21,7 +22,7 @@ type SearchesData = {
   result: Array<{ full_name: string }>;
 };
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
-const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style }, ref) => {
+const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatchDiscover }, ref) => {
   const [query, setQuery] = useState('');
   const [visible, setVisible] = useState(false);
   const [searchesData, setSearches] = useState<SearchesData>();
@@ -38,7 +39,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style },
         }
         setSearches(data);
         setVisible(true);
-        DiscoverStore.dispatch({
+        dispatchDiscover({
           type: 'VISIBLE',
           payload: { visible: true },
         });
@@ -60,7 +61,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style },
   );
   useClickOutside(resultsRef, () => {
     setVisible(false);
-    DiscoverStore.dispatch({
+    dispatchDiscover({
       type: 'VISIBLE',
       payload: { visible: false },
     });
@@ -79,7 +80,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style },
     event.stopPropagation();
     if (!query.includes('Did you mean')) {
       const res = repoInfo.filter((obj: RepoInfoSuggested) => obj.full_name === query);
-      DiscoverStore.dispatch({
+      dispatchDiscover({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
           data: res,
@@ -88,7 +89,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style },
       });
       setQuery('');
       setVisible(false);
-      DiscoverStore.dispatch({
+      dispatchDiscover({
         type: 'VISIBLE',
         payload: { visible: false },
       });
