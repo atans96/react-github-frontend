@@ -5,10 +5,11 @@ import { If } from '../util/react-if/If';
 
 import { StargazerProps } from '../typing/type';
 import { useLocation } from 'react-router-dom';
-import { useTrackedState, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import Empty from '../Layout/EmptyLayout';
 import { useDebouncedValue } from '../util/util';
+import { StargazersStore } from '../store/Staargazers/reducer';
+import { HomeStore } from '../store/Home/reducer';
 
 const MultiValueSearch = Loadable({
   loading: Empty,
@@ -26,8 +27,10 @@ interface SearchBarProps {
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
 const PureInput: React.FC<SearchBarProps> = React.forwardRef(
   ({ visibleSearchesHistory, setVisibleSearchesHistory, setVisible, handleChange, style }, ref) => {
-    const [state, dispatch] = useTrackedState();
-    const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
+    const { visible } = HomeStore.store().Visible();
+    const { stargazersQueueData } = StargazersStore.store().StargazersQueueData();
+    const { stargazersData } = StargazersStore.store().StargazersData();
+
     const [username, setUsername] = useState('');
     const isInputFocused = useRef<HTMLInputElement>(null);
     const debouncedValue = useDebouncedValue(username, 1500); // this value will pick real time value, but will change it's result only when it's seattled for 500ms
@@ -35,7 +38,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     useEffect(() => {
       if (username.toString().trim().length > 0) {
         setVisible(true); // show the autocomplete
-        dispatch({
+        HomeStore.dispatch({
           type: 'VISIBLE',
           payload: {
             visible: true,
@@ -44,7 +47,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
 
         // as you won't get to see the loading spinner when you first enter query to do autocomplete
         // since you need to wait API response to come before setting dispatchSearchUsers(data.users, true, dispatch); below
-        dispatch({
+        HomeStore.dispatch({
           type: 'LOADING',
           payload: {
             isLoading: true,
@@ -52,13 +55,13 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         });
         getSearchUsers(username.toString().trim()).then((data) => {
           if (data) {
-            dispatch({
+            HomeStore.dispatch({
               type: 'SEARCH_USERS',
               payload: {
                 data: data.users,
               },
             });
-            dispatch({
+            HomeStore.dispatch({
               type: 'LOADING',
               payload: {
                 isLoading: false,
@@ -90,8 +93,8 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       if (!visibleSearchesHistory) {
         setVisibleSearchesHistory(true);
       }
-      if (!state.visible) {
-        dispatch({
+      if (!visible) {
+        HomeStore.dispatch({
           type: 'VISIBLE',
           payload: {
             visible: true,
@@ -103,7 +106,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       if (
         e.keyCode === 8 &&
         username.length === 0 &&
-        stateStargazers.stargazersQueueData.length > 0 &&
+        stargazersQueueData.length > 0 &&
         document.activeElement === isInputFocused.current
       ) {
         handleDeleteBackspace();
@@ -127,20 +130,18 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     }, [handleKey]);
 
     const handleDeleteBackspace = () => {
-      const stargazer = stateStargazers.stargazersQueueData.slice(-1)[0];
-      const updatedStargazersData = stateStargazers.stargazersData.find(
-        (obj: StargazerProps) => obj.id === stargazer.id
-      );
+      const stargazer = stargazersQueueData.slice(-1)[0];
+      const updatedStargazersData = stargazersData.find((obj: StargazerProps) => obj.id === stargazer.id);
       if (updatedStargazersData !== undefined) {
         try {
           updatedStargazersData.isQueue = !updatedStargazersData.isQueue;
         } catch {
           updatedStargazersData['isQueue'] = false;
         }
-        dispatchStargazers({
+        StargazersStore.dispatch({
           type: 'STARGAZERS_UPDATED',
           payload: {
-            stargazersData: stateStargazers.stargazersData.map((obj: StargazerProps) => {
+            stargazersData: stargazersData.map((obj: StargazerProps) => {
               if (obj.id === updatedStargazersData.id) {
                 return updatedStargazersData;
               } else {
@@ -149,7 +150,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             }),
           },
         });
-        dispatchStargazers({
+        StargazersStore.dispatch({
           type: 'SET_QUEUE_STARGAZERS',
           payload: {
             stargazersQueueData: stargazer,
@@ -157,13 +158,13 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
         });
       } else {
         stargazer.isQueue = false;
-        dispatchStargazers({
+        StargazersStore.dispatch({
           type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
           payload: {
             stargazersData: stargazer,
           },
         });
-        dispatchStargazers({
+        StargazersStore.dispatch({
           type: 'SET_QUEUE_STARGAZERS',
           payload: {
             stargazersQueueData: stargazer,
@@ -173,9 +174,9 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     };
     return (
       <div className={'input-bar-container-control-searchbar'} style={style}>
-        <If condition={stateStargazers.stargazersQueueData.length > 0}>
+        <If condition={stargazersQueueData.length > 0}>
           <Then>
-            {stateStargazers.stargazersQueueData.map((obj: StargazerProps, idx) => (
+            {stargazersQueueData.map((obj: StargazerProps, idx) => (
               <MultiValueSearch key={idx} stargazer={obj} />
             ))}
           </Then>
@@ -190,7 +191,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             ref={isInputFocused}
             onBlur={() => setUsername('')}
             style={
-              username.length > 0 || stateStargazers.stargazersQueueData.length > 0
+              username.length > 0 || stargazersQueueData.length > 0
                 ? { width: `${65 + username.length * 2}px` }
                 : { width: style.width }
             }
@@ -198,7 +199,7 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             className="input-multi"
             name="query"
             placeholder={'Search...'}
-            required={stateStargazers.stargazersQueueData.length <= 0}
+            required={stargazersQueueData.length <= 0}
           />
         </div>
       </div>

@@ -3,10 +3,11 @@ import Search from './ColumnTwoBody/Search';
 import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../typing/type';
 import { fastFilter, useStableCallback } from '../util';
-import { useTrackedStateManageProfile, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useDeepMemo } from '../hooks/useDeepMemo';
 import Loadable from 'react-loadable';
 import Empty from '../Layout/EmptyLayout';
+import { SharedStore } from '../store/Shared/reducer';
+import { ManageProfileStore } from '../store/ManageProfile/reducer';
 
 const Details = Loadable({
   loading: Empty,
@@ -25,8 +26,9 @@ interface ColumnTwoProps {
 }
 
 const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
-  const [state] = useTrackedStateManageProfile();
-  const [stateShared] = useTrackedStateShared();
+  const { repoInfo } = ManageProfileStore.store().RepoInfo();
+  const { width } = SharedStore.store().Width();
+
   const searchRef = useRef<HTMLInputElement>(null);
   const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
   const [typedFilter, setTypedFilter] = useState('');
@@ -58,7 +60,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
       } else if (languageFilter.length === 0) {
         return obj;
       }
-    }, state.repoInfo);
+    }, repoInfo);
     const filter2 = fastFilter((obj: RepoInfoProps) => {
       if (
         (typedFilter.length > 0 &&
@@ -104,12 +106,12 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
                   return render().map((obj: RepoInfoProps, idx) => (
                     <RepoInfo active={active} obj={obj} key={idx} onClickRepoInfo={onClickRepoInfo} />
                   ));
-                }, [state.repoInfo, checkedItems, languageFilter, typedFilter])}
+                }, [repoInfo, checkedItems, languageFilter, typedFilter])}
               </div>
             </td>
             <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>
-              {fullName !== '' && stateShared.width > 850 && (
-                <Details fullName={fullName} branch={branch} html_url={htmlUrl} width={stateShared.width} />
+              {fullName !== '' && width > 850 && (
+                <Details fullName={fullName} branch={branch} html_url={htmlUrl} width={width} />
               )}
             </td>
           </tr>

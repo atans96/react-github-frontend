@@ -5,7 +5,7 @@ import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
-import { useTrackedState } from '../../selectors/stateContextSelector';
+import { HomeStore } from '../../store/Home/reducer';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -34,19 +34,16 @@ const useStyles = makeStyles<Theme>((theme) => ({
 }));
 
 const ToolBar = () => {
+  const { lastPage } = HomeStore.store().LastPage();
+  const { page } = HomeStore.store().Page();
+
   const classes = useStyles();
-  const [state] = useTrackedState();
   return (
     <Toolbar>
-      <If condition={state.lastPage > 0}>
+      <If condition={lastPage > 0}>
         <Then>
           <div className={classes.paginationInfo}>
-            <Pagination
-              className={classes.buttonPagination}
-              page={state.page}
-              count={state.lastPage}
-              color="secondary"
-            />
+            <Pagination className={classes.buttonPagination} page={page} count={lastPage} color="secondary" />
           </div>
         </Then>
       </If>

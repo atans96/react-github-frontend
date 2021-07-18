@@ -6,7 +6,8 @@ import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
-import { useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
+import { SharedStore } from '../store/Shared/reducer';
+import { DiscoverStore } from '../store/Discover/reducer';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -36,19 +37,20 @@ const useStyles = makeStyles<Theme>((theme) => ({
 
 const PaginationBarDiscover = React.memo(() => {
   const classes = useStyles();
-  const [stateDiscover] = useTrackedStateDiscover();
-  const [stateShared] = useTrackedStateShared();
-  if (stateShared.drawerWidth > 1200) {
+  const { drawerWidth } = SharedStore.store().DrawerWidth();
+  const { lastPageDiscover } = DiscoverStore.store().LastPageDiscover();
+  const { pageDiscover } = DiscoverStore.store().PageDiscover();
+  if (drawerWidth > 1200) {
     return (
       <AppBar position="fixed" color="primary" className={classes.appBar}>
         <Toolbar>
-          <If condition={stateDiscover.lastPageDiscover > 0}>
+          <If condition={lastPageDiscover > 0}>
             <Then>
               <div className={classes.paginationInfo}>
                 <Pagination
                   className={classes.buttonPagination}
-                  page={stateDiscover.pageDiscover}
-                  count={stateDiscover.lastPageDiscover}
+                  page={pageDiscover}
+                  count={lastPageDiscover}
                   color="secondary"
                 />
               </div>

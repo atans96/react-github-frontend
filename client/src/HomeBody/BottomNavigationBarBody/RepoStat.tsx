@@ -1,23 +1,23 @@
 import React from 'react';
 import './RepoStat.css';
-
-import { useTrackedState } from '../../selectors/stateContextSelector';
+import { HomeStore } from '../../store/Home/reducer';
 
 const RepoStat = () => {
-  const [state] = useTrackedState();
   return (
     <div id={'container-stat'}>
-      {state.repoStat.map((arr, idx) => {
-        return (
-          <React.Fragment key={idx}>
-            <div id="box-stat" style={{ borderRight: '1px solid black' }}>
-              <span style={{ padding: '10px' }}>
-                {arr[0]}: {arr[1]}
-              </span>
-            </div>
-          </React.Fragment>
-        );
-      }) || <></>}
+      {HomeStore.store()
+        .RepoStat()
+        .repoStat.map((arr, idx) => {
+          return (
+            <React.Fragment key={idx}>
+              <div id="box-stat" style={{ borderRight: '1px solid black' }}>
+                <span style={{ padding: '10px' }}>
+                  {arr[0]}: {arr[1]}
+                </span>
+              </div>
+            </React.Fragment>
+          );
+        }) || <></>}
     </div>
   );
 };

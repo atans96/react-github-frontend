@@ -1,33 +1,33 @@
 import React from 'react';
-import { useTrackedState } from '../../selectors/stateContextSelector';
 import clsx from 'clsx';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { WebLink } from '../../util/icons';
+import { HomeStore } from '../../store/Home/reducer';
 
 interface CardTitleProps {
   data: { name: string | undefined; id: number };
 }
 const CardTitle: React.FC<CardTitleProps> = ({ data }) => {
-  const [state] = useTrackedState();
+  const { cardEnhancement } = HomeStore.store().CardEnhancement();
   return (
     <a
       target="_blank"
       rel="noopener noreferrer"
-      href={state?.cardEnhancement?.get(data.id)?.webLink}
+      href={cardEnhancement?.get(data.id)?.webLink}
       className={clsx('', {
         'title-href-available':
-          state?.cardEnhancement?.get(data.id)?.webLink?.length !== undefined &&
-          state!.cardEnhancement!.get(data.id)!.webLink?.length > 0,
+          cardEnhancement?.get(data.id)?.webLink?.length !== undefined &&
+          cardEnhancement!.get(data.id)!.webLink?.length > 0,
         'title-href-non-available':
-          state?.cardEnhancement?.get(data.id)?.webLink?.length === undefined ||
-          state?.cardEnhancement?.get(data.id)?.webLink?.length === 0,
+          cardEnhancement?.get(data.id)?.webLink?.length === undefined ||
+          cardEnhancement?.get(data.id)?.webLink?.length === 0,
       })}
     >
       <If
         condition={
-          state?.cardEnhancement?.get(data.id)?.webLink?.length !== undefined &&
-          state!.cardEnhancement!.get(data.id)!.webLink?.length > 0
+          cardEnhancement?.get(data.id)?.webLink?.length !== undefined &&
+          cardEnhancement!.get(data.id)!.webLink?.length > 0
         }
       >
         <span>

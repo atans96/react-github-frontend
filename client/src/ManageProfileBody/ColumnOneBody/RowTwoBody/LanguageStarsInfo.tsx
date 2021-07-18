@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import './LanguageStarsInfo.scss';
+import { SharedStore } from '../../../store/Shared/reducer';
 
 interface LanguageStarsInfoProps {
   languageStar: any;
@@ -9,7 +9,6 @@ interface LanguageStarsInfoProps {
 
 const LanguageStarsInfo: React.FC<LanguageStarsInfoProps> = ({ languageStar, onClickLanguageStarInfo }) => {
   const [clicked, setClicked] = useState(false);
-  const [stateShared] = useTrackedStateShared();
   return (
     <tr
       onClick={(event) => {
@@ -23,7 +22,9 @@ const LanguageStarsInfo: React.FC<LanguageStarsInfoProps> = ({ languageStar, onC
       <th style={{ width: '80%' }}>{languageStar[0]}</th>
       <th
         style={{
-          backgroundColor: stateShared.githubLanguages.get(languageStar[0]?.replace(/\+\+|#|\s/, '-'))?.color,
+          backgroundColor: SharedStore.store()
+            .GithubLanguages()
+            .githubLanguages.get(languageStar[0]?.replace(/\+\+|#|\s/, '-'))?.color,
         }}
         className={`badge language`}
       >

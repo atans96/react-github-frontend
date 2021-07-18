@@ -10,14 +10,6 @@ import { logoutAction, noop } from './util/util';
 import { endOfSession, getFile, getTokenGQL, getValidGQLProperties, session } from './services';
 import { StarRankingContainer, SuggestedRepoContainer, SuggestedRepoImagesContainer } from './selectors/stateSelector';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
-import {
-  StateDiscoverProvider,
-  StateProvider,
-  StateRateLimitProvider,
-  StateSharedProvider,
-  StateStargazersProvider,
-  useTrackedStateShared,
-} from './selectors/stateContextSelector';
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
@@ -29,6 +21,7 @@ import { ShouldRender } from './typing/enum';
 import sysend from 'sysend';
 import DbCtx from './db/db.ctx';
 import { HttpLink } from './link/http/HttpLink';
+import { SharedStore } from './store/Shared/reducer';
 
 const Home = Loadable({
   loading: LoadingBig,
@@ -41,11 +34,7 @@ const Login = Loadable({
   loader: () => import(/* webpackChunkName: "Login" */ './Login'),
 });
 const LoginLoadable = () => {
-  return (
-    <StateRateLimitProvider>
-      <Login />
-    </StateRateLimitProvider>
-  );
+  return <Login />;
 };
 const Discover = Loadable({
   loading: LoadingBig,
@@ -94,6 +83,7 @@ interface AppRoutes {
   shouldRender: string;
   isLoggedIn: boolean;
 }
+
 const AppRoutes = React.memo(
   ({ loadingUserStarred, seenDataLoading, errorUserStarred, seenDataError, shouldRender, isLoggedIn }: AppRoutes) => {
     return (
@@ -107,17 +97,8 @@ const AppRoutes = React.memo(
                 exact
                 render={() => (
                   <>
-                    <StateStargazersProvider>
-                      <SearchBar />
-                    </StateStargazersProvider>
-                    <KeepMountedLayout
-                      mountedCondition={shouldRender === ShouldRender.Home}
-                      render={() => (
-                        <StateStargazersProvider>
-                          <Home />
-                        </StateStargazersProvider>
-                      )}
-                    />
+                    <SearchBar />
+                    <KeepMountedLayout mountedCondition={shouldRender === ShouldRender.Home} render={() => <Home />} />
                   </>
                 )}
               />
@@ -130,11 +111,11 @@ const AppRoutes = React.memo(
                     <KeepMountedLayout
                       mountedCondition={shouldRender === ShouldRender.Discover}
                       render={() => (
-                        <StateStargazersProvider>
+                        <>
                           <SearchBarDiscover />
                           <Discover />
                           <PaginationBarDiscover />
-                        </StateStargazersProvider>
+                        </>
                       )}
                     />
                   )
@@ -165,15 +146,17 @@ const AppRoutes = React.memo(
   }
 );
 const MiddleAppRoute = () => {
+  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
+  const { shouldRender } = SharedStore.store().ShouldRender();
+  const { username } = SharedStore.store().Username();
   const { db, clear } = DbCtx.useContainer();
   const apolloCacheData = useRef<Object>({});
-  const [stateShared, dispatchShared] = useTrackedStateShared();
   sysend.on('Login', function (fn) {
-    dispatchShared({
+    SharedStore.dispatch({
       type: 'LOGIN',
       payload: { isLoggedIn: true },
     });
-    dispatchShared({
+    SharedStore.dispatch({
       type: 'SET_USERNAME',
       payload: { username: fn.username },
     });
@@ -189,7 +172,7 @@ const MiddleAppRoute = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData]);
   useEffect(() => {
-    if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
+    if ('serviceWorker' in navigator && isLoggedIn) {
       navigator.serviceWorker
         .register('sw.js')
         .then(() => navigator.serviceWorker.ready)
@@ -203,7 +186,7 @@ const MiddleAppRoute = () => {
           // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
           navigator?.serviceWorker?.controller?.postMessage({
             type: 'username',
-            username: stateShared.username,
+            username: username,
           });
           return (window.onbeforeunload = () => {
             // Promise.all([
@@ -216,12 +199,12 @@ const MiddleAppRoute = () => {
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.isLoggedIn, apolloCacheData]);
+  }, [isLoggedIn, apolloCacheData]);
 
   useEffect(() => {
     getFile('languages.json').then((githubLanguages) => {
       if (githubLanguages) {
-        dispatchShared({
+        SharedStore.dispatch({
           type: 'SET_GITHUB_LANGUAGES',
           payload: {
             githubLanguages,
@@ -229,10 +212,10 @@ const MiddleAppRoute = () => {
         });
       }
     });
-    if (stateShared.isLoggedIn) {
+    if (isLoggedIn) {
       getTokenGQL().then((res) => {
         if (res.tokenGQL) {
-          dispatchShared({
+          SharedStore.dispatch({
             type: 'TOKEN_ADDED',
             payload: {
               tokenGQL: res.tokenGQL,
@@ -246,11 +229,11 @@ const MiddleAppRoute = () => {
         localStorage.clear();
         clear();
       }
-      dispatchShared({
+      SharedStore.dispatch({
         type: 'SET_USERNAME',
         payload: { username: data.username },
       });
-      dispatchShared({
+      SharedStore.dispatch({
         type: 'LOGIN',
         payload: {
           isLoggedIn: data.data,
@@ -261,31 +244,32 @@ const MiddleAppRoute = () => {
   return (
     <AppRoutes
       errorUserStarred={errorUserStarred}
-      isLoggedIn={stateShared.isLoggedIn}
+      isLoggedIn={isLoggedIn}
       loadingUserStarred={loadingUserStarred}
       seenDataLoading={seenDataLoading}
       seenDataError={seenDataError}
-      shouldRender={stateShared.shouldRender}
+      shouldRender={shouldRender}
     />
   );
 };
 const CustomApolloProvider = ({ children }: any) => {
   const history = useHistory();
-  const [stateShared, dispatchShared] = useTrackedStateShared();
   const unAuthorizedAction = () => {
-    logoutAction(history, dispatchShared);
+    logoutAction(history);
     window.alert('Your token has expired. We will logout you out.');
   };
-
-  const isLoggedInRef = useRef(stateShared.isLoggedIn);
+  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
+  const { username } = SharedStore.store().Username();
+  const { tokenGQL } = SharedStore.store().TokenGQL();
+  const isLoggedInRef = useRef(isLoggedIn);
   useEffect(() => {
-    isLoggedInRef.current = stateShared.isLoggedIn;
+    isLoggedInRef.current = isLoggedIn;
   });
   const clientWrapped = useStableCallback(() => {
     // const httpLink = new HttpLink({
     //   uri: 'https://api.github.com/graphql',
     //   headers: {
-    //     Authorization: `Bearer ${stateShared.tokenGQL}`,
+    //     Authorization: `Bearer ${tokenGQL}`,
     //   },
     // });
     // const wsLink = new WebSocketLink({
@@ -305,7 +289,7 @@ const CustomApolloProvider = ({ children }: any) => {
     const githubGateway = new HttpLink({
       uri: 'https://api.github.com/graphql',
       headers: {
-        Authorization: `Bearer ${stateShared.tokenGQL}`,
+        Authorization: `Bearer ${username}`,
       },
     }) as unknown as ApolloLink;
     // Create Second Link for appending data to MongoDB using GQL
@@ -379,7 +363,7 @@ const CustomApolloProvider = ({ children }: any) => {
               ) {
                 // if no data exist when the user logged-in
                 if (path) {
-                  dispatchShared({
+                  SharedStore.dispatch({
                     type: 'NO_DATA_FETCH',
                     payload: {
                       path: path[0],
@@ -416,7 +400,7 @@ const CustomApolloProvider = ({ children }: any) => {
   const value = React.useMemo(
     () => ({ client: clientWrapped() }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [stateShared.tokenGQL, stateShared.isLoggedIn]
+    [tokenGQL, isLoggedIn]
   );
   return <ApolloContext.Provider value={value}>{children}</ApolloContext.Provider>;
 };
@@ -425,24 +409,18 @@ const Main = () => {
   //make sure that SuggestedRepoImagesContainer.Provider is below CustomApolloProvider since it's using ApolloContext.Provider in order to use useQuery hook
   return (
     <Router>
-      <StateProvider>
-        <StateDiscoverProvider>
-          <StateSharedProvider>
-            <CustomApolloProvider>
-              <ComposeProviders
-                components={[
-                  SuggestedRepoImagesContainer.Provider,
-                  SuggestedRepoContainer.Provider,
-                  StarRankingContainer.Provider,
-                  DbCtx.Provider,
-                ]}
-              >
-                <MiddleAppRoute />
-              </ComposeProviders>
-            </CustomApolloProvider>
-          </StateSharedProvider>
-        </StateDiscoverProvider>
-      </StateProvider>
+      <CustomApolloProvider>
+        <ComposeProviders
+          components={[
+            SuggestedRepoImagesContainer.Provider,
+            SuggestedRepoContainer.Provider,
+            StarRankingContainer.Provider,
+            DbCtx.Provider,
+          ]}
+        >
+          <MiddleAppRoute />
+        </ComposeProviders>
+      </CustomApolloProvider>
     </Router>
   );
 };

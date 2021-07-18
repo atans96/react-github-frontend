@@ -10,10 +10,11 @@ import { MergedDataProps } from '../../typing/type';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { useClickOutside } from '../../hooks/hooks';
-import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../util';
 import Empty from '../../Layout/EmptyLayout';
+import { SharedStore } from '../../store/Shared/reducer';
+import { DiscoverStore } from '../../store/Discover/reducer';
 const LoginGQL = Loadable({
   loading: Empty,
   delay: 300,
@@ -25,6 +26,8 @@ interface StargazerDiscover {
 }
 
 const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
+  const { tokenGQL } = SharedStore.store().TokenGQL();
+  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
   const displayName: string | undefined = (StargazerDiscover as React.ComponentType<any>).displayName;
   const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
   const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
@@ -39,11 +42,9 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
   const notLoggedInRef = useRef<HTMLDivElement>(null);
   useClickOutside(notLoggedInRef, () => setVisible(false));
 
-  const [stateShared] = useTrackedStateShared();
-
   const returnPortal = useStableCallback(() => {
     switch (visible) {
-      case stateShared.tokenGQL.length === 0: {
+      case tokenGQL.length === 0: {
         return createPortal(
           <div
             style={{
@@ -53,7 +54,7 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
             }}
             ref={notLoggedInRef}
           >
-            {visible && stateShared.tokenGQL.length === 0 && (
+            {visible && tokenGQL.length === 0 && (
               <LoginGQL setVisible={setVisible} style={{ display: 'absolute', width: 'fit-content' }} />
             )}
           </div>,
@@ -79,7 +80,7 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
   const handleClickStar = async () => {
     if (!starClicked) {
       await setStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
+        if (isLoggedIn) {
           addedStarredMe({
             getUserInfoStarred: {
               starred: [data.id],
@@ -89,7 +90,7 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
       });
     } else if (starClicked) {
       await removeStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
+        if (isLoggedIn) {
           removeStarred({
             removeStarred: data.id,
           }).then(noop);
@@ -101,12 +102,12 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
     <div className={`stargazer-card-container`}>
       <div
         className={clsx('star-container', {
-          confetti: starClicked && clicked && stateShared.tokenGQL !== '',
+          confetti: starClicked && clicked && tokenGQL !== '',
         })}
         onClick={(e) => {
           e.preventDefault();
           setClicked(true);
-          if (stateShared.tokenGQL === '') {
+          if (tokenGQL === '') {
             handleClickStargazers(e);
           } else {
             setStarClicked(!starClicked);
