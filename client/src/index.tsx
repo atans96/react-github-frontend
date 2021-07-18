@@ -114,7 +114,9 @@ const AppRoutes = React.memo(
                       mountedCondition={shouldRender === ShouldRender.Home}
                       render={() => (
                         <StateStargazersProvider>
-                          <Home />
+                          <StateDiscoverProvider>
+                            <Home />
+                          </StateDiscoverProvider>
                         </StateStargazersProvider>
                       )}
                     />
@@ -132,7 +134,9 @@ const AppRoutes = React.memo(
                       render={() => (
                         <StateStargazersProvider>
                           <SearchBarDiscover />
-                          <Discover />
+                          <StateDiscoverProvider>
+                            <Discover />
+                          </StateDiscoverProvider>
                           <PaginationBarDiscover />
                         </StateStargazersProvider>
                       )}
@@ -276,11 +280,6 @@ const CustomApolloProvider = ({ children }: any) => {
     logoutAction(history, dispatchShared);
     window.alert('Your token has expired. We will logout you out.');
   };
-
-  const isLoggedInRef = useRef(stateShared.isLoggedIn);
-  useEffect(() => {
-    isLoggedInRef.current = stateShared.isLoggedIn;
-  });
   const clientWrapped = useStableCallback(() => {
     // const httpLink = new HttpLink({
     //   uri: 'https://api.github.com/graphql',
@@ -375,7 +374,7 @@ const CustomApolloProvider = ({ children }: any) => {
                 property &&
                 property.length > 0 &&
                 validGQLProperties?.data.includes(property) &&
-                isLoggedInRef.current
+                stateShared.isLoggedIn
               ) {
                 // if no data exist when the user logged-in
                 if (path) {

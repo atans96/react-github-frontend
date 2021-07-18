@@ -84,68 +84,16 @@ const Discover = () => {
     return { mapData: new Map(), arrayData: [] };
   }, [suggestedDataImages?.suggestedDataImages?.getSuggestedRepoImages?.renderImages]);
 
-  const isLoadingRef = useRef<boolean>(true);
-  const mergedDataRef = useRef<any[]>([]);
-  const notificationRef = useRef<string>('');
-  const imagesDataDiscoverRef = useRef<any>();
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
-      mergedDataRef.current = stateDiscover.mergedDataDiscover;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateDiscover.mergedDataDiscover]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
-      isLoadingRef.current = isLoading;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
-      notificationRef.current = notification;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notification]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/discover' && !isFinished) {
-      imagesDataDiscoverRef.current = imagesDataDiscover;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imagesDataDiscover]);
-  const locationRef = useRef('/discover');
-  useEffect(() => {
-    locationRef.current = location.pathname;
-  });
   const handleBottomHit = useStableCallback(() => {
     if (
       !isFetchFinish.current &&
-      mergedDataRef.current.length > 0 &&
-      !isLoadingRef.current &&
-      locationRef.current === '/discover' &&
-      notificationRef.current === ''
+      stateDiscover.mergedDataDiscover.length > 0 &&
+      !isLoading &&
+      location.pathname === '/discover' &&
+      notification === ''
     ) {
       dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
-      const result = mergedDataRef.current.reduce((acc, obj: MergedDataProps) => {
+      const result = stateDiscover.mergedDataDiscover.reduce((acc, obj: MergedDataProps) => {
         const temp = Object.assign(
           {},
           {
@@ -163,7 +111,7 @@ const Discover = () => {
             html_url: obj.html_url,
             id: obj.id,
             imagesData:
-              imagesDataDiscoverRef.current.arrayData
+              imagesDataDiscover.arrayData
                 .filter((xx: RenderImages) => xx.id === obj.id)
                 .map((obj: RenderImages) => [...obj.value])[0] ?? [],
             name: obj.name,
@@ -173,7 +121,7 @@ const Discover = () => {
         acc.push(temp);
         return acc;
       }, [] as SeenProps[]);
-      if (result.length > 0 && imagesDataDiscoverRef.current.mapData.size > 0) {
+      if (result.length > 0 && imagesDataDiscover.mapData.size > 0) {
         //don't add to database yet when imagesData still loading.
         seenAdded(result).then(noop);
       }
