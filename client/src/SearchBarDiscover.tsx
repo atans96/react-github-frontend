@@ -1,10 +1,9 @@
 import React from 'react';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
-import { useTrackedStateDiscover, useTrackedStateShared } from './selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
 import Loadable from 'react-loadable';
-import { useStableCallback } from './util';
 import Empty from './Layout/EmptyLayout';
+import { DiscoverStore } from './store/Discover/reducer';
 
 const PureSearchBarDiscover = Loadable({
   loading: Empty,
@@ -12,17 +11,12 @@ const PureSearchBarDiscover = Loadable({
   loader: () => import(/* webpackChunkName: "PureSearchBarDiscover" */ './SearchBarBody/PureSearchBarDiscover'),
 });
 const SearchBarDiscover = React.memo(() => {
-  const [stateShared] = useTrackedStateShared();
-  const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
-  const PureSearchBarDataMemoized = useStableCallback(() => {
-    return stateShared.width;
-  });
-
+  const { filterMergedDataDiscover } = DiscoverStore.store().FilterMergedDataDiscover();
   const location = useLocation();
   useDeepCompareEffect(() => {
     let isFinished = false;
-    if (stateDiscover.filterMergedDataDiscover.length > 0 && location.pathname === '/discover' && !isFinished) {
-      dispatchDiscover({
+    if (filterMergedDataDiscover.length > 0 && location.pathname === '/discover' && !isFinished) {
+      DiscoverStore.dispatch({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
           data: [],
@@ -34,7 +28,7 @@ const SearchBarDiscover = React.memo(() => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateDiscover.filterMergedDataDiscover]);
+  }, [filterMergedDataDiscover]);
 
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
@@ -46,7 +40,7 @@ const SearchBarDiscover = React.memo(() => {
         marginTop: '10rem',
       }}
     >
-      <PureSearchBarDiscover width={PureSearchBarDataMemoized()} />
+      <PureSearchBarDiscover />
     </div>
   );
 });

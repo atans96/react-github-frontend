@@ -2,25 +2,29 @@ import React, { useEffect, useState } from 'react';
 import './RateLimit.css';
 import clsx from 'clsx';
 import { useLocation } from 'react-router-dom';
-import { useTrackedState, useTrackedStateRateLimit } from '../../selectors/stateContextSelector';
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { epochToJsDate } from '../../util';
 import { getRateLimitInfo } from '../../services';
+import { RateLimitStore } from '../../store/RateLimit/reducer';
+import { HomeStore } from '../../store/Home/reducer';
 
 const RateLimit = () => {
-  const [state] = useTrackedState();
-  const [, dispatchRateLimit] = useTrackedStateRateLimit();
+  const { rateLimit } = RateLimitStore.store().RateLimit();
+  const { rateLimitAnimationAdded } = RateLimitStore.store().RateLimitAnimationAdded();
+
+  const { mergedData } = HomeStore.store().MergedData();
+  const { searchUsers } = HomeStore.store().SearchUsers();
+
   const [refetch, setRefetch] = useState(true);
   const displayName: string | undefined = (RateLimit as unknown as React.ComponentType<any>).displayName;
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
-  const [stateRateLimit] = useTrackedStateRateLimit();
   const [resetTime, setResetTime] = useState<string>('');
   const location = useLocation();
   useEffect(() => {
     let isFinished = false;
     if (location.pathname === '/') {
       const interval = setInterval(() => {
-        setResetTime(epochToJsDate(stateRateLimit.rateLimit.reset));
+        setResetTime(epochToJsDate(rateLimit.reset));
       }, 1000);
       if (resetTime === '00 second') {
         // prevent the interval to be changed further after hit 00 seconds
@@ -35,14 +39,14 @@ const RateLimit = () => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateRateLimit.rateLimit.reset, resetTime]);
+  }, [rateLimit.reset, resetTime]);
   useEffect(
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and
       // persist when switching the component
       let isFinished = false;
       if (location.pathname === '/' && !isFinished) {
-        dispatchRateLimit({
+        RateLimitStore.dispatch({
           type: 'RATE_LIMIT_ADDED',
           payload: {
             rateLimitAnimationAdded: false,
@@ -50,13 +54,13 @@ const RateLimit = () => {
         });
         getRateLimitInfo().then((data) => {
           if (data) {
-            dispatchRateLimit({
+            RateLimitStore.dispatch({
               type: 'RATE_LIMIT_ADDED',
               payload: {
                 rateLimitAnimationAdded: true,
               },
             });
-            dispatchRateLimit({
+            RateLimitStore.dispatch({
               type: 'RATE_LIMIT',
               payload: {
                 limit: data.rateLimit.limit,
@@ -65,7 +69,7 @@ const RateLimit = () => {
               },
             });
 
-            dispatchRateLimit({
+            RateLimitStore.dispatch({
               type: 'RATE_LIMIT_GQL',
               payload: {
                 limit: data.rateLimitGQL.limit,
@@ -82,35 +86,35 @@ const RateLimit = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [refetch, state.mergedData.length, state.searchUsers.length, userDataError, userDataLoading, userData]
+    [refetch, mergedData.length, searchUsers.length, userDataError, userDataLoading, userData]
   );
   return (
     <div id="container">
       <div
         className={clsx('', {
-          added: stateRateLimit.rateLimitAnimationAdded,
+          added: rateLimitAnimationAdded,
         })}
         id="box"
         style={{ borderRight: '1px solid black' }}
       >
-        <span style={{ padding: '10px' }}>LIMIT: {stateRateLimit.rateLimit.limit}</span>
+        <span style={{ padding: '10px' }}>LIMIT: {rateLimit.limit}</span>
       </div>
       <div
         className={clsx('', {
-          added: stateRateLimit.rateLimitAnimationAdded,
+          added: rateLimitAnimationAdded,
         })}
         id="box"
         style={{ borderRight: '1px solid black' }}
       >
-        <span style={{ padding: '10px' }}>USED: {stateRateLimit.rateLimit.used}</span>
+        <span style={{ padding: '10px' }}>USED: {rateLimit.used}</span>
       </div>
       <div
         className={clsx('', {
-          added: stateRateLimit.rateLimitAnimationAdded,
+          added: rateLimitAnimationAdded,
         })}
         id="box"
       >
-        <span style={{ padding: '10px' }}>RESET IN: {stateRateLimit.rateLimit.reset && resetTime}</span>
+        <span style={{ padding: '10px' }}>RESET IN: {rateLimit.reset && resetTime}</span>
       </div>
     </div>
   );

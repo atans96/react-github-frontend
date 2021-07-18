@@ -12,8 +12,9 @@ import { epochToJsDate } from '../../util/util';
 import { MergedDataProps } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 
-import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { LocationGraphQL } from '../../typing/interface';
+import { SharedStore } from '../../store/Shared/reducer';
+import { ManageProfileStore } from '../../store/ManageProfile/reducer';
 
 interface RowTwoProps {
   handleLanguageFilter: (...args: any) => void;
@@ -21,8 +22,8 @@ interface RowTwoProps {
 
 let axiosCancel = false;
 const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
-  const [, dispatchManageProfile] = useTrackedStateManageProfile();
-  const [stateShared, dispatchStateShared] = useTrackedStateShared();
+  const { fetchDataPath } = SharedStore.store().FetchDataPath();
+
   const location = useLocation<LocationGraphQL>();
   const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
   const displayName: string | undefined = (RowTwo as React.ComponentType<any>).displayName;
@@ -45,13 +46,13 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
       location?.state?.data?.userInfoData.getUserInfoData.repoContributions.length > 0 &&
       location.pathname === '/profile'
     ) {
-      dispatchManageProfile({
+      ManageProfileStore.dispatch({
         type: 'REPO_INFO_ADDED',
         payload: {
           repoInfo: location.state.data.userInfoData.getUserInfoData.repoInfo,
         },
       });
-      dispatchManageProfile({
+      ManageProfileStore.dispatch({
         type: 'CONTRIBUTORS_ADDED',
         payload: {
           contributors: location.state.data.userInfoData.getUserInfoData.repoContributions,
@@ -72,9 +73,9 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
   const abortController = new AbortController();
   useDeepCompareEffect(() => {
     if (
-      stateShared.fetchDataPath !== '' &&
+      fetchDataPath !== '' &&
       consumers[displayName!] &&
-      consumers[displayName!].includes(stateShared.fetchDataPath) &&
+      consumers[displayName!].includes(fetchDataPath) &&
       !alreadyFetch.current &&
       location.pathname === '/profile'
     ) {
@@ -150,11 +151,11 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
               );
               return obj;
             });
-            dispatchStateShared({
+            SharedStore.dispatch({
               type: 'NO_DATA_FETCH',
               payload: { path: '' },
             });
-            dispatchManageProfile({
+            ManageProfileStore.dispatch({
               type: 'REPO_INFO_ADDED',
               payload: {
                 repoInfo: temp.data,
@@ -173,7 +174,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
                   return obj.value.data;
                 }
               });
-              dispatchManageProfile({
+              ManageProfileStore.dispatch({
                 type: 'CONTRIBUTORS_ADDED',
                 payload: {
                   contributors: [...fastFilter((x: any) => !!x, temp)],
@@ -190,7 +191,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.fetchDataPath, consumers, alreadyFetch.current, axiosCancel]);
+  }, [fetchDataPath, consumers, alreadyFetch.current, axiosCancel]);
 
   useEffect(() => {
     if (location.pathname !== '/profile') {

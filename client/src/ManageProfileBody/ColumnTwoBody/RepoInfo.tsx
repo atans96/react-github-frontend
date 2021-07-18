@@ -7,10 +7,10 @@ import { ListItem, ListItemIcon, ListItemText, Theme } from '@material-ui/core';
 import PeopleOutlineIcon from '@material-ui/icons/PeopleOutline';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../util';
 import Empty from '../../Layout/EmptyLayout';
+import { SharedStore } from '../../store/Shared/reducer';
 
 const Contributors = Loadable({
   loading: Empty,
@@ -38,7 +38,6 @@ const RepoInfo: React.FC<Props> = ({ obj, onClickRepoInfo, active }) => {
     setOpen((prevState) => !prevState);
   });
   const classes = useStyles();
-  const [stateShared] = useTrackedStateShared();
   return (
     <div style={{ borderBottom: 'solid' }}>
       <div style={active === obj.fullName ? { borderLeft: '5px solid', backgroundColor: '#f8fafc' } : {}}>
@@ -65,7 +64,9 @@ const RepoInfo: React.FC<Props> = ({ obj, onClickRepoInfo, active }) => {
                   width: 'fit-content',
                   padding: '2px 1em',
                   borderRadius: '5px',
-                  backgroundColor: stateShared.githubLanguages.get(obj?.language?.replace(/\+\+|#|\s/, '-'))?.color,
+                  backgroundColor: SharedStore.store()
+                    .GithubLanguages()
+                    .githubLanguages.get(obj?.language?.replace(/\+\+|#|\s/, '-'))?.color,
                 }}
                 className={`language`}
               >

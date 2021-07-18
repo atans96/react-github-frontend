@@ -1,15 +1,12 @@
 import React, { useRef } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { getElasticSearchBert } from '../services';
-import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
 import PureInputDiscover from './PureInputDiscover';
+import { DiscoverStore } from '../store/Discover/reducer';
+import { SharedStore } from '../store/Shared/reducer';
 
-export interface SearchBarProps {
-  width: number;
-}
-
-const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
-  const [, dispatchDiscover] = useTrackedStateDiscover();
+const SearchBarDiscover = () => {
+  const { width } = SharedStore.store().Width();
   const size = {
     width: '500px',
     minWidth: '100px',
@@ -30,7 +27,7 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
     event.preventDefault();
     event.stopPropagation();
     getElasticSearchBert(query?.current?.getState()).then((res) => {
-      dispatchDiscover({
+      DiscoverStore.dispatch({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
           data: res,
@@ -44,7 +41,7 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
     <SearchBarLayout style={{ width: `${width}px` }} onSubmit={handleSubmit}>
       {() => (
         <React.Fragment>
-          <PureInputDiscover style={style} dispatchDiscover={dispatchDiscover} ref={query} />
+          <PureInputDiscover style={style} ref={query} />
         </React.Fragment>
       )}
     </SearchBarLayout>

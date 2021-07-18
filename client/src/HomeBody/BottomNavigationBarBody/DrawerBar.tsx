@@ -7,10 +7,10 @@ import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import { useDraggable } from '../../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
 import { useLocation } from 'react-router-dom';
-import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useStableCallback } from '../../util';
 import Loadable from 'react-loadable';
 import Empty from '../../Layout/EmptyLayout';
+import { SharedStore } from '../../store/Shared/reducer';
 const RSSFeed = Loadable({
   loading: Empty,
   delay: 300,
@@ -68,7 +68,6 @@ const DrawerBar = React.memo(() => {
   const [open, setOpen] = useState(false);
   const [drawerWidth, dragHandlers, drawerRef] = useDraggable({});
   const classes = useStyles({ drawerWidth: open ? `${drawerWidth}px` : '0px' });
-  const [, dispatch] = useTrackedStateShared();
   const handleClick = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setOpen((prev) => !prev);
@@ -76,14 +75,14 @@ const DrawerBar = React.memo(() => {
   const location = useLocation();
   useEffect(() => {
     if (location.pathname === '/') {
-      dispatch({
+      SharedStore.dispatch({
         type: 'SET_DRAWER_WIDTH',
         payload: {
           drawerWidth: open ? 200 : 0,
         },
       });
       return () => {
-        dispatch({
+        SharedStore.dispatch({
           type: 'SET_DRAWER_WIDTH',
           payload: {
             drawerWidth: 0,

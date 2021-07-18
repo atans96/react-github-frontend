@@ -85,15 +85,11 @@ export interface IStateShared {
   fetchDataPath: string;
   githubLanguages: Map<string, GithubLanguages>;
   drawerWidth: number;
-  queryUsername: string[];
+  queryUsername: string[] | string;
   username: string;
   tokenRSS: string;
   tokenGQL: string;
   isLoggedIn: boolean;
-  client_id: Nullable<string>;
-  redirect_uri: Nullable<string>;
-  client_secret: Nullable<string>;
-  proxy_url: string;
 }
 
 export interface IStateDiscover {
@@ -118,7 +114,7 @@ export interface IStateManageProfile {
 }
 
 export interface IState {
-  repoStat: [];
+  repoStat: string[];
   imagesMapData: Map<number, any>;
   filterBySeen: boolean;
   cardEnhancement: Map<number, CardEnhancement>;

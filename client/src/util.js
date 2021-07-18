@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 // import deepKeys from 'deep-keys';
 // import imagesLoaded from 'imagesloaded';
 export const detectBrowser = () => {
@@ -173,11 +173,25 @@ export function isPropagationStopped(event) {
   }
   return false;
 }
+export function compareMaps(map1, map2) {
+  let testVal;
+  if (map1.size !== map2.size) {
+    return false;
+  }
+  for (const [key, val] of map1) {
+    testVal = map2.get(key);
+    // in cases of an undefined value, make sure the key
+    // actually exists on the object so there are no false positives
+    if (testVal !== val || (testVal === undefined && !map2.has(key))) {
+      return false;
+    }
+  }
+  return true;
+}
 export const useStableCallback = (callback) => {
   const onChangeInner = useRef();
   onChangeInner.current = callback;
-  const stable = useCallback((...args) => onChangeInner.current(...args), []);
-  return stable;
+  return useCallback((...args) => onChangeInner.current(...args), []);
 };
 export function composeParamsHandler(fn, params, firstCallback, lastCallback) {
   if (params && firstCallback && !lastCallback) {

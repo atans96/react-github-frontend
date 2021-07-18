@@ -2,12 +2,6 @@ import React, { useRef, useState } from 'react';
 import { MergedDataProps } from '../../typing/type';
 import { useApolloClient } from '@apollo/client';
 import { useClickOutside, useEventHandlerComposer } from '../../hooks/hooks';
-
-import {
-  useTrackedState,
-  useTrackedStateShared,
-  useTrackedStateStargazers,
-} from '../../selectors/stateContextSelector';
 import clsx from 'clsx';
 import { noop } from '../../util/util';
 import { If } from '../../util/react-if/If';
@@ -22,6 +16,9 @@ import { removeStarredMe, setStarredMe } from '../../services';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../util';
 import Empty from '../../Layout/EmptyLayout';
+import { SharedStore } from '../../store/Shared/reducer';
+import { StargazersStore } from '../../store/Staargazers/reducer';
+import { HomeStore } from '../../store/Home/reducer';
 const StargazersInfo = Loadable({
   loading: Empty,
   delay: 300,
@@ -39,29 +36,31 @@ interface StargazersProps {
 
 const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   const client = useApolloClient();
-  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
-  const [stateShared] = useTrackedStateShared();
-  const [, dispatch] = useTrackedState();
+  const { stargazersUsers } = StargazersStore.store().StargazersUsers();
+  const { stargazersUsersStarredRepositories } = StargazersStore.store().StargazersUsersStarredRepositories();
+  const { hasNextPage } = StargazersStore.store().HasNextPage();
+  const { tokenGQL } = SharedStore.store().TokenGQL();
+  const { isLoggedIn } = SharedStore.store().IsLoggedIn();
   const GQL_variables = {
     reponame: data.name,
     owner: data.owner.login,
-    stargazersCount: stateStargazers.stargazersUsers,
-    starredRepoCount: stateStargazers.stargazersUsersStarredRepositories,
+    stargazersCount: stargazersUsers,
+    starredRepoCount: stargazersUsersStarredRepositories,
   };
 
   const GQL_pagination_variables = {
     reponame: data.name,
     owner: data.owner.login,
-    stargazersCount: stateStargazers.stargazersUsers, // localStorage.getItem("users) cannot be updated to stargazersCount
+    stargazersCount: stargazersUsers, // localStorage.getItem("users) cannot be updated to stargazersCount
     // when localStorage changes as a result of FilterResult of localStorage.setItem()
     // but to update this stargazersCount variable, StargazersCard component need to re-render
     // but there is no way to re-render StargazersCard as a result of FilterResult changes other than
     // clicks event in StargazersCard.js. Thus, you need to use React.context to sync with FilterResult.js
-    starredRepoCount: stateStargazers.stargazersUsersStarredRepositories,
-    after: stateStargazers.hasNextPage.endCursor,
+    starredRepoCount: stargazersUsersStarredRepositories,
+    after: hasNextPage.endCursor,
   };
   const onClickCb = useStableCallback(async ({ query, variables }: any) => {
-    if (stateShared.tokenGQL !== '') {
+    if (tokenGQL !== '') {
       return await client // return Promise
         .query({
           query: query,
@@ -72,14 +71,14 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
           result.data.repository.stargazers.nodes.map((node: any) => {
             const newNode = { ...node };
             newNode['isQueue'] = false;
-            return dispatchStargazers({
+            return StargazersStore.dispatch({
               type: 'STARGAZERS_ADDED',
               payload: {
                 stargazersData: newNode,
               },
             });
           });
-          dispatchStargazers({
+          StargazersStore.dispatch({
             type: 'STARGAZERS_HAS_NEXT_PAGE',
             payload: {
               hasNextPage: result.data.repository.stargazers.pageInfo || {},
@@ -103,10 +102,10 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
 
   const onClicked = useStableCallback(() => {
     setVisible(false);
-    dispatch({
+    HomeStore.dispatch({
       type: 'REMOVE_ALL',
     });
-    dispatchStargazers({
+    StargazersStore.dispatch({
       type: 'REMOVE_ALL',
     });
   });
@@ -120,7 +119,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   };
   const returnPortal = useStableCallback(() => {
     switch (visible) {
-      case stateShared.tokenGQL.length > 0 && stateShared.isLoggedIn: {
+      case tokenGQL.length > 0 && isLoggedIn: {
         return createPortal(
           <div
             style={{
@@ -129,7 +128,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
               position: 'absolute',
             }}
           >
-            {visible && stateShared.tokenGQL.length > 0 && stateShared.isLoggedIn && (
+            {visible && tokenGQL.length > 0 && isLoggedIn && (
               <StargazersInfo
                 setVisible={setVisible}
                 getRootProps={getRootProps}
@@ -144,7 +143,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
           document.body
         );
       }
-      case !stateShared.isLoggedIn: {
+      case !isLoggedIn: {
         return createPortal(
           <div
             style={{
@@ -164,7 +163,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
           document.body
         );
       }
-      case stateShared.tokenGQL.length === 0: {
+      case tokenGQL.length === 0: {
         return createPortal(
           <div
             style={{
@@ -174,7 +173,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
             }}
             ref={notLoggedInRef}
           >
-            {visible && stateShared.tokenGQL.length === 0 && (
+            {visible && tokenGQL.length === 0 && (
               <LoginGQL setVisible={setVisible} style={{ display: 'absolute', width: 'fit-content' }} />
             )}
           </div>,
@@ -188,7 +187,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
 
   const handleClickStargazers = (event: React.MouseEvent<HTMLElement>) => {
     setVisible(true); // spawn modal of StargazersInfo
-    dispatchStargazers({
+    StargazersStore.dispatch({
       type: 'REMOVE_ALL',
     });
     if (event.pageX + parseInt(modalWidth.current) > window.innerWidth) {
@@ -205,7 +204,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   const handleClickStar = async () => {
     if (!starClicked) {
       await setStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
+        if (isLoggedIn) {
           addedStarredMe({
             getUserInfoStarred: {
               starred: [data.id],
@@ -215,7 +214,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
       });
     } else if (starClicked) {
       await removeStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
+        if (isLoggedIn) {
           removeStarred({
             removeStarred: data.id,
           }).then(noop);
@@ -230,12 +229,12 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
       <div className={`stargazer-card-container`} ref={starCountsContainerRef}>
         <div
           className={clsx('star-container', {
-            confetti: starClicked && clicked && stateShared.tokenGQL !== '',
+            confetti: starClicked && clicked && tokenGQL !== '',
           })}
           onClick={(e) => {
             e.preventDefault();
             setClicked(true);
-            if (stateShared.tokenGQL === '') {
+            if (tokenGQL === '') {
               handleClickStargazers(e);
             } else {
               setStarClicked(!starClicked);

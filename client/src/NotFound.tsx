@@ -1,9 +1,9 @@
 import React from 'react';
-import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { NavLink, useLocation } from 'react-router-dom';
 import { allowedRoutes } from './util';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
 import './Not-Found.scss';
+import { SharedStore } from './store/Shared/reducer';
 const NotFound = React.memo(({ drawerWidth = 0 }: any) => {
   return (
     //  use display: grid so that when PureNotFound is expanded with its multi-select, the div of this parent
@@ -31,12 +31,12 @@ const NotFound = React.memo(({ drawerWidth = 0 }: any) => {
 NotFound.displayName = 'NotFound';
 const NotFoundRender = () => {
   const location = useLocation<Location>();
-  const [stateShared] = useTrackedStateShared();
+  const { drawerWidth } = SharedStore.store().DrawerWidth();
   return (
     <KeepMountedLayout
       mountedCondition={!/detail/.test(location.pathname) || !allowedRoutes.includes(location.pathname)}
       render={() => {
-        return <NotFound drawerWidth={stateShared.drawerWidth} />;
+        return <NotFound drawerWidth={drawerWidth} />;
       }}
     />
   );

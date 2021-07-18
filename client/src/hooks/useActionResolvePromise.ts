@@ -2,17 +2,19 @@ import { ActionResolvePromise, IDataOne, Output } from '../typing/interface';
 import { fastFilter, useStableCallback } from '../util';
 import { LanguagePreference, MergedDataProps } from '../typing/type';
 import { filterActionResolvedPromiseData, noop } from '../util/util';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
+import React, { useEffect, useRef } from 'react';
 import { useApolloFactory } from './useApolloFactory';
 import { alreadySeenCardSelector } from '../selectors/stateSelector';
 import { useLocation } from 'react-router-dom';
+import { SharedStore } from '../store/Shared/reducer';
+import { HomeStore } from '../store/Home/reducer';
+import { DiscoverStore } from '../store/Discover/reducer';
 
 const useActionResolvePromise = () => {
+  const { filterBySeen } = HomeStore.store().FilterBySeen();
+  const { queryUsername } = SharedStore.store().QueryUsername();
+
   const location = useLocation();
-  const [stateShared] = useTrackedStateShared();
-  const [, dispatchDiscover] = useTrackedStateDiscover();
-  const [state, dispatch] = useTrackedState();
   const { seenData } = useApolloFactory(Function.name).query.getSeen();
   const { userStarred, loadingUserStarred, errorUserStarred } = useApolloFactory(
     Function.name
@@ -36,7 +38,7 @@ const useActionResolvePromise = () => {
   const userStarredRef = useRef(userStarred?.getUserInfoStarred?.starred);
   const alreadySeenCardsRef = useRef<number[]>([]);
   const actionAppend = (data: IDataOne | any, displayName: string) => {
-    if (state.filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
+    if (filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
       return new Promise(function (resolve, reject) {
         switch (displayName) {
           case displayName.match(/^discover/gi) && displayName!.match(/^discover/gi)![0].length > 0
@@ -52,14 +54,14 @@ const useActionResolvePromise = () => {
               data
             );
             if (filter1.length > 0) {
-              dispatchDiscover({
+              DiscoverStore.dispatch({
                 type: 'MERGED_DATA_APPEND_DISCOVER',
                 payload: {
                   data: filter1,
                 },
               });
             } else if (filter1.length === 0) {
-              dispatchDiscover({
+              DiscoverStore.dispatch({
                 type: 'ADVANCE_PAGE_DISCOVER',
               });
             }
@@ -76,14 +78,14 @@ const useActionResolvePromise = () => {
                 ),
               data.dataOne
             );
-            dispatch({
+            HomeStore.dispatch({
               type: 'MERGED_DATA_APPEND',
               payload: {
                 data: filter1,
               },
             });
             if (filter1.length === 0) {
-              dispatch({
+              HomeStore.dispatch({
                 type: 'ADVANCE_PAGE',
               });
             } else {
@@ -92,7 +94,7 @@ const useActionResolvePromise = () => {
                 obj['isQueue'] = false;
                 return obj;
               });
-              dispatch({
+              HomeStore.dispatch({
                 type: 'MERGED_DATA_APPEND',
                 payload: {
                   data: temp,
@@ -127,13 +129,13 @@ const useActionResolvePromise = () => {
         }
         if (action === 'noData') {
           isFetchFinish = true;
-          setNotification(`Sorry, no more data found for ${stateShared.queryUsername}`);
+          setNotification(`Sorry, no more data found for ${queryUsername}`);
         }
         if (action === 'error' && error) {
           throw new Error(`Something wrong at ${displayName} ${error}`);
         }
         if (data && data.error_404) {
-          setNotification(`Sorry, no data found for ${stateShared.queryUsername}`);
+          setNotification(`Sorry, no data found for ${queryUsername}`);
         } else if (data && data.error_403) {
           isFetchFinish = true;
           setNotification('Sorry, API rate limit exceeded.');

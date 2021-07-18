@@ -9,9 +9,9 @@ import SupervisorAccountIcon from '@material-ui/icons/SupervisorAccount';
 import useCollapse from '../../hooks/useCollapse';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../util';
-import { useTrackedState } from '../../selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
 import Empty from '../../Layout/EmptyLayout';
+import { HomeStore } from '../../store/Home/reducer';
 
 const ImageComponentLayout = Loadable({
   loading: Empty,
@@ -29,6 +29,8 @@ interface ImagesCard {
   index: number;
 }
 const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
+  const { imagesData } = HomeStore.store().ImagesData();
+  const { imagesMapData } = HomeStore.store().ImagesMapData();
   const [renderChildren, setRenderChildren] = useState(false);
   const [clicked, setClicked] = useState(false);
   const { getToggleProps, getCollapseProps } = useCollapse({
@@ -46,14 +48,13 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
     return setClicked((prev) => !prev);
   });
   const [renderImages, setRenderImages] = useState<string[]>([]);
-  const [state] = useTrackedState();
   const location = useLocation();
 
   useEffect(() => {
     let isFinished = false;
     if (location.pathname === '/' && !isFinished) {
-      if (Array.isArray(state.imagesData) && state.imagesData.length > 0) {
-        const temp = state.imagesMapData.get(index)?.value ?? [];
+      if (Array.isArray(imagesData) && imagesData.length > 0) {
+        const temp = imagesMapData.get(index)?.value ?? [];
         if (temp.length > 0 && renderImages.length === 0) {
           setRenderImages(temp);
         }
@@ -63,7 +64,7 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.imagesData, state.imagesMapData]);
+  }, [imagesData, imagesMapData]);
 
   // const checkNode = (addedNode: any) => {
   //   if (addedNode.getElementsByTagName === 'function' && addedNode.nodeType === 1 && addedNode.tagName === 'img') {
