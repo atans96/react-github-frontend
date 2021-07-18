@@ -1,5 +1,6 @@
 import { readEnvironmentVariable } from '../util';
-import { SearchUser } from '../typing/interface';
+import { IDataOne, SearchUser } from '../typing/interface';
+import { ContributorsProps, ImagesDataProps, MergedDataProps } from '../typing/type';
 export const getAllGraphQLNavBar = async (username: string) => {
   try {
     const response = await fetch(
@@ -46,6 +47,7 @@ export const getTopContributors = async (fullName: string) => {
     return await response.json();
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const removeStarredMe = async (repoFullName: string) => {
@@ -92,9 +94,10 @@ export const getTokenGQL = async () => {
     const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTokenGQL`, {
       method: 'GET',
     });
-    return await response.json();
+    return (await response.json()) as { tokenGQL: string };
   } catch (e) {
     console.log(e);
+    return { tokenGQL: '' };
   }
 };
 export const removeTokenGQL = async () => {
@@ -189,6 +192,7 @@ export const getValidGQLProperties = async () => {
     return await response.json();
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const markdownParsing = async (full_name: string, branch: string) => {
@@ -202,6 +206,7 @@ export const markdownParsing = async (full_name: string, branch: string) => {
     return await response.json();
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const session = async (end: boolean) => {
@@ -214,6 +219,7 @@ export const session = async (end: boolean) => {
     return await response.json();
   } catch (e) {
     console.log(e);
+    return { username: '', data: false };
   }
 };
 export const getRateLimitInfo = async () => {
@@ -225,6 +231,7 @@ export const getRateLimitInfo = async () => {
     return await response.json();
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const requestGithubLogin = async (proxy_url: string, data: any) => {
@@ -244,6 +251,7 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
     return await response.json();
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const getSearchUsers = async (query: string) => {
@@ -255,6 +263,7 @@ export const getSearchUsers = async (query: string) => {
     return (await response.json()) as SearchUser;
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const getSearchTopics = async ({
@@ -275,9 +284,10 @@ export const getSearchTopics = async ({
         signal,
       }
     );
-    return await response.json();
+    return (await response.json()) as IDataOne;
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const getElasticSearchBertAutocomplete = async (query: string) => {
@@ -299,7 +309,7 @@ export const getElasticSearchBert = async (query: string) => {
     const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT')}?q=${query}&docName=github`, {
       method: 'GET',
     });
-    return await response.json();
+    return (await response.json()) as MergedDataProps[];
   } catch (e) {
     console.log(e);
   }
@@ -319,9 +329,10 @@ export const requestGithubGraphQLLogin = async (token: string) => {
         token: token,
       }),
     });
-    return await response.json();
+    return (await response.json()) as { success: boolean };
   } catch (e) {
     console.log(e);
+    return { success: false };
   }
 };
 export const convertToWebP = async (imgUrl: string) => {
@@ -329,9 +340,12 @@ export const convertToWebP = async (imgUrl: string) => {
     const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/convert_to_webp?imgUrl=${imgUrl}`, {
       method: 'GET',
     });
-    return await response.json();
+    return (await response.json()) as { original: string };
   } catch (e) {
     console.log(e);
+    return {
+      original: '',
+    };
   }
 };
 export const getFile = async (filename: string) => {
@@ -343,6 +357,7 @@ export const getFile = async (filename: string) => {
     return await response.json();
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const getRepoImages = async ({
@@ -385,9 +400,10 @@ export const getRepoImages = async ({
         signal,
       }
     );
-    return await response.json();
+    return (await response.json()) as ImagesDataProps[];
   } catch (e) {
     console.log(e);
+    return undefined;
   }
 };
 export const crawlerPython = async ({
@@ -416,8 +432,27 @@ export const crawlerPython = async ({
       }),
       signal,
     });
-    return await response.json();
+    return (await response.json()) as {
+      webLink: string;
+      profile: {
+        bio: string;
+        homeLocation: string;
+        twitter: string;
+        url: string;
+        worksFor: string;
+      };
+    };
   } catch (e) {
     console.log(e);
+    return {
+      webLink: '',
+      profile: {
+        bio: '',
+        homeLocation: '',
+        twitter: '',
+        url: '',
+        worksFor: '',
+      },
+    };
   }
 };

@@ -51,18 +51,20 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
           },
         });
         getSearchUsers(username.toString().trim()).then((data) => {
-          dispatch({
-            type: 'SEARCH_USERS',
-            payload: {
-              data: data.users,
-            },
-          });
-          dispatch({
-            type: 'LOADING',
-            payload: {
-              isLoading: false,
-            },
-          });
+          if (data) {
+            dispatch({
+              type: 'SEARCH_USERS',
+              payload: {
+                data: data.users,
+              },
+            });
+            dispatch({
+              type: 'LOADING',
+              payload: {
+                isLoading: false,
+              },
+            });
+          }
         });
       }
     }, [debouncedValue]);

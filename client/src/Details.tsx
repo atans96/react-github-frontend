@@ -74,7 +74,7 @@ const Details: React.FC = React.memo(() => {
       let isFinished = false;
       if (!isFinished && /detail/.test(location.pathname) && !!data) {
         markdownParsing(data.data.full_name, data.data.default_branch).then((dataStarRanking) => {
-          if (_isMounted.current) {
+          if (_isMounted.current && dataStarRanking) {
             setReadme(dataStarRanking.readme);
           }
         });

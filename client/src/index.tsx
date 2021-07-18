@@ -167,8 +167,7 @@ const AppRoutes = React.memo(
 const MiddleAppRoute = () => {
   const { db, clear } = DbCtx.useContainer();
   const apolloCacheData = useRef<Object>({});
-  const [, dispatchShared] = useTrackedStateShared();
-  const [stateShared] = useTrackedStateShared();
+  const [stateShared, dispatchShared] = useTrackedStateShared();
   sysend.on('Login', function (fn) {
     dispatchShared({
       type: 'LOGIN',
@@ -221,12 +220,14 @@ const MiddleAppRoute = () => {
 
   useEffect(() => {
     getFile('languages.json').then((githubLanguages) => {
-      dispatchShared({
-        type: 'SET_GITHUB_LANGUAGES',
-        payload: {
-          githubLanguages,
-        },
-      });
+      if (githubLanguages) {
+        dispatchShared({
+          type: 'SET_GITHUB_LANGUAGES',
+          payload: {
+            githubLanguages,
+          },
+        });
+      }
     });
     if (stateShared.isLoggedIn) {
       getTokenGQL().then((res) => {
@@ -373,7 +374,7 @@ const CustomApolloProvider = ({ children }: any) => {
               if (
                 property &&
                 property.length > 0 &&
-                validGQLProperties.data.includes(property) &&
+                validGQLProperties?.data.includes(property) &&
                 isLoggedInRef.current
               ) {
                 // if no data exist when the user logged-in
@@ -445,4 +446,7 @@ const Main = () => {
     </Router>
   );
 };
+window.addEventListener('unhandledrejection', function (promiseRejectionEvent) {
+  console.log(promiseRejectionEvent);
+});
 ReactDOM.render(<Main />, rootEl);

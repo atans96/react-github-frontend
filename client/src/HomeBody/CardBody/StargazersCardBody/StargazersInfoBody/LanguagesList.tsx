@@ -62,7 +62,7 @@ const LanguagesList: React.FC = React.memo(() => {
   };
   useEffect(() => {
     getFile('languages.yml').then((data) => {
-      setLanguageInfo(data);
+      if (data) setLanguageInfo(data);
     });
   }, []);
   return (

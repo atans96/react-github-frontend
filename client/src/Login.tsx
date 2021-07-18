@@ -36,7 +36,7 @@ const Login = () => {
         // Use code parameter and other parameters to make POST request to proxy_server
         requestGithubLogin(`${proxy_url}`, requestData)
           .then((response) => {
-            if (response.data) {
+            if (response) {
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },
@@ -52,7 +52,7 @@ const Login = () => {
                 payload: { username: response.data.login },
               });
               getRateLimitInfo().then((data) => {
-                if (data.rateLimit && data.rateLimitGQL) {
+                if (data) {
                   dispatchRateLimit({
                     type: 'RATE_LIMIT_ADDED',
                     payload: {

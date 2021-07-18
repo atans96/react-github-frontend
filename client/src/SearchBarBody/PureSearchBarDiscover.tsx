@@ -34,7 +34,7 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
           data: res,
-          notificationDiscover: res.length === 0 ? `No data found for query: ${query?.current?.getState()}` : '',
+          notificationDiscover: res?.length === 0 ? `No data found for query: ${query?.current?.getState()}` : '',
         },
       });
       query.current.clearState();

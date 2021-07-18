@@ -55,8 +55,7 @@ const Home = React.memo(() => {
   const location = useLocation();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
-  const [, dispatchShared] = useTrackedStateShared();
-  const [stateShared] = useTrackedStateShared();
+  const [stateShared, dispatchShared] = useTrackedStateShared();
   const abortController = new AbortController();
   const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
   const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
@@ -308,28 +307,34 @@ const Home = React.memo(() => {
                     : stateShared.queryUsername,
                   page: state.page,
                 });
-                const output = Object.assign(
-                  {},
-                  {
-                    id: obj.id,
-                    webLink: response.webLink || '',
-                    profile: {
-                      bio: response.profile.bio || '',
-                      homeLocation: response.profile.homeLocation || [],
-                      twitter: response.profile.twitter || [],
-                      url: response.profile.url || [],
-                      worksFor: response.profile.worksFor || [],
+                if (response) {
+                  const output = Object.assign(
+                    {},
+                    {
+                      id: obj.id,
+                      webLink: response.webLink || '',
+                      profile: {
+                        bio: response.profile.bio || '',
+                        homeLocation: response.profile.homeLocation || [],
+                        twitter: response.profile.twitter || [],
+                        url: response.profile.url || [],
+                        worksFor: response.profile.worksFor || [],
+                      },
+                    }
+                  );
+                  dispatch({
+                    type: 'SET_CARD_ENHANCEMENT',
+                    payload: {
+                      cardEnhancement: output,
                     },
-                  }
-                );
-                dispatch({
-                  type: 'SET_CARD_ENHANCEMENT',
-                  payload: {
-                    cardEnhancement: output,
-                  },
-                });
-                resolve();
-              })();
+                  });
+                  resolve();
+                } else {
+                  reject('fail');
+                }
+              })().catch((err) => {
+                console.error(err);
+              });
             })
           );
           promisesImage.push(
@@ -344,7 +349,7 @@ const Home = React.memo(() => {
                   page: state.page,
                   axiosCancel: axiosCancel.current,
                 });
-                if (response.length > 0) {
+                if (response && response.length > 0) {
                   dispatch({
                     type: 'IMAGES_DATA_ADDED',
                     payload: {
