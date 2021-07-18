@@ -89,23 +89,10 @@ const RowOne = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languagePreferences]);
 
-  const languagePreferencesRef = useRef<any[]>([]);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/profile' && !isFinished) {
-      languagePreferencesRef.current = languagePreferences;
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languagePreferences]);
-
   const handleCheckboxChange = useStableCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     setLanguagePreferences(
-      [...languagePreferencesRef.current].map((obj) => {
+      [...languagePreferences].map((obj) => {
         if (obj.language === event.target.name) {
           return {
             ...obj,

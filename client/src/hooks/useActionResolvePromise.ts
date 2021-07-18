@@ -2,14 +2,12 @@ import { ActionResolvePromise, IDataOne, Output } from '../typing/interface';
 import { fastFilter, useStableCallback } from '../util';
 import { LanguagePreference, MergedDataProps } from '../typing/type';
 import { filterActionResolvedPromiseData, noop } from '../util/util';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useApolloFactory } from './useApolloFactory';
 import { alreadySeenCardSelector } from '../selectors/stateSelector';
-import { useLocation } from 'react-router-dom';
 
 const useActionResolvePromise = () => {
-  const location = useLocation();
   const [stateShared] = useTrackedStateShared();
   const [, dispatchDiscover] = useTrackedStateDiscover();
   const [state, dispatch] = useTrackedState();
@@ -32,9 +30,6 @@ const useActionResolvePromise = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenData?.getSeen?.seenCards]);
 
-  const languagePreferenceRef = useRef(languagePreference);
-  const userStarredRef = useRef(userStarred?.getUserInfoStarred?.starred);
-  const alreadySeenCardsRef = useRef<number[]>([]);
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (state.filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
       return new Promise(function (resolve, reject) {
@@ -46,8 +41,8 @@ const useActionResolvePromise = () => {
               (obj: MergedDataProps) =>
                 filterActionResolvedPromiseData(
                   obj,
-                  !alreadySeenCardsRef?.current?.includes(obj.id) && !userStarredRef?.current?.includes(obj.id),
-                  !!languagePreferenceRef?.current?.get(obj.language)?.checked
+                  !alreadySeenCards?.includes(obj.id) && !userStarred?.getUserInfoStarred?.starred?.includes(obj.id),
+                  !!languagePreference?.get(obj.language)?.checked
                 ),
               data
             );
@@ -71,8 +66,8 @@ const useActionResolvePromise = () => {
               (obj: MergedDataProps) =>
                 filterActionResolvedPromiseData(
                   obj,
-                  !alreadySeenCardsRef?.current?.includes(obj.id),
-                  !!languagePreferenceRef?.current?.get(obj.language)
+                  !alreadySeenCards?.includes(obj.id),
+                  !!languagePreference?.get(obj.language)
                 ),
               data.dataOne
             );
@@ -144,33 +139,6 @@ const useActionResolvePromise = () => {
       return { isFetchFinish };
     }
   );
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      alreadySeenCardsRef.current = [...alreadySeenCards];
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      languagePreferenceRef.current = languagePreference;
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && ['/', '/discover'].includes(location.pathname)) {
-      userStarredRef.current = userStarred?.getUserInfoStarred?.starred;
-      return () => {
-        isFinished = true;
-      };
-    }
-  });
   return { actionResolvePromise };
 };
 export default useActionResolvePromise;
