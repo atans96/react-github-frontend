@@ -134,11 +134,13 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
                       }
                       await getTopContributors(obj.fullName)
                         .then((res) => {
-                          if (res.error_403) {
-                            timeout = epochToJsDate(res.rateLimit.reset);
-                          } else {
-                            breakout = true;
-                            resolve(res);
+                          if (res) {
+                            if (res.error_403) {
+                              timeout = epochToJsDate(res.rateLimit.reset);
+                            } else {
+                              breakout = true;
+                              resolve(res);
+                            }
                           }
                         })
                         .catch((err) => reject(err));

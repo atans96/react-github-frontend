@@ -54,15 +54,17 @@ const useFetchUser = ({ component }: useFetchUser) => {
         topic: variables.queryTopic,
         axiosCancel: axiosCancel.current,
       })
-        .then((result: IDataOne) => {
-          paginationInfo += result.paginationInfoData;
-          dispatch({
-            type: 'LAST_PAGE',
-            payload: {
-              lastPage: paginationInfo,
-            },
-          });
-          actionController(result);
+        .then((result) => {
+          if (result) {
+            paginationInfo += result.paginationInfoData;
+            dispatch({
+              type: 'LAST_PAGE',
+              payload: {
+                lastPage: paginationInfo,
+              },
+            });
+            actionController(result);
+          }
         })
         .catch((error) => {
           actionResolvePromise({
@@ -292,8 +294,8 @@ const useFetchUser = ({ component }: useFetchUser) => {
           topic: clickedGQLTopic.queryTopic,
           axiosCancel: axiosCancel.current,
         })
-          .then((res: IDataOne) => {
-            actionController(res);
+          .then((res) => {
+            if (res) actionController(res);
           })
           .catch((error) => {
             actionResolvePromise({

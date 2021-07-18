@@ -25,7 +25,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
       if (location.pathname === '/profile' || location.pathname === '/detail') {
         _isMounted.current = true;
         markdownParsing(fullName, branch).then((data) => {
-          if (_isMounted.current) {
+          if (data && _isMounted.current) {
             setReadme(data.readme);
           }
         });

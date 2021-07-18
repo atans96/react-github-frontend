@@ -6,6 +6,7 @@ import { StateRateLimitProvider } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import '../hamburgers.css';
 import Empty from '../Layout/EmptyLayout';
+import { StateSharedProvider } from '../selectors/stateContextSelector';
 
 const ToolBar = Loadable({
   loading: Empty,
@@ -67,7 +68,9 @@ const BottomNavigationBar = () => {
           <RateLimit />
         </StateRateLimitProvider>
       </AppBar>
-      <DrawerBar />
+      <StateSharedProvider>
+        <DrawerBar />
+      </StateSharedProvider>
     </React.Fragment>
   );
 };
