@@ -11,7 +11,7 @@ const RateLimit = () => {
   const [state] = useTrackedState();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [refetch, setRefetch] = useState(true);
-  const displayName: string | undefined = (RateLimit as unknown as React.ComponentType<any>).displayName;
+  const displayName: string = (RateLimit as React.ComponentType<any>).displayName || '';
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const [stateRateLimit] = useTrackedStateRateLimit();
   const [resetTime, setResetTime] = useState<string>('');

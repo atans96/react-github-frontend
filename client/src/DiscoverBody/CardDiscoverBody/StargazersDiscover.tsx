@@ -25,7 +25,7 @@ interface StargazerDiscover {
 }
 
 const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
-  const displayName: string | undefined = (StargazerDiscover as React.ComponentType<any>).displayName;
+  const displayName: string = (StargazerDiscover as React.ComponentType<any>).displayName || '';
   const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
   const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
   const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;

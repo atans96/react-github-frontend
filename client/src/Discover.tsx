@@ -33,6 +33,7 @@ const MasonryCard = Loadable({
 
 const Discover = () => {
   const location = useLocation();
+  const displayName: string = (Discover as React.ComponentType<any>).displayName || '';
   const {
     fetchUserMore,
     fetchUser,
@@ -45,9 +46,8 @@ const Discover = () => {
     dispatchShared,
     stateShared,
   } = useFetchUser({
-    component: 'Discover',
+    component: displayName,
   });
-  const displayName: string | undefined = (Discover as React.ComponentType<any>).displayName;
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
   const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
     (data: StaticState) => data.SuggestedRepo

@@ -36,7 +36,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
   const [stateShared] = useTrackedStateShared();
   const [state] = useTrackedState();
-  const displayName: string | undefined = (Card as React.ComponentType<any>).displayName;
+  const displayName: string = (Card as React.ComponentType<any>).displayName || '';
   const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
 
   const userCardMemoizedData = useStableCallback(() => {

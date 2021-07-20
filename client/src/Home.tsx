@@ -17,6 +17,8 @@ import Loadable from 'react-loadable';
 import { useLocation } from 'react-router-dom';
 import useFetchUser from './hooks/useFetchUser';
 import Empty from './Layout/EmptyLayout';
+import Mutex from './util/mutex/mutex';
+const mutex = new Mutex();
 
 const MasonryCard = Loadable({
   loader: () => import(/* webpackChunkName: "MasonryCard" */ './HomeBody/MasonryCard'),
@@ -42,6 +44,8 @@ const ScrollToTopLayout = Loadable({
 });
 
 const Home = React.memo(() => {
+  const abortController = new AbortController();
+  const displayName: string = (Home as React.ComponentType<any>).displayName || '';
   const {
     fetchUserMore,
     fetchUser,
@@ -51,13 +55,11 @@ const Home = React.memo(() => {
     onClickTopic,
     clickedGQLTopic,
     isFetchFinish,
-  } = useFetchUser({ component: 'Home' });
+  } = useFetchUser({ component: displayName, abortController });
   const location = useLocation();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
-  const abortController = new AbortController();
-  const displayName: string | undefined = (Home as React.ComponentType<any>).displayName;
   const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
   const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
@@ -65,6 +67,7 @@ const Home = React.memo(() => {
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const windowScreenRef = useRef<HTMLDivElement>(null);
+  const dataAlreadyFetch = useRef<number>();
   const isMergedDataExist = state.mergedData.length > 0;
   const isSeenCardsExist =
     (seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError) ||
@@ -144,6 +147,7 @@ const Home = React.memo(() => {
       // However, as the component unmount, stateShared.queryUsername is not "", thus causing fetchUser to fire in useEffect
       // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
       // otherwise, don't re-fetch. in this way, stateShared.queryUsername and state.mergedData are still preserved
+      dataAlreadyFetch.current = 0;
       fetchUser();
       return () => {
         isFinished = true;
@@ -159,6 +163,7 @@ const Home = React.memo(() => {
   useEffect(() => {
     let isFinished = false;
     if (location.pathname === '/' && !isFinished) {
+      dataAlreadyFetch.current = 0;
       if (stateShared.queryUsername.length > 0) {
         fetchUserMore();
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
@@ -169,10 +174,11 @@ const Home = React.memo(() => {
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.page, axiosCancel.current]);
+  }, [state.page, axiosCancel.current, abortController.signal]);
 
   useEffect(() => {
     if (location.pathname !== '/') {
+      //TODO: test this
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
       axiosCancel.current = true;
     } else {
@@ -224,7 +230,6 @@ const Home = React.memo(() => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filterBySeen]);
-
   useEffect(() => {
     let isFinished = false;
     if (isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
@@ -265,132 +270,121 @@ const Home = React.memo(() => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenDataLoading, seenDataError, seenData, location, state.filterBySeen]);
-
-  useEffect(
+  useDeepCompareEffect(
     () => {
-      let isFinished = false;
-      if (isMergedDataExist && state.shouldFetchImages && location.pathname === '/' && !isFinished) {
-        // state.mergedData.length > 0 && state.shouldFetchImages will execute after fetchUser() finish getting mergedData
-        dispatch({
-          type: 'SHOULD_IMAGES_DATA_ADDED',
-          payload: {
-            shouldFetchImages: false,
-          },
-        });
-        const data = state.mergedData.reduce((acc, object) => {
-          acc.push(
-            Object.assign(
-              {},
-              {
-                id: object.id,
-                value: {
-                  full_name: object.full_name,
-                  branch: object.default_branch,
-                  ownerName: object.owner.login,
-                },
+      (async () => {
+        let isFinished = false;
+        if (location.pathname === '/' && !isFinished) {
+          const release = await mutex.acquire(); //if no MUTEX, there's no guarantee fetch will be executed too much
+          // so we need to use mutex so any pending execution of asnyc here will be put in Event Loop and after the lock released will resume
+
+          const data = state.mergedData.slice(dataAlreadyFetch.current).reduce((acc, object) => {
+            acc.push(
+              Object.assign(
+                {},
+                {
+                  id: object.id,
+                  value: {
+                    full_name: object.full_name,
+                    branch: object.default_branch,
+                    ownerName: object.owner.login,
+                  },
+                }
+              )
+            );
+            return acc;
+          }, [] as any[]);
+          dataAlreadyFetch.current = state.mergedData.length;
+          const iters = data[Symbol.iterator]();
+          const nextExecuteCrawler = (chunk: any, resolve: any) => {
+            let data = chunk;
+            crawlerPython({
+              signal: abortController.signal,
+              data: data,
+              topic: Array.isArray(stateShared.queryUsername)
+                ? stateShared.queryUsername[0]
+                : stateShared.queryUsername,
+              page: state.page,
+            }).then((response) => {
+              if (response) {
+                const output = Object.assign(
+                  {},
+                  {
+                    id: data.id,
+                    webLink: response.webLink || '',
+                    profile: {
+                      bio: response.profile.bio || '',
+                      homeLocation: response.profile.homeLocation || [],
+                      twitter: response.profile.twitter || [],
+                      url: response.profile.url || [],
+                      worksFor: response.profile.worksFor || [],
+                    },
+                  }
+                );
+                dispatch({
+                  type: 'SET_CARD_ENHANCEMENT',
+                  payload: {
+                    cardEnhancement: output,
+                  },
+                });
               }
-            )
-          );
-          return acc;
-        }, [] as any[]);
-        const promises: Promise<void>[] = [];
-        const promisesImage: Promise<void>[] = [];
-        data.forEach((obj) => {
-          promises.push(
-            new Promise((resolve, reject) => {
-              (async () => {
-                const response = await crawlerPython({
-                  signal: abortController.signal,
-                  data: obj,
-                  topic: Array.isArray(stateShared.queryUsername)
-                    ? stateShared.queryUsername[0]
-                    : stateShared.queryUsername,
-                  page: state.page,
+              const chunk = iters.next();
+              if (chunk.done) {
+                resolve('');
+              } else {
+                nextExecuteCrawler(chunk.value, resolve);
+              }
+            });
+          };
+          const nextExecuteImages = (chunk: any, resolve: any) => {
+            getRepoImages({
+              signal: abortController.signal,
+              data: chunk,
+              topic: Array.isArray(stateShared.queryUsername)
+                ? stateShared.queryUsername[0]
+                : stateShared.queryUsername,
+              page: state.page,
+              axiosCancel: axiosCancel.current,
+            }).then((response: any) => {
+              if (response && response.length > 0) {
+                dispatch({
+                  type: 'IMAGES_DATA_ADDED',
+                  payload: {
+                    images: response,
+                  },
                 });
-                if (response) {
-                  const output = Object.assign(
-                    {},
-                    {
-                      id: obj.id,
-                      webLink: response.webLink || '',
-                      profile: {
-                        bio: response.profile.bio || '',
-                        homeLocation: response.profile.homeLocation || [],
-                        twitter: response.profile.twitter || [],
-                        url: response.profile.url || [],
-                        worksFor: response.profile.worksFor || [],
-                      },
-                    }
-                  );
-                  dispatch({
-                    type: 'SET_CARD_ENHANCEMENT',
-                    payload: {
-                      cardEnhancement: output,
-                    },
-                  });
-                  resolve();
-                } else {
-                  reject('fail');
-                }
-              })().catch((err) => {
-                console.error(err);
-              });
-            })
-          );
-          promisesImage.push(
-            new Promise((resolve, reject) => {
-              (async () => {
-                const response = await getRepoImages({
-                  signal: abortController.signal,
-                  data: obj,
-                  topic: Array.isArray(stateShared.queryUsername)
-                    ? stateShared.queryUsername[0]
-                    : stateShared.queryUsername,
-                  page: state.page,
-                  axiosCancel: axiosCancel.current,
-                });
-                if (response && response.length > 0) {
-                  dispatch({
-                    type: 'IMAGES_DATA_ADDED',
-                    payload: {
-                      images: response,
-                    },
-                  });
-                }
-                resolve();
-              })();
-            })
-          );
-        });
-        const doCrawler = async () => {
-          await pMap(promises, (promise: Promise<void>) => promise?.then(noop), { concurrency: 5 });
+              }
+              const chunk = iters.next();
+              if (chunk.done) {
+                resolve('');
+              } else {
+                nextExecuteImages(chunk.value, resolve);
+              }
+            });
+          };
+          const executeImages = () => {
+            return new Promise((resolve, reject) => {
+              for (let index = 0; index < 2; index++) {
+                const chunk = iters.next();
+                nextExecuteImages(chunk.value, resolve);
+              }
+            });
+          };
+          Promise.all([executeImages()]).then(() => {
+            release();
+          });
           // while (promises.length) {
           //   // 3 concurrent request at at time (batch mode) but if there is two more queue items, it won't go immediately to fill the empty slot so need to use pMap
           //   await Promise.all(promises.splice(0, 3).map((f) => f.then(noop)));
           // }
-        };
-        const doFetchImages = async () => {
-          await pMap(promisesImage, (promise: Promise<void>) => promise?.then(noop), {
-            concurrency: promisesImage.length,
-          });
-        };
-        doFetchImages()
-          .then(noop)
-          .catch((err) => {
-            throw new Error(err);
-          });
-        doCrawler()
-          .then(noop)
-          .catch((err) => {
-            throw new Error(err);
-          });
-        return () => {
-          isFinished = true;
-        };
-      }
+          return () => {
+            isFinished = true;
+          };
+        }
+      })();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.shouldFetchImages, isMergedDataExist, axiosCancel]
+    [state.mergedData.length, axiosCancel.current, abortController.signal]
   );
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 

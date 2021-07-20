@@ -36,7 +36,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
   const [stateShared] = useTrackedStateShared();
   const stargazersMemoizedGithubData = useStableCallback(() => githubData);
 
-  const displayName: string | undefined = (CardDiscover as React.ComponentType<any>).displayName;
+  const displayName: string = (CardDiscover as React.ComponentType<any>).displayName || '';
   const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();

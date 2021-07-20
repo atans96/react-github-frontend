@@ -22,7 +22,6 @@ export type Action =
   | 'FILTER_SET_TOPICS'
   | 'FILTER_SET_TOPICS_REMOVE'
   | 'MERGED_DATA_FILTER_BY_TAGS'
-  | 'SHOULD_IMAGES_DATA_ADDED'
   | 'SET_CARD_ENHANCEMENT'
   | 'UNDISPLAY_MERGED_DATA';
 
@@ -43,7 +42,6 @@ export const initialState: IState = {
   isLoading: false,
   page: 1,
   lastPage: 0,
-  shouldFetchImages: false,
 };
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
@@ -77,12 +75,6 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
       return {
         ...state,
         filterBySeen: action.payload.filterBySeen,
-      };
-    }
-    case 'SHOULD_IMAGES_DATA_ADDED': {
-      return {
-        ...state,
-        shouldFetchImages: action.payload.shouldFetchImages,
       };
     }
     case 'FILTER_SET_TOPICS_REMOVE': {

@@ -29,7 +29,6 @@ const useActionResolvePromise = () => {
     return alreadySeenCardSelector(seenData?.getSeen?.seenCards ?? []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenData?.getSeen?.seenCards]);
-
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (state.filterBySeen && !loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError) {
       return new Promise(function (resolve, reject) {
@@ -113,12 +112,11 @@ const useActionResolvePromise = () => {
       displayName,
       setNotification,
       error = undefined,
-      prefetch = noop,
     }: ActionResolvePromise): Output => {
       if (!loadingUserStarred && !errorUserStarred && !seenDataLoading && !seenDataError) {
         setLoading(false);
         if (data && action === 'append') {
-          actionAppend(data, displayName)!.then(() => prefetch());
+          actionAppend(data, displayName)!.then(noop);
         }
         if (action === 'noData') {
           isFetchFinish = true;
