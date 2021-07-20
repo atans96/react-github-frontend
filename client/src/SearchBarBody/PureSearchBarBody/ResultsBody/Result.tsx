@@ -18,7 +18,7 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
   const [, dispatchStargazers] = useTrackedStateStargazers();
   const [, dispatch] = useTrackedState();
   const [isHovered, setIsHovered] = useState(false);
-  const displayName: string | undefined = (Result as React.ComponentType<any>).displayName;
+  const displayName: string = (Result as React.ComponentType<any>).displayName || '';
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
   const onMouseOver = () => {
     setIsHovered(true);

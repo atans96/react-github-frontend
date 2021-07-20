@@ -6,18 +6,27 @@ import { useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { Counter, useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
+import Mutex from '../util/mutex/mutex';
+import uniqBy from 'lodash.uniqby';
+const mutex = new Mutex();
 
 interface useFetchUser {
   component: string;
+  abortController: any;
 }
 
-const useFetchUser = ({ component }: useFetchUser) => {
+//TO extract all JSON field
+const regex = new RegExp(
+  /(?:\"|\')(?<key>[^"]*)(?:\"|\')(?=:)(?:\:\s*)(?:\"|\')?(?<value>true|false|https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)|[0-9a-zA-Z\+\-\,\.\\/$]*)/gim
+);
+//To extract all json objects
+const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
+const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const { actionResolvePromise } = useActionResolvePromise();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchStargazers] = useTrackedStateStargazers();
-  const abortController = new AbortController();
   // useState is used when the HTML depends on it directly to render something
   const [isLoading, setLoading] = useState(false);
   const [notification, setNotification] = useState('');
@@ -93,57 +102,12 @@ const useFetchUser = ({ component }: useFetchUser) => {
 
     return newID.length > 0 && !([...new Set([...oldID, ...newID])].length === oldID.length);
   };
-  const dataPrefetch = useRef<IDataOne | undefined>();
-  const prefetch = (name: string, axiosCancel: boolean) => () => {
-    getUser({
-      signal: undefined,
-      username: name,
-      perPage: stateShared.perPage,
-      page: state.page + 1,
-      axiosCancel,
-    })
-      .then((data: IDataOne) => {
-        if (!!data && (data.error_404 || data.error_403)) {
-          getOrg({
-            signal: undefined,
-            org: name,
-            perPage: stateShared.perPage,
-            page: state.page + 1,
-            axiosCancel,
-          })
-            .then((data: IDataOne) => {
-              dataPrefetch.current = data;
-            })
-            .catch((error) => {
-              actionResolvePromise({
-                action: ActionResolvedPromise.error,
-                setLoading,
-                setNotification,
-                isFetchFinish: isFetchFinish.current,
-                displayName: component,
-                error,
-              });
-            });
-        } else {
-          dataPrefetch.current = data;
-        }
-      })
-      .catch((error) => {
-        actionResolvePromise({
-          action: ActionResolvedPromise.error,
-          setLoading,
-          setNotification,
-          isFetchFinish: isFetchFinish.current,
-          displayName: component,
-          error,
-        });
-      });
-  };
   const isFunction = (value: () => void) =>
     value && (Object.prototype.toString.call(value) === '[object Function]' || 'function' === typeof value || true)
       ? value()
       : new Error('Not valid function!');
-  const actionController = (res: IDataOne, prefetch = noop, callback?: Promise<any> | any) => {
+
+  const actionController = (res: IDataOne, callback?: Promise<any> | any) => {
     // compare new with old data, if they differ, that means it still has data to fetch
     const promiseOrNot = () => {
       callback() instanceof Promise && res !== undefined && (res.error_404 || res.error_403)
@@ -151,19 +115,13 @@ const useFetchUser = ({ component }: useFetchUser) => {
         : isFunction(callback);
     };
     if (isDataExists(res)) {
-      const ja = Counter(res.dataOne, 'language');
+      const ja = Counter(uniqBy([...res.dataOne], 'id'), 'language');
       const repoStat = Object.entries(ja)
         .slice(0, 5)
         .map((arr: any) => {
           const ja = state.repoStat.find((xx) => xx[0] === arr[0]) || [0, 0];
           return [arr[0], ja[1] + arr[1]];
         });
-      dispatch({
-        type: 'SHOULD_IMAGES_DATA_ADDED',
-        payload: {
-          shouldFetchImages: true,
-        },
-      });
       dispatch({
         type: 'REPO_STAT',
         payload: {
@@ -177,7 +135,6 @@ const useFetchUser = ({ component }: useFetchUser) => {
         isFetchFinish: isFetchFinish.current,
         displayName: component,
         data: res,
-        prefetch,
       });
     } else if (res !== undefined && (res.error_404 || res.error_403)) {
       callback
@@ -200,8 +157,11 @@ const useFetchUser = ({ component }: useFetchUser) => {
         data: res,
       }).isFetchFinish;
     }
+    return true;
   };
-
+  function clear(time: number) {
+    clearTimeout(time);
+  }
   const fetchUser = () => {
     setLoading(true);
     isFetchFinish.current = false;
@@ -212,18 +172,55 @@ const useFetchUser = ({ component }: useFetchUser) => {
     } else {
       userNameTransformed = stateShared.queryUsername;
     }
-    const promises: Promise<void>[] = [];
-    let paginationInfo = 0;
+    const mainIter = async ({ value, actionController, cb }: { value: any; actionController: any; cb: any }) => {
+      if (value) {
+        let dataOne: { dataOne: MergedDataProps[] } = { dataOne: [] };
+        let chunk = '';
+        let interval: any;
+        for await (const data of value()) {
+          let array1;
+          chunk += new TextDecoder().decode(data);
+          while ((array1 = regexJSON.exec(chunk)) !== undefined) {
+            try {
+              const data = JSON.parse(array1![0]);
+              if (data.id && data.full_name && data.default_branch) {
+                dataOne.dataOne.push(data);
+              }
+            } catch (e) {
+              break;
+            }
+          }
+          //When the regex is global, if you call a method on the same regex object,
+          // it will start from the index past the end of the last match. so we need to reset it to start the new loop
+          regexJSON.lastIndex = 0;
+          if (!interval) {
+            actionController(dataOne, cb);
+          }
+          const release = await mutex.acquire();
+          interval = setTimeout(() => {
+            if (dataOne.dataOne.length > 0) actionController(dataOne, cb);
+            release();
+            clear(interval);
+          }, 3000);
+        }
+      }
+    };
     userNameTransformed.forEach((name) => {
-      promises.push(
-        getUser({
-          signal: abortController.signal,
-          username: name,
-          perPage: stateShared.perPage,
-          page: 1,
-          axiosCancel: axiosCancel.current,
-        })
-          .then((data: IDataOne) => {
+      const observer = getUser({
+        signal: abortController.signal,
+        username: name,
+        perPage: stateShared.perPage,
+        page: 1,
+      });
+      observer.subscribe({
+        async next(value: { iterator: any; paginationInfoData: any }) {
+          dispatch({
+            type: 'LAST_PAGE',
+            payload: {
+              lastPage: state.lastPage + value.paginationInfoData.last,
+            },
+          });
+          if (value.iterator) {
             const callback = () =>
               getOrg({
                 signal: abortController.signal,
@@ -233,15 +230,13 @@ const useFetchUser = ({ component }: useFetchUser) => {
                 axiosCancel: axiosCancel.current,
               })
                 .then((data: IDataOne) => {
-                  paginationInfo += data.paginationInfoData;
                   dispatch({
                     type: 'LAST_PAGE',
                     payload: {
-                      lastPage: paginationInfo,
+                      lastPage: state.lastPage + value.paginationInfoData.last,
                     },
                   });
-                  const temp = prefetch(name, axiosCancel.current);
-                  actionController(data, temp);
+                  actionController(data);
                 })
                 .catch((error) => {
                   actionResolvePromise({
@@ -253,29 +248,29 @@ const useFetchUser = ({ component }: useFetchUser) => {
                     error,
                   });
                 });
-            paginationInfo += data.paginationInfoData;
-            dispatch({
-              type: 'LAST_PAGE',
-              payload: {
-                lastPage: paginationInfo,
-              },
-            });
-            const temp = prefetch(name, axiosCancel.current);
-            actionController(data, temp, callback);
-          })
-          .catch((error) => {
-            actionResolvePromise({
-              action: ActionResolvedPromise.error,
-              setLoading,
-              setNotification,
-              isFetchFinish: isFetchFinish.current,
-              displayName: component,
-              error,
-            });
-          })
-      );
+
+            try {
+              mainIter({ value: value.iterator, cb: callback, actionController });
+            } catch (e) {
+              throw new Error(e.message);
+            }
+          }
+        },
+        error(err: any) {
+          actionResolvePromise({
+            action: ActionResolvedPromise.error,
+            setLoading,
+            setNotification,
+            isFetchFinish: isFetchFinish.current,
+            displayName: component,
+            err,
+          });
+        },
+        complete() {
+          console.log('Finished');
+        },
+      });
     });
-    promises.forEach((promise) => promise.then(noop));
   };
   const fetchUserMore = () => {
     // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
@@ -307,19 +302,6 @@ const useFetchUser = ({ component }: useFetchUser) => {
               displayName: component,
             });
           });
-      } else if (dataPrefetch.current && dataPrefetch.current.dataOne.length > 0) {
-        let userNameTransformed: string[];
-        if (!Array.isArray(stateShared.queryUsername)) {
-          userNameTransformed = [stateShared.queryUsername];
-        } else {
-          userNameTransformed = stateShared.queryUsername;
-        }
-        userNameTransformed.forEach((user) => {
-          const temp = prefetch(user, axiosCancel.current);
-          const clone = JSON.parse(JSON.stringify(dataPrefetch.current));
-          actionController(clone, temp);
-        });
-        dataPrefetch.current = undefined;
       }
     }
   };

@@ -44,7 +44,7 @@ const NavBar = React.memo(() => {
   const [isHoveredDiscover, bindDiscover] = useHover();
   const [isHoveredHome, bindHome] = useHover();
   const Active = location.pathname.split('/');
-  const displayName: string | undefined = (NavBar as React.ComponentType<any>).displayName;
+  const displayName: string = (NavBar as React.ComponentType<any>).displayName || '';
   const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
 
   const te = Active[1] !== '' ? Active[1] : 'home';

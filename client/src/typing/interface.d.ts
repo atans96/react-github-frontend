@@ -31,7 +31,6 @@ export interface ActionResolvePromise {
   displayName: string;
   data?: Nullable<IDataOne | any>;
   error?: string;
-  prefetch?: (...args) => void;
 }
 export interface LocationGraphQL {
   //follow NavBar.tsx at getAllGraphQLData
@@ -54,7 +53,6 @@ export interface ActionResolvePromise {
   displayName: string;
   data?: Nullable<IDataOne | any>;
   error?: string;
-  prefetch?: (x: string) => void;
 }
 
 export interface IAction<T> {
@@ -122,7 +120,6 @@ export interface IState {
   imagesMapData: Map<number, any>;
   filterBySeen: boolean;
   cardEnhancement: Map<number, CardEnhancement>;
-  shouldFetchImages: boolean;
   topics: TopicsProps[];
   filteredTopics: string[];
   mergedData: MergedDataProps[];

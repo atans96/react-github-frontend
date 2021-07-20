@@ -1,6 +1,24 @@
 import { readEnvironmentVariable } from '../util';
 import { IDataOne, SearchUser } from '../typing/interface';
-import { ContributorsProps, ImagesDataProps, MergedDataProps } from '../typing/type';
+import { ImagesDataProps, MergedDataProps } from '../typing/type';
+import { Observable } from '../utilities/observables/Observable';
+function getPaginationInfo(linksHeader = '') {
+  const links = linksHeader.split(/\s*,\s*/); // splits and strips the urls
+  return links.reduce(function (parsed_data: string[], link: any) {
+    parsed_data[link.match(/rel="(.*?)"/)[1]] = link.match(/<(.*)>/)[1].match(/page=(.*?)\&/)[1];
+    return parsed_data;
+  }, {} as any);
+}
+function getNextURL(linksHeader = '') {
+  const links = linksHeader.split(/\s*,\s*/); // splits and strips the urls
+  return links.reduce(function (nextUrl: string, link) {
+    if (link.search(/rel="next"/) !== -1) {
+      return (link.match(/<(.*)>/) ?? [])[1];
+    }
+
+    return nextUrl;
+  }, '');
+}
 export const getAllGraphQLNavBar = async (username: string) => {
   try {
     const response = await fetch(
@@ -122,36 +140,101 @@ export const removeToken = async () => {
     console.log(e);
   }
 };
-export const getUser = async ({
+let multiplier = 0;
+let headers = {};
+let last: any;
+export const getUser = ({
   signal,
   username,
   perPage,
   page,
-  axiosCancel = false,
+  raw = false,
+  AcceptHeader = 'v3',
 }: {
   signal: any | undefined;
   username: string;
   perPage: number;
   page: number;
-  axiosCancel: boolean;
+  raw?: boolean;
+  AcceptHeader?: string;
 }) => {
-  try {
-    if (username !== '') {
-      const response = await fetch(
-        `${readEnvironmentVariable(
-          'UWEBSOCKET_ADDRESS'
-        )}/users?username=${username}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-          signal,
+  return new Observable((observer) => {
+    last = last || '';
+    fetch(`https://raw.githubusercontent.com/wa1618i/te/master/test.json`, {
+      method: 'GET',
+      signal,
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/37.0.2062.94 Chrome/37.0.2062.94 Safari/537.36',
+      },
+    })
+      .then((res: any) => {
+        try {
+          const reader = res!.body!.getReader();
+          if (res.headers.link) {
+            if ('last' in getPaginationInfo(res.headers.link)) {
+              headers = getPaginationInfo(res.headers.link);
+            } else {
+              headers = {
+                last: last - 1,
+              };
+            }
+            if (perPage > 100) {
+              multiplier += 1;
+              const stillHasNextPage = perPage - multiplier * 100 > 0;
+              const nextUrl = getNextURL(res.headers.link)
+                ?.match(/([&\?]page=[0-9]*)/g)
+                ?.shift()
+                ?.split('=')
+                .pop();
+              if (nextUrl) {
+                perPage = Number(nextUrl);
+              }
+              if (stillHasNextPage && nextUrl !== undefined) {
+                observer.next({
+                  iterator: async function* () {
+                    while (true) {
+                      const { done, value } = await reader.read();
+                      if (done) {
+                        break;
+                      }
+                      yield value; //pause the while loop until the caller below continue to call iterator again
+                    }
+                  },
+                  paginationInfoData: headers,
+                });
+                return getUser({ signal, username, perPage, page, raw, AcceptHeader });
+              }
+            }
+          } else {
+            headers = {
+              next: 0,
+              last: 1,
+            };
+          }
+          observer.next({
+            iterator: async function* () {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                  break;
+                }
+                yield value; //pause the while loop until the caller below continue to call iterator again
+              }
+            },
+            paginationInfoData: headers,
+          });
+          observer.complete();
+        } catch (e) {
+          observer.error(e);
+          observer.complete();
         }
-      );
-      return await response.json();
-    }
-  } catch (e) {
-    console.log(e);
-  }
+      })
+      .catch((e) => {
+        observer.error(e);
+        observer.complete();
+      });
+  }) as Observable<{ iterator: any; paginationInfoData: any }>;
 };
 export const getOrg = async ({
   signal,

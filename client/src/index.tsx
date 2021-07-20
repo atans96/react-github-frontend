@@ -410,7 +410,6 @@ const CustomApolloProvider = ({ children }: any) => {
       cache: cache,
     });
   });
-
   const ApolloContext = getApolloContext();
   const value = React.useMemo(
     () => ({ client: clientWrapped() }),

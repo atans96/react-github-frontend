@@ -56,7 +56,7 @@ const RowOne = () => {
     setOpenLanguages(!openLanguages);
   };
   const location = useLocation<LocationGraphQL>();
-  const displayName: string | undefined = (RowOne as React.ComponentType<any>).displayName;
+  const displayName: string = (RowOne as React.ComponentType<any>).displayName || '';
   const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
   useEffect(() => {

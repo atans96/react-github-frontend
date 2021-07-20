@@ -32,7 +32,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [state, dispatch] = useTrackedState();
-  const displayName: string | undefined = (SearchBar as React.ComponentType<any>).displayName;
+  const displayName: string = (SearchBar as React.ComponentType<any>).displayName || '';
   const { searchesData } = useApolloFactory(displayName!).query.getSearchesData();
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
   const username = useRef<any>();
@@ -163,7 +163,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           },
         });
       } else {
-        // TODO: freeze on react
         dispatch({
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
@@ -220,7 +219,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           }
         });
       });
-      // TODO: freeze on react
       dispatch({
         type: 'SET_TOPICS',
         payload: {

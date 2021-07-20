@@ -22,10 +22,10 @@ interface RowTwoProps {
 let axiosCancel = false;
 const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
   const [, dispatchManageProfile] = useTrackedStateManageProfile();
-  const [stateShared, dispatchStateShared] = useTrackedStateShared();
+  const [stateShared] = useTrackedStateShared();
   const location = useLocation<LocationGraphQL>();
   const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
-  const displayName: string | undefined = (RowTwo as React.ComponentType<any>).displayName;
+  const displayName: string = (RowTwo as React.ComponentType<any>).displayName || '';
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState('');
 
@@ -82,108 +82,108 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
       (async () => {
         let isApiExceeded = false;
         const promises: Promise<any>[] = [];
-        await getUser({
-          signal: abortController.signal,
-          username: location?.state?.data?.userData?.getUserData?.userName,
-          perPage: +readEnvironmentVariable('QUERY_GITHUB_API')!,
-          page: 1,
-          axiosCancel,
-        }).then((data) => {
-          if (data && data.error_403) {
-            isApiExceeded = true;
-            setNotification('Sorry, API rate limit exceeded.');
-          } else if (data?.dataOne?.length > 0) {
-            const temp = data.dataOne.reduce(
-              (acc: any, obj: MergedDataProps) => {
-                const ja = Object.assign(
-                  {},
-                  {
-                    fullName: obj.full_name,
-                    description: obj.description,
-                    stars: obj.stargazers_count,
-                    forks: obj.forks,
-                    updatedAt: moment(obj.updated_at).fromNow(),
-                    language: obj.language ? obj.language : 'No Language',
-                    topics: obj.topics,
-                    defaultBranch: obj.default_branch,
-                    html_url: obj.html_url,
-                  }
-                );
-                return {
-                  ...acc,
-                  data: acc.data.concat(ja),
-                  languages: acc.languages.concat(obj.language ? obj.language : 'No Language'),
-                };
-              },
-              { languages: [], data: [] }
-            );
-            temp.data.forEach((obj: any) => {
-              promises.push(
-                new Promise<any>((resolve, reject) => {
-                  (async () => {
-                    let timeout = 0;
-                    let breakout = false;
-                    let i = 0;
-                    while (
-                      // @ts-ignore
-                      (await new Promise((resolve) => setTimeout(() => resolve(i++), timeout * 1000))) < 1000 &&
-                      !breakout
-                    ) {
-                      if (timeout > 0) {
-                        timeout = 0; //clear the timeout
-                      }
-                      await getTopContributors(obj.fullName)
-                        .then((res) => {
-                          if (res) {
-                            if (res.error_403) {
-                              timeout = epochToJsDate(res.rateLimit.reset);
-                            } else {
-                              breakout = true;
-                              resolve(res);
-                            }
-                          }
-                        })
-                        .catch((err) => reject(err));
-                    }
-                  })();
-                })
-              );
-              return obj;
-            });
-            dispatchStateShared({
-              type: 'NO_DATA_FETCH',
-              payload: { path: '' },
-            });
-            dispatchManageProfile({
-              type: 'REPO_INFO_ADDED',
-              payload: {
-                repoInfo: temp.data,
-              },
-            });
-            setIsLoading(false);
-            const languages = Object.entries(Counter(temp.languages ?? []));
-            setLanguageStarsInfo(languages);
-          }
-        });
-        if (!isApiExceeded) {
-          Promise.allSettled(promises)
-            .then((result) => {
-              const temp = result.map((obj: any) => {
-                if (obj.status === 'fulfilled') {
-                  return obj.value.data;
-                }
-              });
-              dispatchManageProfile({
-                type: 'CONTRIBUTORS_ADDED',
-                payload: {
-                  contributors: [...fastFilter((x: any) => !!x, temp)],
-                },
-              });
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-        }
+        // await getUser({
+        //   signal: abortController.signal,
+        //   username: location?.state?.data?.userData?.getUserData?.userName,
+        //   perPage: +readEnvironmentVariable('QUERY_GITHUB_API')!,
+        //   page: 1,
+        //   axiosCancel,
+        // }).then((data) => {
+        //   if (data && data.error_403) {
+        //     isApiExceeded = true;
+        //     setNotification('Sorry, API rate limit exceeded.');
+        //   } else if (data?.dataOne?.length > 0) {
+        //     const temp = data.dataOne.reduce(
+        //       (acc: any, obj: MergedDataProps) => {
+        //         const ja = Object.assign(
+        //           {},
+        //           {
+        //             fullName: obj.full_name,
+        //             description: obj.description,
+        //             stars: obj.stargazers_count,
+        //             forks: obj.forks,
+        //             updatedAt: moment(obj.updated_at).fromNow(),
+        //             language: obj.language ? obj.language : 'No Language',
+        //             topics: obj.topics,
+        //             defaultBranch: obj.default_branch,
+        //             html_url: obj.html_url,
+        //           }
+        //         );
+        //         return {
+        //           ...acc,
+        //           data: acc.data.concat(ja),
+        //           languages: acc.languages.concat(obj.language ? obj.language : 'No Language'),
+        //         };
+        //       },
+        //       { languages: [], data: [] }
+        //     );
+        //     temp.data.forEach((obj: any) => {
+        //       promises.push(
+        //         new Promise<any>((resolve, reject) => {
+        //           (async () => {
+        //             let timeout = 0;
+        //             let breakout = false;
+        //             let i = 0;
+        //             while (
+        //               // @ts-ignore
+        //               (await new Promise((resolve) => setTimeout(() => resolve(i++), timeout * 1000))) < 1000 &&
+        //               !breakout
+        //             ) {
+        //               if (timeout > 0) {
+        //                 timeout = 0; //clear the timeout
+        //               }
+        //               await getTopContributors(obj.fullName)
+        //                 .then((res) => {
+        //                   if (res) {
+        //                     if (res.error_403) {
+        //                       timeout = epochToJsDate(res.rateLimit.reset);
+        //                     } else {
+        //                       breakout = true;
+        //                       resolve(res);
+        //                     }
+        //                   }
+        //                 })
+        //                 .catch((err) => reject(err));
+        //             }
+        //           })();
+        //         })
+        //       );
+        //       return obj;
+        //     });
+        //     dispatchStateShared({
+        //       type: 'NO_DATA_FETCH',
+        //       payload: { path: '' },
+        //     });
+        //     dispatchManageProfile({
+        //       type: 'REPO_INFO_ADDED',
+        //       payload: {
+        //         repoInfo: temp.data,
+        //       },
+        //     });
+        //     setIsLoading(false);
+        //     const languages = Object.entries(Counter(temp.languages ?? []));
+        //     setLanguageStarsInfo(languages);
+        //   }
+        // });
+        // if (!isApiExceeded) {
+        //   Promise.allSettled(promises)
+        //     .then((result) => {
+        //       const temp = result.map((obj: any) => {
+        //         if (obj.status === 'fulfilled') {
+        //           return obj.value.data;
+        //         }
+        //       });
+        //       dispatchManageProfile({
+        //         type: 'CONTRIBUTORS_ADDED',
+        //         payload: {
+        //           contributors: [...fastFilter((x: any) => !!x, temp)],
+        //         },
+        //       });
+        //     })
+        //     .catch((err) => {
+        //       console.log(err);
+        //     });
+        // }
       })().catch((err: any) => {
         console.log(err);
         throw new Error(`Something wrong at ${displayName}`);

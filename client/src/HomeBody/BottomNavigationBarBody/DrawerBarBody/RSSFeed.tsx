@@ -43,7 +43,7 @@ const RSSFeed = () => {
   const [stateShared, dispatch] = useTrackedStateShared();
   const isTokenRSSExist = stateShared.tokenRSS.length > 0;
   const classes = useStyles();
-  const displayName: string | undefined = (RSSFeed as React.ComponentType<any>).displayName;
+  const displayName: string = (RSSFeed as React.ComponentType<any>).displayName || '';
   const tokenRSSAdded = useApolloFactory(displayName!).mutation.tokenRSSAdded;
   const rssFeedAdded = useApolloFactory(displayName!).mutation.rssFeedAdded;
   const [openRSS, setOpenRSS] = useState(false);

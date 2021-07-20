@@ -89,7 +89,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
     }
   });
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickCb });
-  const displayName: string | undefined = (Stargazers as React.ComponentType<any>).displayName;
+  const displayName: string = (Stargazers as React.ComponentType<any>).displayName || '';
   const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
   const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
   const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
