@@ -1,5 +1,5 @@
 import { Redirect, useHistory, useLocation } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedStateRateLimit, useTrackedStateShared } from './selectors/stateContextSelector';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import LoginLayout from './Layout/LoginLayout';
@@ -12,7 +12,9 @@ const Login = () => {
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const history = useHistory();
+  const isMounted = useRef(false);
   useEffect(() => {
+    isMounted.current = true;
     if (location.pathname === '/login') {
       // After requesting Github access by logging using user account's Github
       // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
@@ -37,6 +39,8 @@ const Login = () => {
         requestGithubLogin(`${proxy_url}`, requestData)
           .then((response) => {
             if (response) {
+              localStorage.setItem('token_type', response.token.token_type);
+              localStorage.setItem('access_token', response.token.access_token);
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },
@@ -51,7 +55,7 @@ const Login = () => {
                 type: 'SET_USERNAME',
                 payload: { username: response.data.login },
               });
-              getRateLimitInfo().then((data) => {
+              getRateLimitInfo({}).then((data) => {
                 if (data) {
                   dispatchRateLimit({
                     type: 'RATE_LIMIT_ADDED',
@@ -62,18 +66,18 @@ const Login = () => {
                   dispatchRateLimit({
                     type: 'RATE_LIMIT',
                     payload: {
-                      limit: data.rateLimit.limit,
-                      used: data.rateLimit.used,
-                      reset: data.rateLimit.reset,
+                      limit: data.rate.limit,
+                      used: data.rate.used,
+                      reset: data.rate.reset,
                     },
                   });
 
                   dispatchRateLimit({
                     type: 'RATE_LIMIT_GQL',
                     payload: {
-                      limit: data.rateLimitGQL.limit,
-                      used: data.rateLimitGQL.used,
-                      reset: data.rateLimitGQL.reset,
+                      limit: data.resources.graphql.limit,
+                      used: data.resources.graphql.used,
+                      reset: data.resources.graphql.reset,
                     },
                   });
                   sysend.broadcast('Login', {
@@ -98,6 +102,9 @@ const Login = () => {
           });
       }
     }
+    return () => {
+      isMounted.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
   if (stateShared.isLoggedIn) return <Redirect to={'/'} from={'/login'} />;
@@ -109,7 +116,7 @@ const Login = () => {
             className="login-link"
             href={`https://github.com/login/oauth/authorize?scope=user&client_id=${stateShared.client_id}&redirect_uri=${stateShared.redirect_uri}`}
             onClick={() => {
-              setData({ ...data, errorMessage: '' });
+              isMounted.current && setData({ ...data, errorMessage: '' });
             }}
           >
             <GitHubIcon />

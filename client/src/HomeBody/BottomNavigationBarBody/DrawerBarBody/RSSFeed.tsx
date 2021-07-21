@@ -17,7 +17,7 @@ import { Then } from '../../../util/react-if/Then';
 import { If } from '../../../util/react-if/If';
 import { fastFilter, uniqFast } from '../../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 
@@ -40,6 +40,7 @@ const useStyles = makeStyles<Theme>(() => ({
 }));
 
 const RSSFeed = () => {
+  const isMounted = useRef<boolean>(true);
   const [stateShared, dispatch] = useTrackedStateShared();
   const isTokenRSSExist = stateShared.tokenRSS.length > 0;
   const classes = useStyles();
@@ -109,7 +110,7 @@ const RSSFeed = () => {
               });
               HTML.push(a);
             });
-            if (!isTokenRSSExist) {
+            if (!isTokenRSSExist && isMounted.current) {
               setLoading(false);
               setToken('');
               tokenRSSAdded({
@@ -131,7 +132,7 @@ const RSSFeed = () => {
                 },
               }).then(noop);
             }
-            if (!openRSS) {
+            if (!openRSS && isMounted.current) {
               unseenFeeds.current = [];
               rssFeedAdded({
                 getRSSFeed: {
@@ -155,7 +156,7 @@ const RSSFeed = () => {
                   resolve({ status: 400 });
                 });
             } else {
-              if (isTokenRSSExist) {
+              if (isTokenRSSExist && isMounted.current) {
                 const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
                 rssFeedAdded({
                   getRSSFeed: {
@@ -179,9 +180,11 @@ const RSSFeed = () => {
               }
             }
           } catch (error) {
-            console.log(error);
-            setLoading(false);
-            setNotification('Invalid RSS URL. Please try again!');
+            if (isMounted.current) {
+              console.log(error);
+              setLoading(false);
+              setNotification('Invalid RSS URL. Please try again!');
+            }
             resolve({ status: 400 });
           }
         })
@@ -235,10 +238,8 @@ const RSSFeed = () => {
     }
   };
 
-  const location = useLocation();
   useEffect(() => {
-    let isFinished = false;
-    if ((isTokenRSSExist || token !== '') && location.pathname === '/' && !isFinished) {
+    if ((isTokenRSSExist || token !== '') && isMounted.current) {
       const tokenAdd = isTokenRSSExist ? stateShared.tokenRSS : token;
       if (token !== '') {
         setLoading(true);
@@ -247,10 +248,11 @@ const RSSFeed = () => {
         unseenFeeds.current = [];
       }
       updaterWrapper(tokenAdd, re);
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isMounted.current = false;
+      stop();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.tokenRSS, token, openRSS]);
 

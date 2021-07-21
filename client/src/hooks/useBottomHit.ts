@@ -1,6 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { DebounceOptions, useInterval } from './useInterval';
-import { debounce_lodash } from '../util';
+import { useCallback } from 'react';
+import { useInterval } from './useInterval';
 
 function useBottomHit<T extends HTMLDivElement>(
   containerRef: any,
@@ -8,14 +7,8 @@ function useBottomHit<T extends HTMLDivElement>(
   loading: boolean,
   debounce = 200,
   checkInterval = 500,
-  threshold = 100,
-  debounceOptions: DebounceOptions = { leading: true }
+  threshold = 100
 ) {
-  const debouncedOnBottom = useMemo(
-    () => createCallback(debounce, onBottom, debounceOptions),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [debounce, onBottom]
-  );
   const handleOnScroll = useCallback(() => {
     if (containerRef?.current !== undefined && !loading) {
       // use container to see the scroll hit bottom
@@ -25,7 +18,7 @@ function useBottomHit<T extends HTMLDivElement>(
       const validOffset = bottomOffset < threshold;
 
       if (validOffset) {
-        debouncedOnBottom();
+        onBottom();
       }
     } else if (containerRef?.current === undefined && !loading) {
       // use window for listening to scroll
@@ -33,7 +26,7 @@ function useBottomHit<T extends HTMLDivElement>(
       const offset = doc.scrollTop + window.innerHeight;
       const height = doc.offsetHeight;
       if (offset >= height - threshold) {
-        debouncedOnBottom();
+        onBottom();
       }
     }
     // re-declare useCallback when get new loading value
@@ -47,13 +40,5 @@ function useBottomHit<T extends HTMLDivElement>(
     !loading ? checkInterval : 0
   );
 }
-
-const createCallback = (debounce: number, handleOnScroll: () => void, options: DebounceOptions): (() => void) => {
-  if (debounce) {
-    return debounce_lodash(handleOnScroll, debounce, options);
-  } else {
-    return handleOnScroll;
-  }
-};
 
 export default useBottomHit;

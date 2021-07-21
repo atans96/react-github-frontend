@@ -125,16 +125,18 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         <h4 style={{ textAlign: 'center' }}>{data.description}</h4>
       </div>
       <Stargazers data={stargazersMemoizedGithubData()} />
-      <div>
-        <ul
-          className={'language'}
-          style={{ color: stateShared.githubLanguages.get(data?.language?.replace(/\+\+|#|\s/, '-'))?.color }}
-        >
-          <li className={'language-list'}>
-            <h6 style={{ color: 'black', width: 'max-content' }}>{data.language}</h6>
-          </li>
-        </ul>
-      </div>
+      <If condition={data.language !== null}>
+        <Then>
+          <ul
+            className={'language'}
+            style={{ color: stateShared.githubLanguages.get(data?.language?.replace(/\+\+|#|\s/, '-'))?.color }}
+          >
+            <li className={'language-list'}>
+              <h6 style={{ color: 'black', width: 'max-content' }}>{data.language}</h6>
+            </li>
+          </ul>
+        </Then>
+      </If>
       <If condition={!!data.topics}>
         <Then>
           <TopicsCard data={topicsCardMemoizedData()} getRootProps={getRootProps} />

@@ -6,7 +6,6 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 import ChevronLeftIcon from '@material-ui/icons/ChevronLeft';
 import { useDraggable } from '../../hooks/useDraggable';
 import { DraggableCore } from 'react-draggable';
-import { useLocation } from 'react-router-dom';
 import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useStableCallback } from '../../util';
 import Loadable from 'react-loadable';
@@ -73,25 +72,27 @@ const DrawerBar = React.memo(() => {
     e.preventDefault();
     setOpen((prev) => !prev);
   });
-  const location = useLocation();
   useEffect(() => {
-    if (location.pathname === '/') {
+    let isFinished = false;
+    if (!isFinished) {
       dispatch({
         type: 'SET_DRAWER_WIDTH',
         payload: {
           drawerWidth: open ? 200 : 0,
         },
       });
-      return () => {
-        dispatch({
-          type: 'SET_DRAWER_WIDTH',
-          payload: {
-            drawerWidth: 0,
-          },
-        });
-      };
     }
+    return () => {
+      isFinished = true;
+      dispatch({
+        type: 'SET_DRAWER_WIDTH',
+        payload: {
+          drawerWidth: 0,
+        },
+      });
+    };
   }, [open]);
+
   return (
     <React.Fragment>
       <div style={{ bottom: '-5px', left: '-10px', zIndex: 9999, position: 'fixed' }}>

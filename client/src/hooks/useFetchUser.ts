@@ -1,4 +1,4 @@
-import { getOrg, getSearchTopics, getUser } from '../services';
+import { getSearchTopics, getUser } from '../services';
 import { IDataOne } from '../typing/interface';
 import { ActionResolvedPromise, MergedDataProps, Nullable } from '../typing/type';
 import { noop } from '../util/util';
@@ -6,9 +6,7 @@ import { useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { Counter, useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
-import Mutex from '../util/mutex/mutex';
 import uniqBy from 'lodash.uniqby';
-const mutex = new Mutex();
 
 interface useFetchUser {
   component: string;
@@ -30,6 +28,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   // useState is used when the HTML depends on it directly to render something
   const [isLoading, setLoading] = useState(false);
   const [notification, setNotification] = useState('');
+  const notificationRef = useRef<string>(notification);
   const [clickedGQLTopic, setGQLTopic] = useState({
     variables: '',
   } as any);
@@ -66,12 +65,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         .then((result) => {
           if (result) {
             paginationInfo += result.paginationInfoData;
-            dispatch({
-              type: 'LAST_PAGE',
-              payload: {
-                lastPage: paginationInfo,
-              },
-            });
             actionController(result);
           }
         })
@@ -87,34 +80,9 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         });
     }
   });
-  const isDataExists = (data: Nullable<IDataOne>) => {
-    if (data === undefined || data?.dataOne === undefined) {
-      return [[], []];
-    }
-    const oldID: number[] = [];
-    const newID: number[] = [];
-    state.mergedData.map((obj) => {
-      return oldID.push(obj.id);
-    });
-    data.dataOne.map((obj: MergedDataProps) => {
-      return newID.push(obj.id);
-    });
-
-    return newID.length > 0 && !([...new Set([...oldID, ...newID])].length === oldID.length);
-  };
-  const isFunction = (value: () => void) =>
-    value && (Object.prototype.toString.call(value) === '[object Function]' || 'function' === typeof value || true)
-      ? value()
-      : new Error('Not valid function!');
-
-  const actionController = (res: IDataOne, callback?: Promise<any> | any) => {
+  const actionController = (res: IDataOne) => {
     // compare new with old data, if they differ, that means it still has data to fetch
-    const promiseOrNot = () => {
-      callback() instanceof Promise && res !== undefined && (res.error_404 || res.error_403)
-        ? callback()
-        : isFunction(callback);
-    };
-    if (isDataExists(res)) {
+    if (res.dataOne.length > 0) {
       const ja = Counter(uniqBy([...res.dataOne], 'id'), 'language');
       const repoStat = Object.entries(ja)
         .slice(0, 5)
@@ -136,17 +104,24 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         displayName: component,
         data: res,
       });
-    } else if (res !== undefined && (res.error_404 || res.error_403)) {
-      callback
-        ? promiseOrNot()
-        : actionResolvePromise({
-            action: ActionResolvedPromise.error,
-            setLoading,
-            setNotification,
-            isFetchFinish: isFetchFinish.current,
-            displayName: component,
-            data: res,
-          });
+    } else if (res?.error_404 || res?.error_403 || res?.error_message) {
+      actionResolvePromise({
+        action: ActionResolvedPromise.error,
+        setLoading,
+        setNotification,
+        isFetchFinish: isFetchFinish.current,
+        displayName: component,
+        data: res,
+      });
+    } else if (res?.end) {
+      isFetchFinish.current = actionResolvePromise({
+        action: ActionResolvedPromise.end,
+        setLoading,
+        setNotification,
+        isFetchFinish: isFetchFinish.current,
+        displayName: component,
+        data: res,
+      }).isFetchFinish;
     } else {
       isFetchFinish.current = actionResolvePromise({
         action: ActionResolvedPromise.noData,
@@ -157,26 +132,33 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         data: res,
       }).isFetchFinish;
     }
-    return true;
+    return false;
   };
-  function clear(time: number) {
-    clearTimeout(time);
-  }
   const fetchUser = () => {
-    setLoading(true);
-    isFetchFinish.current = false;
-    setNotification('');
-    let userNameTransformed: string[];
-    if (!Array.isArray(stateShared.queryUsername)) {
-      userNameTransformed = [stateShared.queryUsername];
-    } else {
-      userNameTransformed = stateShared.queryUsername;
-    }
-    const mainIter = async ({ value, actionController, cb }: { value: any; actionController: any; cb: any }) => {
-      if (value) {
-        let dataOne: { dataOne: MergedDataProps[] } = { dataOne: [] };
+    if (!isFetchFinish.current) {
+      setLoading(true);
+      setNotification('');
+      let userNameTransformed: string[];
+      if (!Array.isArray(stateShared.queryUsername)) {
+        userNameTransformed = [stateShared.queryUsername];
+      } else {
+        userNameTransformed = stateShared.queryUsername;
+      }
+      const mainIter = async ({ value, actionController }: { value: any; actionController: any }) => {
+        let dataOne: {
+          dataOne: MergedDataProps[];
+          error_404: boolean;
+          error_403: boolean;
+          end: boolean;
+          error_message: string | undefined;
+        } = {
+          dataOne: [],
+          error_404: false,
+          error_403: false,
+          end: false,
+          error_message: undefined,
+        };
         let chunk = '';
-        let interval: any;
         for await (const data of value()) {
           let array1;
           chunk += new TextDecoder().decode(data);
@@ -185,6 +167,15 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
               const data = JSON.parse(array1![0]);
               if (data.id && data.full_name && data.default_branch) {
                 dataOne.dataOne.push(data);
+              } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
+                dataOne.error_404 = true;
+                return actionController(dataOne);
+              } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
+                dataOne.error_403 = true;
+                return actionController(dataOne);
+              } else {
+                dataOne.error_message = data.message;
+                return actionController(dataOne);
               }
             } catch (e) {
               break;
@@ -193,91 +184,65 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           //When the regex is global, if you call a method on the same regex object,
           // it will start from the index past the end of the last match. so we need to reset it to start the new loop
           regexJSON.lastIndex = 0;
-          if (!interval) {
-            actionController(dataOne, cb);
+          if (dataOne.dataOne.length > 0) return actionController(dataOne);
+          if (chunk === '[\n\n]\n') {
+            dataOne.end = true;
+            return actionController(dataOne);
           }
-          const release = await mutex.acquire();
-          interval = setTimeout(() => {
-            if (dataOne.dataOne.length > 0) actionController(dataOne, cb);
-            release();
-            clear(interval);
-          }, 3000);
         }
-      }
-    };
-    userNameTransformed.forEach((name) => {
-      const observer = getUser({
-        signal: abortController.signal,
-        username: name,
-        perPage: stateShared.perPage,
-        page: 1,
-      });
-      observer.subscribe({
-        async next(value: { iterator: any; paginationInfoData: any }) {
-          dispatch({
-            type: 'LAST_PAGE',
-            payload: {
-              lastPage: state.lastPage + value.paginationInfoData.last,
+        return state.mergedData.length === 0 && dataOne.dataOne.length === 0;
+      };
+      let fetcher = (name: string, org: boolean) =>
+        getUser({
+          signal: abortController.signal,
+          username: name,
+          perPage: stateShared.perPage,
+          page: state.page,
+          org,
+        });
+      let observer: undefined | any;
+      userNameTransformed.forEach((name) => {
+        const execute = async () => {
+          observer = !observer ? fetcher(name, false) : observer;
+          observer.subscribe({
+            async next(value: { iterator: any }) {
+              if (value.iterator) {
+                try {
+                  const shouldFetch = await mainIter({ value: value.iterator, actionController });
+                  if (shouldFetch) {
+                    observer = fetcher(name, true);
+                    execute().then(noop);
+                  }
+                } catch (e) {
+                  throw new Error(e.message);
+                }
+              } else {
+                throw new Error('no value iterator');
+              }
             },
+            error(err: any) {
+              actionResolvePromise({
+                action: ActionResolvedPromise.error,
+                setLoading,
+                setNotification,
+                isFetchFinish: isFetchFinish.current,
+                displayName: component,
+                err,
+              });
+            },
+            complete() {},
           });
-          if (value.iterator) {
-            const callback = () =>
-              getOrg({
-                signal: abortController.signal,
-                org: name,
-                perPage: stateShared.perPage,
-                page: 1,
-                axiosCancel: axiosCancel.current,
-              })
-                .then((data: IDataOne) => {
-                  dispatch({
-                    type: 'LAST_PAGE',
-                    payload: {
-                      lastPage: state.lastPage + value.paginationInfoData.last,
-                    },
-                  });
-                  actionController(data);
-                })
-                .catch((error) => {
-                  actionResolvePromise({
-                    action: ActionResolvedPromise.error,
-                    setLoading,
-                    setNotification,
-                    isFetchFinish: isFetchFinish.current,
-                    displayName: component,
-                    error,
-                  });
-                });
-
-            try {
-              mainIter({ value: value.iterator, cb: callback, actionController });
-            } catch (e) {
-              throw new Error(e.message);
-            }
-          }
-        },
-        error(err: any) {
-          actionResolvePromise({
-            action: ActionResolvedPromise.error,
-            setLoading,
-            setNotification,
-            isFetchFinish: isFetchFinish.current,
-            displayName: component,
-            err,
-          });
-        },
-        complete() {
-          console.log('Finished');
-        },
+        };
+        execute().then(noop);
       });
-    });
+    }
   };
-  const fetchUserMore = () => {
+  const fetchTopics = () => {
     // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
     // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
     // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
     // to prevent that, we need to reset the Home.js is unmounted.
-    if (!isFetchFinish.current && state.page > 1) {
+    if (!isFetchFinish.current) {
       // it's possible the user click Details.js and go back to Home.js again and find out that
       // that the previous page.current is already 2, but when he/she navigates aways from Home.js, it go back to page.current=1 again
       // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
@@ -306,7 +271,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     }
   };
   return {
-    fetchUserMore,
+    fetchTopics,
     fetchUser,
     isLoading,
     notification,

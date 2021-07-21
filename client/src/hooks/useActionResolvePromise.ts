@@ -120,7 +120,19 @@ const useActionResolvePromise = () => {
         }
         if (action === 'noData') {
           isFetchFinish = true;
-          setNotification(`Sorry, no more data found for ${stateShared.queryUsername}`);
+          if (stateShared.queryUsername.length > 2) {
+            setNotification('Sorry, no more data found');
+          } else {
+            setNotification(`Sorry, no more data found for: "${stateShared.queryUsername[0]}"`);
+          }
+        }
+        if (action === 'end') {
+          isFetchFinish = true;
+          if (stateShared.queryUsername.length > 2) {
+            setNotification("That's all the data we get");
+          } else {
+            setNotification(`That's all the data we get for: "${stateShared.queryUsername[0]}"`);
+          }
         }
         if (action === 'error' && error) {
           throw new Error(`Something wrong at ${displayName} ${error}`);
@@ -131,7 +143,8 @@ const useActionResolvePromise = () => {
           isFetchFinish = true;
           setNotification('Sorry, API rate limit exceeded.');
         } else if (data && data.error_message) {
-          throw new Error(`Something wrong at ${displayName} ${data.error_message}`);
+          isFetchFinish = true;
+          setNotification(`${data.error_message}`);
         }
       }
       return { isFetchFinish };

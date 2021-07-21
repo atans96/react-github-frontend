@@ -3,7 +3,7 @@ import { useTrackedState, useTrackedStateShared } from './selectors/stateContext
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { MergedDataProps, SeenProps } from './typing/type';
 import { noop } from './util/util';
-import { fastFilter, pMap, useStableCallback } from './util';
+import { fastFilter, useStableCallback } from './util';
 import { crawlerPython, getRepoImages } from './services';
 import useBottomHit from './hooks/useBottomHit';
 import { useEventHandlerComposer } from './hooks/hooks';
@@ -47,7 +47,7 @@ const Home = React.memo(() => {
   const abortController = new AbortController();
   const displayName: string = (Home as React.ComponentType<any>).displayName || '';
   const {
-    fetchUserMore,
+    fetchTopics,
     fetchUser,
     isLoading,
     notification,
@@ -86,33 +86,33 @@ const Home = React.memo(() => {
       dispatch({
         type: 'ADVANCE_PAGE',
       });
-      const result = state.mergedData.reduce((acc, obj: MergedDataProps) => {
-        const temp = Object.assign(
-          {},
-          {
-            stargazers_count: Number(obj.stargazers_count),
-            full_name: obj.full_name,
-            default_branch: obj.default_branch,
-            owner: {
-              login: obj.owner.login,
-              avatar_url: obj.owner.avatar_url,
-              html_url: obj.owner.html_url,
-            },
-            description: obj.description,
-            language: obj.language,
-            topics: obj.topics,
-            html_url: obj.html_url,
-            id: obj.id,
-            imagesData: state.imagesData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
-            name: obj.name,
-            is_queried: false,
-          }
-        );
-        acc.push(temp);
-        return acc;
-      }, [] as SeenProps[]);
-      if (result.length > 0 && state.imagesData.length > 0 && stateShared.isLoggedIn) {
-        seenAdded(result).then(noop);
+      if (state.imagesData.length > 0 && stateShared.isLoggedIn) {
+        const result = state.mergedData.reduce((acc, obj: MergedDataProps) => {
+          const temp = Object.assign(
+            {},
+            {
+              stargazers_count: Number(obj.stargazers_count),
+              full_name: obj.full_name,
+              default_branch: obj.default_branch,
+              owner: {
+                login: obj.owner.login,
+                avatar_url: obj.owner.avatar_url,
+                html_url: obj.owner.html_url,
+              },
+              description: obj.description,
+              language: obj.language,
+              topics: obj.topics,
+              html_url: obj.html_url,
+              id: obj.id,
+              imagesData: state.imagesData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
+              name: obj.name,
+              is_queried: false,
+            }
+          );
+          acc.push(temp);
+          return acc;
+        }, [] as SeenProps[]);
+        if (result.length > 0) seenAdded(result).then(noop);
       }
     }
   });
@@ -149,10 +149,10 @@ const Home = React.memo(() => {
       // otherwise, don't re-fetch. in this way, stateShared.queryUsername and state.mergedData are still preserved
       dataAlreadyFetch.current = 0;
       fetchUser();
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
     // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.queryUsername] so stateShared.queryUsername not change so not execute
     // so you need another dependency of stateShared.perPage
@@ -160,52 +160,50 @@ const Home = React.memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel.current]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished && state.page > 1) {
       dataAlreadyFetch.current = 0;
       if (stateShared.queryUsername.length > 0) {
-        fetchUserMore();
+        fetchUser();
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
-        fetchUserMore();
+        fetchTopics();
       }
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.page, axiosCancel.current, abortController.signal]);
 
   useEffect(() => {
-    if (location.pathname !== '/') {
-      //TODO: test this
+    return () => {
+      console.log('abort');
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
       axiosCancel.current = true;
-    } else {
-      axiosCancel.current = false; // back to default when in '/' path
-    }
-  }, [location, stateShared.queryUsername]);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     let isFinished = false;
-    if (isTokenRSSExist && location.pathname === '/') {
+    if (!isFinished && isTokenRSSExist && location.pathname === '/') {
       dispatchShared({
         type: 'TOKEN_RSS_ADDED',
         payload: {
           tokenRSS: userData.getUserData.tokenRSS,
         },
       });
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTokenRSSExist]);
 
   useEffect(() => {
     let isFinished = false;
     setNotification('');
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
+    if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
       const ids = state.undisplayMergedData.reduce((acc, obj) => {
         acc.push(obj.id);
         return acc;
@@ -224,15 +222,16 @@ const Home = React.memo(() => {
           data: temp,
         },
       });
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filterBySeen]);
+
   useEffect(() => {
     let isFinished = false;
-    if (isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
+    if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
       dispatch({
         type: 'UNDISPLAY_MERGED_DATA',
         payload: {
@@ -264,16 +263,17 @@ const Home = React.memo(() => {
           data: seenData.getSeen.seenCards,
         },
       });
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenDataLoading, seenDataError, seenData, location, state.filterBySeen]);
+
   useDeepCompareEffect(
     () => {
+      let isFinished = false;
       (async () => {
-        let isFinished = false;
         if (location.pathname === '/' && !isFinished) {
           const release = await mutex.acquire(); //if no MUTEX, there's no guarantee fetch will be executed too much
           // so we need to use mutex so any pending execution of asnyc here will be put in Event Loop and after the lock released will resume
@@ -377,11 +377,11 @@ const Home = React.memo(() => {
           //   // 3 concurrent request at at time (batch mode) but if there is two more queue items, it won't go immediately to fill the empty slot so need to use pMap
           //   await Promise.all(promises.splice(0, 3).map((f) => f.then(noop)));
           // }
-          return () => {
-            isFinished = true;
-          };
         }
       })();
+      return () => {
+        isFinished = true;
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.mergedData.length, axiosCancel.current, abortController.signal]
@@ -398,17 +398,23 @@ const Home = React.memo(() => {
   };
   useScrollSaver(location.pathname, '/');
   const [renderLoading, setRenderLoading] = useState(false);
+  function clear(timeout: any) {
+    return clearTimeout(timeout);
+  }
+  const timeoutRef = useRef<any>();
   useEffect(() => {
     if (isLoading) {
-      const timeout = setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         if (isLoading) {
           setRenderLoading(isLoading);
+        } else {
+          clear(timeoutRef.current);
         }
       }, 1000);
-      return () => {
-        clearTimeout(timeout);
-      };
     }
+    return () => {
+      clearTimeout(timeoutRef.current);
+    };
   }, [isLoading]);
   return (
     <React.Fragment>

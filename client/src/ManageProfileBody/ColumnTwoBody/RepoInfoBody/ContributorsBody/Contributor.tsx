@@ -23,10 +23,6 @@ const Contributor: React.FC<Props> = ({ obj }) => {
       type: 'MERGED_DATA_ADDED',
       payload: { data: [] },
     });
-    dispatch({
-      type: 'LAST_PAGE',
-      payload: { lastPage: 0 },
-    });
     history.push('/');
   };
   return (

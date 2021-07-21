@@ -33,6 +33,7 @@ export enum ActionResolvedPromise {
   noData = 'noData',
   error = 'error',
   nonAppend = 'nonAppend',
+  end = 'end',
 }
 export type RepoInfoSuggested = {
   from: string;
