@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MergedDataProps } from '../../typing/type';
 import { useApolloClient } from '@apollo/client';
 import { useClickOutside, useEventHandlerComposer } from '../../hooks/hooks';
@@ -224,7 +224,6 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
     }
   };
   const [clicked, setClicked] = useState(false);
-
   return (
     <React.Fragment>
       <div className={`stargazer-card-container`} ref={starCountsContainerRef}>

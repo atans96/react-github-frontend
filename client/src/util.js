@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef } from 'react';
 // import deepKeys from 'deep-keys';
 // import imagesLoaded from 'imagesloaded';
 export const detectBrowser = () => {
@@ -176,8 +176,7 @@ export function isPropagationStopped(event) {
 export const useStableCallback = (callback) => {
   const onChangeInner = useRef();
   onChangeInner.current = callback;
-  const stable = useCallback((...args) => onChangeInner.current(...args), []);
-  return stable;
+  return useCallback((...args) => onChangeInner.current(...args), []);
 };
 export function composeParamsHandler(fn, params, firstCallback, lastCallback) {
   if (params && firstCallback && !lastCallback) {

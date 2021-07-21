@@ -84,58 +84,60 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const handleSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     event.stopPropagation();
-    const usernameList = stateStargazers.stargazersQueueData.reduce((acc: string[], stargazer: StargazerProps) => {
-      acc.push(stargazer.login);
-      return acc;
-    }, []);
-    dispatchShared({
-      type: 'SET_SHOULD_RENDER',
-      payload: {
-        shouldRender: ShouldRender.Home,
-      },
-    });
-    dispatchShared({
-      type: 'QUERY_USERNAME',
-      payload: {
-        queryUsername: [...usernameList, username.current.getState()].filter((e) => !!e),
-      },
-    });
-    dispatchShared({
-      type: 'SET_SHOULD_RENDER',
-      payload: {
-        shouldRender: ShouldRender.Home,
-      },
-    });
-    dispatch({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_QUEUE',
-    });
-    setVisible(false);
-    setVisibleSearchesHistory(false);
-    if (stateShared.isLoggedIn) {
-      [...usernameList, username.current.getState()]
-        .filter((e) => !!e)
-        .forEach((char) => {
-          searchesAdded({
-            getSearches: {
-              searches: [
-                Object.assign(
-                  {},
-                  {
-                    search: char,
-                    updatedAt: new Date(),
-                    count: 1,
-                  }
-                ),
-              ],
-            },
-          }).then(noop);
-        });
+    if (!stateShared.queryUsername.includes(username.current.getState())) {
+      const usernameList = stateStargazers.stargazersQueueData.reduce((acc: string[], stargazer: StargazerProps) => {
+        acc.push(stargazer.login);
+        return acc;
+      }, []);
+      dispatchShared({
+        type: 'SET_SHOULD_RENDER',
+        payload: {
+          shouldRender: ShouldRender.Home,
+        },
+      });
+      dispatchShared({
+        type: 'QUERY_USERNAME',
+        payload: {
+          queryUsername: [...usernameList, username.current.getState()].filter((e) => !!e),
+        },
+      });
+      dispatchShared({
+        type: 'SET_SHOULD_RENDER',
+        payload: {
+          shouldRender: ShouldRender.Home,
+        },
+      });
+      dispatch({
+        type: 'REMOVE_ALL',
+      });
+      dispatchStargazers({
+        type: 'REMOVE_ALL',
+      });
+      dispatchStargazers({
+        type: 'REMOVE_QUEUE',
+      });
+      setVisible(false);
+      setVisibleSearchesHistory(false);
+      if (stateShared.isLoggedIn) {
+        [...usernameList, username.current.getState()]
+          .filter((e) => !!e)
+          .forEach((char) => {
+            searchesAdded({
+              getSearches: {
+                searches: [
+                  Object.assign(
+                    {},
+                    {
+                      search: char,
+                      updatedAt: new Date(),
+                      count: 1,
+                    }
+                  ),
+                ],
+              },
+            }).then(noop);
+          });
+      }
     }
     username.current.clearState();
   };

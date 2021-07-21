@@ -50,12 +50,17 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             isLoading: true,
           },
         });
-        getSearchUsers(username.toString().trim()).then((data) => {
-          if (data) {
+        getSearchUsers({ query: username.toString().trim() }).then((data) => {
+          const getUsers = data.items.reduce((acc: any, item: any) => {
+            const result = Object.assign({}, { [item.login]: item.avatar_url });
+            acc.push(result);
+            return acc;
+          }, []);
+          if (getUsers) {
             dispatch({
               type: 'SEARCH_USERS',
               payload: {
-                data: data.users,
+                data: getUsers,
               },
             });
             dispatch({

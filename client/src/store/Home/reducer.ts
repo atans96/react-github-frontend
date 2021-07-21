@@ -4,7 +4,6 @@ import uniqBy from 'lodash.uniqby';
 import { CardEnhancement } from '../../typing/type';
 
 export type Action =
-  | 'LAST_PAGE'
   | 'LOADING'
   | 'REPO_STAT'
   | 'REMOVE_ALL'
@@ -41,7 +40,6 @@ export const initialState: IState = {
   visible: false,
   isLoading: false,
   page: 1,
-  lastPage: 0,
 };
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
@@ -123,15 +121,8 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         filteredMergedData: [],
         filteredTopics: [],
         page: 1,
-        lastPage: 0,
         visible: false,
         filterBySeen: true,
-      };
-    }
-    case 'LAST_PAGE': {
-      return {
-        ...state,
-        lastPage: action.payload.lastPage,
       };
     }
     case 'LOADING': {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './RateLimit.css';
 import clsx from 'clsx';
 import { useLocation } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { epochToJsDate } from '../../util';
 import { getRateLimitInfo } from '../../services';
 
 const RateLimit = () => {
+  const abortController = new AbortController();
   const [state] = useTrackedState();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [refetch, setRefetch] = useState(true);
@@ -16,24 +17,33 @@ const RateLimit = () => {
   const [stateRateLimit] = useTrackedStateRateLimit();
   const [resetTime, setResetTime] = useState<string>('');
   const location = useLocation();
+
+  useEffect(() => {
+    return () => {
+      console.log('abort');
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, [location.pathname]);
+  const intervalRef = useRef<any>();
   useEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/') {
-      const interval = setInterval(() => {
+    if (!isFinished && location.pathname === '/') {
+      intervalRef.current = setInterval(() => {
         setResetTime(epochToJsDate(stateRateLimit.rateLimit.reset));
       }, 1000);
       if (resetTime === '00 second') {
         // prevent the interval to be changed further after hit 00 seconds
-        clearInterval(interval);
+        clearInterval(intervalRef.current);
         setRefetch(true); // setState from parent here so that it will refetch the rate_limit_info again
         setResetTime(''); // setState here to set back the resetTime from '00 second' to '' to be cleared
         // otherwise after setRefetch(true), the condition here won't get hit
       }
-      return () => {
-        isFinished = true;
-        clearInterval(interval);
-      };
     }
+    return () => {
+      isFinished = true;
+      clearInterval(intervalRef.current);
+    };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateRateLimit.rateLimit.reset, resetTime]);
   useEffect(
@@ -48,7 +58,7 @@ const RateLimit = () => {
             rateLimitAnimationAdded: false,
           },
         });
-        getRateLimitInfo().then((data) => {
+        getRateLimitInfo({ signal: abortController.signal }).then((data) => {
           if (data) {
             dispatchRateLimit({
               type: 'RATE_LIMIT_ADDED',
@@ -59,27 +69,27 @@ const RateLimit = () => {
             dispatchRateLimit({
               type: 'RATE_LIMIT',
               payload: {
-                limit: data.rateLimit.limit,
-                used: data.rateLimit.used,
-                reset: data.rateLimit.reset,
+                limit: data.rate.limit,
+                used: data.rate.used,
+                reset: data.rate.reset,
               },
             });
 
             dispatchRateLimit({
               type: 'RATE_LIMIT_GQL',
               payload: {
-                limit: data.rateLimitGQL.limit,
-                used: data.rateLimitGQL.used,
-                reset: data.rateLimitGQL.reset,
+                limit: data.resources.graphql.limit,
+                used: data.resources.graphql.used,
+                reset: data.resources.graphql.reset,
               },
             });
           }
           setRefetch(false); // turn back to default after setting to true from RateLimit
         });
-        return () => {
-          isFinished = true;
-        };
       }
+      return () => {
+        isFinished = true;
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [refetch, state.mergedData.length, state.searchUsers.length, userDataError, userDataLoading, userData]

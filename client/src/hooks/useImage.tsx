@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import imagePromiseFactory from '../util/imagePromiseFactory';
 import { Nullable } from '../typing/type';
 import { fastFilter } from '../util';
@@ -49,6 +49,7 @@ export default function useImage({
   height: number | undefined;
 } {
   const [, setIsLoading] = useState(true);
+  const isMounted = useRef<boolean>(true);
   const sourceList = removeBlankArrayElements(stringToArray(srcList));
   const sourceKey = sourceList.join('');
   // persist cache for each render
@@ -67,15 +68,21 @@ export default function useImage({
     // when not using suspense, update state to force a rerender
     .then((data: any) => {
       cache[sourceKey] = { ...cache[sourceKey], cache: 'resolved', data };
-      if (!useSuspense) setIsLoading(false);
+      if (!useSuspense && isMounted.current) setIsLoading(false);
     })
 
     // if no source was found, or if another error occured, update cache
     // when not using suspense, update state to force a rerender
     .catch((error: any) => {
       cache[sourceKey] = { ...cache[sourceKey], cache: 'rejected', error };
-      if (!useSuspense) setIsLoading(false);
+      if (!useSuspense && isMounted.current) setIsLoading(false);
     });
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   if (cache[sourceKey].cache === 'resolved') {
     // const imageData = getImageData(cache[sourceKey].data.image);

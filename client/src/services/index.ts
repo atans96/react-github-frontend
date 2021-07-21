@@ -1,24 +1,7 @@
-import { readEnvironmentVariable } from '../util';
-import { IDataOne, SearchUser } from '../typing/interface';
+import { detectBrowser, readEnvironmentVariable } from '../util';
+import { IDataOne } from '../typing/interface';
 import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { Observable } from '../utilities/observables/Observable';
-function getPaginationInfo(linksHeader = '') {
-  const links = linksHeader.split(/\s*,\s*/); // splits and strips the urls
-  return links.reduce(function (parsed_data: string[], link: any) {
-    parsed_data[link.match(/rel="(.*?)"/)[1]] = link.match(/<(.*)>/)[1].match(/page=(.*?)\&/)[1];
-    return parsed_data;
-  }, {} as any);
-}
-function getNextURL(linksHeader = '') {
-  const links = linksHeader.split(/\s*,\s*/); // splits and strips the urls
-  return links.reduce(function (nextUrl: string, link) {
-    if (link.search(/rel="next"/) !== -1) {
-      return (link.match(/<(.*)>/) ?? [])[1];
-    }
-
-    return nextUrl;
-  }, '');
-}
 export const getAllGraphQLNavBar = async (username: string) => {
   try {
     const response = await fetch(
@@ -141,131 +124,102 @@ export const removeToken = async () => {
   }
 };
 let multiplier = 0;
-let headers = {};
-let last: any;
+let lastUrls: any = {};
 export const getUser = ({
   signal,
   username,
   perPage,
   page,
+  org = false,
   raw = false,
   AcceptHeader = 'v3',
+  url = undefined,
 }: {
   signal: any | undefined;
   username: string;
   perPage: number;
   page: number;
+  org?: boolean;
   raw?: boolean;
   AcceptHeader?: string;
+  url?: string;
 }) => {
   return new Observable((observer) => {
-    last = last || '';
-    fetch(`https://raw.githubusercontent.com/wa1618i/te/master/test.json`, {
-      method: 'GET',
-      signal,
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/37.0.2062.94 Chrome/37.0.2062.94 Safari/537.36',
-      },
-    })
-      .then((res: any) => {
-        try {
-          const reader = res!.body!.getReader();
-          if (res.headers.link) {
-            if ('last' in getPaginationInfo(res.headers.link)) {
-              headers = getPaginationInfo(res.headers.link);
-            } else {
-              headers = {
-                last: last - 1,
-              };
-            }
-            if (perPage > 100) {
-              multiplier += 1;
-              const stillHasNextPage = perPage - multiplier * 100 > 0;
-              const nextUrl = getNextURL(res.headers.link)
-                ?.match(/([&\?]page=[0-9]*)/g)
-                ?.shift()
-                ?.split('=')
-                .pop();
-              if (nextUrl) {
-                perPage = Number(nextUrl);
-              }
-              if (stillHasNextPage && nextUrl !== undefined) {
-                observer.next({
-                  iterator: async function* () {
-                    while (true) {
-                      const { done, value } = await reader.read();
-                      if (done) {
-                        break;
-                      }
-                      yield value; //pause the while loop until the caller below continue to call iterator again
-                    }
-                  },
-                  paginationInfoData: headers,
-                });
-                return getUser({ signal, username, perPage, page, raw, AcceptHeader });
-              }
-            }
-          } else {
-            headers = {
-              next: 0,
-              last: 1,
-            };
-          }
-          observer.next({
-            iterator: async function* () {
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                  break;
-                }
-                yield value; //pause the while loop until the caller below continue to call iterator again
-              }
-            },
-            paginationInfoData: headers,
-          });
-          observer.complete();
-        } catch (e) {
-          observer.error(e);
-          observer.complete();
-        }
-      })
-      .catch((e) => {
-        observer.error(e);
-        observer.complete();
-      });
-  }) as Observable<{ iterator: any; paginationInfoData: any }>;
-};
-export const getOrg = async ({
-  signal,
-  org,
-  perPage,
-  page,
-  axiosCancel = false,
-}: {
-  signal: any | undefined;
-  org: string;
-  perPage: number;
-  page: number;
-  axiosCancel: boolean;
-}) => {
-  try {
-    if (org !== '') {
-      const response = await fetch(
-        `${readEnvironmentVariable(
-          'UWEBSOCKET_ADDRESS'
-        )}/org?org=${org}&page=${page}&per_page=${perPage}&axiosCancel=${axiosCancel}`,
-        {
+    const execute = () => {
+      let validUrl =
+        url ||
+        (org
+          ? `https://api.github.com/orgs/${username}/repos?page=${page}&per_page=${perPage}`
+          : `https://api.github.com/users/${username}/starred?page=${page}&per_page=${perPage}`);
+      if (!lastUrls[validUrl]) {
+        lastUrls[validUrl] = setInterval(() => {
+          delete lastUrls[validUrl];
+        }, 300000);
+        return fetch(validUrl, {
           method: 'GET',
-          credentials: 'include',
           signal,
-        }
-      );
-      return await response.json();
-    }
-  } catch (e) {
-    console.log(e);
-  }
+          headers: {
+            Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json;charset=UTF-8',
+            'User-Agent': `${detectBrowser()}`,
+            Accept: `application/vnd.github.${AcceptHeader}${
+              raw ? '.raw' : '+json'
+            },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
+          },
+        })
+          .then((res: any) => {
+            try {
+              const reader = res!.body!.getReader();
+              if (perPage > 100) {
+                multiplier += 1;
+                if (perPage - multiplier * 100 > 0) {
+                  page += 1;
+                  observer.next({
+                    iterator: async function* () {
+                      while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) {
+                          break;
+                        }
+                        yield value; //pause the while loop until the caller below continue to call iterator again
+                      }
+                    },
+                  });
+                  return false;
+                }
+              }
+              observer.next({
+                iterator: async function* () {
+                  while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                      break;
+                    }
+                    yield value; //pause the while loop until the caller below continue to call iterator again
+                  }
+                },
+              });
+              observer.complete();
+              return true;
+            } catch (e) {
+              observer.error(e);
+              observer.complete();
+              return true;
+            }
+          })
+          .catch((e) => {
+            observer.error(e);
+            observer.complete();
+            return true;
+          });
+      } else {
+        return new Promise((resolve) => resolve(true));
+      }
+    };
+    execute().then((status) => {
+      if (!status) execute();
+    });
+  }) as Observable<{ iterator: any }>;
 };
 export const getValidGQLProperties = async () => {
   try {
@@ -305,11 +259,27 @@ export const session = async (end: boolean) => {
     return { username: '', data: false };
   }
 };
-export const getRateLimitInfo = async () => {
+export const getRateLimitInfo = async ({
+  signal,
+  AcceptHeader = 'v3',
+  raw = false,
+}: {
+  signal?: any;
+  AcceptHeader?: string;
+  raw?: boolean;
+}) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/get_rate_limit`, {
+    const response = await fetch(`https://api.github.com/rate_limit`, {
       method: 'GET',
-      credentials: 'include',
+      signal,
+      headers: {
+        Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json;charset=UTF-8',
+        'User-Agent': `${detectBrowser()}`,
+        Accept: `application/vnd.github.${AcceptHeader}${
+          raw ? '.raw' : '+json'
+        },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
+      },
     });
     return await response.json();
   } catch (e) {
@@ -337,13 +307,28 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
     return undefined;
   }
 };
-export const getSearchUsers = async (query: string) => {
+export const getSearchUsers = async ({
+  query,
+  AcceptHeader = 'v3',
+  raw = false,
+}: {
+  query: string;
+  AcceptHeader?: string;
+  raw?: boolean;
+}) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_users?username=${query}`, {
+    const response = await fetch(`https://api.github.com/search/users?q=${query}`, {
       method: 'GET',
-      credentials: 'include',
+      headers: {
+        Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json;charset=UTF-8',
+        'User-Agent': `${detectBrowser()}`,
+        Accept: `application/vnd.github.${AcceptHeader}${
+          raw ? '.raw' : '+json'
+        },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
+      },
     });
-    return (await response.json()) as SearchUser;
+    return await response.json();
   } catch (e) {
     console.log(e);
     return undefined;
@@ -456,37 +441,39 @@ export const getRepoImages = async ({
   topic: string;
   page: number;
 }) => {
-  try {
-    //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
-    //must contain a different URL to save each request
-    const response = await fetch(
-      `${readEnvironmentVariable(
-        'UWEBSOCKET_ADDRESS'
-      )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Sec-Fetch-Mode': 'cors',
-          'Sec-Fetch-Site': 'same-origin',
-          'Content-Type': 'application/json',
-        },
-        keepalive: true,
-        body: JSON.stringify({
-          data: data,
-        }),
-        //Fastify not only supports async functions for use as controller code,
-        // but it also automatically parses incoming requests into JSON if the Content-Type header suggests
-        // the body is JSON. Thus, when using fetch request to Fastify, we need to use headers of content-type
-        // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
-        // headers: new Headers({ 'content-type': 'application/json' }),
-        signal,
-      }
-    );
-    return (await response.json()) as ImagesDataProps[];
-  } catch (e) {
-    console.log(e);
-    return undefined;
+  if (data) {
+    try {
+      //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
+      //must contain a different URL to save each request
+      const response = await fetch(
+        `${readEnvironmentVariable(
+          'UWEBSOCKET_ADDRESS'
+        )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'Content-Type': 'application/json',
+          },
+          keepalive: true,
+          body: JSON.stringify({
+            data: data,
+          }),
+          //Fastify not only supports async functions for use as controller code,
+          // but it also automatically parses incoming requests into JSON if the Content-Type header suggests
+          // the body is JSON. Thus, when using fetch request to Fastify, we need to use headers of content-type
+          // so that the Json.stringify from client can be parsed into JSON, which will match our fluent-schema in Fastify (requires object, not string)
+          // headers: new Headers({ 'content-type': 'application/json' }),
+          signal,
+        }
+      );
+      return (await response.json()) as ImagesDataProps[];
+    } catch (e) {
+      console.log(e);
+      return undefined;
+    }
   }
 };
 export const crawlerPython = async ({

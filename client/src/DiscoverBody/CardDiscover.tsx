@@ -11,6 +11,8 @@ import Loadable from 'react-loadable';
 import { useStableCallback } from '../util';
 import './CardDiscover.scss';
 import Empty from '../Layout/EmptyLayout';
+import { Then } from '../util/react-if/Then';
+import { If } from '../util/react-if/If';
 
 const ImagesCardDiscover = Loadable({
   loading: Empty,
@@ -103,19 +105,21 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
         <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
       </div>
       <StargazersDiscover data={stargazersMemoizedGithubData()} />
-      <div>
-        <ul
-          className={`language}`}
-          style={{
-            backgroundColor: 'transparent',
-            color: stateShared.githubLanguages.get(githubData?.language?.replace(/\+\+|#|\s/, '-'))?.color,
-          }}
-        >
-          <li className={'language-list'}>
-            <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
-          </li>
-        </ul>
-      </div>
+      <If condition={githubData.language !== null}>
+        <Then>
+          <ul
+            className={'language'}
+            style={{
+              backgroundColor: 'transparent',
+              color: stateShared.githubLanguages.get(githubData?.language?.replace(/\+\+|#|\s/, '-'))?.color,
+            }}
+          >
+            <li className={'language-list'}>
+              <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
+            </li>
+          </ul>
+        </Then>
+      </If>
       <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
         <a href={githubData.html_url} target="_blank" rel="noopener noreferrer">
           {githubData.html_url}

@@ -17,7 +17,13 @@ const useStyles = makeStyles<Theme, StyleProps>({
     width: (props) => props.inputWidth,
   },
 });
-
+let marks: any[] = [];
+for (let i = 10; i < 101; i += 10) {
+  marks.push(Object.assign({}, { value: i }));
+}
+for (let i = 200; i < 1001; i += 100) {
+  marks.push(Object.assign({}, { value: i }));
+}
 interface InputSlider {
   type: string;
   dispatch: (args: any) => void;
@@ -73,7 +79,7 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
               onChange={handleInputChange}
               onBlur={() => dispatch(value)}
               inputProps={{
-                step: 1,
+                step: 100,
                 min: { minSliderRange },
                 max: { maxSliderRange },
                 type: 'number',
@@ -101,12 +107,15 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
           </div>
           <Grid item xs>
             <Slider
-              min={minSliderRange}
-              max={maxSliderRange}
               value={value}
-              onChange={handleSliderChange}
+              defaultValue={10}
               onMouseUp={() => dispatch(value)}
-              aria-labelledby="input-slider"
+              onChange={handleSliderChange}
+              aria-labelledby="discrete-slider"
+              step={null}
+              min={10}
+              max={1000}
+              marks={marks}
             />
           </Grid>
           {shouldShowInput && shouldShowInputFn()}

@@ -40,13 +40,6 @@ const Login = Loadable({
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "Login" */ './Login'),
 });
-const LoginLoadable = () => {
-  return (
-    <StateRateLimitProvider>
-      <Login />
-    </StateRateLimitProvider>
-  );
-};
 const Discover = Loadable({
   loading: LoadingBig,
   delay: 300, // 0.3 seconds
@@ -110,20 +103,31 @@ const AppRoutes = React.memo(
                     <StateStargazersProvider>
                       <SearchBar />
                     </StateStargazersProvider>
-                    <KeepMountedLayout
-                      mountedCondition={shouldRender === ShouldRender.Home}
-                      render={() => (
+                    {shouldRender === ShouldRender.Home && (
+                      <>
                         <StateStargazersProvider>
                           <StateDiscoverProvider>
                             <Home />
                           </StateDiscoverProvider>
                         </StateStargazersProvider>
-                      )}
-                    />
+                      </>
+                    )}
                   </>
                 )}
               />
-              <Route path="/login" exact component={LoginLoadable} />
+              <Route
+                path="/login"
+                exact
+                component={() =>
+                  shouldRender === ShouldRender.Login ? (
+                    <StateRateLimitProvider>
+                      <Login />
+                    </StateRateLimitProvider>
+                  ) : (
+                    <></>
+                  )
+                }
+              />
               <Route
                 path="/discover"
                 exact
@@ -310,7 +314,7 @@ const CustomApolloProvider = ({ children }: any) => {
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
       uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql/`,
-      headers: { origin: `https://localhost:3000` },
+      headers: { origin: `${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}` },
       fetchOptions: {
         credentials: 'include',
       },

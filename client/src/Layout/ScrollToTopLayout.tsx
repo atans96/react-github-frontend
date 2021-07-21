@@ -20,7 +20,7 @@ const ScrollTopLayout = React.memo(() => {
     event.preventDefault();
     const anchor = (event.currentTarget.ownerDocument || document).querySelector('.top');
     if (anchor) {
-      anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      anchor.scrollIntoView({ block: 'center' });
     }
   };
 

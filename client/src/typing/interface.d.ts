@@ -62,8 +62,10 @@ export interface IAction<T> {
 
 export interface IDataOne {
   dataOne: MergedDataProps[];
-  error_404: string;
-  error_403: string;
+  error_404: boolean;
+  error_403: boolean;
+  error_message: string | undefined;
+  end: boolean;
   paginationInfoData: number;
   renderImages: RenderImagesProps[];
 }
@@ -130,7 +132,6 @@ export interface IState {
   visible: boolean;
   isLoading: boolean;
   page: number;
-  lastPage: number;
 }
 
 export interface GraphQLUserData {
@@ -167,10 +168,6 @@ export interface StaticState {
   StarRanking: StarRankingData;
   SuggestedRepo: SuggestedData;
   SuggestedRepoImages: SuggestedDataImages;
-}
-
-export interface SearchUser {
-  users: { [x: string]: any };
 }
 
 export interface IContext {

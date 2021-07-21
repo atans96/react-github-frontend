@@ -193,12 +193,11 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
   }, [stateShared.fetchDataPath, consumers, alreadyFetch.current, axiosCancel]);
 
   useEffect(() => {
-    if (location.pathname !== '/profile') {
-      abortController.abort(); //cancel the fetch when the user go away from current page
+    return () => {
+      console.log('abort');
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
       axiosCancel = true;
-    } else {
-      axiosCancel = false;
-    }
+    };
   }, [location.pathname]);
 
   return (

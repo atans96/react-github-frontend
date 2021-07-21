@@ -148,7 +148,6 @@
   }
   .trunctuatedTexts {
     overflow: auto;
-    height: 100px;
   }
   .details {
     height: 35px;
@@ -200,6 +199,8 @@
   border-radius: 5px;
   max-width: fit-content;
   margin: auto;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
   display: flex;
   svg:hover {
     path {
