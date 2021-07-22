@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { getElasticSearchBert } from '../services';
 import { useTrackedStateDiscover } from '../selectors/stateContextSelector';
@@ -9,6 +9,7 @@ export interface SearchBarProps {
 }
 
 const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
+  const abortController = new AbortController();
   const [, dispatchDiscover] = useTrackedStateDiscover();
   const size = {
     width: '500px',
@@ -29,7 +30,10 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
   const handleSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     event.stopPropagation();
-    getElasticSearchBert(query?.current?.getState()).then((res) => {
+    getElasticSearchBert(query?.current?.getState(), abortController.signal).then((res) => {
+      if (abortController.signal.aborted) {
+        return;
+      }
       dispatchDiscover({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
@@ -40,6 +44,11 @@ const SearchBarDiscover: React.FC<SearchBarProps> = ({ width }) => {
       query.current.clearState();
     });
   };
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+    };
+  }, []);
   return (
     <SearchBarLayout style={{ width: `${width}px` }} onSubmit={handleSubmit}>
       {() => (

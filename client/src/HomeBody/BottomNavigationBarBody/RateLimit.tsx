@@ -6,6 +6,7 @@ import { useTrackedState, useTrackedStateRateLimit } from '../../selectors/state
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { epochToJsDate } from '../../util';
 import { getRateLimitInfo } from '../../services';
+import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 
 const RateLimit = () => {
   const abortController = new AbortController();
@@ -23,7 +24,8 @@ const RateLimit = () => {
       console.log('abort');
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     };
-  }, [location.pathname]);
+  }, []);
+
   const intervalRef = useRef<any>();
   useEffect(() => {
     let isFinished = false;
@@ -46,7 +48,8 @@ const RateLimit = () => {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateRateLimit.rateLimit.reset, resetTime]);
-  useEffect(
+
+  useDeepCompareEffect(
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and
       // persist when switching the component

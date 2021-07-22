@@ -29,6 +29,7 @@ import { ShouldRender } from './typing/enum';
 import sysend from 'sysend';
 import DbCtx from './db/db.ctx';
 import { HttpLink } from './link/http/HttpLink';
+import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 
 const Home = Loadable({
   loading: LoadingBig,
@@ -173,6 +174,7 @@ const AppRoutes = React.memo(
   }
 );
 const MiddleAppRoute = () => {
+  const abortController = new AbortController();
   const { db, clear } = DbCtx.useContainer();
   const apolloCacheData = useRef<Object>({});
   const [stateShared, dispatchShared] = useTrackedStateShared();
@@ -190,14 +192,21 @@ const MiddleAppRoute = () => {
   const { loadingUserStarred, errorUserStarred } = useApolloFactory(Function.name).query.getUserInfoStarred();
   const { seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
   const cacheData: any = useApolloClient().cache.extract();
-  useEffect(() => {
+
+  useDeepCompareEffect(() => {
+    let isFinished = false;
     if (cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
       apolloCacheData.current = cacheData.ROOT_QUERY;
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData]);
+
   useEffect(() => {
-    if ('serviceWorker' in navigator && stateShared.isLoggedIn) {
+    let isFinished = false;
+    if ('serviceWorker' in navigator && stateShared.isLoggedIn && !isFinished) {
       navigator.serviceWorker
         .register('sw.js')
         .then(() => navigator.serviceWorker.ready)
@@ -223,49 +232,68 @@ const MiddleAppRoute = () => {
           });
         });
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn, apolloCacheData]);
 
   useEffect(() => {
-    getFile('languages.json').then((githubLanguages) => {
-      if (githubLanguages) {
-        dispatchShared({
-          type: 'SET_GITHUB_LANGUAGES',
-          payload: {
-            githubLanguages,
-          },
-        });
-      }
-    });
-    if (stateShared.isLoggedIn) {
-      getTokenGQL().then((res) => {
-        if (res.tokenGQL) {
+    let isFinished = false;
+    if (!isFinished) {
+      getFile('languages.json', abortController.signal).then((githubLanguages) => {
+        if (abortController.signal.aborted) return;
+        if (githubLanguages) {
           dispatchShared({
-            type: 'TOKEN_ADDED',
+            type: 'SET_GITHUB_LANGUAGES',
             payload: {
-              tokenGQL: res.tokenGQL,
+              githubLanguages,
             },
           });
         }
       });
-    }
-    session(false).then((data) => {
-      if (!data.data) {
-        localStorage.clear();
-        clear();
+      if (stateShared.isLoggedIn) {
+        getTokenGQL(abortController.signal).then((res) => {
+          if (abortController.signal.aborted) return;
+          if (res.tokenGQL) {
+            dispatchShared({
+              type: 'TOKEN_ADDED',
+              payload: {
+                tokenGQL: res.tokenGQL,
+              },
+            });
+          }
+        });
       }
-      dispatchShared({
-        type: 'SET_USERNAME',
-        payload: { username: data.username },
+      session(false, abortController.signal).then((data) => {
+        if (abortController.signal.aborted) return;
+        if (!data.data) {
+          localStorage.clear();
+          clear();
+        }
+        dispatchShared({
+          type: 'SET_USERNAME',
+          payload: { username: data.username },
+        });
+        dispatchShared({
+          type: 'LOGIN',
+          payload: {
+            isLoggedIn: data.data,
+          },
+        });
       });
-      dispatchShared({
-        type: 'LOGIN',
-        payload: {
-          isLoggedIn: data.data,
-        },
-      });
-    });
+    }
+    return () => {
+      isFinished = true;
+    };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
   return (
     <AppRoutes
       errorUserStarred={errorUserStarred}

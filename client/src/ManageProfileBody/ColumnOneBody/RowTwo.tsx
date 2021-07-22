@@ -38,7 +38,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
     }
   };
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isFinished = false;
     if (
       !isFinished &&
@@ -198,7 +198,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
       axiosCancel = true;
     };
-  }, [location.pathname]);
+  }, []);
 
   return (
     <List>

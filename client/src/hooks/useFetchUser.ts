@@ -28,7 +28,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   // useState is used when the HTML depends on it directly to render something
   const [isLoading, setLoading] = useState(false);
   const [notification, setNotification] = useState('');
-  const notificationRef = useRef<string>(notification);
   const [clickedGQLTopic, setGQLTopic] = useState({
     variables: '',
   } as any);
@@ -37,6 +36,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const onClickTopic = useStableCallback(async ({ variables }: any) => {
+    if (abortController.signal.aborted) return;
     if (stateShared.tokenGQL !== '' && state.filterBySeen) {
       setLoading(true);
       dispatch({
@@ -63,6 +63,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         axiosCancel: axiosCancel.current,
       })
         .then((result) => {
+          if (abortController.signal.aborted) return;
           if (result) {
             paginationInfo += result.paginationInfoData;
             actionController(result);

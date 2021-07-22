@@ -6,6 +6,7 @@ import { markdownParsing } from '../../services';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { useLocation } from 'react-router-dom';
+import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 
 interface DetailsProps {
   branch: string;
@@ -15,6 +16,7 @@ interface DetailsProps {
 }
 
 const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) => {
+  const abortController = new AbortController();
   const _isMounted = useRef(true);
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
@@ -22,21 +24,29 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
 
   useEffect(
     () => {
-      if (location.pathname === '/profile' || location.pathname === '/detail') {
-        _isMounted.current = true;
-        markdownParsing(fullName, branch).then((data) => {
+      if ((_isMounted.current && location.pathname === '/profile') || location.pathname === '/detail') {
+        markdownParsing(fullName, branch, abortController.signal).then((data) => {
+          if (abortController.signal.aborted) return;
           if (data && _isMounted.current) {
             setReadme(data.readme);
           }
         });
-        return () => {
-          _isMounted.current = false;
-        };
       }
+      return () => {
+        _isMounted.current = false;
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [fullName, branch]
   );
+
+  useEffect(() => {
+    return () => {
+      _isMounted.current = false;
+      console.log('abort');
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, []);
 
   return (
     <div
