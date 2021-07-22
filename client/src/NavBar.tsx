@@ -75,12 +75,15 @@ const NavBar = React.memo(() => {
   const handleClick = useStableCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     const res = event.currentTarget.id;
-    dispatch({
-      type: 'SET_SHOULD_RENDER',
-      payload: {
-        shouldRender: res,
-      },
-    });
+    if (res !== 'home') {
+      //this is because we don't want to render Home until the user submit form via SearchBar
+      dispatch({
+        type: 'SET_SHOULD_RENDER',
+        payload: {
+          shouldRender: res,
+        },
+      });
+    }
     setActiveBar((prevState: string) => {
       previousActive.current = prevState;
       return res;

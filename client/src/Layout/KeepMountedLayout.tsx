@@ -1,18 +1,26 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 interface KeepMountedLayoutProps {
   mountedCondition: boolean;
   render: () => React.ReactNode;
 }
-class KeepMountedLayout extends React.PureComponent<KeepMountedLayoutProps> {
-  hasBeenMounted = false;
-  render() {
-    const { mountedCondition, render } = this.props;
-    this.hasBeenMounted = this.hasBeenMounted || mountedCondition;
-    return (
-      <div style={{ contentVisibility: mountedCondition ? 'visible' : 'hidden' }}>
-        {this.hasBeenMounted ? render() : null}
-      </div>
-    );
-  }
-}
+const KeepMountedLayout: React.FC<KeepMountedLayoutProps> = ({ render, mountedCondition }) => {
+  const hasBeenMounted = useRef<boolean>(mountedCondition);
+  const [mount, setMount] = useState(mountedCondition);
+  const interval = useRef<any>();
+
+  useEffect(() => {
+    //delay the unmounted after the user navigate away from page
+    clearInterval(interval.current);
+    interval.current = setInterval(() => {
+      setMount(hasBeenMounted.current);
+    }, 15000);
+  }, [hasBeenMounted.current]);
+
+  useEffect(() => {
+    hasBeenMounted.current = mountedCondition;
+    if (mountedCondition && !mount) setMount(true);
+  }, [mountedCondition]);
+
+  return <div style={{ contentVisibility: mountedCondition ? 'visible' : 'hidden' }}>{mount ? render() : null}</div>;
+};
 export default KeepMountedLayout;

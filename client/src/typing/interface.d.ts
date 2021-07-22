@@ -41,10 +41,6 @@ export interface LocationGraphQL {
   previousPath: string;
 }
 
-interface Output {
-  isFetchFinish: boolean;
-}
-
 export interface ActionResolvePromise {
   action: ActionResolvedPromise;
   setLoading: any;
