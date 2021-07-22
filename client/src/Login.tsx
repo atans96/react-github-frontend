@@ -5,17 +5,19 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import LoginLayout from './Layout/LoginLayout';
 import { getRateLimitInfo, requestGithubLogin } from './services';
 import sysend from 'sysend';
+import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 
 const Login = () => {
+  const abortController = new AbortController();
   const location = useLocation();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const history = useHistory();
   const isMounted = useRef(false);
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     isMounted.current = true;
-    if (location.pathname === '/login') {
+    if (location.pathname === '/login' && isMounted.current) {
       // After requesting Github access by logging using user account's Github
       // Github redirects back to "http://localhost:3000/login?code=f5e7d855f57365e75411"
       const url = window.location.href;
@@ -36,9 +38,9 @@ const Login = () => {
         };
 
         // Use code parameter and other parameters to make POST request to proxy_server
-        requestGithubLogin(`${proxy_url}`, requestData)
+        requestGithubLogin(`${proxy_url}`, requestData, abortController.signal)
           .then((response) => {
-            if (response) {
+            if (response && isMounted.current) {
               localStorage.setItem('token_type', response.token.token_type);
               localStorage.setItem('access_token', response.token.access_token);
               dispatchShared({
@@ -88,6 +90,9 @@ const Login = () => {
               history.push('/');
               // window.location.reload(false);
             } else {
+              if (abortController.signal.aborted) {
+                return;
+              }
               setData({
                 isLoading: false,
                 errorMessage: 'Sorry! Login failed',
@@ -95,6 +100,9 @@ const Login = () => {
             }
           })
           .catch(() => {
+            if (abortController.signal.aborted) {
+              return;
+            }
             setData({
               isLoading: false,
               errorMessage: 'Sorry! Login failed',

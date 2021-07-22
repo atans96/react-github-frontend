@@ -20,6 +20,7 @@ import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
+import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {

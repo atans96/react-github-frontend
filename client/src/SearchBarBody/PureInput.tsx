@@ -26,6 +26,7 @@ interface SearchBarProps {
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
 const PureInput: React.FC<SearchBarProps> = React.forwardRef(
   ({ visibleSearchesHistory, setVisibleSearchesHistory, setVisible, handleChange, style }, ref) => {
+    const abortController = new AbortController();
     const [state, dispatch] = useTrackedState();
     const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
     const [username, setUsername] = useState('');
@@ -33,7 +34,8 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
     const debouncedValue = useDebouncedValue(username, 1500); // this value will pick real time value, but will change it's result only when it's seattled for 500ms
 
     useEffect(() => {
-      if (username.toString().trim().length > 0) {
+      let isFinished = false;
+      if (username.toString().trim().length > 0 && !isFinished) {
         setVisible(true); // show the autocomplete
         dispatch({
           type: 'VISIBLE',
@@ -50,12 +52,15 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
             isLoading: true,
           },
         });
-        getSearchUsers({ query: username.toString().trim() }).then((data) => {
+        getSearchUsers({ query: username.toString().trim(), signal: abortController.signal }).then((data) => {
           const getUsers = data.items.reduce((acc: any, item: any) => {
             const result = Object.assign({}, { [item.login]: item.avatar_url });
             acc.push(result);
             return acc;
           }, []);
+          if (abortController.signal.aborted) {
+            return;
+          }
           if (getUsers) {
             dispatch({
               type: 'SEARCH_USERS',
@@ -72,7 +77,15 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
           }
         });
       }
+      return () => {
+        isFinished = true;
+      };
     }, [debouncedValue]);
+    useEffect(() => {
+      return () => {
+        abortController.abort();
+      };
+    }, []);
     useImperativeHandle(
       ref,
       () => ({
@@ -122,12 +135,12 @@ const PureInput: React.FC<SearchBarProps> = React.forwardRef(
       if (location.pathname === '/' && !isFinished) {
         // Bind the event listener
         document.addEventListener('keydown', handleKey);
-        return () => {
-          // Unbind the event listener on clean up
-          document.removeEventListener('keydown', handleKey);
-          isFinished = true;
-        };
       }
+      return () => {
+        // Unbind the event listener on clean up
+        document.removeEventListener('keydown', handleKey);
+        isFinished = true;
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [handleKey]);
 

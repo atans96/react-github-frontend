@@ -23,6 +23,7 @@ type SearchesData = {
 };
 // separate setState from SearchBar so that SearchBar won't get rerender by onChange
 const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, dispatchDiscover }, ref) => {
+  const abortController = new AbortController();
   const [query, setQuery] = useState('');
   const [visible, setVisible] = useState(false);
   const [searchesData, setSearches] = useState<SearchesData>();
@@ -30,12 +31,16 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
   const resultsRef = useRef(null);
   const debouncedValue = useDebouncedValue(query, 1000);
   useEffect(() => {
-    if (query.trim().length > 0) {
-      getElasticSearchBertAutocomplete(query.trim()).then((data) => {
+    let isFinished = false;
+    if (!isFinished && query.trim().length > 0) {
+      getElasticSearchBertAutocomplete(query.trim(), abortController.signal).then((data) => {
         if (data.isSuggested.status) {
           data.result.unshift(
             Object.assign({}, { full_name: `No result found for ${query}. Did you mean ${data.isSuggested.text}?` })
           );
+        }
+        if (abortController.signal.aborted) {
+          return;
         }
         setSearches(data);
         setVisible(true);
@@ -45,7 +50,17 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
         });
       });
     }
+    return () => {
+      isFinished = true;
+    };
   }, [debouncedValue]);
+
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+    };
+  }, []);
+
   useImperativeHandle(
     ref,
     () => ({

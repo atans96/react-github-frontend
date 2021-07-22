@@ -17,6 +17,7 @@ import ButtonTags from './PureSearchBarBody/ButtonTags';
 import Empty from '../Layout/EmptyLayout';
 import PureInput from './PureInput';
 import Results from './PureSearchBarBody/Results';
+import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
 
 const ResultRenderer = Loadable({
   loading: Empty,
@@ -144,7 +145,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
 
   const location = useLocation();
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isCancelled = false;
     if (location.pathname === '/' && !isCancelled) {
       if (state.filteredTopics.length > 0) {
@@ -172,10 +173,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           },
         });
       }
-      return () => {
-        isCancelled = true;
-      };
     }
+    return () => {
+      isCancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filteredTopics, state.mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
   // being executed at Home.js, thus causing mergedData to change. Now if filteredTopics.length > 0, that means we only display new
@@ -190,7 +191,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
 
   const handleChange = useStableCallback((value: string) => setValue(value));
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isCancelled = false;
     if (location.pathname === '/' && !isCancelled) {
       // this is to render the new topic tags based on filteredMergedData when it throws new data
@@ -227,20 +228,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           topics: result,
         },
       });
-      return () => {
-        isCancelled = true;
-        dispatch({
-          type: 'VISIBLE',
-          payload: { visible: false },
-        });
-        dispatch({
-          type: 'LOADING',
-          payload: {
-            isLoading: false,
-          },
-        });
-      };
     }
+    return () => {
+      isCancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filteredMergedData]);
 

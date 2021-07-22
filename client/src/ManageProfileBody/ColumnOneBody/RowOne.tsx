@@ -59,7 +59,7 @@ const RowOne = () => {
   const displayName: string = (RowOne as React.ComponentType<any>).displayName || '';
   const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isFinished = false;
     if (
       location?.state?.data?.userData.getUserData.languagePreference.length > 0 &&
@@ -67,10 +67,10 @@ const RowOne = () => {
       !isFinished
     ) {
       setLanguagePreferences(location.state.data.userData.getUserData.languagePreference);
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.state?.data?.userData]);
 
@@ -82,10 +82,10 @@ const RowOne = () => {
           languagePreference: languagePreferences,
         },
       }).then(noop);
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [languagePreferences]);
 

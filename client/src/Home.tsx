@@ -160,7 +160,7 @@ const Home = React.memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel.current]);
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     let isFinished = false;
     if (location.pathname === '/' && !isFinished && state.page > 1) {
       dataAlreadyFetch.current = 0;
@@ -174,7 +174,7 @@ const Home = React.memo(() => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.page, axiosCancel.current, abortController.signal]);
+  }, [state.page, axiosCancel.current]);
 
   useEffect(() => {
     return () => {
@@ -182,7 +182,7 @@ const Home = React.memo(() => {
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
       axiosCancel.current = true;
     };
-  }, [location.pathname]);
+  }, []);
 
   useEffect(() => {
     let isFinished = false;
@@ -229,7 +229,7 @@ const Home = React.memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filterBySeen]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isFinished = false;
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
       dispatch({
@@ -268,9 +268,9 @@ const Home = React.memo(() => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seenDataLoading, seenDataError, seenData, location, state.filterBySeen]);
+  }, [seenDataLoading, seenDataError, seenData, location.pathname, state.filterBySeen]);
 
-  useDeepCompareEffect(
+  useEffect(
     () => {
       let isFinished = false;
       (async () => {
@@ -384,7 +384,7 @@ const Home = React.memo(() => {
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.mergedData.length, axiosCancel.current, abortController.signal]
+    [state.mergedData.length, axiosCancel.current]
   );
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
@@ -402,9 +402,11 @@ const Home = React.memo(() => {
     return clearTimeout(timeout);
   }
   const timeoutRef = useRef<any>();
+
   useEffect(() => {
     if (isLoading) {
       timeoutRef.current = setTimeout(() => {
+        clear(timeoutRef.current);
         if (isLoading) {
           setRenderLoading(isLoading);
         } else {
@@ -416,6 +418,7 @@ const Home = React.memo(() => {
       clearTimeout(timeoutRef.current);
     };
   }, [isLoading]);
+
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position

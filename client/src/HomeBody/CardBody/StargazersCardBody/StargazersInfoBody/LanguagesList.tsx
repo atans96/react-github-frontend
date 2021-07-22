@@ -6,8 +6,10 @@ import { StargazerProps } from '../../../../typing/type';
 import { fastFilter } from '../../../../util';
 import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 import { getFile } from '../../../../services';
+import { useLocation } from 'react-router-dom';
 
 const LanguagesList: React.FC = React.memo(() => {
+  const abortController = new AbortController();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [selectedLanguage, setSelectedLanguage] = useState(stateStargazers.language);
   const evenOdd = useRef(0);
@@ -60,11 +62,27 @@ const LanguagesList: React.FC = React.memo(() => {
     });
     evenOdd.current += 1;
   };
+
   useEffect(() => {
-    getFile('languages.yml').then((data) => {
-      if (data) setLanguageInfo(data);
-    });
+    let isFinished = false;
+    if (!isFinished) {
+      getFile('languages.yml', abortController.signal).then((data) => {
+        if (abortController.signal.aborted) return;
+        if (data) setLanguageInfo(data);
+      });
+    }
+    return () => {
+      isFinished = true;
+    };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      console.log('abort');
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, []);
+
   return (
     <div className="btn-group" style={{ display: 'flex', justifyContent: 'center', border: 'solid' }}>
       <button

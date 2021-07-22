@@ -11,9 +11,13 @@ const Search: React.FC<SearchProps> = React.memo(
     const [value, setValue] = useState('');
     const debouncedValue = useDebouncedValue(value, 1500);
     useEffect(() => {
-      if (value.toString().trim().length > 0) {
+      let isFinished = false;
+      if (value.toString().trim().length > 0 && !isFinished) {
         handleInputChange(value);
       }
+      return () => {
+        isFinished = true;
+      };
     }, [debouncedValue]);
     const onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
       e.preventDefault();

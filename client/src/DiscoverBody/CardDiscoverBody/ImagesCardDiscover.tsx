@@ -46,11 +46,11 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
       let isCancelled = false;
       if (location.pathname === '/discover' && !isCancelled && imagesMapDataDiscover.size > 0) {
         const temp = imagesMapDataDiscover.get(index)?.value ?? [];
-        setRenderImages(temp);
-        return () => {
-          isCancelled = true;
-        };
+        if (!isCancelled) setRenderImages(temp);
       }
+      return () => {
+        isCancelled = true;
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [imagesMapDataDiscover]);
 
@@ -69,11 +69,11 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
       let isCancelled = false;
       if (location.pathname === '/discover' && !isCancelled && imagesMapDataDiscover.size > 0) {
         const temp = imagesMapDataDiscover.get(index)?.value ?? [];
-        setRenderImages(temp);
-        return () => {
-          isCancelled = true;
-        };
+        if (!isCancelled) setRenderImages(temp);
       }
+      return () => {
+        isCancelled = true;
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [imagesMapDataDiscover]);
     return (

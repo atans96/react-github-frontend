@@ -2,12 +2,13 @@ import { detectBrowser, readEnvironmentVariable } from '../util';
 import { IDataOne } from '../typing/interface';
 import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { Observable } from '../utilities/observables/Observable';
-export const getAllGraphQLNavBar = async (username: string) => {
+export const getAllGraphQLNavBar = async (username: string, signal: any) => {
   try {
     const response = await fetch(
       `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/graphqlUserData?username=${username}`,
       {
         method: 'GET',
+        signal,
       }
     );
     return await response.json();
@@ -90,10 +91,11 @@ export const setTokenGQL = async (tokenGQL: string, username: string) => {
     console.log(e);
   }
 };
-export const getTokenGQL = async () => {
+export const getTokenGQL = async (signal: any) => {
   try {
     const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTokenGQL`, {
       method: 'GET',
+      signal,
     });
     return (await response.json()) as { tokenGQL: string };
   } catch (e) {
@@ -232,12 +234,13 @@ export const getValidGQLProperties = async () => {
     return undefined;
   }
 };
-export const markdownParsing = async (full_name: string, branch: string) => {
+export const markdownParsing = async (full_name: string, branch: string, signal: any) => {
   try {
     const response = await fetch(
       `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/markdown?full_name=${full_name}&branch=${branch}`,
       {
         method: 'GET',
+        signal,
       }
     );
     return await response.json();
@@ -246,12 +249,13 @@ export const markdownParsing = async (full_name: string, branch: string) => {
     return undefined;
   }
 };
-export const session = async (end: boolean) => {
+export const session = async (end: boolean, signal?: any) => {
   try {
     const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/start?&end=${end}`, {
       method: 'GET',
       credentials: 'include',
       keepalive: true,
+      signal,
     });
     return await response.json();
   } catch (e) {
@@ -287,7 +291,7 @@ export const getRateLimitInfo = async ({
     return undefined;
   }
 };
-export const requestGithubLogin = async (proxy_url: string, data: any) => {
+export const requestGithubLogin = async (proxy_url: string, data: any, signal: any) => {
   try {
     const response = await fetch(proxy_url, {
       method: 'POST',
@@ -300,6 +304,7 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
         'Sec-Fetch-Mode': 'cors',
       },
       body: JSON.stringify(data),
+      signal,
     });
     return await response.json();
   } catch (e) {
@@ -309,16 +314,19 @@ export const requestGithubLogin = async (proxy_url: string, data: any) => {
 };
 export const getSearchUsers = async ({
   query,
+  signal,
   AcceptHeader = 'v3',
   raw = false,
 }: {
   query: string;
+  signal: any;
   AcceptHeader?: string;
   raw?: boolean;
 }) => {
   try {
     const response = await fetch(`https://api.github.com/search/users?q=${query}`, {
       method: 'GET',
+      signal,
       headers: {
         Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
         'Content-Type': 'application/json;charset=UTF-8',
@@ -358,24 +366,26 @@ export const getSearchTopics = async ({
     return undefined;
   }
 };
-export const getElasticSearchBertAutocomplete = async (query: string) => {
+export const getElasticSearchBertAutocomplete = async (query: string, signal: any) => {
   try {
     //TODO: instead of hitting the server all the time, use Redis https://www.linkedin.com/pulse/complete-guide-lighting-fast-autocomplete-search-suggestion-arya/ as buffer
     // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
     const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT_AUTOCOMPLETE')}?q=${query}&docName=github`, {
       method: 'GET',
+      signal,
     });
     return await response.json();
   } catch (e) {
     console.log(e);
   }
 };
-export const getElasticSearchBert = async (query: string) => {
+export const getElasticSearchBert = async (query: string, signal: any) => {
   try {
     //TODO: instead of hitting the server all the time, use Redis https://www.linkedin.com/pulse/complete-guide-lighting-fast-autocomplete-search-suggestion-arya/ as buffer
     // so at startup, the server will send data to Kafka, then when the client online, we will tell Redis to fetch from Kafka storage.
     const response = await fetch(`${readEnvironmentVariable('PYTHON_BERT')}?q=${query}&docName=github`, {
       method: 'GET',
+      signal,
     });
     return (await response.json()) as MergedDataProps[];
   } catch (e) {
@@ -416,11 +426,12 @@ export const convertToWebP = async (imgUrl: string) => {
     };
   }
 };
-export const getFile = async (filename: string) => {
+export const getFile = async (filename: string, signal: any) => {
   try {
     const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_github_languages?filename=${filename}`, {
       method: 'GET',
       headers: { 'Accept-Encoding': 'gzip' },
+      signal,
     });
     return await response.json();
   } catch (e) {

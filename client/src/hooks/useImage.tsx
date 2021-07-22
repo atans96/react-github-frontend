@@ -48,6 +48,7 @@ export default function useImage({
   width: number | undefined;
   height: number | undefined;
 } {
+  const abortController = new AbortController();
   const [, setIsLoading] = useState(true);
   const isMounted = useRef<boolean>(true);
   const sourceList = removeBlankArrayElements(stringToArray(srcList));
@@ -68,6 +69,7 @@ export default function useImage({
     // when not using suspense, update state to force a rerender
     .then((data: any) => {
       cache[sourceKey] = { ...cache[sourceKey], cache: 'resolved', data };
+      if (abortController.signal.aborted) return;
       if (!useSuspense && isMounted.current) setIsLoading(false);
     })
 
@@ -80,6 +82,7 @@ export default function useImage({
 
   useEffect(() => {
     return () => {
+      abortController.abort();
       isMounted.current = false;
     };
   }, []);

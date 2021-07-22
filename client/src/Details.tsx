@@ -11,6 +11,7 @@ import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
 import './Details.scss';
+import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 
 interface StateProps {
   data: {
@@ -27,8 +28,8 @@ interface StateProps {
 }
 
 const Details: React.FC = React.memo(() => {
+  const abortController = new AbortController();
   const location = useLocation<any>();
-  const _isMounted = useRef(true);
   const [readme, setReadme] = useState('');
   const [data, setData] = useState<Nullable<StateProps>>(null);
   const [dataStarRanking, setDataStarRanking] = useState<any>();
@@ -38,20 +39,24 @@ const Details: React.FC = React.memo(() => {
 
   const isStarRankingExist = !starRankingDataLoading && !starRankingDataError && starRankingData.getStarRanking;
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isFinished = false;
     if (isStarRankingExist && !isFinished && /detail/.test(location.pathname) && !!data) {
       const temp = starRankingData.getStarRanking.starRanking.find((obj: starRanking) => obj.id === data.data.id);
-      if (!!temp) {
+      if (!!temp && !isFinished) {
         setDataStarRanking(temp);
       }
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starRankingData, starRankingDataLoading, starRankingDataError]);
-
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+    };
+  }, []);
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && /detail/.test(location.pathname)) {
@@ -61,27 +66,31 @@ const Details: React.FC = React.memo(() => {
         setData(JSON.parse(localStorage.getItem('detailsData') || ''));
         localStorage.removeItem('detailsData');
       }
-      return () => {
-        setData(null);
-        setReadme('');
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  useEffect(
+  useDeepCompareEffect(
     () => {
       let isFinished = false;
       if (!isFinished && /detail/.test(location.pathname) && !!data) {
-        markdownParsing(data.data.full_name, data.data.default_branch).then((dataStarRanking) => {
-          if (_isMounted.current && dataStarRanking) {
-            setReadme(dataStarRanking.readme);
+        markdownParsing(data.data.full_name, data.data.default_branch, abortController.signal).then(
+          (dataStarRanking) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
+            if (dataStarRanking && !isFinished) {
+              setReadme(dataStarRanking.readme);
+            }
           }
-        });
-        return () => {
-          isFinished = true;
-        };
+        );
       }
+      return () => {
+        isFinished = true;
+      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data]

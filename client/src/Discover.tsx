@@ -18,6 +18,7 @@ import { useStableCallback } from './util';
 import { useDeepMemo } from './hooks/useDeepMemo';
 import './Discover.scss';
 import Empty from './Layout/EmptyLayout';
+import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 
 const ScrollToTopLayout = Loadable({
   loading: Empty,
@@ -148,6 +149,7 @@ const Discover = () => {
     dispatchDiscover({ type: 'MERGED_DATA_APPEND_DISCOVER_EMPTY' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedClicked]);
+
   useEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
@@ -159,10 +161,10 @@ const Discover = () => {
       !isFinished
     ) {
       fetchUser();
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestedDataLoading, suggestedDataError, sortedClicked]);
 
@@ -170,10 +172,10 @@ const Discover = () => {
     let isFinished = false;
     if (stateDiscover.pageDiscover > 1 && notification === '' && !isFinished) {
       fetchUserMore();
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateDiscover.pageDiscover]);
 
@@ -182,10 +184,10 @@ const Discover = () => {
     if (!isFinished) {
       setLoading(stateDiscover.isLoadingDiscover);
       setNotification(stateDiscover.notificationDiscover);
-      return () => {
-        isFinished = true;
-      };
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateDiscover.isLoadingDiscover, stateDiscover.notificationDiscover]);
 

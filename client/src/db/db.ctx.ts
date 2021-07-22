@@ -45,9 +45,13 @@ const DbCtx = createContainer(() => {
     setDb(conn);
   };
   useEffect(() => {
-    if (stateShared.isLoggedIn) {
+    let isFinished = false;
+    if (!isFinished && stateShared.isLoggedIn) {
       handleOpenDb().then(noop); // eslint-disable-next-line react-hooks/exhaustive-deps
     }
+    return () => {
+      isFinished = true;
+    };
   }, [stateShared.isLoggedIn]);
 
   // avoid ts async

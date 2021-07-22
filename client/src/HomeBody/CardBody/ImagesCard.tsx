@@ -12,6 +12,7 @@ import { useStableCallback } from '../../util';
 import { useTrackedState } from '../../selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
 import Empty from '../../Layout/EmptyLayout';
+import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 
 const ImageComponentLayout = Loadable({
   loading: Empty,
@@ -49,7 +50,7 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
   const [state] = useTrackedState();
   const location = useLocation();
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     let isFinished = false;
     if (location.pathname === '/' && !isFinished) {
       if (Array.isArray(state.imagesData) && state.imagesData.length > 0) {

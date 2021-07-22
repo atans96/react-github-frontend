@@ -33,6 +33,7 @@ const directionNotLogin = new Map(
 );
 
 const NavBar = React.memo(() => {
+  const abortController = new AbortController();
   const [state, dispatch] = useTrackedStateShared();
   const [active, setActiveBar] = useState<any>('');
   const navBarRef = useRef<HTMLDivElement>(null);
@@ -56,12 +57,21 @@ const NavBar = React.memo(() => {
   const [stateShared] = useTrackedStateShared();
   const history = useHistory();
   useEffect(() => {
+    let isFinished = false;
     if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active[1] !== '' ? Active[1] : 'home')) {
       setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+    };
+  }, []);
   const handleClick = useStableCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
     const res = event.currentTarget.id;
@@ -99,8 +109,12 @@ const NavBar = React.memo(() => {
   });
 
   useEffect(() => {
-    if (state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
-      getAllGraphQLNavBar(stateShared.username).then((data) => {
+    let isFinished = false;
+    if (!isFinished && state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
+      getAllGraphQLNavBar(stateShared.username, abortController.signal).then((data) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
         setIsFinished(true);
         directionLogin.set(
           active.toLowerCase(),
@@ -117,7 +131,7 @@ const NavBar = React.memo(() => {
           history.push({ pathname: `/${active.toLowerCase()}`, state: { data, previousPath: location.pathname } });
         }
       });
-    } else if (directionLogin?.get(active.toLowerCase())?.explored) {
+    } else if (!isFinished && directionLogin?.get(active.toLowerCase())?.explored) {
       setIsFinished(true);
       if (active === 'home') {
         history.push('/');
@@ -127,6 +141,9 @@ const NavBar = React.memo(() => {
         history.push({ pathname: `/${active.toLowerCase()}` });
       }
     }
+    return () => {
+      isFinished = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
