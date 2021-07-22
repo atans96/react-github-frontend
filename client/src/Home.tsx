@@ -18,6 +18,7 @@ import { useLocation } from 'react-router-dom';
 import useFetchUser from './hooks/useFetchUser';
 import Empty from './Layout/EmptyLayout';
 import Mutex from './util/mutex/mutex';
+import { createStore } from './util/hooksy';
 const mutex = new Mutex();
 
 const MasonryCard = Loadable({
@@ -42,20 +43,24 @@ const ScrollToTopLayout = Loadable({
   loader: () => import(/* webpackChunkName: "ScrollToTopLayout" */ './Layout/ScrollToTopLayout'),
   delay: 300, // 0.3 seconds
 });
+const defaultIsFetchFinish = { isFetchFinish: false };
+const defaultIsLoading = { isLoading: false };
+const defaultNotification = { notification: '' };
+export const [useIsFetchFinish] = createStore(defaultIsFetchFinish);
+export const [useIsLoading] = createStore(defaultIsLoading);
+export const [useNotification] = createStore(defaultNotification);
 
 const Home = React.memo(() => {
   const abortController = new AbortController();
+  const [notification, setNotification] = useNotification();
+  const [isFetchFinish] = useIsFetchFinish();
+  const [isLoading] = useIsLoading();
+
   const displayName: string = (Home as React.ComponentType<any>).displayName || '';
-  const {
-    fetchTopics,
-    fetchUser,
-    isLoading,
-    notification,
-    setNotification,
-    onClickTopic,
-    clickedGQLTopic,
-    isFetchFinish,
-  } = useFetchUser({ component: displayName, abortController });
+  const { fetchTopics, fetchUser, onClickTopic, clickedGQLTopic } = useFetchUser({
+    component: displayName,
+    abortController,
+  });
   const location = useLocation();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
@@ -76,11 +81,11 @@ const Home = React.memo(() => {
 
   const handleBottomHit = useStableCallback(() => {
     if (
-      !isFetchFinish &&
+      !isFetchFinish.isFetchFinish &&
       state.mergedData.length > 0 &&
-      !isLoading &&
+      !isLoading.isLoading &&
       location.pathname === '/' &&
-      notification === '' &&
+      notification.notification === '' &&
       state.filterBySeen
     ) {
       dispatch({
@@ -120,7 +125,7 @@ const Home = React.memo(() => {
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
-    isLoading || !isMergedDataExist || isFetchFinish // include isFetchFinish to indicate not to listen anymore
+    isLoading.isLoading || !isMergedDataExist || isFetchFinish.isFetchFinish // include isFetchFinish to indicate not to listen anymore
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
@@ -140,7 +145,8 @@ const Home = React.memo(() => {
       stateShared.queryUsername.length > 0 &&
       state.mergedData.length === 0 &&
       location.pathname === '/' &&
-      !isFinished
+      !isFinished &&
+      !isFetchFinish.isFetchFinish
     ) {
       // we want to preserve stateShared.queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
       // we still want to retain the memory of username so that's why we use reducer of stateShared.queryUsername.
@@ -162,7 +168,7 @@ const Home = React.memo(() => {
 
   useEffect(() => {
     let isFinished = false;
-    if (location.pathname === '/' && !isFinished && state.page > 1) {
+    if (location.pathname === '/' && !isFinished && state.page > 1 && !isFetchFinish.isFetchFinish) {
       dataAlreadyFetch.current = 0;
       if (stateShared.queryUsername.length > 0) {
         fetchUser();
@@ -202,8 +208,8 @@ const Home = React.memo(() => {
 
   useEffect(() => {
     let isFinished = false;
-    setNotification('');
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
+      setNotification({ notification: '' });
       const ids = state.undisplayMergedData.reduce((acc, obj) => {
         acc.push(obj.id);
         return acc;
@@ -274,7 +280,7 @@ const Home = React.memo(() => {
     () => {
       let isFinished = false;
       (async () => {
-        if (location.pathname === '/' && !isFinished) {
+        if (location.pathname === '/' && !isFinished && !isFetchFinish.isFetchFinish) {
           const release = await mutex.acquire(); //if no MUTEX, there's no guarantee fetch will be executed too much
           // so we need to use mutex so any pending execution of asnyc here will be put in Event Loop and after the lock released will resume
 
@@ -404,11 +410,11 @@ const Home = React.memo(() => {
   const timeoutRef = useRef<any>();
 
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading.isLoading && !isMergedDataExist) {
       timeoutRef.current = setTimeout(() => {
         clear(timeoutRef.current);
-        if (isLoading) {
-          setRenderLoading(isLoading);
+        if (isLoading.isLoading) {
+          setRenderLoading(isLoading.isLoading);
         } else {
           clear(timeoutRef.current);
         }
@@ -417,7 +423,7 @@ const Home = React.memo(() => {
     return () => {
       clearTimeout(timeoutRef.current);
     };
-  }, [isLoading]);
+  }, [isLoading.isLoading, isMergedDataExist]);
 
   return (
     <React.Fragment>
@@ -456,12 +462,12 @@ const Home = React.memo(() => {
 
         {isLoading && renderLoading && <LoadingEye queryUsername={stateShared.queryUsername} />}
 
-        <If condition={notification}>
+        <If condition={notification.notification}>
           <Then>
             <div style={{ textAlign: 'center' }}>
               <p>
                 <a className={'underlining'} style={{ fontSize: '30px', color: 'black' }}>
-                  {notification}
+                  {notification.notification}
                 </a>
               </p>
             </div>

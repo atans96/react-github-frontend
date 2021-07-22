@@ -7,6 +7,7 @@ import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } fro
 import { Counter, useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
 import uniqBy from 'lodash.uniqby';
+import { useIsFetchFinish, useIsLoading, useNotification } from '../Home';
 
 interface useFetchUser {
   component: string;
@@ -20,25 +21,26 @@ const regex = new RegExp(
 //To extract all json objects
 const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
 const useFetchUser = ({ component, abortController }: useFetchUser) => {
+  const [, setNotification] = useNotification();
+  const [isFetchFinish, setIsFetchFinish] = useIsFetchFinish();
+  const [, setLoading] = useIsLoading();
+
   const { actionResolvePromise } = useActionResolvePromise();
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchStargazers] = useTrackedStateStargazers();
   // useState is used when the HTML depends on it directly to render something
-  const [isLoading, setLoading] = useState(false);
-  const [notification, setNotification] = useState('');
   const [clickedGQLTopic, setGQLTopic] = useState({
     variables: '',
   } as any);
   // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
-  const isFetchFinish = useRef(false); // indicator to stop fetching when we have no more data
   const onClickTopic = useStableCallback(async ({ variables }: any) => {
     if (abortController.signal.aborted) return;
     if (stateShared.tokenGQL !== '' && state.filterBySeen) {
-      setLoading(true);
+      setLoading({ isLoading: true });
       dispatch({
         type: 'REMOVE_ALL',
       });
@@ -51,8 +53,8 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           queryUsername: '',
         },
       });
-      isFetchFinish.current = false;
-      setNotification('');
+      setIsFetchFinish({ isFetchFinish: false });
+      setNotification({ notification: '' });
       setGQLTopic({
         variables,
       });
@@ -72,9 +74,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         .catch((error) => {
           actionResolvePromise({
             action: ActionResolvedPromise.error,
-            setLoading,
-            setNotification,
-            isFetchFinish: isFetchFinish.current,
             displayName: component,
             error,
           });
@@ -99,46 +98,34 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       });
       actionResolvePromise({
         action: ActionResolvedPromise.append,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
         displayName: component,
         data: res,
       });
     } else if (res?.error_404 || res?.error_403 || res?.error_message) {
       actionResolvePromise({
         action: ActionResolvedPromise.error,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
         displayName: component,
         data: res,
       });
     } else if (res?.end) {
-      isFetchFinish.current = actionResolvePromise({
+      actionResolvePromise({
         action: ActionResolvedPromise.end,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
         displayName: component,
         data: res,
-      }).isFetchFinish;
+      });
     } else {
-      isFetchFinish.current = actionResolvePromise({
+      actionResolvePromise({
         action: ActionResolvedPromise.noData,
-        setLoading,
-        setNotification,
-        isFetchFinish: isFetchFinish.current,
         displayName: component,
         data: res,
-      }).isFetchFinish;
+      });
     }
     return false;
   };
   const fetchUser = () => {
-    if (!isFetchFinish.current) {
-      setLoading(true);
-      setNotification('');
+    if (!isFetchFinish.isFetchFinish) {
+      setLoading({ isLoading: true });
+      setNotification({ notification: '' });
       let userNameTransformed: string[];
       if (!Array.isArray(stateShared.queryUsername)) {
         userNameTransformed = [stateShared.queryUsername];
@@ -224,9 +211,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
             error(err: any) {
               actionResolvePromise({
                 action: ActionResolvedPromise.error,
-                setLoading,
-                setNotification,
-                isFetchFinish: isFetchFinish.current,
                 displayName: component,
                 err,
               });
@@ -243,12 +227,12 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
     // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
     // to prevent that, we need to reset the Home.js is unmounted.
-    if (!isFetchFinish.current) {
+    if (!isFetchFinish.isFetchFinish) {
       // it's possible the user click Details.js and go back to Home.js again and find out that
       // that the previous page.current is already 2, but when he/she navigates aways from Home.js, it go back to page.current=1 again
       // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
-      setLoading(true); // spawn loading spinner at bottom page
-      setNotification('');
+      setLoading({ isLoading: true }); // spawn loading spinner at bottom page
+      setNotification({ notification: '' });
       if (clickedGQLTopic.queryTopic !== undefined) {
         getSearchTopics({
           signal: abortController.signal,
@@ -261,9 +245,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           .catch((error) => {
             actionResolvePromise({
               action: ActionResolvedPromise.error,
-              setLoading,
-              setNotification,
-              isFetchFinish: isFetchFinish.current,
               error: error,
               displayName: component,
             });
@@ -274,12 +255,8 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   return {
     fetchTopics,
     fetchUser,
-    isLoading,
-    notification,
-    setNotification,
     onClickTopic,
     clickedGQLTopic,
-    isFetchFinish: isFetchFinish.current,
   };
 };
 export default useFetchUser;

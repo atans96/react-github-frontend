@@ -13,7 +13,6 @@ import KeepMountedLayout from './Layout/KeepMountedLayout';
 import {
   StateDiscoverProvider,
   StateProvider,
-  StateRateLimitProvider,
   StateSharedProvider,
   StateStargazersProvider,
   useTrackedStateShared,
@@ -22,7 +21,6 @@ import { useApolloFactory } from './hooks/useApolloFactory';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
 import ComposeProviders from './Layout/ComposeProviders';
-import { LoadingBig } from './LoadingBig';
 import Loadable from 'react-loadable';
 import { shallowEqual } from 'fast-equals';
 import { ShouldRender } from './typing/enum';
@@ -30,50 +28,64 @@ import sysend from 'sysend';
 import DbCtx from './db/db.ctx';
 import { HttpLink } from './link/http/HttpLink';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
+import Empty from './Layout/EmptyLayout';
+// import Login from './Login';
 
 const Home = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "Home" */ './Home'),
 });
 const Login = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "Login" */ './Login'),
 });
+// const Login = () => {
+//   useEffect(() => {
+//     console.log(true);
+//   }, []);
+//
+//   useEffect(() => {
+//     return () => {
+//       console.log(false);
+//     };
+//   }, []);
+//   return <></>;
+// };
 const Discover = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "Discover" */ './Discover'),
 });
 const SearchBarDiscover = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "SearchBarDiscover" */ './SearchBarDiscover'),
 });
 const PaginationBarDiscover = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "PaginationBarDiscover" */ './DiscoverBody/PaginationBarDiscover'),
 });
 const Details = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "Details" */ './Details'),
 });
 const ManageProfile = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "ManageProfile" */ './ManageProfile'),
 });
 
 const NotFound = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "NotFound" */ './NotFound'),
 });
 const SearchBar = Loadable({
-  loading: LoadingBig,
+  loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "SearchBar" */ './SearchBar'),
 });
@@ -81,91 +93,53 @@ const SearchBar = Loadable({
 // const ManageProfile = React.lazy(() => import('./ManageProfile'));
 const rootEl = document.getElementById('root'); // from index.html <div id="root"></div>
 interface AppRoutes {
-  loadingUserStarred: boolean;
-  seenDataError: any;
-  seenDataLoading: any;
-  errorUserStarred: any;
   shouldRender: string;
   isLoggedIn: boolean;
 }
 const AppRoutes = React.memo(
-  ({ loadingUserStarred, seenDataLoading, errorUserStarred, seenDataError, shouldRender, isLoggedIn }: AppRoutes) => {
+  ({ shouldRender, isLoggedIn }: AppRoutes) => {
+    const location = useLocation();
     return (
       <>
         <NavBar />
-        <If condition={!loadingUserStarred && !seenDataLoading && !errorUserStarred && !seenDataError}>
-          <Then>
-            <Switch>
-              <Route
-                path="/"
-                exact
-                render={() => (
-                  <>
-                    <StateStargazersProvider>
-                      <SearchBar />
-                    </StateStargazersProvider>
-                    {shouldRender === ShouldRender.Home && (
-                      <>
-                        <StateStargazersProvider>
-                          <StateDiscoverProvider>
-                            <Home />
-                          </StateDiscoverProvider>
-                        </StateStargazersProvider>
-                      </>
-                    )}
-                  </>
-                )}
-              />
-              <Route
-                path="/login"
-                exact
-                component={() =>
-                  shouldRender === ShouldRender.Login ? (
-                    <StateRateLimitProvider>
-                      <Login />
-                    </StateRateLimitProvider>
-                  ) : (
-                    <></>
-                  )
-                }
-              />
-              <Route
-                path="/discover"
-                exact
-                render={() =>
-                  isLoggedIn && (
-                    <KeepMountedLayout
-                      mountedCondition={shouldRender === ShouldRender.Discover}
-                      render={() => (
-                        <StateStargazersProvider>
-                          <SearchBarDiscover />
-                          <StateDiscoverProvider>
-                            <Discover />
-                          </StateDiscoverProvider>
-                          <PaginationBarDiscover />
-                        </StateStargazersProvider>
-                      )}
-                    />
-                  )
-                }
-              />
-              <Route path="/detail/:id" exact component={Details} />
-              <Route
-                path="/profile"
-                exact
-                render={() =>
-                  isLoggedIn && (
-                    <KeepMountedLayout
-                      mountedCondition={shouldRender === ShouldRender.Profile}
-                      render={() => <ManageProfile />}
-                    />
-                  )
-                }
-              />
-              <Route path="*" exact render={() => <NotFound />} />
-            </Switch>
-          </Then>
-        </If>
+        <KeepMountedLayout
+          mountedCondition={location.pathname === '/'}
+          render={() => (
+            <>
+              <StateStargazersProvider>
+                <SearchBar />
+              </StateStargazersProvider>
+              {shouldRender === ShouldRender.Home && (
+                <StateStargazersProvider>
+                  <StateDiscoverProvider>
+                    <Home />
+                  </StateDiscoverProvider>
+                </StateStargazersProvider>
+              )}
+            </>
+          )}
+        />
+        <KeepMountedLayout
+          mountedCondition={location.pathname === '/discover' && shouldRender === ShouldRender.Discover && isLoggedIn}
+          render={() => (
+            <StateStargazersProvider>
+              <SearchBarDiscover />
+              <StateDiscoverProvider>
+                <Discover />
+              </StateDiscoverProvider>
+              <PaginationBarDiscover />
+            </StateStargazersProvider>
+          )}
+        />
+        <KeepMountedLayout
+          mountedCondition={location.pathname === '/profile' && shouldRender === ShouldRender.Profile && isLoggedIn}
+          render={() => <ManageProfile />}
+        />
+        <Switch>
+          <Route path="/login" exact component={Login} />
+          <Route path="/detail/:id" exact component={Details} />
+        </Switch>
+        {!['/', '/profile', '/discover', '/login'].includes(location.pathname) && <NotFound />}
       </>
     );
   },
@@ -189,8 +163,6 @@ const MiddleAppRoute = () => {
     });
   });
   const location = useLocation();
-  const { loadingUserStarred, errorUserStarred } = useApolloFactory(Function.name).query.getUserInfoStarred();
-  const { seenDataLoading, seenDataError } = useApolloFactory(Function.name).query.getSeen();
   const cacheData: any = useApolloClient().cache.extract();
 
   useDeepCompareEffect(() => {
@@ -294,16 +266,7 @@ const MiddleAppRoute = () => {
     };
   }, []);
 
-  return (
-    <AppRoutes
-      errorUserStarred={errorUserStarred}
-      isLoggedIn={stateShared.isLoggedIn}
-      loadingUserStarred={loadingUserStarred}
-      seenDataLoading={seenDataLoading}
-      seenDataError={seenDataError}
-      shouldRender={stateShared.shouldRender}
-    />
-  );
+  return <AppRoutes isLoggedIn={stateShared.isLoggedIn} shouldRender={stateShared.shouldRender} />;
 };
 const CustomApolloProvider = ({ children }: any) => {
   const history = useHistory();

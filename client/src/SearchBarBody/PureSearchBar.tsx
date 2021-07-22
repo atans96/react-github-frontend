@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { createRef, useEffect, useRef, useState } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
 import { MergedDataProps, StargazerProps } from '../typing/type';
@@ -276,7 +276,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   // the purpose of getRootProps is to execute all eventhandlers from both parent and their children who're using it together
   // with the state at their respective component without the need to pass the state to the children.
   const { getRootProps } = useEventHandlerComposer({ onClickCb });
-
   return (
     <SearchBarLayout style={{ width: `${stateShared.width}px` }} onSubmit={handleSubmit}>
       {(portal) => (

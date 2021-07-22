@@ -1,4 +1,4 @@
-import { ActionResolvePromise, IDataOne, Output } from '../typing/interface';
+import { ActionResolvePromise, IDataOne } from '../typing/interface';
 import { fastFilter, useStableCallback } from '../util';
 import { LanguagePreference, MergedDataProps } from '../typing/type';
 import { filterActionResolvedPromiseData, noop } from '../util/util';
@@ -6,8 +6,13 @@ import React from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useApolloFactory } from './useApolloFactory';
 import { alreadySeenCardSelector } from '../selectors/stateSelector';
+import { useIsFetchFinish, useIsLoading, useNotification } from '../Home';
 
 const useActionResolvePromise = () => {
+  const [, setNotification] = useNotification();
+  const [, setIsFetchFinish] = useIsFetchFinish();
+  const [, setIsLoading] = useIsLoading();
+
   const [stateShared] = useTrackedStateShared();
   const [, dispatchDiscover] = useTrackedStateDiscover();
   const [state, dispatch] = useTrackedState();
@@ -104,50 +109,41 @@ const useActionResolvePromise = () => {
     }
   };
   const actionResolvePromise = useStableCallback(
-    ({
-      action,
-      data = undefined,
-      setLoading,
-      isFetchFinish,
-      displayName,
-      setNotification,
-      error = undefined,
-    }: ActionResolvePromise): Output => {
+    ({ action, data = undefined, displayName, error = undefined }: ActionResolvePromise) => {
       if (!loadingUserStarred && !errorUserStarred && !seenDataLoading && !seenDataError) {
-        setLoading(false);
+        setIsLoading({ isLoading: false });
         if (data && action === 'append') {
           actionAppend(data, displayName)!.then(noop);
         }
         if (action === 'noData') {
-          isFetchFinish = true;
+          setIsFetchFinish({ isFetchFinish: true });
           if (stateShared.queryUsername.length > 2) {
-            setNotification('Sorry, no more data found');
+            setNotification({ notification: 'Sorry, no more data found' });
           } else {
-            setNotification(`Sorry, no more data found for: "${stateShared.queryUsername[0]}"`);
+            setNotification({ notification: `Sorry, no more data found for: "${stateShared.queryUsername[0]}"` });
           }
         }
         if (action === 'end') {
-          isFetchFinish = true;
+          setIsFetchFinish({ isFetchFinish: true });
           if (stateShared.queryUsername.length > 2) {
-            setNotification("That's all the data we get");
+            setNotification({ notification: "That's all the data we get" });
           } else {
-            setNotification(`That's all the data we get for: "${stateShared.queryUsername[0]}"`);
+            setNotification({ notification: `That's all the data we get for: "${stateShared.queryUsername[0]}"` });
           }
         }
         if (action === 'error' && error) {
           throw new Error(`Something wrong at ${displayName} ${error}`);
         }
         if (data && data.error_404) {
-          setNotification(`Sorry, no data found for ${stateShared.queryUsername}`);
+          setNotification({ notification: `Sorry, no data found for ${stateShared.queryUsername}` });
         } else if (data && data.error_403) {
-          isFetchFinish = true;
-          setNotification('Sorry, API rate limit exceeded.');
+          setIsFetchFinish({ isFetchFinish: true });
+          setNotification({ notification: 'Sorry, API rate limit exceeded.' });
         } else if (data && data.error_message) {
-          isFetchFinish = true;
-          setNotification(`${data.error_message}`);
+          setIsFetchFinish({ isFetchFinish: true });
+          setNotification({ notification: `${data.error_message}` });
         }
       }
-      return { isFetchFinish };
     }
   );
   return { actionResolvePromise };
