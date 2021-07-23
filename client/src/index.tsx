@@ -29,6 +29,7 @@ import DbCtx from './db/db.ctx';
 import { HttpLink } from './link/http/HttpLink';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import Empty from './Layout/EmptyLayout';
+import { createClient } from 'graphql-ws';
 // import Login from './Login';
 
 const Home = Loadable({
@@ -171,13 +172,16 @@ const MiddleAppRoute = () => {
         .register('sw.js')
         .then(() => navigator.serviceWorker.ready)
         .then(async (reg) => {
-          // const subscription = await reg.pushManager.subscribe({
-          //   userVisibleOnly: true,
-          //
-          //   //public vapid key
-          //   applicationServerKey: urlBase64ToUint8Array(readEnvironmentVariable('VAPID_PUB_KEY')),
-          // });
-          // subscribeToApollo({ signal: abortController.signal, subscription }).then(noop);
+          const permission = await window.Notification.requestPermission();
+          if (permission === 'granted' || permission === 'default') {
+            const subscription = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+
+              //public vapid key
+              applicationServerKey: urlBase64ToUint8Array(readEnvironmentVariable('VAPID_PUB_KEY')),
+            });
+            subscribeToApollo({ signal: abortController.signal, subscription }).then(noop);
+          }
           reg.onupdatefound = () => {
             const waitingServiceWorker = reg.waiting;
             if (waitingServiceWorker) {
@@ -264,6 +268,25 @@ const MiddleAppRoute = () => {
   return <AppRoutes isLoggedIn={stateShared.isLoggedIn} shouldRender={stateShared.shouldRender} />;
 };
 const CustomApolloProvider = ({ children }: any) => {
+  const client = createClient({
+    url: readEnvironmentVariable('GRAPHQL_WS_ADDRESS') || '',
+  });
+  client.subscribe(
+    {
+      query: '{ hello }',
+    },
+    {
+      next: (data) => {
+        console.log(data);
+      },
+      error: (e) => {
+        console.error(e);
+      },
+      complete: () => {
+        console.log('complete');
+      },
+    }
+  );
   const history = useHistory();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const unAuthorizedAction = () => {
@@ -271,26 +294,6 @@ const CustomApolloProvider = ({ children }: any) => {
     window.alert('Your token has expired. We will logout you out.');
   };
   const clientWrapped = useStableCallback(() => {
-    // const httpLink = new HttpLink({
-    //   uri: 'https://api.github.com/graphql',
-    //   headers: {
-    //     Authorization: `Bearer ${stateShared.tokenGQL}`,
-    //   },
-    // });
-    // const wsLink = new WebSocketLink({
-    //   uri: readEnvironmentVariable('WS_LINK') || ('' as string),
-    //   options: {
-    //     reconnect: true,
-    //   },
-    // });
-    // const githubGateway = ApolloLink.split(
-    //   ({ query }) => {
-    //     const { kind, operation } = getMainDefinition(query) as any;
-    //     return kind === 'OperationDefinition' && operation === 'subscription';
-    //   }, // Routes the query to the proper client
-    //   wsLink,
-    //   httpLink
-    // );
     const githubGateway = new HttpLink({
       uri: 'https://api.github.com/graphql',
       headers: {
