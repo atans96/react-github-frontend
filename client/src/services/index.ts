@@ -366,6 +366,31 @@ export const getSearchTopics = async ({
     return undefined;
   }
 };
+export const subscribeToApollo = async ({
+  signal,
+  subscription,
+}: {
+  signal: any | undefined;
+  subscription: PushSubscription;
+}) => {
+  try {
+    const response = await fetch(`${readEnvironmentVariable('GRAPHQL_ADDRESS')}/subscribe/`, {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+      headers: {
+        'Content-Type': 'application/json',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+      },
+      signal,
+      credentials: 'include',
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
+};
 export const getElasticSearchBertAutocomplete = async (query: string, signal: any) => {
   try {
     //TODO: instead of hitting the server all the time, use Redis https://www.linkedin.com/pulse/complete-guide-lighting-fast-autocomplete-search-suggestion-arya/ as buffer

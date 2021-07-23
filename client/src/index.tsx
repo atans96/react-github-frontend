@@ -5,9 +5,9 @@ import { BrowserRouter as Router, Route, Switch, useHistory, useLocation } from 
 import NavBar from './NavBar';
 import { ApolloClient, ApolloLink, getApolloContext, InMemoryCache, useApolloClient } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
-import { readEnvironmentVariable, useStableCallback } from './util';
+import { readEnvironmentVariable, urlBase64ToUint8Array, useStableCallback } from './util';
 import { logoutAction, noop } from './util/util';
-import { endOfSession, getFile, getTokenGQL, getValidGQLProperties, session } from './services';
+import { endOfSession, getFile, getTokenGQL, getValidGQLProperties, session, subscribeToApollo } from './services';
 import { StarRankingContainer, SuggestedRepoContainer, SuggestedRepoImagesContainer } from './selectors/stateSelector';
 import KeepMountedLayout from './Layout/KeepMountedLayout';
 import {
@@ -41,18 +41,6 @@ const Login = Loadable({
   delay: 300, // 0.3 seconds
   loader: () => import(/* webpackChunkName: "Login" */ './Login'),
 });
-// const Login = () => {
-//   useEffect(() => {
-//     console.log(true);
-//   }, []);
-//
-//   useEffect(() => {
-//     return () => {
-//       console.log(false);
-//     };
-//   }, []);
-//   return <></>;
-// };
 const Discover = Loadable({
   loading: Empty,
   delay: 300, // 0.3 seconds
@@ -182,7 +170,14 @@ const MiddleAppRoute = () => {
       navigator.serviceWorker
         .register('sw.js')
         .then(() => navigator.serviceWorker.ready)
-        .then((reg) => {
+        .then(async (reg) => {
+          // const subscription = await reg.pushManager.subscribe({
+          //   userVisibleOnly: true,
+          //
+          //   //public vapid key
+          //   applicationServerKey: urlBase64ToUint8Array(readEnvironmentVariable('VAPID_PUB_KEY')),
+          // });
+          // subscribeToApollo({ signal: abortController.signal, subscription }).then(noop);
           reg.onupdatefound = () => {
             const waitingServiceWorker = reg.waiting;
             if (waitingServiceWorker) {
