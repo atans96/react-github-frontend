@@ -9,6 +9,7 @@ const PureSearchBar = Loadable({
   loader: () => import(/* webpackChunkName: "PureSearchBar" */ './SearchBarBody/PureSearchBar'),
 });
 const SearchBar = () => {
+    //TODO: https://github.com/moroshko/react-autosuggest
   const [stateShared] = useTrackedStateShared();
   const portalExpandable = useRef<any>();
   // useEffect(() => {

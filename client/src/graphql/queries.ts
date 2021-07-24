@@ -153,8 +153,6 @@ export const GET_USER_DATA = gql`
     getUserData {
       userName
       avatar
-      token
-      tokenRSS
       languagePreference {
         language
         checked
@@ -163,7 +161,7 @@ export const GET_USER_DATA = gql`
   }
 `;
 export const SEARCH_FOR_REPOS = gql`
-  query($reponame: String!, $owner: String!, $stargazersCount: Int!, $starredRepoCount: Int!) {
+  query ($reponame: String!, $owner: String!, $stargazersCount: Int!, $starredRepoCount: Int!) {
     repository(name: $reponame, owner: $owner) {
       stargazers(first: $stargazersCount) {
         nodes {
@@ -196,7 +194,7 @@ export const SEARCH_FOR_REPOS = gql`
   }
 `;
 export const SEARCH_FOR_MORE_REPOS = gql`
-  query($reponame: String!, $owner: String!, $stargazersCount: Int!, $starredRepoCount: Int!, $after: String!) {
+  query ($reponame: String!, $owner: String!, $stargazersCount: Int!, $starredRepoCount: Int!, $after: String!) {
     repository(name: $reponame, owner: $owner) {
       stargazers(first: $stargazersCount, after: $after) {
         nodes {
@@ -229,7 +227,7 @@ export const SEARCH_FOR_MORE_REPOS = gql`
   }
 `;
 export const SEARCH_FOR_TOPICS = gql`
-  query($queryTopic: String!, $perPage: Int!) {
+  query ($queryTopic: String!, $perPage: Int!) {
     search(query: $queryTopic, type: REPOSITORY, last: $perPage) {
       nodes {
         ... on Repository {
@@ -282,7 +280,7 @@ export const SEARCH_FOR_TOPICS = gql`
   }
 `;
 export const SEARCH_FOR_MORE_TOPICS = gql`
-  query($queryTopic: String!, $after: String!, $perPage: Int!) {
+  query ($queryTopic: String!, $after: String!, $perPage: Int!) {
     search(query: $queryTopic, type: REPOSITORY, last: $perPage, after: $after) {
       nodes {
         ... on Repository {
