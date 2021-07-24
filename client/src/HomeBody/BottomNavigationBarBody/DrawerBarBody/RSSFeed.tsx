@@ -20,7 +20,6 @@ import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
-import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -46,7 +45,6 @@ const RSSFeed = () => {
   const isTokenRSSExist = stateShared.tokenRSS.length > 0;
   const classes = useStyles();
   const displayName: string = (RSSFeed as React.ComponentType<any>).displayName || '';
-  const tokenRSSAdded = useApolloFactory(displayName!).mutation.tokenRSSAdded;
   const rssFeedAdded = useApolloFactory(displayName!).mutation.rssFeedAdded;
   const [openRSS, setOpenRSS] = useState(false);
   const [showMoreRSS, setShowMoreRSS] = useState(false);
@@ -114,17 +112,13 @@ const RSSFeed = () => {
             if (!isTokenRSSExist && isMounted.current) {
               setLoading(false);
               setToken('');
-              tokenRSSAdded({
-                getUserData: {
-                  tokenRSS: token,
-                },
-              }).then(noop);
               dispatch({
                 type: 'TOKEN_RSS_ADDED',
                 payload: {
                   tokenRSS: token,
                 },
               });
+              localStorage.setItem('tokenRSS', token);
               setRSSFeed(HTML.reverse());
               rssFeedAdded({
                 getRSSFeed: {

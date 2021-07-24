@@ -77,7 +77,7 @@ const Home = React.memo(() => {
   const isSeenCardsExist =
     (seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError) ||
     false;
-  const isTokenRSSExist = userData?.getUserData?.tokenRSS?.length > 0 && !userDataLoading && !userDataError;
+  const isTokenRSSExist = (localStorage.getItem('tokenRSS') || '').length > 0 && !userDataLoading && !userDataError;
 
   const handleBottomHit = useStableCallback(() => {
     if (
@@ -196,7 +196,7 @@ const Home = React.memo(() => {
       dispatchShared({
         type: 'TOKEN_RSS_ADDED',
         payload: {
-          tokenRSS: userData.getUserData.tokenRSS,
+          tokenRSS: localStorage.getItem('tokenRSS') || '',
         },
       });
     }

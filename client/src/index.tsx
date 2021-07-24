@@ -31,7 +31,10 @@ import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import Empty from './Layout/EmptyLayout';
 import { createClient } from 'graphql-ws';
 // import Login from './Login';
-
+const channel = new BroadcastChannel('sw-messages');
+const graphqlWS = createClient({
+  url: readEnvironmentVariable('GRAPHQL_WS_ADDRESS')!,
+});
 const Home = Loadable({
   loading: Empty,
   delay: 300, // 0.3 seconds
@@ -176,11 +179,20 @@ const MiddleAppRoute = () => {
           if (permission === 'granted' || permission === 'default') {
             const subscription = await reg.pushManager.subscribe({
               userVisibleOnly: true,
-
-              //public vapid key
               applicationServerKey: urlBase64ToUint8Array(readEnvironmentVariable('VAPID_PUB_KEY')),
             });
             subscribeToApollo({ signal: abortController.signal, subscription }).then(noop);
+            channel.addEventListener('message', (event) => {
+              console.log('Received', event.data);
+              // reg.showNotification(
+              //     event.data.title, // title of the notification
+              //     {
+              //       body: 'Push notification from section.io', //the body of the push notification
+              //       image: 'https://pixabay.com/vectors/bell-notification-communication-1096280/',
+              //       icon: 'https://pixabay.com/vectors/bell-notification-communication-1096280/', // icon
+              //     }
+              // );
+            });
           }
           reg.onupdatefound = () => {
             const waitingServiceWorker = reg.waiting;
@@ -202,6 +214,10 @@ const MiddleAppRoute = () => {
             return window.close();
           });
         });
+    } else if ('serviceWorker' in navigator && !stateShared.isLoggedIn && !isFinished) {
+      navigator?.serviceWorker?.controller?.postMessage({
+        type: 'logout',
+      });
     }
     return () => {
       isFinished = true;
@@ -268,16 +284,17 @@ const MiddleAppRoute = () => {
   return <AppRoutes isLoggedIn={stateShared.isLoggedIn} shouldRender={stateShared.shouldRender} />;
 };
 const CustomApolloProvider = ({ children }: any) => {
-  const client = createClient({
-    url: readEnvironmentVariable('GRAPHQL_WS_ADDRESS') || '',
-  });
-  client.subscribe(
+  graphqlWS.subscribe(
     {
-      query: '{ hello }',
+      query: 'subscription { getData }',
     },
     {
-      next: (data) => {
-        console.log(data);
+      next: (data: any) => {
+        if (data) {
+          const temp = JSON.parse(data.data.getData);
+          console.log(temp.newData);
+          console.log(JSON.parse(temp.fieldsUpdated));
+        }
       },
       error: (e) => {
         console.error(e);

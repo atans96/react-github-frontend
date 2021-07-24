@@ -75,18 +75,6 @@ export const useApolloFactory = (path: string) => {
       });
     }
   };
-  const tokenRSSAdded = async (data: Pick2<GraphQLUserData, 'getUserData', 'tokenRSS'>) => {
-    const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
-    if (oldData) {
-      await client.cache.writeQuery({
-        query: GET_USER_DATA,
-        data: {
-          ...oldData,
-          tokenRSS: data.getUserData.tokenRSS,
-        },
-      });
-    }
-  };
   const rssFeedAdded = async (data: GraphQLRSSFeedData) => {
     const oldData: GraphQLRSSFeedData | null = (await client.cache.readQuery({ query: GET_RSS_FEED })) || null;
     if (
@@ -183,29 +171,48 @@ export const useApolloFactory = (path: string) => {
       });
     }
   };
-  const { data: userData, loading: userDataLoading, error: userDataError } = useQuery(GET_USER_DATA, {
+  const {
+    data: userData,
+    loading: userDataLoading,
+    error: userDataError,
+  } = useQuery(GET_USER_DATA, {
     context: { clientName: 'mongo' },
   });
-  const { data: userInfoData, loading: userInfoDataLoading, error: userInfoDataError } = useQuery(GET_USER_INFO_DATA, {
+  const {
+    data: userInfoData,
+    loading: userInfoDataLoading,
+    error: userInfoDataError,
+  } = useQuery(GET_USER_INFO_DATA, {
     context: { clientName: 'mongo' },
   });
 
-  const { data: userStarred, loading: loadingUserStarred, error: errorUserStarred } = useQuery(GET_USER_STARRED, {
+  const {
+    data: userStarred,
+    loading: loadingUserStarred,
+    error: errorUserStarred,
+  } = useQuery(GET_USER_STARRED, {
     context: { clientName: 'mongo' },
   });
 
-  const { data: seenData, loading: seenDataLoading, error: seenDataError } = useQuery(GET_SEEN, {
+  const {
+    data: seenData,
+    loading: seenDataLoading,
+    error: seenDataError,
+  } = useQuery(GET_SEEN, {
     context: { clientName: 'mongo' },
   });
 
-  const { data: searchesData, loading: loadingSearchesData, error: errorSearchesData } = useQuery(GET_SEARCHES, {
+  const {
+    data: searchesData,
+    loading: loadingSearchesData,
+    error: errorSearchesData,
+  } = useQuery(GET_SEARCHES, {
     context: { clientName: 'mongo' },
   });
   return {
     mutation: {
       seenAdded,
       clickedAdded,
-      tokenRSSAdded,
       rssFeedAdded,
       removeStarred,
       addedStarredMe,
