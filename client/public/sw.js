@@ -100,3 +100,12 @@ addEventListener('push', (e) => {
   console.log(e.data.json());
   channel.postMessage(e.data.json());
 });
+addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  if (event.action === 'ok') {
+    event.waitUntil(self.client.openWindow(event.notification.data.url));
+  }
+});
+addEventListener('notificationclose', () => {
+  // Log analytical data
+});

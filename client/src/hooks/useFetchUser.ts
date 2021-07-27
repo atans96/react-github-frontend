@@ -196,8 +196,8 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
             async next(value: { iterator: any }) {
               if (value.iterator) {
                 try {
-                  const shouldFetch = await mainIter({ value: value.iterator, actionController });
-                  if (shouldFetch) {
+                  const shouldFetchOrg = await mainIter({ value: value.iterator, actionController });
+                  if (shouldFetchOrg) {
                     observer = fetcher(name, true);
                     execute().then(noop);
                   }
