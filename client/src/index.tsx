@@ -29,12 +29,10 @@ import DbCtx from './db/db.ctx';
 import { HttpLink } from './link/http/HttpLink';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import Empty from './Layout/EmptyLayout';
-import { createClient } from 'graphql-ws';
+import useWebSocket from './util/websocket';
 // import Login from './Login';
 const channel = new BroadcastChannel('sw-messages');
-const graphqlWS = createClient({
-  url: readEnvironmentVariable('GRAPHQL_WS_ADDRESS')!,
-});
+
 const Home = Loadable({
   loading: Empty,
   delay: 300, // 0.3 seconds
@@ -184,14 +182,14 @@ const MiddleAppRoute = () => {
             subscribeToApollo({ signal: abortController.signal, subscription }).then(noop);
             channel.addEventListener('message', (event) => {
               console.log('Received', event.data);
-              // reg.showNotification(
-              //     event.data.title, // title of the notification
-              //     {
-              //       body: 'Push notification from section.io', //the body of the push notification
-              //       image: 'https://pixabay.com/vectors/bell-notification-communication-1096280/',
-              //       icon: 'https://pixabay.com/vectors/bell-notification-communication-1096280/', // icon
-              //     }
-              // );
+              reg.showNotification(
+                event.data.title, // title of the notification
+                {
+                  body: 'Push notification from section.io', //the body of the push notification
+                  image: 'https://pixabay.com/vectors/bell-notification-communication-1096280/',
+                  icon: 'https://pixabay.com/vectors/bell-notification-communication-1096280/', // icon
+                }
+              );
             });
           }
           reg.onupdatefound = () => {
@@ -227,7 +225,7 @@ const MiddleAppRoute = () => {
 
   useEffect(() => {
     let isFinished = false;
-    if (!isFinished) {
+    if (!isFinished && stateShared.isLoggedIn) {
       getFile('languages.json', abortController.signal).then((githubLanguages) => {
         if (abortController.signal.aborted) return;
         if (githubLanguages) {
@@ -239,37 +237,35 @@ const MiddleAppRoute = () => {
           });
         }
       });
-      if (stateShared.isLoggedIn) {
-        getTokenGQL(abortController.signal).then((res) => {
-          if (abortController.signal.aborted) return;
-          if (res.tokenGQL) {
-            dispatchShared({
-              type: 'TOKEN_ADDED',
-              payload: {
-                tokenGQL: res.tokenGQL,
-              },
-            });
-          }
-        });
-      }
-      session(false, abortController.signal).then((data) => {
+      getTokenGQL(abortController.signal).then((res) => {
         if (abortController.signal.aborted) return;
-        if (!data.data) {
-          localStorage.clear();
-          clear();
+        if (res.tokenGQL) {
+          dispatchShared({
+            type: 'TOKEN_ADDED',
+            payload: {
+              tokenGQL: res.tokenGQL,
+            },
+          });
         }
-        dispatchShared({
-          type: 'SET_USERNAME',
-          payload: { username: data.username },
-        });
-        dispatchShared({
-          type: 'LOGIN',
-          payload: {
-            isLoggedIn: data.data,
-          },
-        });
       });
     }
+    session(false, abortController.signal).then((data) => {
+      if (abortController.signal.aborted) return;
+      if (!data.data) {
+        localStorage.clear();
+        clear();
+      }
+      dispatchShared({
+        type: 'SET_USERNAME',
+        payload: { username: data.username },
+      });
+      dispatchShared({
+        type: 'LOGIN',
+        payload: {
+          isLoggedIn: data.data,
+        },
+      });
+    });
     return () => {
       isFinished = true;
     };
@@ -284,32 +280,20 @@ const MiddleAppRoute = () => {
   return <AppRoutes isLoggedIn={stateShared.isLoggedIn} shouldRender={stateShared.shouldRender} />;
 };
 const CustomApolloProvider = ({ children }: any) => {
-  graphqlWS.subscribe(
-    {
-      query: 'subscription { getData }',
-    },
-    {
-      next: (data: any) => {
-        if (data) {
-          const temp = JSON.parse(data.data.getData);
-          console.log(temp.newData);
-          console.log(JSON.parse(temp.fieldsUpdated));
-        }
-      },
-      error: (e) => {
-        console.error(e);
-      },
-      complete: () => {
-        console.log('complete');
-      },
-    }
-  );
   const history = useHistory();
   const [stateShared, dispatchShared] = useTrackedStateShared();
+  const { lastJsonMessage, getWebSocket } = useWebSocket(readEnvironmentVariable('GRAPHQL_WS_ADDRESS')!, {
+    shouldReconnect: (closeEvent) => true,
+  });
+  useDeepCompareEffect(() => {
+    console.log(lastJsonMessage); //TODO: send this to DexieDB and notify apolloCache to update its cache
+  }, [lastJsonMessage || {}]);
+
   const unAuthorizedAction = () => {
     logoutAction(history, dispatchShared);
     window.alert('Your token has expired. We will logout you out.');
   };
+
   const clientWrapped = useStableCallback(() => {
     const githubGateway = new HttpLink({
       uri: 'https://api.github.com/graphql',
