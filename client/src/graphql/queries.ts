@@ -332,3 +332,15 @@ export const SEARCH_FOR_MORE_TOPICS = gql`
     }
   }
 `;
+export const associate = {
+  getSearches: GET_SEARCHES,
+  getStarRanking: GET_STAR_RANKING,
+  getSuggestedRepoImages: GET_SUGGESTED_REPO_IMAGES,
+  getSuggestedRepo: GET_SUGGESTED_REPO,
+  getClicked: GET_CLICKED,
+  getRSSFeed: GET_RSS_FEED,
+  getSeen: GET_SEEN,
+  getUserInfoStarred: GET_USER_STARRED,
+  getUserInfoData: GET_USER_INFO_DATA,
+  getUserData: GET_USER_DATA,
+} as any;
