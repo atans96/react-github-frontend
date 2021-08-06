@@ -25,7 +25,7 @@ export const useWebSocket = (
       try {
         return JSON.parse(lastMessage.data);
       } catch (e) {
-        return UNPARSABLE_JSON_OBJECT;
+        return lastMessage.data;
       }
     }
     return null;

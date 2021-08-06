@@ -30,6 +30,8 @@ import { HttpLink } from './link/http/HttpLink';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import Empty from './Layout/EmptyLayout';
 import useWebSocket from './util/websocket';
+import { associate, GET_SEARCHES, GET_USER_DATA } from './graphql/queries';
+import { GraphQLUserData } from './typing/interface';
 // import Login from './Login';
 const channel = new BroadcastChannel('sw-messages');
 
@@ -153,18 +155,59 @@ const MiddleAppRoute = () => {
     });
   });
   const location = useLocation();
-  const cacheData: any = useApolloClient().cache.extract();
+  const client = useApolloClient();
+  const cacheData: any = client.cache.extract();
+  const { lastJsonMessage, getWebSocket } = useWebSocket(readEnvironmentVariable('GRAPHQL_WS_ADDRESS_NODEJS')!, {
+    shouldReconnect: (closeEvent) => true,
+  });
 
   useDeepCompareEffect(() => {
     let isFinished = false;
-    if (cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
+    if (!isFinished && cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
+      delete cacheData.ROOT_QUERY.__typename;
       apolloCacheData.current = cacheData.ROOT_QUERY;
     }
     return () => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheData]);
+  }, [cacheData, lastJsonMessage]);
+
+  useEffect(() => {
+    return () => {
+      getWebSocket()?.close();
+    };
+  }, []);
+  const readQuery = (key: any) => {
+    return new Promise((resolve, reject) => {
+      (async () => {
+        const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: key })) || null;
+        resolve(oldData);
+      })();
+    });
+  };
+  useDeepCompareEffect(() => {
+    if (lastJsonMessage?.impactedQuery?.length > 0) {
+      lastJsonMessage.impactedQuery.forEach((obj: any) => {
+        const key: string = Object.keys(obj)[0];
+        readQuery(associate[key]).then((oldData: any) => {
+          const newData: any = Object.values(obj)[0];
+          if (newData && oldData) {
+            console.log('NEW DATA');
+            client.cache.writeQuery({
+              query: associate[key],
+              data: {
+                [key]: {
+                  ...oldData[key],
+                  ...newData,
+                },
+              },
+            });
+          }
+        });
+      });
+    }
+  }, [lastJsonMessage || {}]);
 
   useEffect(() => {
     let isFinished = false;
@@ -206,7 +249,7 @@ const MiddleAppRoute = () => {
           return (window.onbeforeunload = () => {
             // Promise.all([
             //   db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
-            //   endOfSession(stateShared.username, apolloCacheData),
+            //   endOfSession(stateShared.username, apolloCacheData.current),
             //   session(true),
             // ]).then(noop);
             return window.close();
@@ -250,21 +293,23 @@ const MiddleAppRoute = () => {
       });
     }
     session(false, abortController.signal).then((data) => {
-      if (abortController.signal.aborted) return;
-      if (!data.data) {
-        localStorage.clear();
-        clear();
+      if (data) {
+        if (abortController.signal.aborted) return;
+        if (!data.data) {
+          localStorage.clear();
+          clear();
+        }
+        dispatchShared({
+          type: 'SET_USERNAME',
+          payload: { username: data.username },
+        });
+        dispatchShared({
+          type: 'LOGIN',
+          payload: {
+            isLoggedIn: data.data,
+          },
+        });
       }
-      dispatchShared({
-        type: 'SET_USERNAME',
-        payload: { username: data.username },
-      });
-      dispatchShared({
-        type: 'LOGIN',
-        payload: {
-          isLoggedIn: data.data,
-        },
-      });
     });
     return () => {
       isFinished = true;
@@ -282,16 +327,9 @@ const MiddleAppRoute = () => {
 const CustomApolloProvider = ({ children }: any) => {
   const history = useHistory();
   const [stateShared, dispatchShared] = useTrackedStateShared();
-  const { lastJsonMessage, getWebSocket } = useWebSocket(readEnvironmentVariable('GRAPHQL_WS_ADDRESS')!, {
-    shouldReconnect: (closeEvent) => true,
-  });
-  useDeepCompareEffect(() => {
-    console.log(lastJsonMessage); //TODO: send this to DexieDB and notify apolloCache to update its cache
-  }, [lastJsonMessage || {}]);
-
   const unAuthorizedAction = () => {
     logoutAction(history, dispatchShared);
-    window.alert('Your token has expired. We will logout you out.');
+    window.alert('Your token has expired. We will log you out.');
   };
 
   const clientWrapped = useStableCallback(() => {
@@ -304,10 +342,8 @@ const CustomApolloProvider = ({ children }: any) => {
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
       uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql/`,
-      headers: { origin: `${process.env.CLIENT_HOST}:${process.env.CLIENT_PORT}` },
-      fetchOptions: {
-        credentials: 'include',
-      },
+      headers: { origin: `${readEnvironmentVariable('CLIENT_HOST')}:${readEnvironmentVariable('CLIENT_PORT')}` },
+      credentials: 'include',
     }) as unknown as ApolloLink;
     const cache = new InMemoryCache({
       addTypename: false,
@@ -400,6 +436,7 @@ const CustomApolloProvider = ({ children }: any) => {
       ),
     ]);
     return new ApolloClient({
+      credentials: 'include',
       link: link,
       cache: cache,
     });

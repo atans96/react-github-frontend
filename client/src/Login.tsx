@@ -37,20 +37,30 @@ const Login = () => {
 
         // Use code parameter and other parameters to make POST request to proxy_server
         requestGithubLogin(`${proxy_url}`, requestData, abortController.signal)
-          .then((response) => {
-            if (response && isMounted.current) {
-              localStorage.setItem('token_type', response.token.token_type);
-              localStorage.setItem('access_token', response.token.access_token);
+          .then((response: any) => {
+            if (response && response.length > 0 && isMounted.current) {
+              let res;
+              try {
+                res = JSON.parse(response);
+              } catch (e) {
+                setData({
+                  isLoading: false,
+                  errorMessage: 'Sorry! Login failed',
+                });
+                return;
+              }
+              localStorage.setItem('token_type', res.token);
+              localStorage.setItem('access_token', res.token_type);
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },
               });
               dispatchShared({
                 type: 'SET_USERNAME',
-                payload: { username: response.data.login },
+                payload: { username: res.data.login },
               });
               sysend.broadcast('Login', {
-                username: response.data.login,
+                username: res.data.login,
               });
               history.push('/');
               // window.location.reload(false);

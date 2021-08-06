@@ -251,13 +251,17 @@ export const markdownParsing = async (full_name: string, branch: string, signal:
 };
 export const session = async (end: boolean, signal?: any) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/start?&end=${end}`, {
+    const response = await fetch(`https://127.0.0.1:3001/start?&end=${end}`, {
       method: 'GET',
       credentials: 'include',
       keepalive: true,
       signal,
     });
-    return await response.json();
+    try {
+      return await response.json();
+    } catch (e) {
+      return undefined;
+    }
   } catch (e) {
     console.log(e);
     return { username: '', data: false };
@@ -306,7 +310,7 @@ export const requestGithubLogin = async (proxy_url: string, data: any, signal: a
       body: JSON.stringify(data),
       signal,
     });
-    return await response.json();
+    return await response.text();
   } catch (e) {
     console.log(e);
     return undefined;
