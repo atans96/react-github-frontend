@@ -91,27 +91,42 @@ const DbCtx = createContainer(() => {
       handleOpenDb().then(() => {
         conn.getUserInfoData.get(1).then((data: any) => {
           if (data) {
-            setUserInfoDataDexie({ getUserInfoData: JSON.parse(data.data).userInfoData.getUserInfoData });
+            const temp = JSON.parse(data.data).userInfoData.getUserInfoData;
+            if (temp) {
+              setUserInfoDataDexie({ getUserInfoData: temp });
+            }
           }
         });
         conn.getUserInfoStarred.get(1).then((data: any) => {
           if (data) {
-            setUserStarredDexie({ getUserInfoStarred: JSON.parse(data.data).userStarred.getUserInfoStarred });
+            const temp = JSON.parse(data.data).userStarred.getUserInfoStarred;
+            if (temp) {
+              setUserStarredDexie({ getUserInfoStarred: temp });
+            }
           }
         });
         conn.getSeen.get(1).then((data: any) => {
           if (data) {
-            setSeenDataDexie({ getSeen: JSON.parse(data.data).seenData.getSeen });
+            const temp = JSON.parse(data.data).seenData.getSeen;
+            if (temp) {
+              setSeenDataDexie({ getSeen: temp });
+            }
           }
         });
         conn.getSearchesData.get(1).then((data: any) => {
           if (data) {
-            setSearchesDataDexie({ getSearches: JSON.parse(data.data).searchesData.getSearches });
+            const temp = JSON.parse(data.data).searchesData.getSearches;
+            if (temp) {
+              setSearchesDataDexie({ getSearches: JSON.parse(data.data).searchesData.getSearches });
+            }
           }
         });
         conn.getUserData.get(1).then((data: any) => {
           if (data) {
-            setUserDataDexie({ getUserData: JSON.parse(data.data).userData.getUserData });
+            const temp = JSON.parse(data.data).userData.getUserData;
+            if (temp) {
+              setUserDataDexie({ getUserData: temp });
+            }
           }
         });
       }); // eslint-disable-next-line react-hooks/exhaustive-deps

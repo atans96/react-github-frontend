@@ -57,14 +57,14 @@ export const useApolloFactory = (path: string) => {
 
   useEffect(() => {
     timeRef.current = setTimeout(() => {
-      if (!stateShared.isLoggedIn) {
-        setShouldSkip(stateShared.isLoggedIn);
+      if (!stateShared.isLoggedIn || Object.keys(userDataDexie).length === 0) {
+        setShouldSkip(false);
       }
     }, 3500);
     return () => {
       clearTimeout(timeRef.current);
     };
-  }, [stateShared.isLoggedIn]);
+  }, [stateShared.isLoggedIn, userDataDexie]);
 
   const client = useApolloClient();
   const seenAdded = async (data: SeenProps[]) => {
@@ -268,62 +268,131 @@ export const useApolloFactory = (path: string) => {
       getUserData: () => {
         pushConsumers(Key.getUserData, path);
         if (stateShared.isLoggedIn) {
-          const temp: GraphQLUserData = userDataDexie;
-          if (stateShared.isLoggedIn && !userDataLoading && !userDataError && temp) {
-            db?.getUserData?.add({ data: JSON.stringify({ userData: temp }) });
+          if (!userDataLoading && !userDataError && Object.keys(userDataDexie).length > 0) {
+            return {
+              userData: userDataDexie as GraphQLUserData,
+              userDataLoading: Object.keys(userDataDexie).length === 0,
+              userDataError: undefined,
+            };
+          } else if (
+            !userDataLoading &&
+            !userDataError &&
+            userData &&
+            Object.keys(userDataDexie).length === 0 &&
+            Object.keys(userData).length > 0
+          ) {
+            db?.getUserData?.add({ data: JSON.stringify({ userData }) });
+            return {
+              userData: userData as GraphQLUserData,
+              userDataLoading: Object.keys(userData).length === 0,
+              userDataError: undefined,
+            };
+          } else {
+            return {
+              userData: userDataDexie as GraphQLUserData,
+              userDataLoading: Object.keys(userDataDexie).length === 0,
+              userDataError: undefined,
+            };
           }
-          return { userData: temp, userDataLoading: Object.keys(temp).length === 0, userDataError: undefined };
         } else {
-          const temp: GraphQLUserData = userData;
-          return { userData: temp, userDataLoading, userDataError };
+          return { userData: userData as GraphQLUserData, userDataLoading, userDataError };
         }
       },
       getUserInfoData: () => {
         pushConsumers(Key.getUserInfoData, path);
         if (stateShared.isLoggedIn) {
-          const temp: GraphQLUserInfoData = userInfoDataDexie;
-          if (stateShared.isLoggedIn && !userInfoDataLoading && !userInfoDataError && temp) {
-            db?.getUserInfoData?.add({ data: JSON.stringify({ userInfoData: temp }) });
+          if (!userInfoDataLoading && !userInfoDataError && Object.keys(userInfoDataDexie).length > 0) {
+            return {
+              userInfoData: userInfoDataDexie as GraphQLUserInfoData,
+              userInfoDataLoading: Object.keys(userInfoDataDexie).length === 0,
+              userInfoDataError: undefined,
+            };
+          } else if (
+            !userInfoDataLoading &&
+            !userInfoDataError &&
+            userInfoData &&
+            Object.keys(userInfoDataDexie).length === 0 &&
+            Object.keys(userInfoData).length > 0
+          ) {
+            db?.getUserInfoData?.add({ data: JSON.stringify({ userInfoData }) });
+            return {
+              userInfoData: userInfoData as GraphQLUserInfoData,
+              userInfoDataLoading: Object.keys(userInfoData).length === 0,
+              userInfoDataError: undefined,
+            };
+          } else {
+            return {
+              userInfoData: userInfoDataDexie as GraphQLUserInfoData,
+              userInfoDataLoading: Object.keys(userInfoDataDexie).length === 0,
+              userInfoDataError: undefined,
+            };
           }
-          return {
-            userInfoData: temp,
-            userInfoDataLoading: Object.keys(temp).length === 0,
-            userInfoDataError: undefined,
-          };
         } else {
-          const temp: GraphQLUserInfoData = userInfoData;
-          return { userInfoData: temp, userInfoDataLoading, userInfoDataError };
+          return { userInfoData: userInfoData as GraphQLUserInfoData, userInfoDataLoading, userInfoDataError };
         }
       },
       getUserInfoStarred: () => {
         pushConsumers(Key.getUserInfoStarred, path);
         if (stateShared.isLoggedIn) {
-          const temp: GraphQLUserStarred = userStarredDexie;
-          if (stateShared.isLoggedIn && !loadingUserStarred && !errorUserStarred && temp) {
-            db?.getUserInfoStarred?.add({ data: JSON.stringify({ userStarred: temp }) });
+          if (!loadingUserStarred && !errorUserStarred && Object.keys(userStarredDexie).length > 0) {
+            return {
+              userStarred: userStarredDexie as GraphQLUserStarred,
+              loadingUserStarred: Object.keys(userStarredDexie).length === 0,
+              errorUserStarred: undefined,
+            };
+          } else if (
+            !loadingUserStarred &&
+            !errorUserStarred &&
+            userStarred &&
+            Object.keys(userStarredDexie).length === 0 &&
+            Object.keys(userStarred).length > 0
+          ) {
+            db?.getUserInfoStarred?.add({ data: JSON.stringify({ userStarred }) });
+            return {
+              userStarred: userStarred as GraphQLUserStarred,
+              loadingUserStarred: Object.keys(userStarred).length === 0,
+              errorUserStarred: undefined,
+            };
+          } else {
+            return {
+              userStarred: userStarredDexie as GraphQLUserStarred,
+              loadingUserStarred: Object.keys(userStarredDexie).length === 0,
+              errorUserStarred: undefined,
+            };
           }
-          return {
-            userStarred: temp,
-            loadingUserStarred: Object.keys(temp).length === 0,
-            errorUserStarred: undefined,
-          };
         } else {
-          const temp: GraphQLUserStarred = userStarred;
-          return { userStarred: temp, loadingUserStarred, errorUserStarred };
+          return { userStarred: userStarred as GraphQLUserStarred, loadingUserStarred, errorUserStarred };
         }
       },
       getSeen: () => {
         pushConsumers(Key.getSeen, path);
         if (stateShared.isLoggedIn) {
-          const temp: GraphQLSeenData = seenDataDexie;
-          if (stateShared.isLoggedIn && !seenDataLoading && !seenDataError && temp) {
-            db?.getSeen?.add({ data: JSON.stringify({ seenData: temp }) }, 1);
+          if (!seenDataLoading && !seenDataError && Object.keys(seenDataDexie).length > 0) {
+            return {
+              seenData: seenDataDexie as GraphQLSeenData,
+              seenDataLoading: Object.keys(seenDataDexie).length === 0,
+              seenDataError: undefined,
+            };
+          } else if (
+            !seenDataLoading &&
+            !seenDataError &&
+            seenData &&
+            Object.keys(seenDataDexie).length === 0 &&
+            Object.keys(seenData).length > 0
+          ) {
+            db?.getSeen?.add({ data: JSON.stringify({ seenData }) });
+            return {
+              seenData: seenData as GraphQLSeenData,
+              seenDataLoading: Object.keys(seenData).length === 0,
+              seenDataError: undefined,
+            };
+          } else {
+            return {
+              seenData: seenDataDexie as GraphQLSeenData,
+              seenDataLoading: Object.keys(seenDataDexie).length === 0,
+              seenDataError: undefined,
+            };
           }
-          return {
-            seenData: temp,
-            seenDataLoading: Object.keys(temp).length === 0,
-            seenDataError: undefined,
-          };
         } else {
           const temp: GraphQLSeenData = seenData;
           return { seenData: temp, seenDataLoading, seenDataError };
@@ -332,15 +401,32 @@ export const useApolloFactory = (path: string) => {
       getSearchesData: () => {
         pushConsumers(Key.getSearchesData, path);
         if (stateShared.isLoggedIn) {
-          const temp: GraphQLSearchesData = searchesDataDexie;
-          if (stateShared.isLoggedIn && !loadingSearchesData && !errorSearchesData && temp) {
-            db?.getSearchesData?.add({ data: JSON.stringify({ searchesData: temp }) });
+          if (!loadingSearchesData && !errorSearchesData && Object.keys(searchesDataDexie).length > 0) {
+            return {
+              searchesData: searchesDataDexie as GraphQLSearchesData,
+              loadingSearchesData: Object.keys(searchesDataDexie).length === 0,
+              errorSearchesData: undefined,
+            };
+          } else if (
+            !loadingSearchesData &&
+            !errorSearchesData &&
+            searchesData &&
+            Object.keys(searchesDataDexie).length === 0 &&
+            Object.keys(searchesData).length > 0
+          ) {
+            db?.getSearchesData?.add({ data: JSON.stringify({ searchesData }) });
+            return {
+              searchesData: searchesData as GraphQLSearchesData,
+              loadingSearchesData: Object.keys(searchesData).length === 0,
+              errorSearchesData: undefined,
+            };
+          } else {
+            return {
+              searchesData: searchesDataDexie as GraphQLSearchesData,
+              loadingSearchesData: Object.keys(searchesDataDexie).length === 0,
+              errorSearchesData: undefined,
+            };
           }
-          return {
-            searchesData: temp,
-            loadingSearchesData: Object.keys(temp).length === 0,
-            errorSearchesData: undefined,
-          };
         } else {
           const temp: GraphQLSearchesData = searchesData;
           return { searchesData: temp, loadingSearchesData, errorSearchesData };
