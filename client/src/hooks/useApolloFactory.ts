@@ -18,10 +18,24 @@ import {
   GraphQLUserStarred,
 } from '../typing/interface';
 import { Pick2, SeenProps } from '../typing/type';
-
+import { useTrackedStateShared } from '../selectors/stateContextSelector';
+import DbCtx, {
+  useSearchesDataDexie,
+  useSeenDataDexie,
+  useUserDataDexie,
+  useUserInfoDataDexie,
+  useUserStarredDexie,
+} from '../db/db.ctx';
+import { useEffect, useRef, useState } from 'react';
+enum Key {
+  getUserData = 'getUserData',
+  getUserInfoData = 'getUserInfoData',
+  getUserInfoStarred = 'getUserInfoStarred',
+  getSeen = 'getSeen',
+  getSearchesData = 'getSearchesData',
+}
 const consumers: Record<string, Array<string>> = {};
-
-function pushConsumers(property: string, path: string) {
+function pushConsumers(property: Key, path: string) {
   if (consumers[path] && !consumers[path].includes(property)) {
     consumers[path].push(property);
   } else if (consumers[path] == undefined) {
@@ -29,6 +43,29 @@ function pushConsumers(property: string, path: string) {
   }
 }
 export const useApolloFactory = (path: string) => {
+  const { db } = DbCtx.useContainer();
+
+  const [userDataDexie] = useUserDataDexie();
+  const [userInfoDataDexie] = useUserInfoDataDexie();
+  const [userStarredDexie] = useUserStarredDexie();
+  const [seenDataDexie] = useSeenDataDexie();
+  const [searchesDataDexie] = useSearchesDataDexie();
+
+  const [stateShared] = useTrackedStateShared();
+  const [shouldSkip, setShouldSkip] = useState(true);
+  const timeRef = useRef<any>();
+
+  useEffect(() => {
+    timeRef.current = setTimeout(() => {
+      if (!stateShared.isLoggedIn) {
+        setShouldSkip(stateShared.isLoggedIn);
+      }
+    }, 3500);
+    return () => {
+      clearTimeout(timeRef.current);
+    };
+  }, [stateShared.isLoggedIn]);
+
   const client = useApolloClient();
   const seenAdded = async (data: SeenProps[]) => {
     const oldData: GraphQLSeenData | null = (await client.cache.readQuery({ query: GET_SEEN })) || null;
@@ -177,6 +214,7 @@ export const useApolloFactory = (path: string) => {
     error: userDataError,
   } = useQuery(GET_USER_DATA, {
     context: { clientName: 'mongo' },
+    skip: shouldSkip,
   });
   const {
     data: userInfoData,
@@ -184,6 +222,7 @@ export const useApolloFactory = (path: string) => {
     error: userInfoDataError,
   } = useQuery(GET_USER_INFO_DATA, {
     context: { clientName: 'mongo' },
+    skip: shouldSkip,
   });
 
   const {
@@ -192,6 +231,7 @@ export const useApolloFactory = (path: string) => {
     error: errorUserStarred,
   } = useQuery(GET_USER_STARRED, {
     context: { clientName: 'mongo' },
+    skip: shouldSkip,
   });
 
   const {
@@ -200,6 +240,7 @@ export const useApolloFactory = (path: string) => {
     error: seenDataError,
   } = useQuery(GET_SEEN, {
     context: { clientName: 'mongo' },
+    skip: shouldSkip,
   });
 
   const {
@@ -208,6 +249,7 @@ export const useApolloFactory = (path: string) => {
     error: errorSearchesData,
   } = useQuery(GET_SEARCHES, {
     context: { clientName: 'mongo' },
+    skip: shouldSkip,
   });
   return {
     mutation: {
@@ -224,29 +266,85 @@ export const useApolloFactory = (path: string) => {
     },
     query: {
       getUserData: () => {
-        pushConsumers('getUserData', path);
-        const temp: GraphQLUserData = userData;
-        return { userData: temp, userDataLoading, userDataError };
+        pushConsumers(Key.getUserData, path);
+        if (stateShared.isLoggedIn) {
+          const temp: GraphQLUserData = userDataDexie;
+          if (stateShared.isLoggedIn && !userDataLoading && !userDataError && temp) {
+            db?.getUserData?.add({ data: JSON.stringify({ userData: temp }) });
+          }
+          return { userData: temp, userDataLoading: Object.keys(temp).length === 0, userDataError: undefined };
+        } else {
+          const temp: GraphQLUserData = userData;
+          return { userData: temp, userDataLoading, userDataError };
+        }
       },
       getUserInfoData: () => {
-        const temp: GraphQLUserInfoData = userInfoData;
-        pushConsumers('getUserInfoData', path);
-        return { userInfoData: temp, userInfoDataLoading, userInfoDataError };
+        pushConsumers(Key.getUserInfoData, path);
+        if (stateShared.isLoggedIn) {
+          const temp: GraphQLUserInfoData = userInfoDataDexie;
+          if (stateShared.isLoggedIn && !userInfoDataLoading && !userInfoDataError && temp) {
+            db?.getUserInfoData?.add({ data: JSON.stringify({ userInfoData: temp }) });
+          }
+          return {
+            userInfoData: temp,
+            userInfoDataLoading: Object.keys(temp).length === 0,
+            userInfoDataError: undefined,
+          };
+        } else {
+          const temp: GraphQLUserInfoData = userInfoData;
+          return { userInfoData: temp, userInfoDataLoading, userInfoDataError };
+        }
       },
       getUserInfoStarred: () => {
-        const temp: GraphQLUserStarred = userStarred;
-        pushConsumers('getUserInfoStarred', path);
-        return { userStarred: temp, loadingUserStarred, errorUserStarred };
+        pushConsumers(Key.getUserInfoStarred, path);
+        if (stateShared.isLoggedIn) {
+          const temp: GraphQLUserStarred = userStarredDexie;
+          if (stateShared.isLoggedIn && !loadingUserStarred && !errorUserStarred && temp) {
+            db?.getUserInfoStarred?.add({ data: JSON.stringify({ userStarred: temp }) });
+          }
+          return {
+            userStarred: temp,
+            loadingUserStarred: Object.keys(temp).length === 0,
+            errorUserStarred: undefined,
+          };
+        } else {
+          const temp: GraphQLUserStarred = userStarred;
+          return { userStarred: temp, loadingUserStarred, errorUserStarred };
+        }
       },
       getSeen: () => {
-        const temp: GraphQLSeenData = seenData;
-        pushConsumers('getSeen', path);
-        return { seenData: temp, seenDataLoading, seenDataError };
+        pushConsumers(Key.getSeen, path);
+        if (stateShared.isLoggedIn) {
+          const temp: GraphQLSeenData = seenDataDexie;
+          if (stateShared.isLoggedIn && !seenDataLoading && !seenDataError && temp) {
+            db?.getSeen?.add({ data: JSON.stringify({ seenData: temp }) }, 1);
+          }
+          return {
+            seenData: temp,
+            seenDataLoading: Object.keys(temp).length === 0,
+            seenDataError: undefined,
+          };
+        } else {
+          const temp: GraphQLSeenData = seenData;
+          return { seenData: temp, seenDataLoading, seenDataError };
+        }
       },
       getSearchesData: () => {
-        const temp: GraphQLSearchesData = searchesData;
-        pushConsumers('getSearchesData', path);
-        return { searchesData: temp, loadingSearchesData, errorSearchesData };
+        pushConsumers(Key.getSearchesData, path);
+        if (stateShared.isLoggedIn) {
+          const temp: GraphQLSearchesData = searchesDataDexie;
+          if (stateShared.isLoggedIn && !loadingSearchesData && !errorSearchesData && temp) {
+            db?.getSearchesData?.add({ data: JSON.stringify({ searchesData: temp }) });
+          }
+          return {
+            searchesData: temp,
+            loadingSearchesData: Object.keys(temp).length === 0,
+            errorSearchesData: undefined,
+          };
+        } else {
+          const temp: GraphQLSearchesData = searchesData;
+          return { searchesData: temp, loadingSearchesData, errorSearchesData };
+        }
       },
     },
   };

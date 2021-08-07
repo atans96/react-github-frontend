@@ -17,9 +17,6 @@ import {
   StateStargazersProvider,
   useTrackedStateShared,
 } from './selectors/stateContextSelector';
-import { useApolloFactory } from './hooks/useApolloFactory';
-import { If } from './util/react-if/If';
-import { Then } from './util/react-if/Then';
 import ComposeProviders from './Layout/ComposeProviders';
 import Loadable from 'react-loadable';
 import { shallowEqual } from 'fast-equals';
@@ -30,7 +27,7 @@ import { HttpLink } from './link/http/HttpLink';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import Empty from './Layout/EmptyLayout';
 import useWebSocket from './util/websocket';
-import { associate, GET_SEARCHES, GET_USER_DATA } from './graphql/queries';
+import { associate } from './graphql/queries';
 import { GraphQLUserData } from './typing/interface';
 // import Login from './Login';
 const channel = new BroadcastChannel('sw-messages');
@@ -88,6 +85,7 @@ interface AppRoutes {
   shouldRender: string;
   isLoggedIn: boolean;
 }
+
 const AppRoutes = React.memo(
   ({ shouldRender, isLoggedIn }: AppRoutes) => {
     const location = useLocation();
@@ -154,7 +152,6 @@ const MiddleAppRoute = () => {
       payload: { username: fn.username },
     });
   });
-  const location = useLocation();
   const client = useApolloClient();
   const cacheData: any = client.cache.extract();
   const { lastJsonMessage, getWebSocket } = useWebSocket(readEnvironmentVariable('GRAPHQL_WS_ADDRESS_NODEJS')!, {
@@ -173,11 +170,6 @@ const MiddleAppRoute = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheData, lastJsonMessage]);
 
-  useEffect(() => {
-    return () => {
-      getWebSocket()?.close();
-    };
-  }, []);
   const readQuery = (key: any) => {
     return new Promise((resolve, reject) => {
       (async () => {
@@ -206,6 +198,9 @@ const MiddleAppRoute = () => {
           }
         });
       });
+    } else if (lastJsonMessage?.newUser) {
+      //TODO: show dialog bar Tutorial https://github.com/shipshapecode/shepherd
+      console.log('Welcome');
     }
   }, [lastJsonMessage || {}]);
 
@@ -247,11 +242,12 @@ const MiddleAppRoute = () => {
             username: stateShared.username,
           });
           return (window.onbeforeunload = () => {
-            // Promise.all([
-            //   db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }),
-            //   endOfSession(stateShared.username, apolloCacheData.current),
-            //   session(true),
-            // ]).then(noop);
+            Promise.all([
+              //TODO: apolloCacheData write it one by one
+              // db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }, 2),
+              // endOfSession(stateShared.username, apolloCacheData.current),
+              // session(true),
+            ]).then(noop);
             return window.close();
           });
         });
@@ -314,10 +310,11 @@ const MiddleAppRoute = () => {
     return () => {
       isFinished = true;
     };
-  }, []);
+  }, [stateShared.isLoggedIn]);
 
   useEffect(() => {
     return () => {
+      getWebSocket()?.close();
       abortController.abort();
     };
   }, []);

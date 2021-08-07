@@ -11,36 +11,87 @@ import {
   SuggestedData,
   SuggestedDataImages,
 } from '../typing/type';
+import { useTrackedStateShared } from './stateContextSelector';
+import { useEffect, useRef, useState } from 'react';
 //only use when you have a static database (doesn't depend on mutation action by the user)
 
 const useStarRanking = () => {
-  const { data: starRankingData, loading: starRankingDataLoading, error: starRankingDataError } = useQuery(
-    GET_STAR_RANKING,
-    {
-      context: { clientName: 'mongo' },
-    }
-  );
+  const [stateShared] = useTrackedStateShared();
+  const [shouldSkip, setShouldSkip] = useState(true);
+  const timeRef = useRef<any>();
+
+  useEffect(() => {
+    timeRef.current = setTimeout(() => {
+      if (!stateShared.isLoggedIn) {
+        setShouldSkip(stateShared.isLoggedIn);
+      }
+    }, 3500);
+    return () => {
+      clearTimeout(timeRef.current);
+    };
+  }, [stateShared.isLoggedIn]);
+
+  const {
+    data: starRankingData,
+    loading: starRankingDataLoading,
+    error: starRankingDataError,
+  } = useQuery(GET_STAR_RANKING, {
+    context: { clientName: 'mongo' },
+    skip: shouldSkip,
+  });
   return { starRankingData, starRankingDataLoading, starRankingDataError } as StarRankingData;
 };
 export const StarRankingContainer = createContainer(useStarRanking);
 const useSuggestedRepo = () => {
-  const { data: suggestedData, loading: suggestedDataLoading, error: suggestedDataError } = useQuery(
-    GET_SUGGESTED_REPO,
-    {
-      context: { clientName: 'mongo' },
-    }
-  );
+  const [stateShared] = useTrackedStateShared();
+  const [shouldSkip, setShouldSkip] = useState(true);
+  const timeRef = useRef<any>();
+  useEffect(() => {
+    timeRef.current = setTimeout(() => {
+      if (!stateShared.isLoggedIn) {
+        setShouldSkip(stateShared.isLoggedIn);
+      }
+    }, 3500);
+    return () => {
+      clearTimeout(timeRef.current);
+    };
+  }, [stateShared.isLoggedIn]);
+
+  const {
+    data: suggestedData,
+    loading: suggestedDataLoading,
+    error: suggestedDataError,
+  } = useQuery(GET_SUGGESTED_REPO, {
+    context: { clientName: 'mongo' },
+    skip: shouldSkip,
+  });
   return { suggestedData, suggestedDataError, suggestedDataLoading } as SuggestedData;
 };
 export const SuggestedRepoContainer = createContainer(useSuggestedRepo);
 export type suggestedDataImages = Pick<SuggestedDataImages, 'suggestedDataImages'>;
 const useSuggestedRepoImages = () => {
-  const { data: suggestedDataImages, loading: suggestedDataImagesLoading, error: suggestedDataImagesError } = useQuery(
-    GET_SUGGESTED_REPO_IMAGES,
-    {
-      context: { clientName: 'mongo' },
-    }
-  );
+  const [stateShared] = useTrackedStateShared();
+  const [shouldSkip, setShouldSkip] = useState(true);
+  const timeRef = useRef<any>();
+  useEffect(() => {
+    timeRef.current = setTimeout(() => {
+      if (!stateShared.isLoggedIn) {
+        setShouldSkip(stateShared.isLoggedIn);
+      }
+    }, 3500);
+    return () => {
+      clearTimeout(timeRef.current);
+    };
+  }, [stateShared.isLoggedIn]);
+
+  const {
+    data: suggestedDataImages,
+    loading: suggestedDataImagesLoading,
+    error: suggestedDataImagesError,
+  } = useQuery(GET_SUGGESTED_REPO_IMAGES, {
+    context: { clientName: 'mongo' },
+    skip: shouldSkip,
+  });
   return { suggestedDataImages, suggestedDataImagesError, suggestedDataImagesLoading } as SuggestedDataImages;
 };
 export const SuggestedRepoImagesContainer = createContainer(useSuggestedRepoImages);

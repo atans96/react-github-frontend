@@ -251,12 +251,15 @@ export const markdownParsing = async (full_name: string, branch: string, signal:
 };
 export const session = async (end: boolean, signal?: any) => {
   try {
-    const response = await fetch(`https://127.0.0.1:3001/start?&end=${end}`, {
-      method: 'GET',
-      credentials: 'include',
-      keepalive: true,
-      signal,
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable('GOLANG_PORT')}/start?&end=${end}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        keepalive: true,
+        signal,
+      }
+    );
     try {
       return await response.json();
     } catch (e) {
@@ -457,11 +460,14 @@ export const convertToWebP = async (imgUrl: string) => {
 };
 export const getFile = async (filename: string, signal: any) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_github_languages?filename=${filename}`, {
-      method: 'GET',
-      headers: { 'Accept-Encoding': 'gzip' },
-      signal,
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable('GOLANG_PORT')}/${filename}`,
+      {
+        method: 'GET',
+        headers: { 'Accept-Encoding': 'gzip' },
+        signal,
+      }
+    );
     return await response.json();
   } catch (e) {
     console.log(e);

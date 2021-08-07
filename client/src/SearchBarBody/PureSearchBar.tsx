@@ -16,13 +16,17 @@ import ButtonPageSetting from './PureSearchBarBody/ButtonPageSetting';
 import ButtonTags from './PureSearchBarBody/ButtonTags';
 import Empty from '../Layout/EmptyLayout';
 import PureInput from './PureInput';
-import Results from './PureSearchBarBody/Results';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
 
 const ResultRenderer = Loadable({
   loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "ResultRenderer" */ './PureSearchBarBody/ResultsBody/ResultRenderer'),
+});
+const Results = Loadable({
+  loading: Empty,
+  delay: 300,
+  loader: () => import(/* webpackChunkName: "ResultRenderer" */ './PureSearchBarBody/Results'),
 });
 
 interface SearchBarProps {
@@ -295,7 +299,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             condition={
               searchesData &&
               searchesData.getSearches !== null &&
-              searchesData.getSearches.searches.length > 0 &&
+              searchesData?.getSearches?.searches?.length > 0 &&
               valueRef.length > 0 &&
               visibleSearchesHistory &&
               filter(searchesData?.getSearches?.searches, valueRef).length > 0

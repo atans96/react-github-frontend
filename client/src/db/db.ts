@@ -6,7 +6,11 @@ export interface ApolloCache {
 }
 
 export class ApolloCacheDB extends Dexie {
-  public apolloCache: Dexie.Table<ApolloCache, number>; // id is number in this case
+  public getUserData: Dexie.Table<ApolloCache, number>; // id is number in this case
+  public getUserInfoData: Dexie.Table<ApolloCache, number>;
+  public getUserInfoStarred: Dexie.Table<ApolloCache, number>;
+  public getSeen: Dexie.Table<ApolloCache, number>;
+  public getSearchesData: Dexie.Table<ApolloCache, number>;
 
   public constructor() {
     super('ApolloCacheDB');
@@ -14,9 +18,17 @@ export class ApolloCacheDB extends Dexie {
     this.autoOpen = false;
 
     this.version(1).stores({
-      apolloCache: '++id,data',
+      getUserData: '++id,data',
+      getUserInfoData: '++id,data',
+      getUserInfoStarred: '++id,data',
+      getSeen: '++id,data',
+      getSearchesData: '++id,data',
     });
 
-    this.apolloCache = this.table('apolloCache');
+    this.getUserData = this.table('getUserData');
+    this.getUserInfoData = this.table('getUserInfoData');
+    this.getUserInfoStarred = this.table('getUserInfoStarred');
+    this.getSeen = this.table('getSeen');
+    this.getSearchesData = this.table('getSearchesData');
   }
 }

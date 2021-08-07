@@ -9,16 +9,9 @@ const PureSearchBar = Loadable({
   loader: () => import(/* webpackChunkName: "PureSearchBar" */ './SearchBarBody/PureSearchBar'),
 });
 const SearchBar = () => {
-    //TODO: https://github.com/moroshko/react-autosuggest
+  //TODO: https://github.com/moroshko/react-autosuggest
   const [stateShared] = useTrackedStateShared();
   const portalExpandable = useRef<any>();
-  // useEffect(() => {
-  //   console.log('mounted');
-  //   return () => {
-  //     console.log('unmounted');
-  //     // Anything in here is fired on component unmount.
-  //   };
-  // }, []);
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom
