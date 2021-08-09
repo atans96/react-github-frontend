@@ -216,6 +216,13 @@ export const useApolloFactory = (path: string) => {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
   });
+  db?.transaction('rw', [db.getUserData], async () => {
+    const getUserData = await db.getUserData.get(1);
+    if (!getUserData && userData?.getUserData && Object.keys(userData.getUserData).length > 0) {
+      db?.getUserData?.add({ data: JSON.stringify({ userData }) }, 1);
+    }
+  });
+
   const {
     data: userInfoData,
     loading: userInfoDataLoading,
@@ -223,6 +230,12 @@ export const useApolloFactory = (path: string) => {
   } = useQuery(GET_USER_INFO_DATA, {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
+  });
+  db?.transaction('rw', [db.getUserInfoData], async () => {
+    const getUserInfoData = await db.getUserInfoData.get(1);
+    if (!getUserInfoData && userInfoData?.getUserInfoData && Object.keys(userInfoData.getUserInfoData).length > 0) {
+      db?.getUserInfoData?.add({ data: JSON.stringify({ userInfoData }) }, 1);
+    }
   });
 
   const {
@@ -233,6 +246,16 @@ export const useApolloFactory = (path: string) => {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
   });
+  db?.transaction('rw', [db.getUserInfoStarred], async () => {
+    const getUserInfoStarred = await db.getUserInfoStarred.get(1);
+    if (
+      !getUserInfoStarred &&
+      userStarred?.getUserInfoStarred &&
+      Object.keys(userStarred.getUserInfoStarred).length > 0
+    ) {
+      db?.getUserInfoStarred?.add({ data: JSON.stringify({ userStarred }) }, 1);
+    }
+  });
 
   const {
     data: seenData,
@@ -241,6 +264,12 @@ export const useApolloFactory = (path: string) => {
   } = useQuery(GET_SEEN, {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
+  });
+  db?.transaction('rw', [db.getSeen], async () => {
+    const getSeen = await db.getSeen.get(1);
+    if (!getSeen && seenData?.getSeen?.seenCards?.length > 0) {
+      db?.getSeen?.add({ data: JSON.stringify({ seenData }) }, 1);
+    }
   });
 
   const {
@@ -251,6 +280,13 @@ export const useApolloFactory = (path: string) => {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
   });
+  db?.transaction('rw', [db.getSearchesData], async () => {
+    const getSearchesData = await db.getSearchesData.get(1);
+    if (!getSearchesData && searchesData?.getSearches?.searches?.length > 0) {
+      db?.getSearchesData?.add({ data: JSON.stringify({ searchesData }) }, 1);
+    }
+  });
+
   return {
     mutation: {
       seenAdded,
@@ -268,32 +304,18 @@ export const useApolloFactory = (path: string) => {
       getUserData: () => {
         pushConsumers(Key.getUserData, path);
         if (stateShared.isLoggedIn) {
-          if (!userDataLoading && !userDataError && Object.keys(userDataDexie).length > 0) {
-            return {
-              userData: userDataDexie as GraphQLUserData,
-              userDataLoading: Object.keys(userDataDexie).length === 0,
-              userDataError: undefined,
-            };
-          } else if (
-            !userDataLoading &&
-            !userDataError &&
-            userData &&
-            Object.keys(userDataDexie).length === 0 &&
-            Object.keys(userData).length > 0
-          ) {
-            db?.getUserData?.add({ data: JSON.stringify({ userData }) });
-            return {
-              userData: userData as GraphQLUserData,
-              userDataLoading: Object.keys(userData).length === 0,
-              userDataError: undefined,
-            };
-          } else {
+          if (Object.keys(userDataDexie).length > 0) {
             return {
               userData: userDataDexie as GraphQLUserData,
               userDataLoading: Object.keys(userDataDexie).length === 0,
               userDataError: undefined,
             };
           }
+          return {
+            userData: userData as GraphQLUserData,
+            userDataLoading,
+            userDataError,
+          };
         } else {
           return { userData: userData as GraphQLUserData, userDataLoading, userDataError };
         }
@@ -301,32 +323,18 @@ export const useApolloFactory = (path: string) => {
       getUserInfoData: () => {
         pushConsumers(Key.getUserInfoData, path);
         if (stateShared.isLoggedIn) {
-          if (!userInfoDataLoading && !userInfoDataError && Object.keys(userInfoDataDexie).length > 0) {
-            return {
-              userInfoData: userInfoDataDexie as GraphQLUserInfoData,
-              userInfoDataLoading: Object.keys(userInfoDataDexie).length === 0,
-              userInfoDataError: undefined,
-            };
-          } else if (
-            !userInfoDataLoading &&
-            !userInfoDataError &&
-            userInfoData &&
-            Object.keys(userInfoDataDexie).length === 0 &&
-            Object.keys(userInfoData).length > 0
-          ) {
-            db?.getUserInfoData?.add({ data: JSON.stringify({ userInfoData }) });
-            return {
-              userInfoData: userInfoData as GraphQLUserInfoData,
-              userInfoDataLoading: Object.keys(userInfoData).length === 0,
-              userInfoDataError: undefined,
-            };
-          } else {
+          if (Object.keys(userInfoDataDexie).length > 0) {
             return {
               userInfoData: userInfoDataDexie as GraphQLUserInfoData,
               userInfoDataLoading: Object.keys(userInfoDataDexie).length === 0,
               userInfoDataError: undefined,
             };
           }
+          return {
+            userInfoData: userInfoData as GraphQLUserInfoData,
+            userInfoDataLoading,
+            userInfoDataError,
+          };
         } else {
           return { userInfoData: userInfoData as GraphQLUserInfoData, userInfoDataLoading, userInfoDataError };
         }
@@ -334,32 +342,18 @@ export const useApolloFactory = (path: string) => {
       getUserInfoStarred: () => {
         pushConsumers(Key.getUserInfoStarred, path);
         if (stateShared.isLoggedIn) {
-          if (!loadingUserStarred && !errorUserStarred && Object.keys(userStarredDexie).length > 0) {
-            return {
-              userStarred: userStarredDexie as GraphQLUserStarred,
-              loadingUserStarred: Object.keys(userStarredDexie).length === 0,
-              errorUserStarred: undefined,
-            };
-          } else if (
-            !loadingUserStarred &&
-            !errorUserStarred &&
-            userStarred &&
-            Object.keys(userStarredDexie).length === 0 &&
-            Object.keys(userStarred).length > 0
-          ) {
-            db?.getUserInfoStarred?.add({ data: JSON.stringify({ userStarred }) });
-            return {
-              userStarred: userStarred as GraphQLUserStarred,
-              loadingUserStarred: Object.keys(userStarred).length === 0,
-              errorUserStarred: undefined,
-            };
-          } else {
+          if (Object.keys(userStarredDexie).length > 0) {
             return {
               userStarred: userStarredDexie as GraphQLUserStarred,
               loadingUserStarred: Object.keys(userStarredDexie).length === 0,
               errorUserStarred: undefined,
             };
           }
+          return {
+            userStarred: userStarred as GraphQLUserStarred,
+            loadingUserStarred,
+            errorUserStarred,
+          };
         } else {
           return { userStarred: userStarred as GraphQLUserStarred, loadingUserStarred, errorUserStarred };
         }
@@ -367,32 +361,18 @@ export const useApolloFactory = (path: string) => {
       getSeen: () => {
         pushConsumers(Key.getSeen, path);
         if (stateShared.isLoggedIn) {
-          if (!seenDataLoading && !seenDataError && Object.keys(seenDataDexie).length > 0) {
-            return {
-              seenData: seenDataDexie as GraphQLSeenData,
-              seenDataLoading: Object.keys(seenDataDexie).length === 0,
-              seenDataError: undefined,
-            };
-          } else if (
-            !seenDataLoading &&
-            !seenDataError &&
-            seenData &&
-            Object.keys(seenDataDexie).length === 0 &&
-            Object.keys(seenData).length > 0
-          ) {
-            db?.getSeen?.add({ data: JSON.stringify({ seenData }) });
-            return {
-              seenData: seenData as GraphQLSeenData,
-              seenDataLoading: Object.keys(seenData).length === 0,
-              seenDataError: undefined,
-            };
-          } else {
+          if (Object.keys(seenDataDexie).length > 0) {
             return {
               seenData: seenDataDexie as GraphQLSeenData,
               seenDataLoading: Object.keys(seenDataDexie).length === 0,
               seenDataError: undefined,
             };
           }
+          return {
+            seenData: seenData as GraphQLSeenData,
+            seenDataLoading,
+            seenDataError,
+          };
         } else {
           const temp: GraphQLSeenData = seenData;
           return { seenData: temp, seenDataLoading, seenDataError };
@@ -401,32 +381,18 @@ export const useApolloFactory = (path: string) => {
       getSearchesData: () => {
         pushConsumers(Key.getSearchesData, path);
         if (stateShared.isLoggedIn) {
-          if (!loadingSearchesData && !errorSearchesData && Object.keys(searchesDataDexie).length > 0) {
-            return {
-              searchesData: searchesDataDexie as GraphQLSearchesData,
-              loadingSearchesData: Object.keys(searchesDataDexie).length === 0,
-              errorSearchesData: undefined,
-            };
-          } else if (
-            !loadingSearchesData &&
-            !errorSearchesData &&
-            searchesData &&
-            Object.keys(searchesDataDexie).length === 0 &&
-            Object.keys(searchesData).length > 0
-          ) {
-            db?.getSearchesData?.add({ data: JSON.stringify({ searchesData }) });
-            return {
-              searchesData: searchesData as GraphQLSearchesData,
-              loadingSearchesData: Object.keys(searchesData).length === 0,
-              errorSearchesData: undefined,
-            };
-          } else {
+          if (Object.keys(searchesDataDexie).length > 0) {
             return {
               searchesData: searchesDataDexie as GraphQLSearchesData,
               loadingSearchesData: Object.keys(searchesDataDexie).length === 0,
               errorSearchesData: undefined,
             };
           }
+          return {
+            searchesData: searchesData as GraphQLSearchesData,
+            loadingSearchesData,
+            errorSearchesData,
+          };
         } else {
           const temp: GraphQLSearchesData = searchesData;
           return { searchesData: temp, loadingSearchesData, errorSearchesData };

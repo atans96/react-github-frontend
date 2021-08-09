@@ -235,7 +235,7 @@ const Home = React.memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.filterBySeen]);
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     let isFinished = false;
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
       dispatch({
@@ -280,7 +280,7 @@ const Home = React.memo(() => {
     () => {
       let isFinished = false;
       (async () => {
-        if (location.pathname === '/' && !isFinished && !isFetchFinish.isFetchFinish) {
+        if (location.pathname === '/' && !isFinished && !isFetchFinish.isFetchFinish && isMergedDataExist) {
           const release = await mutex.acquire(); //if no MUTEX, there's no guarantee fetch will be executed too much
           // so we need to use mutex so any pending execution of asnyc here will be put in Event Loop and after the lock released will resume
 
@@ -346,17 +346,12 @@ const Home = React.memo(() => {
             getRepoImages({
               signal: abortController.signal,
               data: chunk,
-              topic: Array.isArray(stateShared.queryUsername)
-                ? stateShared.queryUsername[0]
-                : stateShared.queryUsername,
-              page: state.page,
-              axiosCancel: axiosCancel.current,
             }).then((response: any) => {
-              if (response && response.length > 0) {
+              if (response && response?.value?.length > 0) {
                 dispatch({
                   type: 'IMAGES_DATA_ADDED',
                   payload: {
-                    images: response,
+                    images: [{ id: response.id, value: response.value }],
                   },
                 });
               }

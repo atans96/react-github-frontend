@@ -95,6 +95,7 @@ addEventListener('fetch', function (event) {
     );
   }
 });
+
 const channel = new BroadcastChannel('sw-messages');
 addEventListener('push', (e) => {
   console.log(e.data.json());

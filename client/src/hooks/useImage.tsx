@@ -17,9 +17,15 @@ const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<
     const queueNext = (src: Nullable<string>) => {
       return promiseFactory(src).then((data: any) => {
         done = true;
+        let sr: any = '';
+        if (data.src.original === src) {
+          sr = src;
+        } else {
+          sr = `data:image/webp;base64, ${data.src.original}`;
+        }
         resolve({
           src: {
-            original: data.src.original.length > 0 ? `data:image/webp;base64, ${data.src.original}` : '',
+            original: sr?.length > 0 ? `${sr}` : '',
           },
           width: data.width,
           height: data.height,

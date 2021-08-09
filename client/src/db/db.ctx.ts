@@ -91,7 +91,7 @@ const DbCtx = createContainer(() => {
       handleOpenDb().then(() => {
         conn.getUserInfoData.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).userInfoData.getUserInfoData;
+            const temp = JSON.parse(data.data).userInfoData?.getUserInfoData;
             if (temp) {
               setUserInfoDataDexie({ getUserInfoData: temp });
             }
@@ -99,7 +99,7 @@ const DbCtx = createContainer(() => {
         });
         conn.getUserInfoStarred.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).userStarred.getUserInfoStarred;
+            const temp = JSON.parse(data.data).userStarred?.getUserInfoStarred;
             if (temp) {
               setUserStarredDexie({ getUserInfoStarred: temp });
             }
@@ -107,7 +107,7 @@ const DbCtx = createContainer(() => {
         });
         conn.getSeen.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).seenData.getSeen;
+            const temp = JSON.parse(data.data).seenData?.getSeen;
             if (temp) {
               setSeenDataDexie({ getSeen: temp });
             }
@@ -115,7 +115,7 @@ const DbCtx = createContainer(() => {
         });
         conn.getSearchesData.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).searchesData.getSearches;
+            const temp = JSON.parse(data.data).searchesData?.getSearches;
             if (temp) {
               setSearchesDataDexie({ getSearches: JSON.parse(data.data).searchesData.getSearches });
             }
@@ -123,7 +123,7 @@ const DbCtx = createContainer(() => {
         });
         conn.getUserData.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).userData.getUserData;
+            const temp = JSON.parse(data.data).userData?.getUserData;
             if (temp) {
               setUserDataDexie({ getUserData: temp });
             }
