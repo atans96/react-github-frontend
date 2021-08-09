@@ -111,11 +111,12 @@ const useActionResolvePromise = () => {
   const actionResolvePromise = useStableCallback(
     ({ action, data = undefined, displayName, error = undefined }: ActionResolvePromise) => {
       if (!loadingUserStarred && !errorUserStarred && !seenDataLoading && !seenDataError) {
-        setIsLoading({ isLoading: false });
         if (data && action === 'append') {
+          setIsLoading({ isLoading: false });
           actionAppend(data, displayName)!.then(noop);
         }
         if (action === 'noData') {
+          setIsLoading({ isLoading: false });
           setIsFetchFinish({ isFetchFinish: true });
           if (stateShared.queryUsername.length > 2) {
             setNotification({ notification: 'Sorry, no more data found' });
@@ -124,6 +125,7 @@ const useActionResolvePromise = () => {
           }
         }
         if (action === 'end') {
+          setIsLoading({ isLoading: false });
           setIsFetchFinish({ isFetchFinish: true });
           if (stateShared.queryUsername.length > 2) {
             setNotification({ notification: "That's all the data we get" });
@@ -132,14 +134,18 @@ const useActionResolvePromise = () => {
           }
         }
         if (action === 'error' && error) {
+          setIsLoading({ isLoading: false });
           throw new Error(`Something wrong at ${displayName} ${error}`);
         }
         if (data && data.error_404) {
+          setIsLoading({ isLoading: false });
           setNotification({ notification: `Sorry, no data found for ${stateShared.queryUsername}` });
         } else if (data && data.error_403) {
+          setIsLoading({ isLoading: false });
           setIsFetchFinish({ isFetchFinish: true });
           setNotification({ notification: 'Sorry, API rate limit exceeded.' });
         } else if (data && data.error_message) {
+          setIsLoading({ isLoading: false });
           setIsFetchFinish({ isFetchFinish: true });
           setNotification({ notification: `${data.error_message}` });
         }

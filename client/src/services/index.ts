@@ -474,38 +474,24 @@ export const getFile = async (filename: string, signal: any) => {
     return undefined;
   }
 };
-export const getRepoImages = async ({
-  axiosCancel = false,
-  signal,
-  data,
-  topic,
-  page,
-}: {
-  axiosCancel: boolean;
-  signal: any | undefined;
-  data: any[];
-  topic: string;
-  page: number;
-}) => {
+export const getRepoImages = async ({ signal, data }: { signal: any | undefined; data: any[] }) => {
   if (data) {
     try {
       //actually query_topic is not used at Node.Js but since we want to save this query to Redis, each request
       //must contain a different URL to save each request
       const response = await fetch(
-        `${readEnvironmentVariable(
-          'UWEBSOCKET_ADDRESS'
-        )}/images_from_markdown?query_topic=${topic}&page=${page}&axiosCancel=${axiosCancel}`,
+        `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+          'GOLANG_PORT'
+        )}/images_from_markdown`,
         {
           method: 'POST',
           credentials: 'include',
           headers: {
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-origin',
             'Content-Type': 'application/json',
           },
           keepalive: true,
           body: JSON.stringify({
-            data: data,
+            data,
           }),
           //Fastify not only supports async functions for use as controller code,
           // but it also automatically parses incoming requests into JSON if the Content-Type header suggests

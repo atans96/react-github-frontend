@@ -26,7 +26,7 @@ import DbCtx from './db/db.ctx';
 import { HttpLink } from './link/http/HttpLink';
 import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import Empty from './Layout/EmptyLayout';
-import useWebSocket from './util/websocket';
+import useWebSocket, { SendMessage } from './util/websocket';
 import { associate } from './graphql/queries';
 import { GraphQLUserData } from './typing/interface';
 // import Login from './Login';
@@ -154,10 +154,12 @@ const MiddleAppRoute = () => {
   });
   const client = useApolloClient();
   const cacheData: any = client.cache.extract();
-  const { lastJsonMessage, getWebSocket } = useWebSocket(readEnvironmentVariable('GRAPHQL_WS_ADDRESS_NODEJS')!, {
-    shouldReconnect: (closeEvent) => true,
-  });
-
+  const { lastJsonMessage, getWebSocket, sendJsonMessage } = useWebSocket(
+    readEnvironmentVariable('GRAPHQL_WS_ADDRESS_NODEJS')!,
+    {
+      shouldReconnect: (closeEvent) => true,
+    }
+  );
   useDeepCompareEffect(() => {
     let isFinished = false;
     if (!isFinished && cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
@@ -242,8 +244,11 @@ const MiddleAppRoute = () => {
             username: stateShared.username,
           });
           return (window.onbeforeunload = () => {
+            sendJsonMessage({
+              close: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') },
+            });
             Promise.all([
-              //TODO: apolloCacheData write it one by one
+              // TODO: apolloCacheData write it one by one
               // db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }, 2),
               // endOfSession(stateShared.username, apolloCacheData.current),
               // session(true),
@@ -265,6 +270,7 @@ const MiddleAppRoute = () => {
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && stateShared.isLoggedIn) {
+      sendJsonMessage({ open: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') } });
       getFile('languages.json', abortController.signal).then((githubLanguages) => {
         if (abortController.signal.aborted) return;
         if (githubLanguages) {
