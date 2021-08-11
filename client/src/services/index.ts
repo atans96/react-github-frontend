@@ -5,7 +5,9 @@ import { Observable } from '../utilities/observables/Observable';
 export const getAllGraphQLNavBar = async (username: string, signal: any) => {
   try {
     const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/graphqlUserData?username=${username}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/graphqlUserData?username=${username}`,
       {
         method: 'GET',
         signal,
@@ -16,20 +18,16 @@ export const getAllGraphQLNavBar = async (username: string, signal: any) => {
     console.log(e);
   }
 };
-export const endOfSession = async (username: string, cacheData: any) => {
+export const getRSSFeed = async (rssUrl: string) => {
   try {
     const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/end_of_session?username=${username}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/rssFeed?rssUrl=${rssUrl}`,
       {
-        method: 'POST',
-        body: JSON.stringify({ data: cacheData }),
+        method: 'GET',
         keepalive: true,
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          'Sec-Fetch-Mode': 'cors',
-          'Sec-Fetch-Site': 'same-origin',
-        },
       }
     );
     return await response.json();
@@ -37,10 +35,31 @@ export const endOfSession = async (username: string, cacheData: any) => {
     console.log(e);
   }
 };
+export const endOfSession = async (username: string, cacheData: any) => {
+  try {
+    if (Object.keys(cacheData).length > 0) {
+      const response = await fetch(
+        `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+          'GOLANG_PORT'
+        )}/server_uwebsocket/end_of_session`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ data: cacheData, username }),
+          credentials: 'include',
+        }
+      );
+      return await response.json();
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
 export const getTopContributors = async (fullName: string) => {
   try {
     const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTopContributors?full_name=${fullName}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/getTopContributors?full_name=${fullName}`,
       {
         method: 'GET',
         credentials: 'include',
@@ -55,7 +74,9 @@ export const getTopContributors = async (fullName: string) => {
 export const removeStarredMe = async (repoFullName: string) => {
   try {
     const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/removeStarredMe?repoFullName=${repoFullName}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/removeStarredMe?repoFullName=${repoFullName}`,
       {
         method: 'GET',
       }
@@ -68,7 +89,9 @@ export const removeStarredMe = async (repoFullName: string) => {
 export const setStarredMe = async (repoFullName: string) => {
   try {
     const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setStarredMe?repoFullName=${repoFullName}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/setStarredMe?repoFullName=${repoFullName}`,
       {
         method: 'GET',
       }
@@ -80,12 +103,17 @@ export const setStarredMe = async (repoFullName: string) => {
 };
 export const setTokenGQL = async (tokenGQL: string, username: string) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/setTokenGQL?username=${username}`, {
-      method: 'GET',
-      headers: {
-        Authorization: `${tokenGQL}`,
-      },
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/setTokenGQL?username=${username}`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `${tokenGQL}`,
+        },
+      }
+    );
     return await response.json();
   } catch (e) {
     console.log(e);
@@ -93,10 +121,15 @@ export const setTokenGQL = async (tokenGQL: string, username: string) => {
 };
 export const getTokenGQL = async (signal: any) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/getTokenGQL`, {
-      method: 'GET',
-      signal,
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/getTokenGQL`,
+      {
+        method: 'GET',
+        signal,
+      }
+    );
     return (await response.json()) as { tokenGQL: string };
   } catch (e) {
     console.log(e);
@@ -105,10 +138,15 @@ export const getTokenGQL = async (signal: any) => {
 };
 export const removeTokenGQL = async () => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyTokenGQL`, {
-      method: 'GET',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/destroyTokenGQL`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
     return await response.json();
   } catch (e) {
     console.log(e);
@@ -116,10 +154,15 @@ export const removeTokenGQL = async () => {
 };
 export const removeToken = async () => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/destroyToken`, {
-      method: 'GET',
-      credentials: 'include',
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/destroyToken`,
+      {
+        method: 'GET',
+        credentials: 'include',
+      }
+    );
     return await response.json();
   } catch (e) {
     console.log(e);
@@ -237,7 +280,9 @@ export const getValidGQLProperties = async () => {
 export const markdownParsing = async (full_name: string, branch: string, signal: any) => {
   try {
     const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/markdown?full_name=${full_name}&branch=${branch}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/markdown?full_name=${full_name}&branch=${branch}`,
       {
         method: 'GET',
         signal,
@@ -360,7 +405,9 @@ export const getSearchTopics = async ({
 }) => {
   try {
     const response = await fetch(
-      `${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/search_topics?topic=${topic}&axiosCancel=${axiosCancel}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/search_topics?topic=${topic}&axiosCancel=${axiosCancel}`,
       {
         method: 'GET',
         credentials: 'include',
@@ -426,19 +473,24 @@ export const getElasticSearchBert = async (query: string, signal: any) => {
 };
 export const requestGithubGraphQLLogin = async (token: string) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/auth_graphql`, {
-      method: 'POST',
-      keepalive: true,
-      credentials: 'include',
-      headers: {
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        token: token,
-      }),
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/server_uwebsocket/auth_graphql`,
+      {
+        method: 'POST',
+        keepalive: true,
+        credentials: 'include',
+        headers: {
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-origin',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: token,
+        }),
+      }
+    );
     return (await response.json()) as { success: boolean };
   } catch (e) {
     console.log(e);
@@ -447,9 +499,14 @@ export const requestGithubGraphQLLogin = async (token: string) => {
 };
 export const convertToWebP = async (imgUrl: string) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('UWEBSOCKET_ADDRESS')}/convert_to_webp?imgUrl=${imgUrl}`, {
-      method: 'GET',
-    });
+    const response = await fetch(
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/convert_to_webp?imgUrl=${imgUrl}`,
+      {
+        method: 'GET',
+      }
+    );
     return (await response.json()) as { original: string };
   } catch (e) {
     console.log(e);

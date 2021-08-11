@@ -404,7 +404,7 @@ export function useUniqueId(idFromProps?: string | null) {
   }, []);
 
   useEffect(() => {
-    if (serverHandoffComplete === false) {
+    if (!serverHandoffComplete) {
       /*
        * Flag all future uses of `useId` to skip the update dance. This is in
        * `useEffect` because it goes after `useLayoutEffect`, ensuring we don't

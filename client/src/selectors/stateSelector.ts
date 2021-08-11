@@ -128,7 +128,7 @@ export const sortedRepoInfoSelector = (starRankingFiltered: starRanking[], sorte
       const ids = starRankingFiltered?.map((obj: starRanking) => obj.id);
       return suggestedRepo?.suggestedData?.getSuggestedRepo?.repoInfoSuggested
         ?.slice()
-        .sort((a: RepoInfoSuggested, b: RepoInfoSuggested) => {
+        .sortBy((a: RepoInfoSuggested, b: RepoInfoSuggested) => {
           return ids.indexOf(a.id) - ids.indexOf(b.id);
         })
         .map((obj: RepoInfoSuggested) => {
@@ -151,7 +151,7 @@ export const starRankingFilteredSelector = (sorted: string) =>
       return (
         starRanking?.starRankingData?.getStarRanking?.starRanking
           ?.slice()
-          .sort(
+          .sortBy(
             (a: starRanking, b: starRanking) => b['trends'][sorted.toLowerCase()] - a['trends'][sorted.toLowerCase()]
           ) ?? []
       );

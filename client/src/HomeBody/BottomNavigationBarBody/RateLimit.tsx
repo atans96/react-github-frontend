@@ -49,7 +49,7 @@ const RateLimit = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateRateLimit.rateLimit.reset, resetTime]);
 
-  useDeepCompareEffect(
+  useEffect(
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and
       // persist when switching the component

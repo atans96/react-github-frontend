@@ -2,11 +2,12 @@ import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Theme } from '@material-ui/core';
 import AppBar from '@material-ui/core/AppBar';
-import { StateRateLimitProvider } from '../selectors/stateContextSelector';
+import { StateRateLimitProvider, useTrackedStateShared } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import '../hamburgers.css';
 import Empty from '../Layout/EmptyLayout';
-
+import { If } from '../util/react-if/If';
+import { Then } from '../util/react-if/Then';
 const ToolBar = Loadable({
   loading: Empty,
   delay: 300,
@@ -57,17 +58,26 @@ const useStyles = makeStyles<Theme>((theme) => ({
 }));
 const BottomNavigationBar = () => {
   const classes = useStyles();
+  const [stateShared] = useTrackedStateShared();
   return (
     <React.Fragment>
       <AppBar position="fixed" color="primary" className={classes.appBar}>
         <ToolBar />
         <RepoStat />
 
-        <StateRateLimitProvider>
-          <RateLimit />
-        </StateRateLimitProvider>
+        <If condition={stateShared.width > 900}>
+          <Then>
+            <StateRateLimitProvider>
+              <RateLimit />
+            </StateRateLimitProvider>
+          </Then>
+        </If>
       </AppBar>
-      <DrawerBar />
+      <If condition={stateShared.width > 750}>
+        <Then>
+          <DrawerBar />
+        </Then>
+      </If>
     </React.Fragment>
   );
 };

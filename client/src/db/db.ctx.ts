@@ -5,10 +5,10 @@ import { ApolloCacheDB } from './db';
 import { readEnvironmentVariable } from '../util';
 import Encryption from './Encryption';
 import Dexie from 'dexie';
-import { noop } from '../util/util';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { createStore } from '../util/hooksy';
 import {
+  GraphQLRSSFeedData,
   GraphQLSearchesData,
   GraphQLSeenData,
   GraphQLUserData,
@@ -16,12 +16,16 @@ import {
   GraphQLUserStarred,
 } from '../typing/interface';
 
+const conn = new ApolloCacheDB();
+
 const defaultUserData: GraphQLUserData | any = {};
 const defaultUserInfoData: GraphQLUserInfoData | any = {};
 const defaultUserStarred: GraphQLUserStarred | any = {};
 const defaultSeenData: GraphQLSeenData | any = {};
 const defaultSearchesData: GraphQLSearchesData | any = {};
+const defaultRSSFeed: GraphQLRSSFeedData | any = {};
 export const [useUserDataDexie] = createStore(defaultUserData);
+export const [useRSSFeedDexie] = createStore(defaultRSSFeed);
 export const [useUserInfoDataDexie] = createStore(defaultUserInfoData);
 export const [useUserStarredDexie] = createStore(defaultUserStarred);
 export const [useSeenDataDexie] = createStore(defaultSeenData);
@@ -29,6 +33,7 @@ export const [useSearchesDataDexie] = createStore(defaultSearchesData);
 
 const DbCtx = createContainer(() => {
   const [, setUserDataDexie] = useUserDataDexie();
+  const [, setRSSFeedDexie] = useRSSFeedDexie();
   const [, setUserInfoDataDexie] = useUserInfoDataDexie();
   const [, setUserStarredDexie] = useUserStarredDexie();
   const [, setSeenDataDexie] = useSeenDataDexie();
@@ -36,7 +41,6 @@ const DbCtx = createContainer(() => {
 
   const [db, setDb] = useState<ApolloCacheDB | null>(null);
   const [stateShared] = useTrackedStateShared();
-  const conn = new ApolloCacheDB();
   const handleOpenDb = async () => {
     let symmetricKey;
     if (await Dexie.exists('ApolloCacheDB')) {

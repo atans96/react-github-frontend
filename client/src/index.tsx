@@ -140,7 +140,6 @@ const AppRoutes = React.memo(
 const MiddleAppRoute = () => {
   const abortController = new AbortController();
   const { db, clear } = DbCtx.useContainer();
-  const apolloCacheData = useRef<Object>({});
   const [stateShared, dispatchShared] = useTrackedStateShared();
   sysend.on('Login', function (fn) {
     dispatchShared({
@@ -153,24 +152,13 @@ const MiddleAppRoute = () => {
     });
   });
   const client = useApolloClient();
-  const cacheData: any = client.cache.extract();
+
   const { lastJsonMessage, getWebSocket, sendJsonMessage } = useWebSocket(
     readEnvironmentVariable('GRAPHQL_WS_ADDRESS_NODEJS')!,
     {
       shouldReconnect: (closeEvent) => true,
     }
   );
-  useDeepCompareEffect(() => {
-    let isFinished = false;
-    if (!isFinished && cacheData.ROOT_QUERY && Object.keys(cacheData.ROOT_QUERY).length > 0) {
-      delete cacheData.ROOT_QUERY.__typename;
-      apolloCacheData.current = cacheData.ROOT_QUERY;
-    }
-    return () => {
-      isFinished = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheData, lastJsonMessage]);
 
   const readQuery = (key: any) => {
     return new Promise((resolve, reject) => {
@@ -243,18 +231,6 @@ const MiddleAppRoute = () => {
             type: 'username',
             username: stateShared.username,
           });
-          return (window.onbeforeunload = () => {
-            sendJsonMessage({
-              close: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') },
-            });
-            Promise.all([
-              // TODO: apolloCacheData write it one by one
-              // db.apolloCache.add({ data: JSON.stringify(apolloCacheData) }, 2),
-              // endOfSession(stateShared.username, apolloCacheData.current),
-              // session(true),
-            ]).then(noop);
-            return window.close();
-          });
         });
     } else if ('serviceWorker' in navigator && !stateShared.isLoggedIn && !isFinished) {
       navigator?.serviceWorker?.controller?.postMessage({
@@ -265,7 +241,7 @@ const MiddleAppRoute = () => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.isLoggedIn, apolloCacheData]);
+  }, [stateShared.isLoggedIn]);
 
   useEffect(() => {
     let isFinished = false;
@@ -317,7 +293,46 @@ const MiddleAppRoute = () => {
       isFinished = true;
     };
   }, [stateShared.isLoggedIn]);
-
+  window.onbeforeunload = () => {
+    if (stateShared.isLoggedIn) {
+      sendJsonMessage({
+        close: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') },
+      });
+      Promise.all([
+        db?.transaction(
+          'rw',
+          [db.getUserData, db.getUserInfoData, db.getUserInfoStarred, db.getSeen, db.getSearchesData],
+          async () => {
+            const cache: any = client.cache.extract();
+            Object.entries(cache.ROOT_QUERY).forEach(([key, val]) => {
+              if (!(key === '__typename')) {
+                switch (key) {
+                  case 'getUserInfoData':
+                    db?.getUserInfoData?.add({ data: JSON.stringify({ val }) }, 1);
+                    break;
+                  case 'getUserInfoStarred':
+                    db?.getUserInfoStarred?.add({ data: JSON.stringify({ val }) }, 1);
+                    break;
+                  case 'getSeen':
+                    db?.getSeen?.add({ data: JSON.stringify({ val }) }, 1);
+                    break;
+                  case 'getSearchesData':
+                    db?.getSearchesData?.add({ data: JSON.stringify({ val }) }, 1);
+                    break;
+                  case 'getUserData':
+                    db?.getUserData?.add({ data: JSON.stringify({ val }) }, 1);
+                    break;
+                }
+              }
+            });
+          }
+        ),
+        endOfSession(stateShared.username, client.cache.extract()),
+        // session(true),
+      ]).then(noop);
+    }
+    return window.close();
+  };
   useEffect(() => {
     return () => {
       getWebSocket()?.close();
@@ -344,7 +359,7 @@ const CustomApolloProvider = ({ children }: any) => {
     }) as unknown as ApolloLink;
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
-      uri: `${readEnvironmentVariable('GRAPHQL_ADDRESS')}/graphql/`,
+      uri: `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable('GOLANG_PORT')}/graphql/`,
       headers: { origin: `${readEnvironmentVariable('CLIENT_HOST')}:${readEnvironmentVariable('CLIENT_PORT')}` },
       credentials: 'include',
     }) as unknown as ApolloLink;
@@ -479,4 +494,7 @@ const Main = () => {
 window.addEventListener('unhandledrejection', function (promiseRejectionEvent) {
   console.log(promiseRejectionEvent);
 });
+window.onunhandledrejection = function (event: PromiseRejectionEvent) {
+  console.log(event.reason);
+};
 ReactDOM.render(<Main />, rootEl);

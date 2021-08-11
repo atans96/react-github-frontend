@@ -14,6 +14,39 @@ export function urlBase64ToUint8Array(base64String) {
   }
   return outputArray;
 }
+export function memoizeFn(func) {
+  const memo = {};
+  const slice = Array.prototype.slice;
+  return function () {
+    const args = slice.call(arguments);
+    if (args in memo) return memo[args];
+    else return (memo[args] = func.apply(this, args));
+  };
+}
+export const sortBy = () =>
+  (function () {
+    if (typeof Object.defineProperty === 'function') {
+      try {
+        Object.defineProperty(Array.prototype, 'sortBy', { value: sb });
+      } catch (e) {}
+    }
+    return function sb(f) {
+      for (let i = this.length; i; ) {
+        const o = this[--i];
+        this[i] = [].concat(f.call(o, o, i), o);
+      }
+      this.sort(function (a, b) {
+        for (let i = 0, len = a.length; i < len; ++i) {
+          if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1;
+        }
+        return 0;
+      });
+      for (let i = this.length; i; ) {
+        this[--i] = this[i][this[i].length - 1];
+      }
+      return this;
+    };
+  })();
 export const detectBrowser = () => {
   const { userAgent } = navigator;
   let match = userAgent.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
@@ -213,7 +246,7 @@ export function composeEventHandlers(...fns) {
 }
 export function isImageExists(url) {
   // Define the promise
-  const imgPromise = new Promise(function imgPromise(resolve, reject) {
+  return new Promise(function imgPromise(resolve, reject) {
     // Create the image
     const imgElement = new Image();
 
@@ -230,8 +263,6 @@ export function isImageExists(url) {
     // Assign URL
     imgElement.src = url;
   });
-
-  return imgPromise;
 }
 
 // export function checkImagesLoaded(array, callback) {
@@ -469,71 +500,3 @@ CancelablePromise.allSettled = (iterable) => cancelable(Promise.allSettled(itera
 CancelablePromise.race = (iterable) => cancelable(Promise.race(iterable));
 CancelablePromise.resolve = (value) => cancelable(Promise.resolve(value));
 CancelablePromise.reject = (value) => cancelable(Promise.reject(value));
-
-export async function pMap(iterable, mapper, { concurrency = Number.POSITIVE_INFINITY, stopOnError = true } = {}) {
-  return new Promise((resolve, reject) => {
-    if (typeof mapper !== 'function') {
-      throw new TypeError('Mapper function is required');
-    }
-
-    const result = [];
-    const errors = [];
-    const iterator = iterable[Symbol.iterator]();
-    let isRejected = false;
-    let isIterableDone = false;
-    let resolvingCount = 0;
-    let currentIndex = 0;
-
-    const next = () => {
-      if (isRejected) {
-        return;
-      }
-
-      const nextItem = iterator.next();
-      const index = currentIndex;
-      currentIndex++;
-
-      if (nextItem.done) {
-        isIterableDone = true;
-
-        if (resolvingCount === 0) {
-          if (!stopOnError && errors.length > 0) {
-            reject(new AggregateError(errors));
-          } else {
-            resolve(result);
-          }
-        }
-
-        return;
-      }
-
-      resolvingCount++;
-
-      (async () => {
-        try {
-          const element = await nextItem.value;
-          result[index] = await mapper(element, index);
-          resolvingCount--;
-          next();
-        } catch (error) {
-          if (stopOnError) {
-            isRejected = true;
-            reject(error);
-          } else {
-            errors.push(error);
-            resolvingCount--;
-            next();
-          }
-        }
-      })();
-    };
-
-    for (let index = 0; index < concurrency; index++) {
-      next();
-
-      if (isIterableDone) {
-        break;
-      }
-    }
-  });
-}

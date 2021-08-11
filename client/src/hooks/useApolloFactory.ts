@@ -27,6 +27,7 @@ import DbCtx, {
   useUserStarredDexie,
 } from '../db/db.ctx';
 import { useEffect, useRef, useState } from 'react';
+
 enum Key {
   getUserData = 'getUserData',
   getUserInfoData = 'getUserInfoData',
@@ -34,7 +35,9 @@ enum Key {
   getSeen = 'getSeen',
   getSearchesData = 'getSearchesData',
 }
+
 const consumers: Record<string, Array<string>> = {};
+
 function pushConsumers(property: Key, path: string) {
   if (consumers[path] && !consumers[path].includes(property)) {
     consumers[path].push(property);
@@ -42,6 +45,7 @@ function pushConsumers(property: Key, path: string) {
     consumers[path] = [property];
   }
 }
+
 export const useApolloFactory = (path: string) => {
   const { db } = DbCtx.useContainer();
 
@@ -112,6 +116,7 @@ export const useApolloFactory = (path: string) => {
       });
     }
   };
+
   const rssFeedAdded = async (data: GraphQLRSSFeedData) => {
     const oldData: GraphQLRSSFeedData | null = (await client.cache.readQuery({ query: GET_RSS_FEED })) || null;
     if (
@@ -143,6 +148,7 @@ export const useApolloFactory = (path: string) => {
     }
     return (await client.cache.readQuery({ query: GET_RSS_FEED })) as GraphQLRSSFeedData;
   };
+
   const removeStarred = async (data: { removeStarred: number }) => {
     const oldData: GraphQLUserStarred | null = (await client.cache.readQuery({ query: GET_USER_STARRED })) || null;
     if (oldData && oldData.getUserInfoStarred.starred.length > 0) {
@@ -178,6 +184,7 @@ export const useApolloFactory = (path: string) => {
       });
     }
   };
+
   const languagesPreferenceAdded = async (data: Pick2<GraphQLUserData, 'getUserData', 'languagePreference'>) => {
     const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: GET_USER_DATA })) || null;
     if (oldData) {
@@ -190,24 +197,30 @@ export const useApolloFactory = (path: string) => {
       });
     }
   };
+
   const searchesAdded = async (data: GraphQLSearchesData) => {
     const oldData: GraphQLSearchesData | null = (await client.cache.readQuery({ query: GET_SEARCHES })) || null;
     if (oldData && oldData.getSearches.searches.length > 0) {
       await client.cache.writeQuery({
         query: GET_SEARCHES,
         data: {
-          getSearches: oldData.getSearches.searches.unshift.apply(oldData.getSearches, data.getSearches.searches), //the newest always at top
+          getSearches: {
+            searches: oldData.getSearches.searches.unshift.apply(oldData.getSearches, data.getSearches.searches),
+          }, //the newest always at top
         },
       });
     } else {
       await client.cache.writeQuery({
         query: GET_SEARCHES,
         data: {
-          getSearches: [...data.getSearches.searches],
+          getSearches: {
+            searches: [...data.getSearches.searches],
+          },
         },
       });
     }
   };
+
   const {
     data: userData,
     loading: userDataLoading,
