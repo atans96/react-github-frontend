@@ -37,11 +37,11 @@ const LanguagesList: React.FC = React.memo(() => {
     }, []);
     if (evenOdd.current % 2 === 0) {
       //the first click start at 0 will sort from bigger to smaller
-      temp.sort((a: any, b: any) => {
+      temp.sortBy((a: any, b: any) => {
         return b.languages - a.languages;
       });
     } else {
-      temp.sort((a: any, b: any) => {
+      temp.sortBy((a: any, b: any) => {
         //the second click start at odd will sort from smaller to bigger
         return a.languages - b.languages;
       });

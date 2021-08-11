@@ -49,8 +49,8 @@ const Login = () => {
                 });
                 return;
               }
-              localStorage.setItem('token_type', res.token);
-              localStorage.setItem('access_token', res.token_type);
+              localStorage.setItem('token_type', res.token_type);
+              localStorage.setItem('access_token', res.token);
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },

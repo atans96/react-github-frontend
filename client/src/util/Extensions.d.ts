@@ -1,3 +1,5 @@
+import { sortBy } from '../util';
+
 declare global {
   interface HTMLImageElement {
     load: Function;
@@ -8,6 +10,7 @@ declare global {
   }
   interface Array {
     extend: Function;
+    sortBy: Function;
   }
 }
 // eslint-disable-next-line no-extend-native
@@ -61,4 +64,5 @@ Array.prototype.extend = function (other_array) {
     this.push(v);
   }, this);
 };
+Array.prototype.sortBy = sortBy();
 export {};

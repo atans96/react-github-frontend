@@ -4,7 +4,6 @@ export interface ApolloCache {
   id?: number; // make id optional because when create a data, typescript will still require this one XD
   data: string;
 }
-
 export class ApolloCacheDB extends Dexie {
   public getUserData: Dexie.Table<ApolloCache, number>; // id is number in this case
   public getUserInfoData: Dexie.Table<ApolloCache, number>;

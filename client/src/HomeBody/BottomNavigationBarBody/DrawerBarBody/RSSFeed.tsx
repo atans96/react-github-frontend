@@ -12,7 +12,7 @@ import {
 } from '@material-ui/core';
 import { ExpandLess, ExpandMore } from '@material-ui/icons';
 import { makeStyles } from '@material-ui/core/styles';
-import { addRSSFeed, noop } from '../../../util/util';
+import { noop } from '../../../util/util';
 import { Then } from '../../../util/react-if/Then';
 import { If } from '../../../util/react-if/If';
 import { fastFilter, uniqFast } from '../../../util';
@@ -20,6 +20,7 @@ import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
+import { getRSSFeed } from '../../../services';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -38,6 +39,22 @@ const useStyles = makeStyles<Theme>(() => ({
     },
   },
 }));
+const makeCancelable = (promise: Promise<any>) => {
+  let hasCanceled_ = false;
+
+  const wrappedPromise = new Promise((resolve, reject) => {
+    promise.then((val) => (hasCanceled_ ? reject({ isCanceled: true }) : resolve(val)));
+    promise.catch((error) => (hasCanceled_ ? reject({ isCanceled: true }) : reject(error)));
+  });
+
+  return {
+    promise: wrappedPromise,
+    cancel() {
+      hasCanceled_ = true;
+    },
+  };
+};
+const re = new RegExp('href="([^"]+)"', 'g');
 
 const RSSFeed = () => {
   const isMounted = useRef<boolean>(true);
@@ -46,7 +63,6 @@ const RSSFeed = () => {
   const classes = useStyles();
   const displayName: string = (RSSFeed as React.ComponentType<any>).displayName || '';
   const rssFeedAdded = useApolloFactory(displayName!).mutation.rssFeedAdded;
-  const [openRSS, setOpenRSS] = useState(false);
   const [showMoreRSS, setShowMoreRSS] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rssFeed, setRSSFeed] = useState<string[]>([]);
@@ -54,34 +70,22 @@ const RSSFeed = () => {
   const [notification, setNotification] = useState('');
   const timerRef = useRef<number | undefined>(undefined);
   const unseenFeeds = useRef<string[]>([]);
-  const re = new RegExp('href="([^"]+)"', 'g');
   const previousPromise = useRef<any>(undefined);
   const [notificationBadge, setNotificationBadge] = useState(0);
-  const makeCancelable = (promise: Promise<any>) => {
-    let hasCanceled_ = false;
+  const [openRSS, setOpenRSS] = useState(false);
 
-    const wrappedPromise = new Promise((resolve, reject) => {
-      promise.then((val) => (hasCanceled_ ? reject({ isCanceled: true }) : resolve(val)));
-      promise.catch((error) => (hasCanceled_ ? reject({ isCanceled: true }) : reject(error)));
-    });
-
-    return {
-      promise: wrappedPromise,
-      cancel() {
-        hasCanceled_ = true;
-      },
-    };
-  };
   const updater = async (tokenAdd: any, re: any) => {
-    return new Promise(async (resolve, reject) => {
-      await addRSSFeed(tokenAdd)
-        .then((res: any) => {
+    return new Promise((resolve, reject) => {
+      getRSSFeed(tokenAdd)
+        .then((res) => {
           let matches;
           const output: any[] = [];
-          const HTML: string[] = [];
+          let HTML: string[] = [];
+          const HTMLRender: Array<{ content: string; update: Date }> = [];
           try {
             res.items.forEach((obj: any) => {
-              while ((matches = re.exec(obj.content))) {
+              const ja = JSON.parse(obj);
+              while ((matches = re.exec(ja.content))) {
                 if (matches) {
                   const match = matches[0].match('href="(.*?)"')[1];
                   output.push(
@@ -98,7 +102,7 @@ const RSSFeed = () => {
                   break;
                 }
               }
-              const a = obj.content.toString().replace(/./g, (c: any, i: any) => {
+              const a = ja.content.toString().replace(/./g, (c: any, i: any) => {
                 if (output.length > 0 && i === parseInt(output[0].index)) {
                   const returnOutput = output[0].value + ' ';
                   output.shift();
@@ -107,72 +111,107 @@ const RSSFeed = () => {
                   return c;
                 }
               });
-              HTML.push(a);
+              HTMLRender.push({ update: new Date(ja.updatedParsed), content: a });
             });
-            if (!isTokenRSSExist && isMounted.current) {
-              setLoading(false);
-              setToken('');
-              dispatch({
-                type: 'TOKEN_RSS_ADDED',
-                payload: {
-                  tokenRSS: token,
-                },
-              });
-              localStorage.setItem('tokenRSS', token);
-              setRSSFeed(HTML.reverse());
-              rssFeedAdded({
-                getRSSFeed: {
-                  rss: HTML,
-                  lastSeen: HTML,
-                },
-              }).then(noop);
-            }
-            if (!openRSS && isMounted.current) {
-              unseenFeeds.current = [];
-              rssFeedAdded({
-                getRSSFeed: {
-                  rss: HTML,
-                  lastSeen: [],
-                },
-              })
-                .then((res) => {
-                  if (res.getRSSFeed.lastSeen) {
-                    unseenFeeds.current = fastFilter(
-                      (x: string) => res.getRSSFeed.lastSeen.indexOf(x) === -1,
-                      res.getRSSFeed.rss
-                    );
-                    setNotificationBadge(unseenFeeds.current.length);
-                    resolve({ status: 200 });
-                  }
-                })
-                .catch((e: any) => {
+            switch (isTokenRSSExist) {
+              case false:
+                if (isMounted.current) {
                   setLoading(false);
-                  setNotification(e.message);
-                  resolve({ status: 400 });
-                });
-            } else {
-              if (isTokenRSSExist && isMounted.current) {
-                const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
-                rssFeedAdded({
-                  getRSSFeed: {
-                    rss: HTML,
-                    lastSeen: uniqq,
-                  },
-                })
-                  .then((res) => {
-                    const uniqq = uniqFast([...res.getRSSFeed.lastSeen, ...res.getRSSFeed.rss]);
-                    setRSSFeed(uniqq.reverse()); //show it to the user
-                    if (notificationBadge > 0) {
-                      setNotificationBadge(0);
-                    }
-                    resolve({ status: 200 });
-                  })
-                  .catch((e: any) => {
-                    setLoading(false);
-                    setNotification(e.message);
-                    resolve({ status: 400 });
+                  setToken('');
+                  dispatch({
+                    type: 'TOKEN_RSS_ADDED',
+                    payload: {
+                      tokenRSS: token,
+                    },
                   });
-              }
+                  localStorage.setItem('tokenRSS', token);
+                  HTMLRender.sortBy(function (o: any) {
+                    return -o.update;
+                  });
+                  HTML = HTMLRender.map((obj) => obj.content);
+                  setRSSFeed(HTML);
+                  rssFeedAdded({
+                    getRSSFeed: {
+                      rss: HTML,
+                      lastSeen: HTML,
+                    },
+                  })
+                    .then(noop)
+                    .catch((e: any) => {
+                      setLoading(false);
+                      setNotification(e.message);
+                      reject({ status: 400 });
+                    });
+                }
+              case true:
+                switch (openRSS) {
+                  case false:
+                    if (isMounted.current) {
+                      HTMLRender.sortBy(function (o: any) {
+                        return -o.update;
+                      });
+                      HTML = HTMLRender.map((obj) => obj.content);
+                      unseenFeeds.current = [];
+                      rssFeedAdded({
+                        getRSSFeed: {
+                          rss: HTML,
+                          lastSeen: [],
+                        },
+                      })
+                        .then((res) => {
+                          if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
+                            setRSSFeed(HTML);
+                            resolve({ status: 200 });
+                            return;
+                          }
+                          if (res.getRSSFeed.lastSeen) {
+                            unseenFeeds.current = fastFilter(
+                              (x: string) => res.getRSSFeed.lastSeen.indexOf(x) === -1,
+                              res.getRSSFeed.rss
+                            );
+                            setNotificationBadge(unseenFeeds.current.length);
+                            resolve({ status: 200 });
+                          }
+                        })
+                        .catch((e: any) => {
+                          setLoading(false);
+                          setNotification(e.message);
+                          reject({ status: 400 });
+                        });
+                    }
+                  case true:
+                    if (isMounted.current) {
+                      HTMLRender.sortBy(function (o: any) {
+                        return -o.update;
+                      });
+                      HTML = HTMLRender.map((obj) => obj.content);
+                      const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
+                      rssFeedAdded({
+                        getRSSFeed: {
+                          rss: HTML,
+                          lastSeen: uniqq,
+                        },
+                      })
+                        .then((res) => {
+                          if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
+                            setRSSFeed(HTML);
+                            resolve({ status: 200 });
+                            return;
+                          }
+                          const uniqq = uniqFast([...res.getRSSFeed.lastSeen, ...res.getRSSFeed.rss]);
+                          setRSSFeed(uniqq); //show it to the user
+                          if (notificationBadge > 0) {
+                            setNotificationBadge(0);
+                          }
+                          resolve({ status: 200 });
+                        })
+                        .catch((e: any) => {
+                          setLoading(false);
+                          setNotification(e.message);
+                          reject({ status: 400 });
+                        });
+                    }
+                }
             }
           } catch (error) {
             if (isMounted.current) {
@@ -180,7 +219,7 @@ const RSSFeed = () => {
               setLoading(false);
               setNotification('Invalid RSS URL. Please try again!');
             }
-            resolve({ status: 400 });
+            reject({ status: 400 });
           }
         })
         .catch((e) => {
@@ -196,20 +235,13 @@ const RSSFeed = () => {
       timerRef.current = undefined;
     }
   };
-  const handleOpenRSS = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setOpenRSS(!openRSS);
-    if (notificationBadge > 0) {
-      setNotificationBadge(0);
-    }
-  };
   const handleOpenRSSShowMore = (e: React.MouseEvent) => {
     e.preventDefault();
     setShowMoreRSS(!showMoreRSS);
   };
   const updaterWrapper = (tokenAdd: string, re: any) => {
     stop();
-    if (previousPromise.current !== undefined) {
+    if (previousPromise.current !== undefined && timerRef.current) {
       previousPromise.current.cancel();
     }
     previousPromise.current = makeCancelable(updater(tokenAdd, re));
@@ -244,12 +276,22 @@ const RSSFeed = () => {
       }
       updaterWrapper(tokenAdd, re);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stateShared.tokenRSS, token, openRSS]);
+  const handleOpenRSS = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setOpenRSS(!openRSS);
+    if (notificationBadge > 0) {
+      setNotificationBadge(0);
+    }
+  };
+  useEffect(() => {
     return () => {
       isMounted.current = false;
       stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.tokenRSS, token, openRSS]);
+  }, []);
 
   return (
     <List>
@@ -276,17 +318,29 @@ const RSSFeed = () => {
               <Then>
                 <form action="#" method="get" className="input-group" style={{ padding: '1em' }}>
                   <div style={{ display: 'flex' }}>
-                    <input
-                      autoCorrect="off"
-                      autoComplete="off"
-                      autoCapitalize="off"
-                      required
-                      value={token}
-                      onChange={(e) => setToken(e.target.value)}
-                      type="text"
-                      className="form-control"
-                      placeholder={'Copy your RSS URL...'}
-                    />
+                    <form
+                      onSubmit={(e) => {
+                        if (isTokenRSSExist || token !== '') {
+                          const tokenAdd = isTokenRSSExist ? stateShared.tokenRSS : token;
+                          if (token !== '') {
+                            setLoading(true);
+                          }
+                          updaterWrapper(tokenAdd, re);
+                        }
+                      }}
+                    >
+                      <input
+                        autoCorrect="off"
+                        autoComplete="off"
+                        autoCapitalize="off"
+                        required
+                        value={token}
+                        onChange={(e) => setToken(e.target.value)}
+                        type="text"
+                        className="form-control"
+                        placeholder={'Copy your RSS URL...'}
+                      />
+                    </form>
                   </div>
                 </form>
                 <div style={{ textAlign: 'center' }}>

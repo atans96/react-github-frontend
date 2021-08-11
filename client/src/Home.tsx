@@ -469,7 +469,11 @@ const Home = React.memo(() => {
           </Then>
         </If>
       </div>
-      {stateShared.width > 1100 && <BottomNavigationBar />}
+      <If condition={stateShared.width > 750}>
+        <Then>
+          <BottomNavigationBar />
+        </Then>
+      </If>
     </React.Fragment>
   );
 });

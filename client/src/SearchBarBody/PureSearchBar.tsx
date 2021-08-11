@@ -242,6 +242,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   useClickOutside(resultsRef, () => {
     setVisible(false);
     setVisibleSearchesHistory(false);
+    username.current.clearState();
     dispatch({
       type: 'VISIBLE',
       payload: { visible: false },
@@ -310,6 +311,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                 searches={searchesData?.getSearches?.searches}
                 filter={filter}
                 valueRef={valueRef}
+                ref={resultsRef}
                 isLoading={state.isLoading}
                 getRootProps={getRootProps}
                 width={stateShared.width}
