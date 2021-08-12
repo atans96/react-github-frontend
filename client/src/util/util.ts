@@ -5,7 +5,7 @@ import { RSSSource } from './RSSSource';
 import { removeToken, removeTokenGQL, session } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
 export function useDebouncedValue<T>(input: T, time = 1500) {
-  const [debouncedValue, setDebouncedValue] = useState(input);
+  const [debouncedValue, setDebouncedValue] = useState<any>(input);
 
   // every time input value has changed - set interval before it's actually commited
   useEffect(() => {
@@ -15,6 +15,7 @@ export function useDebouncedValue<T>(input: T, time = 1500) {
 
     return () => {
       clearTimeout(timeout);
+      setDebouncedValue(undefined);
     };
   }, [input, time]);
 

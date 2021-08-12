@@ -1,6 +1,6 @@
 import React from 'react';
 import { useUserCardStyles } from '../../DiscoverBody/CardDiscoverBody/UserCardStyle';
-import { CardEnhancement, OwnerProps } from '../../typing/type';
+import { OwnerProps } from '../../typing/type';
 import {
   useTrackedState,
   useTrackedStateShared,
@@ -9,6 +9,7 @@ import {
 import clsx from 'clsx';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
+import { parallel } from 'async';
 
 interface UserCard {
   data: { owner: OwnerProps; id: number };
@@ -23,18 +24,23 @@ const UserCard: React.FC<UserCard> = ({ data }) => {
   function onClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    dispatch({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_ALL',
-    });
-    dispatchShared({
-      type: 'QUERY_USERNAME',
-      payload: {
-        queryUsername: login,
-      },
-    });
+    parallel([
+      () =>
+        dispatch({
+          type: 'REMOVE_ALL',
+        }),
+      () =>
+        dispatchStargazers({
+          type: 'REMOVE_ALL',
+        }),
+      () =>
+        dispatchShared({
+          type: 'QUERY_USERNAME',
+          payload: {
+            queryUsername: login,
+          },
+        }),
+    ]);
   }
   return (
     <div className="avatarBackground">

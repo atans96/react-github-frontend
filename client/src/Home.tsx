@@ -3,7 +3,7 @@ import { useTrackedState, useTrackedStateShared } from './selectors/stateContext
 import { useApolloFactory } from './hooks/useApolloFactory';
 import { MergedDataProps, SeenProps } from './typing/type';
 import { noop } from './util/util';
-import { fastFilter, useStableCallback } from './util';
+import { useStableCallback } from './util';
 import { crawlerPython, getRepoImages } from './services';
 import useBottomHit from './hooks/useBottomHit';
 import { useEventHandlerComposer } from './hooks/hooks';
@@ -19,6 +19,7 @@ import useFetchUser from './hooks/useFetchUser';
 import Empty from './Layout/EmptyLayout';
 import Mutex from './util/mutex/mutex';
 import { createStore } from './util/hooksy';
+import { parallel, filter } from 'async';
 const mutex = new Mutex();
 
 const MasonryCard = Loadable({
@@ -214,20 +215,64 @@ const Home = React.memo(() => {
         acc.push(obj.id);
         return acc;
       }, [] as number[]);
-      const temp = fastFilter((obj: MergedDataProps) => !ids.includes(obj.id), state.mergedData);
-      const images = fastFilter((image: Record<string, any>) => !ids.includes(image.id), state.imagesData);
-      dispatch({
-        type: 'IMAGES_DATA_REPLACE',
-        payload: {
-          imagesData: images,
-        },
-      });
-      dispatch({
-        type: 'MERGED_DATA_ADDED',
-        payload: {
-          data: temp,
-        },
-      });
+      parallel([
+        () =>
+          filter(
+            state.mergedData,
+            (obj: MergedDataProps, cb) => {
+              if (!ids.includes(obj.id)) {
+                // @ts-ignore
+                cb(null, obj);
+                return obj;
+              } else {
+                cb(null, undefined);
+                return undefined;
+              }
+            },
+            function (err, results: any) {
+              if (err) {
+                throw new Error('err');
+              }
+              if (!results) {
+                return;
+              }
+              return dispatch({
+                type: 'MERGED_DATA_ADDED',
+                payload: {
+                  data: results,
+                },
+              });
+            }
+          ),
+        () =>
+          filter(
+            state.imagesData,
+            (image: Record<string, any>, cb) => {
+              if (!ids.includes(image.id)) {
+                // @ts-ignore
+                cb(null, image);
+                return image;
+              } else {
+                cb(null, undefined);
+                return undefined;
+              }
+            },
+            function (err, images: any) {
+              if (err) {
+                throw new Error('err');
+              }
+              if (!images) {
+                return;
+              }
+              return dispatch({
+                type: 'IMAGES_DATA_REPLACE',
+                payload: {
+                  imagesData: images,
+                },
+              });
+            }
+          ),
+      ]);
     }
     return () => {
       isFinished = true;
@@ -238,37 +283,43 @@ const Home = React.memo(() => {
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
-      dispatch({
-        type: 'UNDISPLAY_MERGED_DATA',
-        payload: {
-          undisplayMergedData: seenData.getSeen.seenCards,
+      parallel([
+        () =>
+          dispatch({
+            type: 'UNDISPLAY_MERGED_DATA',
+            payload: {
+              undisplayMergedData: seenData.getSeen.seenCards,
+            },
+          }),
+        () => {
+          const temp = seenData.getSeen.seenCards ?? [];
+          const images = temp!.reduce((acc: any[], obj: SeenProps) => {
+            acc.push(
+              Object.assign(
+                {},
+                {
+                  id: obj.id,
+                  value: [...obj.imagesData],
+                }
+              )
+            );
+            return acc;
+          }, [] as SeenProps[]);
+          dispatch({
+            type: 'IMAGES_DATA_ADDED',
+            payload: {
+              images: images,
+            },
+          });
         },
-      });
-      const temp = seenData.getSeen.seenCards ?? [];
-      const images = temp!.reduce((acc: any[], obj: SeenProps) => {
-        acc.push(
-          Object.assign(
-            {},
-            {
-              id: obj.id,
-              value: [...obj.imagesData],
-            }
-          )
-        );
-        return acc;
-      }, [] as SeenProps[]);
-      dispatch({
-        type: 'IMAGES_DATA_ADDED',
-        payload: {
-          images: images,
-        },
-      });
-      dispatch({
-        type: 'MERGED_DATA_ADDED',
-        payload: {
-          data: seenData.getSeen.seenCards,
-        },
-      });
+        () =>
+          dispatch({
+            type: 'MERGED_DATA_ADDED',
+            payload: {
+              data: seenData.getSeen.seenCards,
+            },
+          }),
+      ]);
     }
     return () => {
       isFinished = true;
@@ -455,7 +506,9 @@ const Home = React.memo(() => {
           </Then>
         </If>
 
-        {isLoading && renderLoading && <LoadingEye queryUsername={stateShared.queryUsername} />}
+        {isLoading && renderLoading && notification.notification.length === 0 && (
+          <LoadingEye queryUsername={stateShared.queryUsername} />
+        )}
 
         <If condition={notification.notification}>
           <Then>

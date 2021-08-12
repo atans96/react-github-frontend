@@ -24,12 +24,6 @@ export const Tags: React.FC<TagsProps> = ({ obj, clicked }) => {
           filteredTopics: obj.topic,
         },
       });
-      dispatch({
-        type: 'FILTER_SET_TOPICS',
-        payload: {
-          filteredTopics: obj.topic,
-        },
-      });
     } else {
       dispatch({
         type: 'FILTER_SET_TOPICS_REMOVE',

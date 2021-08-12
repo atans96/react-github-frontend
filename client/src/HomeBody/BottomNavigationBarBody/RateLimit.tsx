@@ -6,7 +6,7 @@ import { useTrackedState, useTrackedStateRateLimit } from '../../selectors/state
 import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { epochToJsDate } from '../../util';
 import { getRateLimitInfo } from '../../services';
-import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
+import { parallel } from 'async';
 
 const RateLimit = () => {
   const abortController = new AbortController();
@@ -55,40 +55,49 @@ const RateLimit = () => {
       // persist when switching the component
       let isFinished = false;
       if (location.pathname === '/' && !isFinished) {
-        dispatchRateLimit({
-          type: 'RATE_LIMIT_ADDED',
-          payload: {
-            rateLimitAnimationAdded: false,
-          },
-        });
-        getRateLimitInfo({ signal: abortController.signal }).then((data) => {
-          if (data) {
+        parallel([
+          () =>
             dispatchRateLimit({
               type: 'RATE_LIMIT_ADDED',
               payload: {
-                rateLimitAnimationAdded: true,
+                rateLimitAnimationAdded: false,
               },
-            });
-            dispatchRateLimit({
-              type: 'RATE_LIMIT',
-              payload: {
-                limit: data.rate.limit,
-                used: data.rate.used,
-                reset: data.rate.reset,
-              },
-            });
-
-            dispatchRateLimit({
-              type: 'RATE_LIMIT_GQL',
-              payload: {
-                limit: data.resources.graphql.limit,
-                used: data.resources.graphql.used,
-                reset: data.resources.graphql.reset,
-              },
-            });
-          }
-          setRefetch(false); // turn back to default after setting to true from RateLimit
-        });
+            }),
+          () =>
+            getRateLimitInfo({ signal: abortController.signal }).then((data) => {
+              if (data) {
+                parallel([
+                  () =>
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT_ADDED',
+                      payload: {
+                        rateLimitAnimationAdded: true,
+                      },
+                    }),
+                  () =>
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT',
+                      payload: {
+                        limit: data.rate.limit,
+                        used: data.rate.used,
+                        reset: data.rate.reset,
+                      },
+                    }),
+                  () =>
+                    dispatchRateLimit({
+                      type: 'RATE_LIMIT_GQL',
+                      payload: {
+                        limit: data.resources.graphql.limit,
+                        used: data.resources.graphql.used,
+                        reset: data.resources.graphql.reset,
+                      },
+                    }),
+                ]);
+              }
+              setRefetch(false); // turn back to default after setting to true from RateLimit
+            }),
+          () => setRefetch(false),
+        ]);
       }
       return () => {
         isFinished = true;

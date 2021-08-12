@@ -1,8 +1,8 @@
-import React, { createRef, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
-import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
+import { useEventHandlerComposer } from '../hooks/hooks';
 import { MergedDataProps, StargazerProps } from '../typing/type';
-import { fastFilter, useStableCallback } from '../util';
+import { useStableCallback } from '../util';
 import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
@@ -17,16 +17,18 @@ import ButtonTags from './PureSearchBarBody/ButtonTags';
 import Empty from '../Layout/EmptyLayout';
 import PureInput from './PureInput';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
+import { useQueryUsername, useVisible, useVisibleSearchesHistory } from '../SearchBar';
+import { parallel, each, filter } from 'async';
 
-const ResultRenderer = Loadable({
+const SearchHistories = Loadable({
   loading: Empty,
   delay: 300,
-  loader: () => import(/* webpackChunkName: "ResultRenderer" */ './PureSearchBarBody/ResultsBody/ResultRenderer'),
+  loader: () => import(/* webpackChunkName: "SearchHistories" */ './PureSearchBarBody/ResultsBody/SearchHistories'),
 });
-const Results = Loadable({
+const Searches = Loadable({
   loading: Empty,
   delay: 300,
-  loader: () => import(/* webpackChunkName: "ResultRenderer" */ './PureSearchBarBody/Results'),
+  loader: () => import(/* webpackChunkName: "SearchHistories" */ './PureSearchBarBody/Searches'),
 });
 
 interface SearchBarProps {
@@ -34,13 +36,17 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
+  const [visible, setVisible] = useVisible();
+  const [visibleSearchesHistory, setVisibleSearchesHistory] = useVisibleSearchesHistory();
+  const [username, setUsername] = useQueryUsername();
+
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [state, dispatch] = useTrackedState();
   const displayName: string = (SearchBar as React.ComponentType<any>).displayName || '';
   const { searchesData } = useApolloFactory(displayName!).query.getSearchesData();
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
-  const username = useRef<any>();
+
   const size = {
     width: '500px',
     minWidth: '100px',
@@ -57,10 +63,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     };
   }
   const [valueRef, setValue] = useState<string>('');
-  const [visible, setVisible] = useState(false);
-  const [visibleSearchesHistory, setVisibleSearchesHistory] = useState(true);
-
-  const resultsRef = useRef(null);
 
   const showTipsText = (type: string) => {
     switch (type) {
@@ -89,62 +91,83 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const handleSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     event.stopPropagation();
-    if (!stateShared.queryUsername.includes(username.current.getState())) {
-      const usernameList = stateStargazers.stargazersQueueData.reduce((acc: string[], stargazer: StargazerProps) => {
-        acc.push(stargazer.login);
-        return acc;
-      }, []);
-      dispatchShared({
-        type: 'SET_SHOULD_RENDER',
-        payload: {
-          shouldRender: ShouldRender.Home,
-        },
-      });
-      dispatchShared({
-        type: 'QUERY_USERNAME',
-        payload: {
-          queryUsername: [...usernameList, username.current.getState()].filter((e) => !!e),
-        },
-      });
-      dispatchShared({
-        type: 'SET_SHOULD_RENDER',
-        payload: {
-          shouldRender: ShouldRender.Home,
-        },
-      });
-      dispatch({
-        type: 'REMOVE_ALL',
-      });
-      dispatchStargazers({
-        type: 'REMOVE_ALL',
-      });
-      dispatchStargazers({
-        type: 'REMOVE_QUEUE',
-      });
-      setVisible(false);
-      setVisibleSearchesHistory(false);
-      if (stateShared.isLoggedIn) {
-        [...usernameList, username.current.getState()]
-          .filter((e) => !!e)
-          .forEach((char) => {
-            searchesAdded({
-              getSearches: {
-                searches: [
-                  Object.assign(
-                    {},
-                    {
-                      search: char,
-                      updatedAt: new Date(),
-                      count: 1,
-                    }
-                  ),
-                ],
+    const usernameList = stateStargazers.stargazersQueueData.reduce((acc: string[], stargazer: StargazerProps) => {
+      acc.push(stargazer.login);
+      return acc;
+    }, []);
+    setUsername('');
+    parallel([
+      () =>
+        dispatchShared({
+          type: 'QUERY_USERNAME',
+          payload: {
+            queryUsername: [...usernameList, username].filter((e) => !!e),
+          },
+        }),
+      () =>
+        dispatchShared({
+          type: 'SET_SHOULD_RENDER',
+          payload: {
+            shouldRender: ShouldRender.Home,
+          },
+        }),
+      () =>
+        dispatchStargazers({
+          type: 'REMOVE_QUEUE',
+        }),
+      () =>
+        dispatchStargazers({
+          type: 'REMOVE_ALL',
+        }),
+      () =>
+        dispatch({
+          type: 'REMOVE_ALL',
+        }),
+      function () {
+        if (!stateShared.queryUsername.includes(username)) {
+          setVisible(false);
+          setVisibleSearchesHistory(false);
+          if (stateShared.isLoggedIn) {
+            filter(
+              [...usernameList, username],
+              (e: any, cb) => {
+                if (!!e) {
+                  cb(null, e);
+                  return e;
+                } else {
+                  cb(null, undefined);
+                  return undefined;
+                }
               },
-            }).then(noop);
-          });
-      }
-    }
-    username.current.clearState();
+              (err, results: any) => {
+                if (err) {
+                  throw new Error('err');
+                }
+                if (!results) {
+                  return;
+                }
+                each(results, (char: string) => {
+                  searchesAdded({
+                    getSearches: {
+                      searches: [
+                        Object.assign(
+                          {},
+                          {
+                            search: char,
+                            updatedAt: new Date(),
+                            count: 1,
+                          }
+                        ),
+                      ],
+                    },
+                  }).then(noop);
+                });
+              }
+            );
+          }
+        }
+      },
+    ]);
   };
 
   const location = useLocation();
@@ -153,23 +176,40 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     let isCancelled = false;
     if (location.pathname === '/' && !isCancelled) {
       if (state.filteredTopics.length > 0) {
-        dispatch({
-          type: 'MERGED_DATA_FILTER_BY_TAGS',
-          payload: {
-            filteredMergedData: fastFilter((x: MergedDataProps) => {
-              const topics = [...x.topics];
-              if (x.language) {
-                topics.push(x.language.toLowerCase());
+        filter(
+          state.mergedData,
+          (x: any, cb) => {
+            const topics = [...x.topics];
+            if (x.language) {
+              topics.push(x.language.toLowerCase());
+              if (state.filteredTopics.join().includes(topics.join())) {
+                cb(null, x);
+                return x;
+              } else {
+                cb(null, undefined);
+                return undefined;
               }
-              return (
-                [...topics, ...state.filteredTopics].reduce((a: any, b: any) => a.filter((c: string) => b.includes(c)))
-                  .length > 0
-              );
-              // return _.intersection(topics, state.filteredTopics).length === state.filteredTopics.length;
-            }, state.mergedData),
+            } else {
+              cb(null, undefined);
+              return undefined;
+            }
           },
-        });
-      } else {
+          (err, result: any) => {
+            if (err) {
+              throw new Error('err');
+            }
+            if (!result) {
+              return;
+            }
+            return dispatch({
+              type: 'MERGED_DATA_FILTER_BY_TAGS',
+              payload: {
+                filteredMergedData: result,
+              },
+            });
+          }
+        );
+      } else if (state.filteredTopics.length === 0 && state.filteredMergedData.length > 0) {
         dispatch({
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
@@ -207,49 +247,51 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           topics.push(obj.language.toLowerCase());
         }
         const languageAndTopics = [...new Set(topics)];
-        languageAndTopics.forEach((topic: string) => {
-          const index = state.topics.findIndex((x) => x.topic === topic);
-          if (!result.find((obj) => obj.topic === topic)) {
-            result.push(
-              Object.assign(
-                {},
-                {
-                  topic: topic,
-                  count: 1,
-                  clicked: index > -1 ? state.topics[index].clicked : false,
-                }
-              )
-            );
-          } else {
-            const index = result.findIndex((obj) => obj.topic === topic);
-            result[index].count = result[index].count + 1;
+        each(
+          languageAndTopics,
+          (topic, cb) => {
+            const index = state.topics.findIndex((x) => x.topic === topic);
+            if (!result.find((obj) => obj.topic === topic)) {
+              result.push(
+                Object.assign(
+                  {},
+                  {
+                    topic: topic,
+                    count: 1,
+                    clicked: index > -1 ? state.topics[index].clicked : false,
+                  }
+                )
+              );
+            } else {
+              result[index].count = result[index].count + 1;
+            }
+            // @ts-ignore
+            cb(null, result);
+            return result;
+          },
+          function (err) {
+            if (err) {
+              throw new Error('err');
+            }
+            if (result.length > 0) {
+              dispatch({
+                type: 'SET_TOPICS',
+                payload: {
+                  topics: result,
+                },
+              });
+            }
           }
-        });
-      });
-      dispatch({
-        type: 'SET_TOPICS',
-        payload: {
-          topics: result,
-        },
+        );
       });
     }
     return () => {
       isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.filteredMergedData]);
+  }, [state.mergedData]);
 
-  useClickOutside(resultsRef, () => {
-    setVisible(false);
-    setVisibleSearchesHistory(false);
-    username.current.clearState();
-    dispatch({
-      type: 'VISIBLE',
-      payload: { visible: false },
-    });
-  });
-
-  const filter = (
+  const filterJ = (
     searchesHistory: Array<{ search: string; count: number; updatedAt: Date }> | undefined,
     valueRef: string
   ) => {
@@ -265,17 +307,21 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   };
   const onClickCb = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setVisible(false);
-    setValue('');
-    dispatch({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_ALL',
-    });
-    dispatchStargazers({
-      type: 'REMOVE_QUEUE',
-    });
+    parallel([
+      () => setValue(''),
+      () =>
+        dispatch({
+          type: 'REMOVE_ALL',
+        }),
+      () =>
+        dispatchStargazers({
+          type: 'REMOVE_ALL',
+        }),
+      () =>
+        dispatchStargazers({
+          type: 'REMOVE_QUEUE',
+        }),
+    ]);
   });
 
   // the purpose of getRootProps is to execute all eventhandlers from both parent and their children who're using it together
@@ -288,14 +334,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           {/* we separate this as new component since UI need to be updated as soon as possible
             thus causing heavy rendering. To prevent setState takes effect of rendering the children component
             to Home.tsx, we put it in new component */}
-          <PureInput
-            setVisible={setVisible}
-            visibleSearchesHistory={visibleSearchesHistory}
-            setVisibleSearchesHistory={setVisibleSearchesHistory}
-            style={style}
-            handleChange={handleChange}
-            ref={username}
-          />
+          <PureInput style={style} handleChange={handleChange} />
           <If
             condition={
               searchesData &&
@@ -303,15 +342,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
               searchesData?.getSearches?.searches?.length > 0 &&
               valueRef.length > 0 &&
               visibleSearchesHistory &&
-              filter(searchesData?.getSearches?.searches, valueRef).length > 0
+              filterJ(searchesData?.getSearches?.searches, valueRef).length > 0
             }
           >
             <Then>
-              <ResultRenderer
+              <SearchHistories
                 searches={searchesData?.getSearches?.searches}
-                filter={filter}
+                filter={filterJ}
                 valueRef={valueRef}
-                ref={resultsRef}
                 isLoading={state.isLoading}
                 getRootProps={getRootProps}
                 width={stateShared.width}
@@ -319,12 +357,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
               />
             </Then>
           </If>
-          <If condition={visible && filter(searchesData?.getSearches?.searches, valueRef).length === 0}>
+          <If condition={visible && filterJ(searchesData?.getSearches?.searches, valueRef).length === 0}>
             <Then>
-              <Results
+              <Searches
                 data={state.searchUsers}
                 style={style}
-                ref={resultsRef}
                 isLoading={state.isLoading}
                 getRootProps={getRootProps}
               />

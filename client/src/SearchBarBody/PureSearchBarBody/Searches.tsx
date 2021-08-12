@@ -7,17 +7,17 @@ import { Else } from '../../util/react-if/Else';
 import { LoadingSmall } from '../../LoadingSmall';
 import Loadable from 'react-loadable';
 import Empty from '../../Layout/EmptyLayout';
+
 const Result = Loadable({
   loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "Result" */ './ResultsBody/Result'),
 });
-interface Results {
+interface Searches {
   isLoading: boolean;
   style: React.CSSProperties;
   data: { [key: string]: string }[];
   getRootProps: any;
-  ref: React.Ref<HTMLDivElement>;
 }
 const Child = ({ result }: any) => {
   const classes = useUserCardStyles({ avatarSize: 20 });
@@ -32,12 +32,12 @@ const Child = ({ result }: any) => {
     </div>
   );
 };
-const Results: React.FC<Results> = React.forwardRef(({ data, isLoading, style, getRootProps }, ref) => {
+const Searches: React.FC<Searches> = ({ data, isLoading, style, getRootProps }) => {
   return (
     <>
       <If condition={isLoading}>
         <Then>
-          <div className="resultsContainer" style={style} ref={ref}>
+          <div className="resultsContainer" style={style}>
             <ul className={'results'}>
               <li className={'clearfix'}>
                 <LoadingSmall />
@@ -49,17 +49,14 @@ const Results: React.FC<Results> = React.forwardRef(({ data, isLoading, style, g
 
       <If condition={!isLoading}>
         <Then>
-          <div className="resultsContainer" style={style} ref={ref}>
+          <div className="resultsContainer" style={style}>
             <If condition={data && data.length > 0}>
               <Then>
                 <ul className={'results'}>
                   {data.map((result, idx) => (
-                    <Result
-                      key={idx}
-                      children={Child({ result })}
-                      userName={Object.keys(result).toString()}
-                      getRootProps={getRootProps}
-                    />
+                    <Result key={idx} userName={Object.keys(result).toString()} getRootProps={getRootProps}>
+                      {() => <Child result={result} />}
+                    </Result>
                   ))}
                 </ul>
               </Then>
@@ -75,6 +72,6 @@ const Results: React.FC<Results> = React.forwardRef(({ data, isLoading, style, g
       </If>
     </>
   );
-});
-Results.displayName = 'Results';
-export default Results;
+};
+Searches.displayName = 'Searches';
+export default Searches;

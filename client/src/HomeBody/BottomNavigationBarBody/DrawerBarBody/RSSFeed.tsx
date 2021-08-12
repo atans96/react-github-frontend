@@ -21,6 +21,7 @@ import { NavLink } from 'react-router-dom';
 import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import { getRSSFeed } from '../../../services';
+import { forEach } from 'async';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -83,96 +84,66 @@ const RSSFeed = () => {
           let HTML: string[] = [];
           const HTMLRender: Array<{ content: string; update: Date }> = [];
           try {
-            res.items.forEach((obj: any) => {
-              const ja = JSON.parse(obj);
-              while ((matches = re.exec(ja.content))) {
-                if (matches) {
-                  const match = matches[0].match('href="(.*?)"')[1];
-                  output.push(
-                    Object.assign(
-                      {},
-                      {
-                        index: matches.index,
-                        value: 'href=https://github.com' + match,
-                        len: matches[0].match('href="(.*?)"')[0].length,
-                      }
-                    )
-                  );
-                } else {
-                  break;
+            forEach(
+              res.items,
+              (obj: any) => {
+                const ja = JSON.parse(obj);
+                while ((matches = re.exec(ja.content))) {
+                  if (matches) {
+                    const match = matches[0].match('href="(.*?)"')[1];
+                    output.push(
+                      Object.assign(
+                        {},
+                        {
+                          index: matches.index,
+                          value: 'href=https://github.com' + match,
+                          len: matches[0].match('href="(.*?)"')[0].length,
+                        }
+                      )
+                    );
+                  } else {
+                    break;
+                  }
                 }
-              }
-              const a = ja.content.toString().replace(/./g, (c: any, i: any) => {
-                if (output.length > 0 && i === parseInt(output[0].index)) {
-                  const returnOutput = output[0].value + ' ';
-                  output.shift();
-                  return returnOutput;
-                } else {
-                  return c;
+                const a = ja.content.toString().replace(/./g, (c: any, i: any) => {
+                  if (output.length > 0 && i === parseInt(output[0].index)) {
+                    const returnOutput = output[0].value + ' ';
+                    output.shift();
+                    return returnOutput;
+                  } else {
+                    return c;
+                  }
+                });
+                HTMLRender.push({ update: new Date(ja.updatedParsed), content: a });
+              },
+              (err) => {
+                if (err) {
+                  throw new Error('err');
                 }
-              });
-              HTMLRender.push({ update: new Date(ja.updatedParsed), content: a });
-            });
-            switch (isTokenRSSExist) {
-              case false:
-                if (isMounted.current) {
-                  setLoading(false);
-                  setToken('');
-                  dispatch({
-                    type: 'TOKEN_RSS_ADDED',
-                    payload: {
-                      tokenRSS: token,
-                    },
-                  });
-                  localStorage.setItem('tokenRSS', token);
-                  HTMLRender.sortBy(function (o: any) {
-                    return -o.update;
-                  });
-                  HTML = HTMLRender.map((obj) => obj.content);
-                  setRSSFeed(HTML);
-                  rssFeedAdded({
-                    getRSSFeed: {
-                      rss: HTML,
-                      lastSeen: HTML,
-                    },
-                  })
-                    .then(noop)
-                    .catch((e: any) => {
-                      setLoading(false);
-                      setNotification(e.message);
-                      reject({ status: 400 });
-                    });
-                }
-              case true:
-                switch (openRSS) {
+                HTMLRender.sortBy(function (o: any) {
+                  return -o.update;
+                });
+                HTML = HTMLRender.map((obj) => obj.content);
+                switch (isTokenRSSExist) {
                   case false:
                     if (isMounted.current) {
-                      HTMLRender.sortBy(function (o: any) {
-                        return -o.update;
+                      setLoading(false);
+                      setToken('');
+                      dispatch({
+                        type: 'TOKEN_RSS_ADDED',
+                        payload: {
+                          tokenRSS: token,
+                        },
                       });
-                      HTML = HTMLRender.map((obj) => obj.content);
-                      unseenFeeds.current = [];
+                      localStorage.setItem('tokenRSS', token);
+                      setRSSFeed(HTML);
                       rssFeedAdded({
                         getRSSFeed: {
                           rss: HTML,
-                          lastSeen: [],
+                          lastSeen: HTML,
                         },
                       })
-                        .then((res) => {
-                          if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
-                            setRSSFeed(HTML);
-                            resolve({ status: 200 });
-                            return;
-                          }
-                          if (res.getRSSFeed.lastSeen) {
-                            unseenFeeds.current = fastFilter(
-                              (x: string) => res.getRSSFeed.lastSeen.indexOf(x) === -1,
-                              res.getRSSFeed.rss
-                            );
-                            setNotificationBadge(unseenFeeds.current.length);
-                            resolve({ status: 200 });
-                          }
-                        })
+                        .then(noop)
                         .catch((e: any) => {
                           setLoading(false);
                           setNotification(e.message);
@@ -180,39 +151,69 @@ const RSSFeed = () => {
                         });
                     }
                   case true:
-                    if (isMounted.current) {
-                      HTMLRender.sortBy(function (o: any) {
-                        return -o.update;
-                      });
-                      HTML = HTMLRender.map((obj) => obj.content);
-                      const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
-                      rssFeedAdded({
-                        getRSSFeed: {
-                          rss: HTML,
-                          lastSeen: uniqq,
-                        },
-                      })
-                        .then((res) => {
-                          if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
-                            setRSSFeed(HTML);
-                            resolve({ status: 200 });
-                            return;
-                          }
-                          const uniqq = uniqFast([...res.getRSSFeed.lastSeen, ...res.getRSSFeed.rss]);
-                          setRSSFeed(uniqq); //show it to the user
-                          if (notificationBadge > 0) {
-                            setNotificationBadge(0);
-                          }
-                          resolve({ status: 200 });
-                        })
-                        .catch((e: any) => {
-                          setLoading(false);
-                          setNotification(e.message);
-                          reject({ status: 400 });
-                        });
+                    switch (openRSS) {
+                      case false:
+                        if (isMounted.current) {
+                          unseenFeeds.current = [];
+                          rssFeedAdded({
+                            getRSSFeed: {
+                              rss: HTML,
+                              lastSeen: [],
+                            },
+                          })
+                            .then((res) => {
+                              if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
+                                setRSSFeed(HTML);
+                                resolve({ status: 200 });
+                                return;
+                              }
+                              if (res.getRSSFeed.lastSeen) {
+                                unseenFeeds.current = fastFilter(
+                                  (x: string) => res.getRSSFeed.lastSeen.indexOf(x) === -1,
+                                  res.getRSSFeed.rss
+                                );
+                                setNotificationBadge(unseenFeeds.current.length);
+                                resolve({ status: 200 });
+                              }
+                            })
+                            .catch((e: any) => {
+                              setLoading(false);
+                              setNotification(e.message);
+                              reject({ status: 400 });
+                            });
+                        }
+                      case true:
+                        if (isMounted.current) {
+                          const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
+                          rssFeedAdded({
+                            getRSSFeed: {
+                              rss: HTML,
+                              lastSeen: uniqq,
+                            },
+                          })
+                            .then((res) => {
+                              if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
+                                setRSSFeed(HTML);
+                                resolve({ status: 200 });
+                                return;
+                              }
+                              const uniqq = uniqFast([...res.getRSSFeed.lastSeen, ...res.getRSSFeed.rss]);
+                              setRSSFeed(uniqq); //show it to the user
+                              if (notificationBadge > 0) {
+                                setNotificationBadge(0);
+                              }
+                              resolve({ status: 200 });
+                            })
+                            .catch((e: any) => {
+                              setLoading(false);
+                              setNotification(e.message);
+                              reject({ status: 400 });
+                            });
+                        }
                     }
                 }
-            }
+              }
+            );
           } catch (error) {
             if (isMounted.current) {
               console.log(error);
@@ -316,31 +317,33 @@ const RSSFeed = () => {
             </If>
             <If condition={!loading && stateShared.isLoggedIn}>
               <Then>
-                <form action="#" method="get" className="input-group" style={{ padding: '1em' }}>
+                <form
+                  action="#"
+                  method="get"
+                  className="input-group"
+                  style={{ padding: '1em' }}
+                  onSubmit={(e) => {
+                    if (isTokenRSSExist || token !== '') {
+                      const tokenAdd = isTokenRSSExist ? stateShared.tokenRSS : token;
+                      if (token !== '') {
+                        setLoading(true);
+                      }
+                      updaterWrapper(tokenAdd, re);
+                    }
+                  }}
+                >
                   <div style={{ display: 'flex' }}>
-                    <form
-                      onSubmit={(e) => {
-                        if (isTokenRSSExist || token !== '') {
-                          const tokenAdd = isTokenRSSExist ? stateShared.tokenRSS : token;
-                          if (token !== '') {
-                            setLoading(true);
-                          }
-                          updaterWrapper(tokenAdd, re);
-                        }
-                      }}
-                    >
-                      <input
-                        autoCorrect="off"
-                        autoComplete="off"
-                        autoCapitalize="off"
-                        required
-                        value={token}
-                        onChange={(e) => setToken(e.target.value)}
-                        type="text"
-                        className="form-control"
-                        placeholder={'Copy your RSS URL...'}
-                      />
-                    </form>
+                    <input
+                      autoCorrect="off"
+                      autoComplete="off"
+                      autoCapitalize="off"
+                      required
+                      value={token}
+                      onChange={(e) => setToken(e.target.value)}
+                      type="text"
+                      className="form-control"
+                      placeholder={'Copy your RSS URL...'}
+                    />
                   </div>
                 </form>
                 <div style={{ textAlign: 'center' }}>
