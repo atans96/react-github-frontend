@@ -5,6 +5,7 @@ import './ResultStyle.scss';
 import '../StargazersInfoStyle.scss';
 import clsx from 'clsx';
 import { StargazerProps } from '../../../../typing/type';
+import { detect, map } from 'async';
 
 import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 import { IStateStargazers } from '../../../../typing/interface';
@@ -39,35 +40,51 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
       },
     });
     const ja = stateStargazers.stargazersData || [];
-    const updatedStargazersData = ja.find((obj: StargazerProps) => obj.id === stargazer.id);
-    if (updatedStargazersData !== undefined) {
-      try {
-        updatedStargazersData.isQueue = !updatedStargazersData.isQueue;
-      } catch {
-        updatedStargazersData['isQueue'] = false;
-      }
-      dispatchStargazers({
-        type: 'STARGAZERS_UPDATED',
-        payload: {
-          stargazersData:
-            stateStargazers.stargazersData.map((obj: StargazerProps) => {
+    detect(
+      ja,
+      (obj: StargazerProps) => obj.id === stargazer.id,
+      (err, updatedStargazersData) => {
+        if (err) {
+          throw new Error('err');
+        }
+        if (updatedStargazersData !== undefined) {
+          try {
+            updatedStargazersData.isQueue = !updatedStargazersData.isQueue;
+          } catch {
+            updatedStargazersData['isQueue'] = false;
+          }
+          map(
+            stateStargazers.stargazersData,
+            (obj: StargazerProps) => {
               if (obj.id === updatedStargazersData.id) {
                 return updatedStargazersData;
               } else {
                 return obj;
               }
-            }) || [],
-        },
-      });
-    } else {
-      stargazer.isQueue = false;
-      dispatchStargazers({
-        type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
-        payload: {
-          stargazersData: stargazer,
-        },
-      });
-    }
+            },
+            (err, result) => {
+              if (err) {
+                throw new Error('err');
+              }
+              dispatchStargazers({
+                type: 'STARGAZERS_UPDATED',
+                payload: {
+                  stargazersData: result || [],
+                },
+              });
+            }
+          );
+        } else {
+          stargazer.isQueue = false;
+          dispatchStargazers({
+            type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
+            payload: {
+              stargazersData: stargazer,
+            },
+          });
+        }
+      }
+    );
   };
   const onClick = () => {
     dispatchShared({

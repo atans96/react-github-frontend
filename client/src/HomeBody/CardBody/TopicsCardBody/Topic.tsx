@@ -3,8 +3,8 @@ import './TopicStyle.scss';
 
 interface Topic {
   topic: string;
-  idx: number;
   getRootProps: any;
+  idx: number;
 }
 
 const Topic: React.FC<Topic> = ({ idx, topic, getRootProps }) => {
@@ -12,7 +12,7 @@ const Topic: React.FC<Topic> = ({ idx, topic, getRootProps }) => {
     e.preventDefault();
   };
   return (
-    <button className={'tag'}>
+    <button className={'tag'} key={idx}>
       <h6
         className={'topic-text'}
         {...getRootProps({
@@ -23,7 +23,6 @@ const Topic: React.FC<Topic> = ({ idx, topic, getRootProps }) => {
             },
           },
         })}
-        key={idx}
       >
         {topic.trim()}
       </h6>

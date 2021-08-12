@@ -127,10 +127,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
       <Stargazers data={stargazersMemoizedGithubData()} />
       <If condition={data.language !== null}>
         <Then>
-          <ul
-            className={'language'}
-            style={{ color: stateShared.githubLanguages.get(data?.language?.replace(/\+\+|#|\s/, '-'))?.color }}
-          >
+          <ul className={'language'} style={{ color: stateShared.githubLanguages.get(data?.language)?.color }}>
             <li className={'language-list'}>
               <h6 style={{ color: 'black', width: 'max-content' }}>{data.language}</h6>
             </li>

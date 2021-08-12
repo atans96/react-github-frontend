@@ -8,6 +8,7 @@ import { useClickOutside } from '../../../hooks/hooks';
 import { logoutAction, noop } from '../../../util/util';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import { useHistory } from 'react-router-dom';
+import { parallel } from 'async';
 
 interface LoginGQLProps {
   style: CSSProperties;
@@ -25,17 +26,22 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
     await requestGithubGraphQLLogin(token)
       .then((res) => {
         if (res.success) {
-          setTokenGQL(token, stateShared.username).then(noop);
-          dispatch({
-            type: 'TOKEN_ADDED',
-            payload: {
-              tokenGQL: token,
-            },
-          });
-          setVisible(false);
+          parallel([
+            () => setTokenGQL(token, stateShared.username).then(noop),
+            () =>
+              dispatch({
+                type: 'TOKEN_ADDED',
+                payload: {
+                  tokenGQL: token,
+                },
+              }),
+            () => setVisible(false),
+          ]);
         } else {
-          setNotification('Token is not valid, try again!');
-          setData({ ...data, isLoading: false });
+          parallel([
+            () => setNotification('Token is not valid, try again!'),
+            () => setData({ ...data, isLoading: false }),
+          ]);
         }
       })
       .catch(() => {
@@ -49,22 +55,23 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    setData({ ...data, isLoading: true });
-    verifyTokenGQL().then(noop);
-    setRef(null);
-    setNotification("Please wait we're verifying the token");
+    parallel([
+      () => setData({ ...data, isLoading: true }),
+      () => verifyTokenGQL().then(noop),
+      () => setRef(null),
+      () => setNotification("Please wait we're verifying the token"),
+    ]);
   };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    setData({ ...data, isLoading: true });
-    verifyTokenGQL().then(noop);
-    setRef(null); // when loading, you cannot close the modal box
-    // but after isLoading false above, loginLayoutRef exists again because
-    // you re-render using setdata and setNotification above, thus causing spawnForm to re-execute
-    // and get the loginLayoutRef again from LoginLayout
-    setNotification("Please wait we're verifying the token");
+    parallel([
+      () => setData({ ...data, isLoading: true }),
+      () => verifyTokenGQL().then(noop),
+      () => setRef(null),
+      () => setNotification("Please wait we're verifying the token"),
+    ]);
   };
   return (
     <LoginLayout style={style} apiType={'GraphQL'} data={data} notification={notification}>

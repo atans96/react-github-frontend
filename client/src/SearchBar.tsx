@@ -2,12 +2,20 @@ import React, { useEffect, useRef } from 'react';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import Empty from './Layout/EmptyLayout';
+import { createStore } from './util/hooksy';
 
 const PureSearchBar = Loadable({
   loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "PureSearchBar" */ './SearchBarBody/PureSearchBar'),
 });
+const defaultVisible = false;
+const defaulQueryUsername = '';
+const defaultVisibleSearchesHistory = false;
+export const [useVisible] = createStore(defaultVisible);
+export const [useVisibleSearchesHistory] = createStore(defaultVisibleSearchesHistory);
+export const [useQueryUsername] = createStore(defaulQueryUsername);
+
 const SearchBar = () => {
   //TODO: https://github.com/moroshko/react-autosuggest
   const [stateShared] = useTrackedStateShared();

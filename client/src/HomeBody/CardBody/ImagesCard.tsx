@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import '../../DiscoverBody/CardDiscoverBody/ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -47,6 +47,7 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
     return setClicked((prev) => !prev);
   });
   const [renderImages, setRenderImages] = useState<string[]>([]);
+  const [render, setRender] = useState<any>();
   const [state] = useTrackedState();
   const location = useLocation();
 

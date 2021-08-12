@@ -1,15 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { MergedDataProps } from '../../typing/type';
 import { useApolloClient } from '@apollo/client';
 import { useClickOutside, useEventHandlerComposer } from '../../hooks/hooks';
-
+import { parallel, map } from 'async';
 import {
   useTrackedState,
   useTrackedStateShared,
   useTrackedStateStargazers,
 } from '../../selectors/stateContextSelector';
 import clsx from 'clsx';
-import { noop } from '../../util/util';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { StarIcon } from '../../util/icons';
@@ -22,6 +21,7 @@ import { removeStarredMe, setStarredMe } from '../../services';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../util';
 import Empty from '../../Layout/EmptyLayout';
+
 const StargazersInfo = Loadable({
   loading: Empty,
   delay: 300,
@@ -33,6 +33,7 @@ const LoginGQL = Loadable({
   delay: 300,
   loader: () => import(/* webpackChunkName: "LoginGQL" */ './StargazersCardBody/LoginGQL'),
 });
+
 interface StargazersProps {
   data: MergedDataProps;
 }
@@ -62,29 +63,33 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   };
   const onClickCb = useStableCallback(async ({ query, variables }: any) => {
     if (stateShared.tokenGQL !== '') {
-      return await client // return Promise
+      return client // return Promise
         .query({
           query: query,
           variables: variables,
           context: { clientName: 'github' },
         })
         .then((result) => {
-          result.data.repository.stargazers.nodes.map((node: any) => {
-            const newNode = { ...node };
-            newNode['isQueue'] = false;
-            return dispatchStargazers({
-              type: 'STARGAZERS_ADDED',
-              payload: {
-                stargazersData: newNode,
-              },
-            });
-          });
-          dispatchStargazers({
-            type: 'STARGAZERS_HAS_NEXT_PAGE',
-            payload: {
-              hasNextPage: result.data.repository.stargazers.pageInfo || {},
-            },
-          });
+          parallel([
+            () =>
+              dispatchStargazers({
+                type: 'STARGAZERS_HAS_NEXT_PAGE',
+                payload: {
+                  hasNextPage: result.data.repository.stargazers.pageInfo || {},
+                },
+              }),
+            () =>
+              map(result.data.repository.stargazers.nodes, (node: any) => {
+                const newNode = { ...node };
+                newNode['isQueue'] = false;
+                dispatchStargazers({
+                  type: 'STARGAZERS_ADDED',
+                  payload: {
+                    stargazersData: newNode,
+                  },
+                });
+              }),
+          ]);
         });
     }
   });
@@ -202,23 +207,23 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
     setIsLoading(true);
   };
 
-  const handleClickStar = async () => {
+  const handleClickStar = () => {
     if (!starClicked) {
-      await setStarredMe(data.full_name).then(() => {
+      setStarredMe(data.full_name).then(() => {
         if (stateShared.isLoggedIn) {
           addedStarredMe({
             getUserInfoStarred: {
               starred: [data.id],
             },
-          }).then(noop);
+          });
         }
       });
     } else if (starClicked) {
-      await removeStarredMe(data.full_name).then(() => {
+      removeStarredMe(data.full_name).then(() => {
         if (stateShared.isLoggedIn) {
           removeStarred({
             removeStarred: data.id,
-          }).then(noop);
+          });
         }
       });
     }
@@ -238,7 +243,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
               handleClickStargazers(e);
             } else {
               setStarClicked(!starClicked);
-              handleClickStar().then(noop);
+              handleClickStar();
             }
           }}
         >

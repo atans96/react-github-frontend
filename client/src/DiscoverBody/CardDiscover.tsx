@@ -111,7 +111,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
             className={'language'}
             style={{
               backgroundColor: 'transparent',
-              color: stateShared.githubLanguages.get(githubData?.language?.replace(/\+\+|#|\s/, '-'))?.color,
+              color: stateShared.githubLanguages.get(githubData?.language)?.color,
             }}
           >
             <li className={'language-list'}>

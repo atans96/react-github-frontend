@@ -20,8 +20,10 @@ const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<
         let sr: any = '';
         if (data.src.original === src) {
           sr = src;
-        } else {
+        } else if (data.src.original.length > 0) {
           sr = `data:image/webp;base64, ${data.src.original}`;
+        } else {
+          sr = '';
         }
         resolve({
           src: {

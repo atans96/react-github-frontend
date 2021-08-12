@@ -168,9 +168,7 @@ const StargazersInfo = ({
                 ? { ...GQL_VARIABLES.GQL_pagination_variables }
                 : { ...GQL_VARIABLES.GQL_variables },
             },
-            firstCallback: () => {
-              setIsLoadingFetchMore(false);
-            },
+            firstCallback: () => setIsLoadingFetchMore(false),
           })}
           style={{ cursor: isLoadingFetchMore ? '' : 'pointer' }}
           ref={simulateClick}
