@@ -168,7 +168,7 @@ const MiddleAppRoute = () => {
       })();
     });
   };
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     if (lastJsonMessage?.impactedQuery?.length > 0) {
       lastJsonMessage.impactedQuery.forEach((obj: any) => {
         const key: string = Object.keys(obj)[0];
@@ -245,7 +245,7 @@ const MiddleAppRoute = () => {
 
   useEffect(() => {
     let isFinished = false;
-    if (!isFinished && stateShared.isLoggedIn) {
+    if (!isFinished && stateShared.isLoggedIn && stateShared.username.length > 0) {
       sendJsonMessage({ open: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') } });
       getFile('languages.json', abortController.signal).then((githubLanguages) => {
         if (abortController.signal.aborted) return;
@@ -292,7 +292,8 @@ const MiddleAppRoute = () => {
     return () => {
       isFinished = true;
     };
-  }, [stateShared.isLoggedIn]);
+  }, [stateShared.isLoggedIn, stateShared.username]);
+
   window.onbeforeunload = () => {
     if (stateShared.isLoggedIn) {
       sendJsonMessage({
@@ -301,26 +302,26 @@ const MiddleAppRoute = () => {
       Promise.all([
         db?.transaction(
           'rw',
-          [db.getUserData, db.getUserInfoData, db.getUserInfoStarred, db.getSeen, db.getSearchesData],
+          [db.getUserData, db.getUserInfoData, db.getUserInfoStarred, db.getSeen, db.getSearches],
           async () => {
             const cache: any = client.cache.extract();
             Object.entries(cache.ROOT_QUERY).forEach(([key, val]) => {
               if (!(key === '__typename')) {
                 switch (key) {
                   case 'getUserInfoData':
-                    db?.getUserInfoData?.add({ data: JSON.stringify({ val }) }, 1);
+                    db?.getUserInfoData?.update(1, { data: JSON.stringify({ getUserInfoData: val }) });
                     break;
                   case 'getUserInfoStarred':
-                    db?.getUserInfoStarred?.add({ data: JSON.stringify({ val }) }, 1);
+                    db?.getUserInfoStarred?.update(1, { data: JSON.stringify({ getUserInfoStarred: val }) });
                     break;
                   case 'getSeen':
-                    db?.getSeen?.add({ data: JSON.stringify({ val }) }, 1);
+                    db?.getSeen?.update(1, { data: JSON.stringify({ getSeen: val }) });
                     break;
-                  case 'getSearchesData':
-                    db?.getSearchesData?.add({ data: JSON.stringify({ val }) }, 1);
+                  case 'getSearches':
+                    db?.getSearches?.update(1, { data: JSON.stringify({ getSearches: val }) });
                     break;
                   case 'getUserData':
-                    db?.getUserData?.add({ data: JSON.stringify({ val }) }, 1);
+                    db?.getUserData?.update(1, { data: JSON.stringify({ getUserData: val }) });
                     break;
                 }
               }

@@ -10,12 +10,24 @@ import clsx from 'clsx';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { parallel } from 'async';
+import {
+  defaultIsFetchFinish,
+  defaultIsLoading,
+  defaultNotification,
+  useIsFetchFinish,
+  useIsLoading,
+  useNotification,
+} from '../../Home';
 
 interface UserCard {
   data: { owner: OwnerProps; id: number };
 }
 
 const UserCard: React.FC<UserCard> = ({ data }) => {
+  const [, setNotification] = useNotification();
+  const [, setIsFetchFinish] = useIsFetchFinish();
+  const [, setIsLoading] = useIsLoading();
+
   const classes = useUserCardStyles();
   const { login, avatar_url, html_url } = data.owner;
   const [state, dispatch] = useTrackedState();
@@ -25,6 +37,9 @@ const UserCard: React.FC<UserCard> = ({ data }) => {
     e.preventDefault();
     e.stopPropagation();
     parallel([
+      () => setNotification({ ...defaultNotification }),
+      () => setIsFetchFinish({ ...defaultIsFetchFinish }),
+      () => setIsLoading({ ...defaultIsLoading }),
       () =>
         dispatch({
           type: 'REMOVE_ALL',

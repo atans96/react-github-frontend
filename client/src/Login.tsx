@@ -5,6 +5,7 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import LoginLayout from './Layout/LoginLayout';
 import { requestGithubLogin } from './services';
 import sysend from 'sysend';
+import { parallel } from 'async';
 
 const Login = () => {
   const abortController = new AbortController();
@@ -39,7 +40,7 @@ const Login = () => {
         requestGithubLogin(`${proxy_url}`, requestData, abortController.signal)
           .then((response: any) => {
             if (response && response.length > 0 && isMounted.current) {
-              let res;
+              let res: { token_type: string; token: string; data: { login: any } };
               try {
                 res = JSON.parse(response);
               } catch (e) {
@@ -49,20 +50,25 @@ const Login = () => {
                 });
                 return;
               }
-              localStorage.setItem('token_type', res.token_type);
-              localStorage.setItem('access_token', res.token);
-              dispatchShared({
-                type: 'LOGIN',
-                payload: { isLoggedIn: true },
-              });
-              dispatchShared({
-                type: 'SET_USERNAME',
-                payload: { username: res.data.login },
-              });
-              sysend.broadcast('Login', {
-                username: res.data.login,
-              });
-              history.push('/');
+              parallel([
+                () => localStorage.setItem('token_type', res.token_type),
+                () => localStorage.setItem('access_token', res.token),
+                () =>
+                  dispatchShared({
+                    type: 'LOGIN',
+                    payload: { isLoggedIn: true },
+                  }),
+                () =>
+                  dispatchShared({
+                    type: 'SET_USERNAME',
+                    payload: { username: res.data.login },
+                  }),
+                () =>
+                  sysend.broadcast('Login', {
+                    username: res.data.login,
+                  }),
+                () => history.push('/'),
+              ]);
               // window.location.reload(false);
             } else {
               if (!isMounted.current) {
