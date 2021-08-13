@@ -19,8 +19,7 @@ import {
 } from '../typing/interface';
 import { Pick2, Searches, SeenProps } from '../typing/type';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import DbCtx, { useSearchesDataDexie, useSeenDataDexie, useUserInfoDataDexie, useUserStarredDexie } from '../db/db.ctx';
-import { useEffect, useRef, useState } from 'react';
+import DbCtx from '../db/db.ctx';
 import { map, parallel } from 'async';
 import { noop } from '../util/util';
 import { createStore } from '../util/hooksy';
@@ -43,7 +42,18 @@ function pushConsumers(property: Key, path: string) {
   }
 }
 const defaultUserData: GraphQLUserData | any = {};
+const defaultSearchesData: GraphQLSearchesData | any = {};
+const defaultUserInfoData: GraphQLUserInfoData | any = {};
+const defaultUserStarred: GraphQLUserStarred | any = {};
+const defaultSeenData: GraphQLSeenData | any = {};
+const defaultRSSFeed: GraphQLRSSFeedData | any = {};
 export const [useUserDataDexie] = createStore(defaultUserData);
+export const [useSearchesDataDexie] = createStore(defaultSearchesData);
+export const [useRSSFeedDexie] = createStore(defaultRSSFeed);
+export const [useUserInfoDataDexie] = createStore(defaultUserInfoData);
+export const [useUserStarredDexie] = createStore(defaultUserStarred);
+export const [useSeenDataDexie] = createStore(defaultSeenData);
+
 function once(fn: any) {
   let result: any;
   return function () {
@@ -57,25 +67,12 @@ function once(fn: any) {
 export const useApolloFactory = (path: string) => {
   const { db } = DbCtx.useContainer();
   const [userDataDexie, setUserDataDexie] = useUserDataDexie();
-  const [userInfoDataDexie] = useUserInfoDataDexie();
-  const [userStarredDexie] = useUserStarredDexie();
-  const [seenDataDexie] = useSeenDataDexie();
-  const [searchesDataDexie] = useSearchesDataDexie();
+  const [userInfoDataDexie, setUserInfoDataDexie] = useUserInfoDataDexie();
+  const [userStarredDexie, setUserStarredDexie] = useUserStarredDexie();
+  const [seenDataDexie, setSeenDataDexie] = useSeenDataDexie();
+  const [searchesDataDexie, setSearchesDataDexie] = useSearchesDataDexie();
 
   const [stateShared] = useTrackedStateShared();
-  const [shouldSkip, setShouldSkip] = useState(true);
-  const timeRef = useRef<any>();
-
-  useEffect(() => {
-    timeRef.current = setTimeout(() => {
-      if (!stateShared.isLoggedIn || (userDataDexie && Object.keys(userDataDexie).length === 0) || !userDataDexie) {
-        setShouldSkip(false);
-      }
-    }, 500);
-    return () => {
-      clearTimeout(timeRef.current);
-    };
-  }, [stateShared.isLoggedIn, userDataDexie]);
 
   const client = useApolloClient();
   const seenAdded = async (data: SeenProps[]) => {
@@ -282,41 +279,26 @@ export const useApolloFactory = (path: string) => {
     }
   );
 
-  const {
-    data: userInfoData,
-    loading: userInfoDataLoading,
-    error: userInfoDataError,
-  } = useQuery(GET_USER_INFO_DATA, {
+  const [getUserInfoData, { data: userInfoData, loading: userInfoDataLoading, error: userInfoDataError }] =
+    useLazyQuery(GET_USER_INFO_DATA, {
+      context: { clientName: 'mongo' },
+    });
+
+  const [getUserInfoStarred, { data: userStarred, loading: loadingUserStarred, error: errorUserStarred }] =
+    useLazyQuery(GET_USER_STARRED, {
+      context: { clientName: 'mongo' },
+    });
+
+  const [getSeen, { data: seenData, loading: seenDataLoading, error: seenDataError }] = useLazyQuery(GET_SEEN, {
     context: { clientName: 'mongo' },
-    skip: shouldSkip,
   });
 
-  const {
-    data: userStarred,
-    loading: loadingUserStarred,
-    error: errorUserStarred,
-  } = useQuery(GET_USER_STARRED, {
-    context: { clientName: 'mongo' },
-    skip: shouldSkip,
-  });
-
-  const {
-    data: seenData,
-    loading: seenDataLoading,
-    error: seenDataError,
-  } = useQuery(GET_SEEN, {
-    context: { clientName: 'mongo' },
-    skip: shouldSkip,
-  });
-
-  const {
-    data: searchesData,
-    loading: loadingSearchesData,
-    error: errorSearchesData,
-  } = useQuery(GET_SEARCHES, {
-    context: { clientName: 'mongo' },
-    skip: shouldSkip,
-  });
+  const [getSearches, { data: searchesData, loading: loadingSearchesData, error: errorSearchesData }] = useLazyQuery(
+    GET_SEARCHES,
+    {
+      context: { clientName: 'mongo' },
+    }
+  );
 
   return {
     mutation: {
@@ -382,81 +364,220 @@ export const useApolloFactory = (path: string) => {
       },
       getUserInfoData: () => {
         pushConsumers(Key.getUserInfoData, path);
-        if (stateShared.isLoggedIn) {
-          if (Object.keys(userInfoDataDexie).length > 0) {
-            return {
-              userInfoData: userInfoDataDexie as GraphQLUserInfoData,
-              userInfoDataLoading: Object.keys(userInfoDataDexie).length === 0,
-              userInfoDataError: undefined,
-            };
-          }
-          return {
-            userInfoData: userInfoData as GraphQLUserInfoData,
-            userInfoDataLoading,
-            userInfoDataError,
-          };
-        } else {
-          return { userInfoData: userInfoData as GraphQLUserInfoData, userInfoDataLoading, userInfoDataError };
+        switch (stateShared.isLoggedIn) {
+          case true:
+            switch (userInfoDataDexie) {
+              case undefined:
+                switch (true) {
+                  case userInfoData && Object.keys(userInfoData?.getUserInfoData).length > 0:
+                    setUserInfoDataDexie({ getUserInfoData: userInfoData?.getUserInfoData });
+                    db.getUserInfoData.add(
+                      {
+                        data: JSON.stringify({
+                          getUserInfoData: userInfoData?.getUserInfoData,
+                        } as GraphQLUserInfoData),
+                      },
+                      1
+                    );
+                    return {
+                      userInfoData: userInfoData as GraphQLUserInfoData,
+                      userInfoDataLoading,
+                      userInfoDataError,
+                    };
+                  default:
+                    return {
+                      userInfoData: userInfoData as GraphQLUserInfoData,
+                      userInfoDataLoading,
+                      userInfoDataError,
+                    };
+                }
+              default:
+                if (Object.keys(userInfoDataDexie).length > 0) {
+                  return {
+                    userInfoData: userInfoDataDexie as GraphQLUserInfoData,
+                    userInfoDataLoading: false,
+                    userInfoDataError: undefined,
+                  };
+                } else {
+                  db?.getUserInfoData?.get(1).then((oldData: any) => {
+                    if (oldData?.data) {
+                      setUserInfoDataDexie({
+                        getUserInfoData: JSON.parse(oldData.data).getUserInfoData,
+                      } as GraphQLUserInfoData);
+                    } else {
+                      getUserInfoData();
+                      setUserInfoDataDexie(undefined);
+                    }
+                  });
+                }
+            }
+            break;
+          case false:
+            return { userInfoData: userInfoData as GraphQLUserInfoData, userInfoDataLoading, userInfoDataError };
+          default:
+            return { userInfoData: userInfoData as GraphQLUserInfoData, userInfoDataLoading, userInfoDataError };
         }
+        return { userInfoData: userInfoData as GraphQLUserInfoData, userInfoDataLoading, userInfoDataError };
       },
       getUserInfoStarred: () => {
         pushConsumers(Key.getUserInfoStarred, path);
-        if (stateShared.isLoggedIn) {
-          if (Object.keys(userStarredDexie).length > 0) {
-            return {
-              userStarred: userStarredDexie as GraphQLUserStarred,
-              loadingUserStarred: Object.keys(userStarredDexie).length === 0,
-              errorUserStarred: undefined,
-            };
-          }
-          return {
-            userStarred: userStarred as GraphQLUserStarred,
-            loadingUserStarred,
-            errorUserStarred,
-          };
-        } else {
-          return { userStarred: userStarred as GraphQLUserStarred, loadingUserStarred, errorUserStarred };
+        switch (stateShared.isLoggedIn) {
+          case true:
+            switch (userStarredDexie) {
+              case undefined:
+                switch (true) {
+                  case userStarred && Object.keys(userStarred?.getUserInfoStarred).length > 0:
+                    setUserStarredDexie({ getUserInfoStarred: userStarred?.getUserInfoStarred });
+                    db.getUserInfoStarred.add(
+                      {
+                        data: JSON.stringify({
+                          getUserInfoStarred: userStarred?.getUserInfoStarred,
+                        } as GraphQLUserStarred),
+                      },
+                      1
+                    );
+                    return {
+                      userStarred: userStarred as GraphQLUserStarred,
+                      loadingUserStarred,
+                      errorUserStarred,
+                    };
+                  default:
+                    return {
+                      userStarred: userStarred as GraphQLUserStarred,
+                      loadingUserStarred,
+                      errorUserStarred,
+                    };
+                }
+              default:
+                if (Object.keys(userStarredDexie).length > 0) {
+                  return {
+                    userStarred: userStarredDexie as GraphQLUserStarred,
+                    loadingUserStarred: false,
+                    errorUserStarred: undefined,
+                  };
+                } else {
+                  db?.getUserInfoStarred?.get(1).then((oldData: any) => {
+                    if (oldData?.data) {
+                      setUserStarredDexie({
+                        getUserInfoStarred: JSON.parse(oldData.data).getUserInfoStarred,
+                      } as GraphQLUserStarred);
+                    } else {
+                      getUserInfoStarred();
+                      setUserStarredDexie(undefined);
+                    }
+                  });
+                }
+            }
+            break;
+          case false:
+            return { userStarred: userStarred as GraphQLUserStarred, loadingUserStarred, errorUserStarred };
+          default:
+            return { userStarred: userStarred as GraphQLUserStarred, loadingUserStarred, errorUserStarred };
         }
+        return { userStarred: userStarred as GraphQLUserStarred, loadingUserStarred, errorUserStarred };
       },
       getSeen: () => {
         pushConsumers(Key.getSeen, path);
-        if (stateShared.isLoggedIn) {
-          if (Object.keys(seenDataDexie).length > 0) {
-            return {
-              seenData: seenDataDexie as GraphQLSeenData,
-              seenDataLoading: Object.keys(seenDataDexie).length === 0,
-              seenDataError: undefined,
-            };
-          }
-          return {
-            seenData: seenData as GraphQLSeenData,
-            seenDataLoading,
-            seenDataError,
-          };
-        } else {
-          const temp: GraphQLSeenData = seenData;
-          return { seenData: temp, seenDataLoading, seenDataError };
+        switch (stateShared.isLoggedIn) {
+          case true:
+            switch (searchesDataDexie) {
+              case undefined:
+                switch (true) {
+                  case seenData && Object.keys(seenData?.getSeen).length > 0:
+                    setSeenDataDexie({ getSeen: seenData?.getSeen });
+                    db.getSeen.add({ data: JSON.stringify({ getSeen: seenData?.getSeen } as GraphQLSeenData) }, 1);
+                    return {
+                      seenData: seenData as GraphQLSeenData,
+                      seenDataLoading,
+                      seenDataError,
+                    };
+                  default:
+                    return {
+                      seenData: seenData as GraphQLSeenData,
+                      seenDataLoading,
+                      seenDataError,
+                    };
+                }
+              default:
+                if (Object.keys(seenDataDexie).length > 0) {
+                  return {
+                    seenData: seenDataDexie as GraphQLSeenData,
+                    seenDataLoading: false,
+                    seenDataError: undefined,
+                  };
+                } else {
+                  db?.getSeen?.get(1).then((oldData: any) => {
+                    if (oldData?.data) {
+                      setSeenDataDexie({
+                        getSeen: JSON.parse(oldData.data).getSeen,
+                      } as GraphQLSeenData);
+                    } else {
+                      getSeen();
+                      setSeenDataDexie(undefined);
+                    }
+                  });
+                }
+            }
+            break;
+          case false:
+            return { seenData: seenData as GraphQLSeenData, seenDataLoading, seenDataError };
+          default:
+            return { seenData: seenData as GraphQLSeenData, seenDataLoading, seenDataError };
         }
+        return { seenData: seenData as GraphQLSeenData, seenDataLoading, seenDataError };
       },
       getSearches: () => {
         pushConsumers(Key.getSearches, path);
-        if (stateShared.isLoggedIn) {
-          if (Object.keys(searchesDataDexie).length > 0) {
-            return {
-              searchesData: searchesDataDexie as GraphQLSearchesData,
-              loadingSearchesData: Object.keys(searchesDataDexie).length === 0,
-              errorSearchesData: undefined,
-            };
-          }
-          return {
-            searchesData: searchesData as GraphQLSearchesData,
-            loadingSearchesData,
-            errorSearchesData,
-          };
-        } else {
-          const temp: GraphQLSearchesData = searchesData;
-          return { searchesData: temp, loadingSearchesData, errorSearchesData };
+        switch (stateShared.isLoggedIn) {
+          case true:
+            switch (searchesDataDexie) {
+              case undefined:
+                switch (true) {
+                  case searchesData && Object.keys(searchesData?.getSearches).length > 0:
+                    setSearchesDataDexie({ getSearches: searchesData?.getSearches });
+                    db.getSearches.add(
+                      { data: JSON.stringify({ getSearches: searchesData?.getSearches } as GraphQLSearchesData) },
+                      1
+                    );
+                    return {
+                      searchesData: searchesData as GraphQLSearchesData,
+                      loadingSearchesData,
+                      errorSearchesData,
+                    };
+                  default:
+                    return {
+                      searchesData: searchesData as GraphQLSearchesData,
+                      loadingSearchesData,
+                      errorSearchesData,
+                    };
+                }
+              default:
+                if (Object.keys(searchesDataDexie).length > 0) {
+                  return {
+                    searchesData: searchesDataDexie as GraphQLSearchesData,
+                    loadingSearchesData: false,
+                    errorSearchesData: undefined,
+                  };
+                } else {
+                  db?.getSearches?.get(1).then((oldData: any) => {
+                    if (oldData?.data) {
+                      setSearchesDataDexie({
+                        getSearches: JSON.parse(oldData.data).getSearches,
+                      } as GraphQLSearchesData);
+                    } else {
+                      getSearches();
+                      setSearchesDataDexie(undefined);
+                    }
+                  });
+                }
+            }
+            break;
+          case false:
+            return { searchesData: searchesData as GraphQLSearchesData, loadingSearchesData, errorSearchesData };
+          default:
+            return { searchesData: searchesData as GraphQLSearchesData, loadingSearchesData, errorSearchesData };
         }
+        return { searchesData: searchesData as GraphQLSearchesData, loadingSearchesData, errorSearchesData };
       },
     },
   };
