@@ -235,6 +235,15 @@ export function composeParamsHandler(fn, params, firstCallback, lastCallback) {
     return fn;
   }
 }
+export function memoize(func) {
+  var memo = {};
+  var slice = Array.prototype.slice;
+  return function () {
+    var args = slice.call(arguments);
+    if (args in memo) return memo[args];
+    else return (memo[args] = func.apply(this, args));
+  };
+}
 export function composeEventHandlers(...fns) {
   return (event, ...args) =>
     fns.some((fn) => {

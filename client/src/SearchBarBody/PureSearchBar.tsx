@@ -18,7 +18,7 @@ import Empty from '../Layout/EmptyLayout';
 import PureInput from './PureInput';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
 import { useQueryUsername, useVisible, useVisibleSearchesHistory } from '../SearchBar';
-import { parallel, each, filter } from 'async';
+import { parallel, each, filter, map } from 'async';
 
 const SearchHistories = Loadable({
   loading: Empty,
@@ -44,7 +44,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [state, dispatch] = useTrackedState();
   const displayName: string = (SearchBar as React.ComponentType<any>).displayName || '';
-  const { searchesData } = useApolloFactory(displayName!).query.getSearchesData();
+  const { searchesData } = useApolloFactory(displayName!).query.getSearches();
   const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
 
   const size = {
@@ -263,7 +263,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                 )
               );
             } else {
-              result[index].count = result[index].count + 1;
+              map(result, (obj: any) => {
+                if (obj.topic === topic) {
+                  obj.count += 1;
+                }
+                return obj;
+              });
             }
             // @ts-ignore
             cb(null, result);

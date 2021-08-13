@@ -1,4 +1,4 @@
-import { useApolloClient, useQuery } from '@apollo/client';
+import { useApolloClient, useLazyQuery, useQuery } from '@apollo/client';
 import {
   GET_CLICKED,
   GET_RSS_FEED,
@@ -17,23 +17,20 @@ import {
   GraphQLUserInfoData,
   GraphQLUserStarred,
 } from '../typing/interface';
-import { Pick2, SeenProps } from '../typing/type';
+import { Pick2, Searches, SeenProps } from '../typing/type';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import DbCtx, {
-  useSearchesDataDexie,
-  useSeenDataDexie,
-  useUserDataDexie,
-  useUserInfoDataDexie,
-  useUserStarredDexie,
-} from '../db/db.ctx';
+import DbCtx, { useSearchesDataDexie, useSeenDataDexie, useUserInfoDataDexie, useUserStarredDexie } from '../db/db.ctx';
 import { useEffect, useRef, useState } from 'react';
+import { map, parallel } from 'async';
+import { noop } from '../util/util';
+import { createStore } from '../util/hooksy';
 
 enum Key {
   getUserData = 'getUserData',
   getUserInfoData = 'getUserInfoData',
   getUserInfoStarred = 'getUserInfoStarred',
   getSeen = 'getSeen',
-  getSearchesData = 'getSearchesData',
+  getSearches = 'getSearches',
 }
 
 const consumers: Record<string, Array<string>> = {};
@@ -45,11 +42,21 @@ function pushConsumers(property: Key, path: string) {
     consumers[path] = [property];
   }
 }
-
+const defaultUserData: GraphQLUserData | any = {};
+export const [useUserDataDexie] = createStore(defaultUserData);
+function once(fn: any) {
+  let result: any;
+  return function () {
+    if (fn) {
+      result = fn.apply(null);
+      fn = null;
+    }
+    return result;
+  };
+}
 export const useApolloFactory = (path: string) => {
   const { db } = DbCtx.useContainer();
-
-  const [userDataDexie] = useUserDataDexie();
+  const [userDataDexie, setUserDataDexie] = useUserDataDexie();
   const [userInfoDataDexie] = useUserInfoDataDexie();
   const [userStarredDexie] = useUserStarredDexie();
   const [seenDataDexie] = useSeenDataDexie();
@@ -61,10 +68,10 @@ export const useApolloFactory = (path: string) => {
 
   useEffect(() => {
     timeRef.current = setTimeout(() => {
-      if (!stateShared.isLoggedIn || Object.keys(userDataDexie).length === 0) {
+      if (!stateShared.isLoggedIn || (userDataDexie && Object.keys(userDataDexie).length === 0) || !userDataDexie) {
         setShouldSkip(false);
       }
-    }, 3500);
+    }, 500);
     return () => {
       clearTimeout(timeRef.current);
     };
@@ -199,42 +206,81 @@ export const useApolloFactory = (path: string) => {
   };
 
   const searchesAdded = async (data: GraphQLSearchesData) => {
-    const oldData: GraphQLSearchesData | null = (await client.cache.readQuery({ query: GET_SEARCHES })) || null;
-    if (oldData && oldData.getSearches.searches.length > 0) {
-      await client.cache.writeQuery({
-        query: GET_SEARCHES,
-        data: {
-          getSearches: {
-            searches: oldData.getSearches.searches.unshift.apply(oldData.getSearches, data.getSearches.searches),
-          }, //the newest always at top
-        },
+    db?.transaction('rw', [db.getSearches], () => {
+      db.getSearches.get(1).then((oldData: any) => {
+        if (oldData?.data) {
+          let needAppend = true;
+          map(
+            [...JSON.parse(oldData.data).getSearches.searches],
+            (obj: Searches, cb) => {
+              if (obj.search === data.getSearches.searches[0].search) {
+                needAppend = false;
+                const temp = Object.assign({}, { search: obj.search, count: obj.count + 1, updatedAt: new Date() });
+                cb(null, temp);
+                return temp;
+              }
+              cb(null, obj);
+              return obj;
+            },
+            (err, res) => {
+              if (err) {
+                throw new Error('Err');
+              }
+              parallel([
+                () =>
+                  client.cache.writeQuery({
+                    query: GET_SEARCHES,
+                    data: {
+                      getSearches: {
+                        searches: needAppend ? [...data.getSearches.searches, ...res] : res,
+                      },
+                    },
+                  }),
+                () =>
+                  db?.getSearches?.update(1, {
+                    data: JSON.stringify({
+                      getSearches: {
+                        searches: needAppend ? [...data.getSearches.searches, ...res] : res,
+                      },
+                    }),
+                  }),
+              ]);
+            }
+          );
+        } else {
+          parallel([
+            () =>
+              client.cache.writeQuery({
+                query: GET_SEARCHES,
+                data: {
+                  getSearches: {
+                    searches: [...data.getSearches.searches],
+                  },
+                },
+              }),
+            () =>
+              db?.getSearches?.add(
+                {
+                  data: JSON.stringify({
+                    getSearches: {
+                      searches: [...data.getSearches.searches],
+                    },
+                  }),
+                },
+                1
+              ),
+          ]);
+        }
       });
-    } else {
-      await client.cache.writeQuery({
-        query: GET_SEARCHES,
-        data: {
-          getSearches: {
-            searches: [...data.getSearches.searches],
-          },
-        },
-      });
-    }
+    }).then(noop);
   };
 
-  const {
-    data: userData,
-    loading: userDataLoading,
-    error: userDataError,
-  } = useQuery(GET_USER_DATA, {
-    context: { clientName: 'mongo' },
-    skip: shouldSkip,
-  });
-  db?.transaction('rw', [db.getUserData], async () => {
-    const getUserData = await db.getUserData.get(1);
-    if (!getUserData && userData?.getUserData && Object.keys(userData.getUserData).length > 0) {
-      db?.getUserData?.add({ data: JSON.stringify({ userData }) }, 1);
+  const [getUserData, { data: userData, loading: userDataLoading, error: userDataError }] = useLazyQuery(
+    GET_USER_DATA,
+    {
+      context: { clientName: 'mongo' },
     }
-  });
+  );
 
   const {
     data: userInfoData,
@@ -243,12 +289,6 @@ export const useApolloFactory = (path: string) => {
   } = useQuery(GET_USER_INFO_DATA, {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
-  });
-  db?.transaction('rw', [db.getUserInfoData], async () => {
-    const getUserInfoData = await db.getUserInfoData.get(1);
-    if (!getUserInfoData && userInfoData?.getUserInfoData && Object.keys(userInfoData.getUserInfoData).length > 0) {
-      db?.getUserInfoData?.add({ data: JSON.stringify({ userInfoData }) }, 1);
-    }
   });
 
   const {
@@ -259,16 +299,6 @@ export const useApolloFactory = (path: string) => {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
   });
-  db?.transaction('rw', [db.getUserInfoStarred], async () => {
-    const getUserInfoStarred = await db.getUserInfoStarred.get(1);
-    if (
-      !getUserInfoStarred &&
-      userStarred?.getUserInfoStarred &&
-      Object.keys(userStarred.getUserInfoStarred).length > 0
-    ) {
-      db?.getUserInfoStarred?.add({ data: JSON.stringify({ userStarred }) }, 1);
-    }
-  });
 
   const {
     data: seenData,
@@ -278,12 +308,6 @@ export const useApolloFactory = (path: string) => {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
   });
-  db?.transaction('rw', [db.getSeen], async () => {
-    const getSeen = await db.getSeen.get(1);
-    if (!getSeen && seenData?.getSeen?.seenCards?.length > 0) {
-      db?.getSeen?.add({ data: JSON.stringify({ seenData }) }, 1);
-    }
-  });
 
   const {
     data: searchesData,
@@ -292,12 +316,6 @@ export const useApolloFactory = (path: string) => {
   } = useQuery(GET_SEARCHES, {
     context: { clientName: 'mongo' },
     skip: shouldSkip,
-  });
-  db?.transaction('rw', [db.getSearchesData], async () => {
-    const getSearchesData = await db.getSearchesData.get(1);
-    if (!getSearchesData && searchesData?.getSearches?.searches?.length > 0) {
-      db?.getSearchesData?.add({ data: JSON.stringify({ searchesData }) }, 1);
-    }
   });
 
   return {
@@ -316,22 +334,51 @@ export const useApolloFactory = (path: string) => {
     query: {
       getUserData: () => {
         pushConsumers(Key.getUserData, path);
-        if (stateShared.isLoggedIn) {
-          if (Object.keys(userDataDexie).length > 0) {
-            return {
-              userData: userDataDexie as GraphQLUserData,
-              userDataLoading: Object.keys(userDataDexie).length === 0,
-              userDataError: undefined,
-            };
-          }
-          return {
-            userData: userData as GraphQLUserData,
-            userDataLoading,
-            userDataError,
-          };
-        } else {
-          return { userData: userData as GraphQLUserData, userDataLoading, userDataError };
+        switch (stateShared.isLoggedIn) {
+          case true:
+            switch (userDataDexie) {
+              case undefined:
+                switch (true) {
+                  case userData && Object.keys(userData?.getUserData).length > 0:
+                    setUserDataDexie({ getUserData: userData?.getUserData });
+                    db.getUserData.add({ data: JSON.stringify({ getUserData: userData?.getUserData }) }, 1);
+                    return {
+                      userData: userData as GraphQLUserData,
+                      userDataLoading,
+                      userDataError,
+                    };
+                  default:
+                    return {
+                      userData: userData as GraphQLUserData,
+                      userDataLoading,
+                      userDataError,
+                    };
+                }
+              default:
+                if (Object.keys(userDataDexie).length > 0) {
+                  return {
+                    userData: userDataDexie as GraphQLUserData,
+                    userDataLoading: false,
+                    userDataError: undefined,
+                  };
+                } else {
+                  db?.getUserData?.get(1).then((oldData: any) => {
+                    if (oldData?.data) {
+                      setUserDataDexie({ getUserData: JSON.parse(oldData.data).getUserData } as GraphQLUserData);
+                    } else {
+                      getUserData();
+                      setUserDataDexie(undefined);
+                    }
+                  });
+                }
+            }
+            break;
+          case false:
+            return { userData: userData as GraphQLUserData, userDataLoading, userDataError };
+          default:
+            return { userData: userData as GraphQLUserData, userDataLoading, userDataError };
         }
+        return { userData: userData as GraphQLUserData, userDataLoading, userDataError };
       },
       getUserInfoData: () => {
         pushConsumers(Key.getUserInfoData, path);
@@ -391,8 +438,8 @@ export const useApolloFactory = (path: string) => {
           return { seenData: temp, seenDataLoading, seenDataError };
         }
       },
-      getSearchesData: () => {
-        pushConsumers(Key.getSearchesData, path);
+      getSearches: () => {
+        pushConsumers(Key.getSearches, path);
         if (stateShared.isLoggedIn) {
           if (Object.keys(searchesDataDexie).length > 0) {
             return {

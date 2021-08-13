@@ -44,9 +44,9 @@ const ScrollToTopLayout = Loadable({
   loader: () => import(/* webpackChunkName: "ScrollToTopLayout" */ './Layout/ScrollToTopLayout'),
   delay: 300, // 0.3 seconds
 });
-const defaultIsFetchFinish = { isFetchFinish: false };
-const defaultIsLoading = { isLoading: false };
-const defaultNotification = { notification: '' };
+export const defaultIsFetchFinish = { isFetchFinish: false };
+export const defaultIsLoading = { isLoading: false };
+export const defaultNotification = { notification: '' };
 export const [useIsFetchFinish] = createStore(defaultIsFetchFinish);
 export const [useIsLoading] = createStore(defaultIsLoading);
 export const [useNotification] = createStore(defaultNotification);

@@ -9,6 +9,8 @@ import { TopicsProps } from '../../typing/type';
 import { Tags } from './Tags';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
+import { ShouldRender } from '../../typing/enum';
+import { parallel } from 'async';
 
 const defaultTheme = createTheme();
 const theme = createTheme({
@@ -28,7 +30,7 @@ interface ButtonTagsProps {
 
 const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable }) => {
   const [state, dispatch] = useTrackedState();
-  const [stateShared] = useTrackedStateShared();
+  const [stateShared, dispatchShared] = useTrackedStateShared();
   const handleClickSearchTopicTags = (event: React.MouseEvent): void => {
     event.preventDefault();
   };
@@ -60,17 +62,38 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
     }
   };
   const handleClickFilterSeenCards = (event: React.MouseEvent): void => {
-    //TODO: when click this, there will be a delay so need to show loading spinner
     event.preventDefault();
-    if (!state.filterBySeen && renderTopicTags) {
-      setExpandableTopicTags(false);
-    }
-    dispatch({
-      type: 'FILTER_CARDS_BY_SEEN',
-      payload: {
-        filterBySeen: !state.filterBySeen,
+    parallel([
+      () => {
+        if (!state.filterBySeen && renderTopicTags) {
+          setExpandableTopicTags(false);
+        }
       },
-    });
+      () =>
+        dispatch({
+          type: 'FILTER_CARDS_BY_SEEN',
+          payload: {
+            filterBySeen: !state.filterBySeen,
+          },
+        }),
+      () => {
+        if (stateShared.shouldRender === ShouldRender.Home) {
+          dispatchShared({
+            type: 'SET_SHOULD_RENDER',
+            payload: {
+              shouldRender: '',
+            },
+          });
+        } else {
+          dispatchShared({
+            type: 'SET_SHOULD_RENDER',
+            payload: {
+              shouldRender: ShouldRender.Home,
+            },
+          });
+        }
+      },
+    ]);
   };
   return (
     <React.Fragment>

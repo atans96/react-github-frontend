@@ -11,20 +11,17 @@ import {
   GraphQLRSSFeedData,
   GraphQLSearchesData,
   GraphQLSeenData,
-  GraphQLUserData,
   GraphQLUserInfoData,
   GraphQLUserStarred,
 } from '../typing/interface';
 
 const conn = new ApolloCacheDB();
 
-const defaultUserData: GraphQLUserData | any = {};
 const defaultUserInfoData: GraphQLUserInfoData | any = {};
 const defaultUserStarred: GraphQLUserStarred | any = {};
 const defaultSeenData: GraphQLSeenData | any = {};
 const defaultSearchesData: GraphQLSearchesData | any = {};
 const defaultRSSFeed: GraphQLRSSFeedData | any = {};
-export const [useUserDataDexie] = createStore(defaultUserData);
 export const [useRSSFeedDexie] = createStore(defaultRSSFeed);
 export const [useUserInfoDataDexie] = createStore(defaultUserInfoData);
 export const [useUserStarredDexie] = createStore(defaultUserStarred);
@@ -32,7 +29,6 @@ export const [useSeenDataDexie] = createStore(defaultSeenData);
 export const [useSearchesDataDexie] = createStore(defaultSearchesData);
 
 const DbCtx = createContainer(() => {
-  const [, setUserDataDexie] = useUserDataDexie();
   const [, setRSSFeedDexie] = useRSSFeedDexie();
   const [, setUserInfoDataDexie] = useUserInfoDataDexie();
   const [, setUserStarredDexie] = useUserStarredDexie();
@@ -78,7 +74,7 @@ const DbCtx = createContainer(() => {
           type: ENCRYPT_LIST,
           fields: ['data'],
         },
-        getSearchesData: {
+        getSearches: {
           type: ENCRYPT_LIST,
           fields: ['data'],
         },
@@ -95,7 +91,7 @@ const DbCtx = createContainer(() => {
       handleOpenDb().then(() => {
         conn.getUserInfoData.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).userInfoData?.getUserInfoData;
+            const temp = JSON.parse(data.data).getUserInfoData;
             if (temp) {
               setUserInfoDataDexie({ getUserInfoData: temp });
             }
@@ -103,7 +99,7 @@ const DbCtx = createContainer(() => {
         });
         conn.getUserInfoStarred.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).userStarred?.getUserInfoStarred;
+            const temp = JSON.parse(data.data).getUserInfoStarred;
             if (temp) {
               setUserStarredDexie({ getUserInfoStarred: temp });
             }
@@ -111,25 +107,17 @@ const DbCtx = createContainer(() => {
         });
         conn.getSeen.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).seenData?.getSeen;
+            const temp = JSON.parse(data.data).getSeen;
             if (temp) {
               setSeenDataDexie({ getSeen: temp });
             }
           }
         });
-        conn.getSearchesData.get(1).then((data: any) => {
+        conn.getSearches.get(1).then((data: any) => {
           if (data) {
-            const temp = JSON.parse(data.data).searchesData?.getSearches;
+            const temp = JSON.parse(data.data).getSearches;
             if (temp) {
-              setSearchesDataDexie({ getSearches: JSON.parse(data.data).searchesData.getSearches });
-            }
-          }
-        });
-        conn.getUserData.get(1).then((data: any) => {
-          if (data) {
-            const temp = JSON.parse(data.data).userData?.getUserData;
-            if (temp) {
-              setUserDataDexie({ getUserData: temp });
+              setSearchesDataDexie({ getSearches: temp });
             }
           }
         });
