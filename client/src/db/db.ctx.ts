@@ -6,35 +6,10 @@ import { readEnvironmentVariable } from '../util';
 import Encryption from './Encryption';
 import Dexie from 'dexie';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import { createStore } from '../util/hooksy';
-import {
-  GraphQLRSSFeedData,
-  GraphQLSearchesData,
-  GraphQLSeenData,
-  GraphQLUserInfoData,
-  GraphQLUserStarred,
-} from '../typing/interface';
 
 const conn = new ApolloCacheDB();
 
-const defaultUserInfoData: GraphQLUserInfoData | any = {};
-const defaultUserStarred: GraphQLUserStarred | any = {};
-const defaultSeenData: GraphQLSeenData | any = {};
-const defaultSearchesData: GraphQLSearchesData | any = {};
-const defaultRSSFeed: GraphQLRSSFeedData | any = {};
-export const [useRSSFeedDexie] = createStore(defaultRSSFeed);
-export const [useUserInfoDataDexie] = createStore(defaultUserInfoData);
-export const [useUserStarredDexie] = createStore(defaultUserStarred);
-export const [useSeenDataDexie] = createStore(defaultSeenData);
-export const [useSearchesDataDexie] = createStore(defaultSearchesData);
-
 const DbCtx = createContainer(() => {
-  const [, setRSSFeedDexie] = useRSSFeedDexie();
-  const [, setUserInfoDataDexie] = useUserInfoDataDexie();
-  const [, setUserStarredDexie] = useUserStarredDexie();
-  const [, setSeenDataDexie] = useSeenDataDexie();
-  const [, setSearchesDataDexie] = useSearchesDataDexie();
-
   const [db, setDb] = useState<ApolloCacheDB | null>(null);
   const [stateShared] = useTrackedStateShared();
   const handleOpenDb = async () => {
@@ -88,40 +63,7 @@ const DbCtx = createContainer(() => {
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && stateShared.isLoggedIn) {
-      handleOpenDb().then(() => {
-        conn.getUserInfoData.get(1).then((data: any) => {
-          if (data) {
-            const temp = JSON.parse(data.data).getUserInfoData;
-            if (temp) {
-              setUserInfoDataDexie({ getUserInfoData: temp });
-            }
-          }
-        });
-        conn.getUserInfoStarred.get(1).then((data: any) => {
-          if (data) {
-            const temp = JSON.parse(data.data).getUserInfoStarred;
-            if (temp) {
-              setUserStarredDexie({ getUserInfoStarred: temp });
-            }
-          }
-        });
-        conn.getSeen.get(1).then((data: any) => {
-          if (data) {
-            const temp = JSON.parse(data.data).getSeen;
-            if (temp) {
-              setSeenDataDexie({ getSeen: temp });
-            }
-          }
-        });
-        conn.getSearches.get(1).then((data: any) => {
-          if (data) {
-            const temp = JSON.parse(data.data).getSearches;
-            if (temp) {
-              setSearchesDataDexie({ getSearches: temp });
-            }
-          }
-        });
-      }); // eslint-disable-next-line react-hooks/exhaustive-deps
+      handleOpenDb().then(() => {}); // eslint-disable-next-line react-hooks/exhaustive-deps
     }
     return () => {
       isFinished = true;
