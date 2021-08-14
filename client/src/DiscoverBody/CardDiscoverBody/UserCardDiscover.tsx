@@ -48,7 +48,7 @@ const UserCardDiscover: React.FC<UserCardDiscover> = React.memo(
             <img alt="avatar" className="avatar-img" src={avatar_url} />
           </div>
           <div className={classes.nameWrapper}>
-            <a href={html_url} target="_blank" rel="noopener noreferrer" onClick={onClick}>
+            <a href={html_url} onClick={onClick}>
               <strong>{login}</strong>
             </a>
             <Typography

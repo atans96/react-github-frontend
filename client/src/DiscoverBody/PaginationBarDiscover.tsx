@@ -34,7 +34,7 @@ const useStyles = makeStyles<Theme>((theme) => ({
   },
 }));
 
-const PaginationBarDiscover = React.memo(() => {
+const PaginationBarDiscover = () => {
   const classes = useStyles();
   const [stateDiscover] = useTrackedStateDiscover();
   const [stateShared] = useTrackedStateShared();
@@ -61,6 +61,6 @@ const PaginationBarDiscover = React.memo(() => {
   } else {
     return <></>;
   }
-});
+};
 PaginationBarDiscover.displayName = 'PaginationBarDiscover';
-export default PaginationBarDiscover;
+export default React.memo(PaginationBarDiscover);

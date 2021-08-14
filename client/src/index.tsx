@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import './index.scss';
 import ReactDOM from 'react-dom';
 import { BrowserRouter as Router, Route, Switch, useHistory, useLocation } from 'react-router-dom';
@@ -24,9 +24,8 @@ import { ShouldRender } from './typing/enum';
 import sysend from 'sysend';
 import DbCtx from './db/db.ctx';
 import { HttpLink } from './link/http/HttpLink';
-import useDeepCompareEffect from './hooks/useDeepCompareEffect';
 import Empty from './Layout/EmptyLayout';
-import useWebSocket, { SendMessage } from './util/websocket';
+import useWebSocket from './util/websocket';
 import { associate } from './graphql/queries';
 import { GraphQLUserData } from './typing/interface';
 // import Login from './Login';

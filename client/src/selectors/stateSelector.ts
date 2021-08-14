@@ -109,18 +109,6 @@ export function useSelector(selector: any) {
   return selector(useApolloData());
 }
 //don't import createSelector to React component as it will re-create selector (not memoize) when the component gets rerender
-export const alreadySeenCardSelector = createSelector<SeenProps[] | [], any, any[]>(
-  [(seenCards: SeenProps[]) => seenCards],
-  (seenCard: SeenProps[]) => {
-    return (
-      seenCard?.reduce((acc: any[], obj: SeenProps) => {
-        acc.push(obj.id);
-        return acc;
-      }, []) ?? []
-    );
-  }
-);
-
 export const sortedRepoInfoSelector = (starRankingFiltered: starRanking[], sorted: string) =>
   createSelector<StaticState, any, any[]>(
     [(data: StaticState) => data.SuggestedRepo],

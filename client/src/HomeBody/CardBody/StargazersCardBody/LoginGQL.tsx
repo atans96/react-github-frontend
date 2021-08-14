@@ -80,8 +80,11 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
           <div className={'login-link-container'}>
             <a
               className="login-link"
-              target="_blank"
-              rel="noopener noreferrer"
+              onClick={() =>
+                window.open(
+                  'https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token'
+                )
+              }
               href={'https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token'}
             >
               <GitHubIcon />

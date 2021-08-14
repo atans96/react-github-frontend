@@ -8,7 +8,7 @@ import { useApolloFactory } from '../../hooks/useApolloFactory';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { getTopContributors, getUser } from '../../services';
 import moment from 'moment';
-import { epochToJsDate } from '../../util/util';
+import { consumers, epochToJsDate } from '../../util/util';
 import { MergedDataProps } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 
@@ -67,7 +67,6 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.state?.data?.userInfoData]);
 
-  const consumers = useApolloFactory(displayName!).consumers().consumers;
   const alreadyFetch = useRef(false);
   const abortController = new AbortController();
   useDeepCompareEffect(() => {

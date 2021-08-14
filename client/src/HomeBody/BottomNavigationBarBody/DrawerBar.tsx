@@ -63,7 +63,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
 }));
 
-const DrawerBar = React.memo(() => {
+const DrawerBar = () => {
   const [open, setOpen] = useState(false);
   const [drawerWidth, dragHandlers, drawerRef] = useDraggable({});
   const classes = useStyles({ drawerWidth: open ? `${drawerWidth}px` : '0px' });
@@ -134,6 +134,6 @@ const DrawerBar = React.memo(() => {
       </Drawer>
     </React.Fragment>
   );
-});
+};
 DrawerBar.displayName = 'DrawerBar';
-export default DrawerBar;
+export default React.memo(DrawerBar);

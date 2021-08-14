@@ -99,13 +99,15 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
                 ));
             }, [renderImages])}
         </div>
-        <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
-          <ListItemIcon>
-            <SupervisorAccountIcon />
-          </ListItemIcon>
-          <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
-          {renderChildren ? <ExpandLess /> : <ExpandMore />}
-        </ListItem>
+        {renderImages.length > 0 && (
+          <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
+            <ListItemIcon>
+              <SupervisorAccountIcon />
+            </ListItemIcon>
+            <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
+            {renderChildren && renderImages.length > 0 ? <ExpandLess /> : <ExpandMore />}
+          </ListItem>
+        )}
         {clicked && <ImagesModalLayout clicked={clicked} handleClick={handleClick} renderImages={renderImages} />}
       </React.Fragment>
     );

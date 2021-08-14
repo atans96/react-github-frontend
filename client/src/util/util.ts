@@ -4,6 +4,26 @@ import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
 import { removeToken, removeTokenGQL, session } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
+import { Key } from '../typing/enum';
+
+export function once(fn: any) {
+  let result: any;
+  return function () {
+    if (fn) {
+      result = fn.apply(null);
+      fn = null;
+    }
+    return result;
+  };
+}
+export const consumers: Record<string, Array<string>> = {};
+export function pushConsumers(property: Key, path: string) {
+  if (consumers[path] && !consumers[path].includes(property)) {
+    consumers[path].push(property);
+  } else if (consumers[path] == undefined) {
+    consumers[path] = [property];
+  }
+}
 export function useDebouncedValue<T>(input: T, time = 1500) {
   const [debouncedValue, setDebouncedValue] = useState<any>(input);
 

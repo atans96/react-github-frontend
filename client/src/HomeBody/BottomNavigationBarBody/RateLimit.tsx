@@ -3,10 +3,10 @@ import './RateLimit.css';
 import clsx from 'clsx';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateRateLimit } from '../../selectors/stateContextSelector';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { epochToJsDate } from '../../util';
 import { getRateLimitInfo } from '../../services';
 import { parallel } from 'async';
+import { useGetUserData } from '../../apolloFactory/useGetUserData';
 
 const RateLimit = () => {
   const abortController = new AbortController();
@@ -14,7 +14,7 @@ const RateLimit = () => {
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [refetch, setRefetch] = useState(true);
   const displayName: string = (RateLimit as React.ComponentType<any>).displayName || '';
-  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
+  const { userData, userDataLoading, userDataError } = useGetUserData(displayName!).query();
   const [stateRateLimit] = useTrackedStateRateLimit();
   const [resetTime, setResetTime] = useState<string>('');
   const location = useLocation();

@@ -16,7 +16,7 @@ const ColumnTwo = Loadable({
   delay: 300,
   loader: () => import(/* webpackChunkName: "ColumnTwo" */ './ManageProfileBody/ColumnTwo'),
 });
-const ManageProfile = React.memo(() => {
+const ManageProfile = () => {
   const [state, dispatch] = useTrackedStateShared();
   const [languageFilter, setLanguageFilter] = useState<string[]>([]);
   const handleLanguageFilter = useStableCallback((language: string, remove = false) => {
@@ -53,6 +53,6 @@ const ManageProfile = React.memo(() => {
       </StateManageProfileProvider>
     </div>
   );
-});
+};
 ManageProfile.displayName = 'ManageProfile';
-export default ManageProfile;
+export default React.memo(ManageProfile);

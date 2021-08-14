@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from './selectors/stateContextSelector';
-import { useApolloFactory } from './hooks/useApolloFactory';
 import { MergedDataProps, SeenProps } from './typing/type';
-import { noop } from './util/util';
 import { useStableCallback } from './util';
 import { crawlerPython, getRepoImages } from './services';
 import useBottomHit from './hooks/useBottomHit';
@@ -19,7 +17,9 @@ import useFetchUser from './hooks/useFetchUser';
 import Empty from './Layout/EmptyLayout';
 import Mutex from './util/mutex/mutex';
 import { createStore } from './util/hooksy';
-import { parallel, filter } from 'async';
+import { filter, parallel } from 'async';
+import { useGetSeenMutation } from './apolloFactory/useGetSeenMutation';
+
 const mutex = new Mutex();
 
 const MasonryCard = Loadable({
@@ -51,11 +51,12 @@ export const [useIsFetchFinish] = createStore(defaultIsFetchFinish);
 export const [useIsLoading] = createStore(defaultIsLoading);
 export const [useNotification] = createStore(defaultNotification);
 
-const Home = React.memo(() => {
+const Home = () => {
+  const seenAdded = useGetSeenMutation();
   const abortController = new AbortController();
   const [notification, setNotification] = useNotification();
   const [isFetchFinish] = useIsFetchFinish();
-  const [isLoading] = useIsLoading();
+  const [isLoading, setIsLoading] = useIsLoading();
 
   const displayName: string = (Home as React.ComponentType<any>).displayName || '';
   const { fetchTopics, fetchUser, onClickTopic, clickedGQLTopic } = useFetchUser({
@@ -66,19 +67,14 @@ const Home = React.memo(() => {
   const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
-  const { seenData, seenDataLoading, seenDataError } = useApolloFactory(displayName!).query.getSeen();
-  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
-  const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
   // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const windowScreenRef = useRef<HTMLDivElement>(null);
   const dataAlreadyFetch = useRef<number>();
   const isMergedDataExist = state.mergedData.length > 0;
-  const isSeenCardsExist =
-    (seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length > 0 && !seenDataLoading && !seenDataError) ||
-    false;
-  const isTokenRSSExist = (localStorage.getItem('tokenRSS') || '').length > 0 && !userDataLoading && !userDataError;
+  const isSeenCardsExist = stateShared?.seenCards?.length > 0 || false;
+  const isTokenRSSExist = (localStorage.getItem('tokenRSS') || '').length > 0;
 
   const handleBottomHit = useStableCallback(() => {
     if (
@@ -92,7 +88,7 @@ const Home = React.memo(() => {
       dispatch({
         type: 'ADVANCE_PAGE',
       });
-      if (state.imagesData.length > 0 && stateShared.isLoggedIn) {
+      if (stateShared.isLoggedIn) {
         const result = state.mergedData.reduce((acc, obj: MergedDataProps) => {
           const temp = Object.assign(
             {},
@@ -118,7 +114,9 @@ const Home = React.memo(() => {
           acc.push(temp);
           return acc;
         }, [] as SeenProps[]);
-        if (result.length > 0) seenAdded(result).then(noop);
+        if (result.length > 0) {
+          seenAdded(result);
+        }
       }
     }
   });
@@ -139,6 +137,7 @@ const Home = React.memo(() => {
       });
     }
   });
+
   useDeepCompareEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
@@ -210,7 +209,6 @@ const Home = React.memo(() => {
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
-      setNotification({ notification: '' });
       const ids = state.undisplayMergedData.reduce((acc, obj) => {
         acc.push(obj.id);
         return acc;
@@ -278,21 +276,20 @@ const Home = React.memo(() => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.filterBySeen]);
+  }, [state.filterBySeen, isSeenCardsExist]);
 
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
       parallel([
-        () =>
-          dispatch({
-            type: 'UNDISPLAY_MERGED_DATA',
-            payload: {
-              undisplayMergedData: seenData.getSeen.seenCards,
-            },
-          }),
         () => {
-          const temp = seenData.getSeen.seenCards ?? [];
+          if (notification.notification.length > 0) setNotification({ notification: '' });
+        },
+        () => {
+          if (isLoading.isLoading) setIsLoading({ isLoading: false });
+        },
+        () => {
+          const temp = state.undisplayMergedData ?? [];
           const images = temp!.reduce((acc: any[], obj: SeenProps) => {
             acc.push(
               Object.assign(
@@ -316,7 +313,7 @@ const Home = React.memo(() => {
           dispatch({
             type: 'MERGED_DATA_ADDED',
             payload: {
-              data: seenData.getSeen.seenCards,
+              data: state.undisplayMergedData,
             },
           }),
       ]);
@@ -325,7 +322,7 @@ const Home = React.memo(() => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seenDataLoading, seenDataError, seenData, location.pathname, state.filterBySeen]);
+  }, [stateShared.seenCards, location.pathname, state.filterBySeen]);
 
   useEffect(
     () => {
@@ -450,9 +447,11 @@ const Home = React.memo(() => {
   };
   useScrollSaver(location.pathname, '/');
   const [renderLoading, setRenderLoading] = useState(false);
+
   function clear(timeout: any) {
     return clearTimeout(timeout);
   }
+
   const timeoutRef = useRef<any>();
 
   useEffect(() => {
@@ -469,6 +468,7 @@ const Home = React.memo(() => {
     return () => {
       clearTimeout(timeoutRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading.isLoading, isMergedDataExist]);
 
   return (
@@ -494,7 +494,7 @@ const Home = React.memo(() => {
         <If condition={!state.filterBySeen && isSeenCardsExist}>
           <Then>
             <div style={{ textAlign: 'center' }}>
-              <h3>Your {(seenData?.getSeen?.seenCards && seenData.getSeen.seenCards.length) || 0} Card History:</h3>
+              <h3>Your {whichToUse().length || 0} Card History:</h3>
             </div>
           </Then>
         </If>
@@ -506,7 +506,7 @@ const Home = React.memo(() => {
           </Then>
         </If>
 
-        {isLoading && renderLoading && notification.notification.length === 0 && (
+        {isLoading && renderLoading && notification.notification.length === 0 && !isFetchFinish.isFetchFinish && (
           <LoadingEye queryUsername={stateShared.queryUsername} />
         )}
 
@@ -529,6 +529,6 @@ const Home = React.memo(() => {
       </If>
     </React.Fragment>
   );
-});
+};
 Home.displayName = 'Home';
-export default Home;
+export default React.memo(Home);

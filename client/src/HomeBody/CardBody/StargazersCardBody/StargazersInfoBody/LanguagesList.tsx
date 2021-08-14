@@ -6,9 +6,8 @@ import { StargazerProps } from '../../../../typing/type';
 import { fastFilter } from '../../../../util';
 import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 import { getFile } from '../../../../services';
-import { useLocation } from 'react-router-dom';
 
-const LanguagesList: React.FC = React.memo(() => {
+const LanguagesList = () => {
   const abortController = new AbortController();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [selectedLanguage, setSelectedLanguage] = useState(stateStargazers.language);
@@ -123,6 +122,6 @@ const LanguagesList: React.FC = React.memo(() => {
       </ul>
     </div>
   );
-});
+};
 LanguagesList.displayName = 'LanguagesList';
-export default LanguagesList;
+export default React.memo(LanguagesList);
