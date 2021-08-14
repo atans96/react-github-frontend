@@ -6,15 +6,12 @@ import { useTrackedState, useTrackedStateRateLimit } from '../../selectors/state
 import { epochToJsDate } from '../../util';
 import { getRateLimitInfo } from '../../services';
 import { parallel } from 'async';
-import { useGetUserData } from '../../apolloFactory/useGetUserData';
 
 const RateLimit = () => {
   const abortController = new AbortController();
   const [state] = useTrackedState();
   const [, dispatchRateLimit] = useTrackedStateRateLimit();
   const [refetch, setRefetch] = useState(true);
-  const displayName: string = (RateLimit as React.ComponentType<any>).displayName || '';
-  const { userData, userDataLoading, userDataError } = useGetUserData(displayName!).query();
   const [stateRateLimit] = useTrackedStateRateLimit();
   const [resetTime, setResetTime] = useState<string>('');
   const location = useLocation();
@@ -104,7 +101,7 @@ const RateLimit = () => {
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [refetch, state.mergedData.length, state.searchUsers.length, userDataError, userDataLoading, userData]
+    [refetch, state.mergedData.length, state.searchUsers.length]
   );
   return (
     <div id="container">

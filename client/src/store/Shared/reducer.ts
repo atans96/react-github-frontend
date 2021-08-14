@@ -18,6 +18,7 @@ export type ActionShared =
   | 'SET_SEARCHES_HISTORY'
   | 'SET_STARRED'
   | 'QUERY_USERNAME'
+  | 'SET_USERDATA'
   | 'SET_USERNAME'
   | 'TOKEN_RSS_ADDED'
   | 'SET_SHOULD_RENDER'
@@ -30,6 +31,7 @@ export const initialStateShared: IStateShared = {
   shouldRender: '',
   seenCards: [],
   searches: [],
+  userData: {},
   starred: [],
   githubLanguages: new Map<string, GithubLanguages>(),
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
@@ -56,6 +58,12 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateStargazers,
         ...initialStateManageProfile,
         ...initialStateRateLimit,
+      };
+    }
+    case 'SET_USERDATA': {
+      return {
+        ...state,
+        userData: action.payload.userData,
       };
     }
     case 'SET_SEARCHES_HISTORY': {

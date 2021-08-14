@@ -18,10 +18,10 @@ import { If } from '../../../util/react-if/If';
 import { fastFilter, uniqFast } from '../../../util';
 import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
-import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 import { getRSSFeed } from '../../../services';
 import { forEach } from 'async';
+import { useRSSFeedMutation } from '../../../apolloFactory/useRSSFeedMutation';
 
 const useStyles = makeStyles<Theme>(() => ({
   paper: {
@@ -63,7 +63,7 @@ const RSSFeed = () => {
   const isTokenRSSExist = stateShared.tokenRSS.length > 0;
   const classes = useStyles();
   const displayName: string = (RSSFeed as React.ComponentType<any>).displayName || '';
-  const rssFeedAdded = useApolloFactory(displayName!).mutation.rssFeedAdded;
+  const rssFeedAdded = useRSSFeedMutation();
   const [showMoreRSS, setShowMoreRSS] = useState(false);
   const [loading, setLoading] = useState(false);
   const [rssFeed, setRSSFeed] = useState<string[]>([]);

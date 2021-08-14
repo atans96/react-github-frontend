@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Checkbox,
   Collapse,
@@ -13,13 +13,13 @@ import {
 } from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { makeStyles } from '@material-ui/core/styles';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 import { noop } from '../../util/util';
 import { LanguagePreference } from '../../typing/type';
 import { useLocation } from 'react-router-dom';
 import { LocationGraphQL } from '../../typing/interface';
 import { useStableCallback } from '../../util';
+import { useGetUserDataMutation } from '../../apolloFactory/useGetUserDataMutation';
 
 interface StyleProps {
   drawerWidth: string;
@@ -56,8 +56,7 @@ const RowOne = () => {
     setOpenLanguages(!openLanguages);
   };
   const location = useLocation<LocationGraphQL>();
-  const displayName: string = (RowOne as React.ComponentType<any>).displayName || '';
-  const languagesPreferenceAdded = useApolloFactory(displayName!).mutation.languagesPreferenceAdded;
+  const languagesPreferenceAdded = useGetUserDataMutation();
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
   useDeepCompareEffect(() => {
     let isFinished = false;

@@ -76,6 +76,7 @@ export interface IStateStargazers {
 }
 export interface IStateShared {
   width: number;
+  userData: Partial<UserData>;
   searches: Searches[];
   seenCards: number[];
   starred: number[];

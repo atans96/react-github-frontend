@@ -13,7 +13,7 @@ export const useGetUserInfoStarredMutation = () => {
     db.getUserInfoStarred.get(1).then((oldData: any) => {
       if (oldData?.data) {
         const old: GraphQLUserStarred = JSON.parse(oldData.data);
-        if (old.getUserInfoStarred.starred.length > 0) {
+        if (old?.getUserInfoStarred?.starred?.length > 0) {
           parallel([
             () =>
               dispatchShared({
