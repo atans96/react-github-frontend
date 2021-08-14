@@ -5,7 +5,6 @@ import { filterActionResolvedPromiseData, noop } from '../util/util';
 import React from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../Home';
-import { useGetUserData } from '../apolloFactory/useGetUserData';
 
 const useActionResolvePromise = () => {
   const [, setNotification] = useNotification();
@@ -15,13 +14,14 @@ const useActionResolvePromise = () => {
   const [stateShared] = useTrackedStateShared();
   const [, dispatchDiscover] = useTrackedStateDiscover();
   const [state, dispatch] = useTrackedState();
-  const { userData } = useGetUserData(Function.name).query();
   const languagePreference = React.useMemo(() => {
     return new Map(
-      userData?.getUserData?.languagePreference.map((obj: LanguagePreference) => [obj.language, obj]) || []
+      (stateShared?.userData?.languagePreference &&
+        stateShared.userData.languagePreference.map((obj: LanguagePreference) => [obj.language, obj])) ||
+        []
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData?.getUserData?.languagePreference]);
+  }, [stateShared?.userData?.languagePreference]);
 
   const actionAppend = (data: IDataOne | any, displayName: string) => {
     if (state.filterBySeen) {

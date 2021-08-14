@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { NavLink, useHistory, useLocation } from 'react-router-dom';
 import useHover from './hooks/useHover';
 import Profile from './NavBarBody/Profile';
 import Logout from './NavBarBody/Logout';
@@ -7,15 +7,12 @@ import Login from './NavBarBody/Login';
 import Home from './NavBarBody/Home';
 import Discover from './NavBarBody/SearchSuggested';
 import { logoutAction } from './util/util';
-import { useApolloFactory } from './hooks/useApolloFactory';
-import { useHistory } from 'react-router-dom';
 import { If } from './util/react-if/If';
 import { Then } from './util/react-if/Then';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { getAllGraphQLNavBar } from './services';
 import { useStableCallback } from './util';
-import { useGetUserData } from './apolloFactory/useGetUserData';
 
 //why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
 const directionLogin = new Map(
@@ -46,8 +43,6 @@ const NavBar = () => {
   const [isHoveredDiscover, bindDiscover] = useHover();
   const [isHoveredHome, bindHome] = useHover();
   const Active = location.pathname.split('/');
-  const displayName: string = (NavBar as React.ComponentType<any>).displayName || '';
-  const { userData, userDataLoading, userDataError } = useGetUserData(displayName!).query();
 
   const te = Active[1] !== '' ? Active[1] : 'home';
   const number = state.isLoggedIn ? directionLogin?.get(te)?.index : directionNotLogin?.get(te)?.index;
@@ -132,7 +127,10 @@ const NavBar = () => {
           logoutAction(history, dispatch);
         } else {
           //TODO: don't push state to history for RowTwo and RowOne.
-          history.push({ pathname: `/${active.toLowerCase()}`, state: { data, previousPath: location.pathname } });
+          history.push({
+            pathname: `/${active.toLowerCase()}`,
+            state: { data, previousPath: location.pathname },
+          });
         }
       });
     } else if (!isFinished && directionLogin?.get(active.toLowerCase())?.explored) {
@@ -265,10 +263,7 @@ const NavBar = () => {
                     onClick: handleClick,
                     active: active,
                     binder: bindProfile,
-                    avatar:
-                      !userDataLoading && !userDataError && userData && userData.getUserData
-                        ? userData.getUserData.avatar
-                        : '',
+                    avatar: stateShared.userData.avatar || '',
                     style:
                       isHoveredProfile && active !== 'profile'
                         ? {
