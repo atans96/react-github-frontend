@@ -14,6 +14,9 @@ export type ActionShared =
   | 'LOGOUT'
   | 'SET_GITHUB_LANGUAGES'
   | 'SET_WIDTH'
+  | 'SET_SEEN'
+  | 'SET_SEARCHES_HISTORY'
+  | 'SET_STARRED'
   | 'QUERY_USERNAME'
   | 'SET_USERNAME'
   | 'TOKEN_RSS_ADDED'
@@ -25,6 +28,9 @@ export type ActionShared =
 export const initialStateShared: IStateShared = {
   width: window.innerWidth,
   shouldRender: '',
+  seenCards: [],
+  searches: [],
+  starred: [],
   githubLanguages: new Map<string, GithubLanguages>(),
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
@@ -50,6 +56,24 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateStargazers,
         ...initialStateManageProfile,
         ...initialStateRateLimit,
+      };
+    }
+    case 'SET_SEARCHES_HISTORY': {
+      return {
+        ...state,
+        searches: action.payload.searches,
+      };
+    }
+    case 'SET_STARRED': {
+      return {
+        ...state,
+        starred: action.payload.starred,
+      };
+    }
+    case 'SET_SEEN': {
+      return {
+        ...state,
+        seenCards: action.payload.seenCards,
       };
     }
     case 'SET_SHOULD_RENDER': {

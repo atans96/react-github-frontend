@@ -27,7 +27,7 @@ interface StateProps {
   path: string;
 }
 
-const Details: React.FC = React.memo(() => {
+const Details = () => {
   const abortController = new AbortController();
   const location = useLocation<any>();
   const [readme, setReadme] = useState('');
@@ -138,7 +138,7 @@ const Details: React.FC = React.memo(() => {
               </If>
             </div>
             <div className={'footer'}>
-              <a href={data?.data?.html_url} target="_blank" rel="noopener noreferrer">
+              <a href={data?.data?.html_url} onClick={() => window.open(data?.data?.html_url)}>
                 View on GitHub
               </a>
             </div>
@@ -147,6 +147,6 @@ const Details: React.FC = React.memo(() => {
       </div>
     </React.Fragment>
   );
-});
+};
 Details.displayName = 'Details';
-export default Details;
+export default React.memo(Details);

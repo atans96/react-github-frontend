@@ -53,7 +53,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
     padding: '0 8px',
   },
 }));
-const ColumnOne: React.FC<ColumnOneProps> = React.memo(({ handleLanguageFilter }) => {
+const ColumnOne: React.FC<ColumnOneProps> = ({ handleLanguageFilter }) => {
   const classes = useStyles({ drawerWidth: `250px` });
   return (
     <React.Fragment>
@@ -65,6 +65,6 @@ const ColumnOne: React.FC<ColumnOneProps> = React.memo(({ handleLanguageFilter }
       </Drawer>
     </React.Fragment>
   );
-});
+};
 ColumnOne.displayName = 'ColumnOne';
-export default ColumnOne;
+export default React.memo(ColumnOne);

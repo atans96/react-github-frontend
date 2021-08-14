@@ -11,7 +11,7 @@ const PureSearchBarDiscover = Loadable({
   delay: 300,
   loader: () => import(/* webpackChunkName: "PureSearchBarDiscover" */ './SearchBarBody/PureSearchBarDiscover'),
 });
-const SearchBarDiscover = React.memo(() => {
+const SearchBarDiscover = () => {
   const [stateShared] = useTrackedStateShared();
   const [stateDiscover, dispatchDiscover] = useTrackedStateDiscover();
   const PureSearchBarDataMemoized = useStableCallback(() => {
@@ -49,6 +49,6 @@ const SearchBarDiscover = React.memo(() => {
       <PureSearchBarDiscover width={PureSearchBarDataMemoized()} />
     </div>
   );
-});
+};
 SearchBarDiscover.displayName = 'SearchBarDiscover';
-export default SearchBarDiscover;
+export default React.memo(SearchBarDiscover);

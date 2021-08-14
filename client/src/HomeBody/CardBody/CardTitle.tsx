@@ -12,8 +12,7 @@ const CardTitle: React.FC<CardTitleProps> = ({ data }) => {
   const [state] = useTrackedState();
   return (
     <a
-      target="_blank"
-      rel="noopener noreferrer"
+      onClick={() => window.open(state?.cardEnhancement?.get(data.id)?.webLink)}
       href={state?.cardEnhancement?.get(data.id)?.webLink}
       className={clsx('', {
         'title-href-available':

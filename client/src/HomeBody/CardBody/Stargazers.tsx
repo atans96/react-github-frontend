@@ -14,13 +14,14 @@ import { Then } from '../../util/react-if/Then';
 import { StarIcon } from '../../util/icons';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import { SEARCH_FOR_REPOS } from '../../graphql/queries';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router-dom';
 import { removeStarredMe, setStarredMe } from '../../services';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../util';
 import Empty from '../../Layout/EmptyLayout';
+import { noop } from '../../util/util';
+import { useGetUserInfoStarredMutation } from '../../apolloFactory/useGetUserInfoStarredMutation';
 
 const StargazersInfo = Loadable({
   loading: Empty,
@@ -39,6 +40,7 @@ interface StargazersProps {
 }
 
 const Stargazers: React.FC<StargazersProps> = ({ data }) => {
+  const { addedStarredMe, removeStarred } = useGetUserInfoStarredMutation();
   const client = useApolloClient();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [stateShared] = useTrackedStateShared();
@@ -94,12 +96,9 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
     }
   });
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickCb });
-  const displayName: string = (Stargazers as React.ComponentType<any>).displayName || '';
-  const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
-  const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
-  const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
+
   const modalWidth = useRef('400px');
-  const [starClicked, setStarClicked] = useState(userStarred?.getUserInfoStarred?.starred?.includes(data.id));
+  const [starClicked, setStarClicked] = useState(stateShared?.starred?.includes(data.id));
 
   const [visible, setVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -209,23 +208,29 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
 
   const handleClickStar = () => {
     if (!starClicked) {
-      setStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
-          addedStarredMe({
-            getUserInfoStarred: {
-              starred: [data.id],
-            },
-          });
-        }
-      });
+      parallel([
+        () => setStarredMe(data.full_name),
+        () => {
+          if (stateShared.isLoggedIn) {
+            addedStarredMe({
+              getUserInfoStarred: {
+                starred: [data.id],
+              },
+            }).then(noop);
+          }
+        },
+      ]);
     } else if (starClicked) {
-      removeStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
-          removeStarred({
-            removeStarred: data.id,
-          });
-        }
-      });
+      parallel([
+        () => removeStarredMe(data.full_name),
+        () => {
+          if (stateShared.isLoggedIn) {
+            removeStarred({
+              removeStarred: data.id,
+            }).then(noop);
+          }
+        },
+      ]);
     }
   };
   const [clicked, setClicked] = useState(false);

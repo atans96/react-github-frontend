@@ -15,7 +15,7 @@ export interface FilterResultSettings {
   props: any;
 }
 
-const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props }) => {
+const FilterResultSettings: React.FC<FilterResultSettings> = ({ props }) => {
   const classes = useStyles();
   const [state, dispatch] = useTrackedStateStargazers();
   const dispatchStargazersUsers = (stargazersUsers: number) => {
@@ -78,6 +78,6 @@ const FilterResultSettings: React.FC<FilterResultSettings> = React.memo(({ props
       </div>
     </div>
   );
-});
+};
 FilterResultSettings.displayName = 'FilterResultSettings';
-export default FilterResultSettings;
+export default React.memo(FilterResultSettings);

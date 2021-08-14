@@ -15,6 +15,7 @@ import { useTrackedStateShared } from './selectors/stateContextSelector';
 import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { getAllGraphQLNavBar } from './services';
 import { useStableCallback } from './util';
+import { useGetUserData } from './apolloFactory/useGetUserData';
 
 //why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
 const directionLogin = new Map(
@@ -32,7 +33,7 @@ const directionNotLogin = new Map(
   ].map((i) => [i.path, { index: i.index, explored: i.explored }])
 );
 
-const NavBar = React.memo(() => {
+const NavBar = () => {
   const abortController = new AbortController();
   const [state, dispatch] = useTrackedStateShared();
   const [active, setActiveBar] = useState<any>('');
@@ -46,7 +47,7 @@ const NavBar = React.memo(() => {
   const [isHoveredHome, bindHome] = useHover();
   const Active = location.pathname.split('/');
   const displayName: string = (NavBar as React.ComponentType<any>).displayName || '';
-  const { userData, userDataLoading, userDataError } = useApolloFactory(displayName!).query.getUserData();
+  const { userData, userDataLoading, userDataError } = useGetUserData(displayName!).query();
 
   const te = Active[1] !== '' ? Active[1] : 'home';
   const number = state.isLoggedIn ? directionLogin?.get(te)?.index : directionNotLogin?.get(te)?.index;
@@ -372,6 +373,6 @@ const NavBar = React.memo(() => {
       </ul>
     </div>
   );
-});
+};
 NavBar.displayName = 'NavBar';
-export default NavBar;
+export default React.memo(NavBar);

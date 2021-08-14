@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { useEventHandlerComposer } from '../hooks/hooks';
 import { MergedDataProps, StargazerProps } from '../typing/type';
 import { useStableCallback } from '../util';
-import { useApolloFactory } from '../hooks/useApolloFactory';
 import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
-import { noop } from '../util/util';
 import Loadable from 'react-loadable';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
@@ -18,7 +16,9 @@ import Empty from '../Layout/EmptyLayout';
 import PureInput from './PureInput';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
 import { useQueryUsername, useVisible, useVisibleSearchesHistory } from '../SearchBar';
-import { parallel, each, filter, map } from 'async';
+import { each, filter, map, parallel } from 'async';
+import { useIsFetchFinish } from '../Home';
+import { useGetSearchesMutation } from '../apolloFactory/useGetSearchesMutation';
 
 const SearchHistories = Loadable({
   loading: Empty,
@@ -36,16 +36,14 @@ interface SearchBarProps {
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
+  const searchesAdded = useGetSearchesMutation();
   const [visible, setVisible] = useVisible();
   const [visibleSearchesHistory, setVisibleSearchesHistory] = useVisibleSearchesHistory();
   const [username, setUsername] = useQueryUsername();
-
+  const [, setIsFetchFinish] = useIsFetchFinish();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [state, dispatch] = useTrackedState();
-  const displayName: string = (SearchBar as React.ComponentType<any>).displayName || '';
-  const { searchesData } = useApolloFactory(displayName!).query.getSearches();
-  const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
 
   const size = {
     width: '500px',
@@ -97,6 +95,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     }, []);
     setUsername('');
     parallel([
+      () => setIsFetchFinish({ isFetchFinish: false }),
       () =>
         dispatchShared({
           type: 'QUERY_USERNAME',
@@ -160,7 +159,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                         ),
                       ],
                     },
-                  }).then(noop);
+                  });
                 });
               }
             );
@@ -342,17 +341,15 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           <PureInput style={style} handleChange={handleChange} />
           <If
             condition={
-              searchesData &&
-              searchesData.getSearches !== null &&
-              searchesData?.getSearches?.searches?.length > 0 &&
+              stateShared?.searches?.length > 0 &&
               valueRef.length > 0 &&
               visibleSearchesHistory &&
-              filterJ(searchesData?.getSearches?.searches, valueRef).length > 0
+              filterJ(stateShared?.searches, valueRef).length > 0
             }
           >
             <Then>
               <SearchHistories
-                searches={searchesData?.getSearches?.searches}
+                searches={stateShared?.searches}
                 filter={filterJ}
                 valueRef={valueRef}
                 isLoading={state.isLoading}
@@ -362,7 +359,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
               />
             </Then>
           </If>
-          <If condition={visible && filterJ(searchesData?.getSearches?.searches, valueRef).length === 0}>
+          <If condition={visible && filterJ(stateShared?.searches, valueRef).length === 0}>
             <Then>
               <Searches
                 data={state.searchUsers}

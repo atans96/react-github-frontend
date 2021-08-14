@@ -1,5 +1,4 @@
 import React, { createRef, useEffect, useState } from 'react';
-import { useApolloFactory } from '../../../hooks/useApolloFactory';
 import {
   useTrackedState,
   useTrackedStateShared,
@@ -9,14 +8,15 @@ import { useQueryUsername, useVisible, useVisibleSearchesHistory } from '../../.
 import { useStableCallback } from '../../../util';
 import { ShouldRender } from '../../../typing/enum';
 import { parallel } from 'async';
+import { useGetSearchesMutation } from '../../../apolloFactory/useGetSearchesMutation';
 
 interface Result {
   userName: string;
   getRootProps: any;
   children(): React.ReactNode;
 }
-
 const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
+  const searchesAdded = useGetSearchesMutation();
   const [, setVisible] = useVisible();
   const [, setVisibleSearchesHistory] = useVisibleSearchesHistory();
   const [, setUsername] = useQueryUsername();
@@ -25,8 +25,6 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
   const [, dispatchStargazers] = useTrackedStateStargazers();
   const [, dispatch] = useTrackedState();
   const [isHovered, setIsHovered] = useState(false);
-  const displayName: string = (Result as React.ComponentType<any>).displayName || '';
-  const searchesAdded = useApolloFactory(displayName!).mutation.searchesAdded;
   const resultsRef = createRef<HTMLLIElement>();
   const onMouseOver = () => {
     setIsHovered(true);
@@ -102,9 +100,7 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
         if (stateShared.isLoggedIn) {
           searchesAdded({
             getSearches: { searches: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })] },
-          })
-            .then(() => {})
-            .catch((e) => new Error(e));
+          });
         }
       },
     ]);

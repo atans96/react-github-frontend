@@ -2,6 +2,7 @@ import { detectBrowser, readEnvironmentVariable } from '../util';
 import { IDataOne } from '../typing/interface';
 import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { Observable } from '../utilities/observables/Observable';
+import { noop } from '../util/util';
 export const getAllGraphQLNavBar = async (username: string, signal: any) => {
   try {
     const response = await fetch(
@@ -73,30 +74,24 @@ export const getTopContributors = async (fullName: string) => {
 };
 export const removeStarredMe = async (repoFullName: string) => {
   try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/removeStarredMe?repoFullName=${repoFullName}`,
-      {
-        method: 'GET',
-      }
-    );
-    return await response.json();
+    fetch(`https://api.github.com/user/starred/${repoFullName}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+      },
+    }).then(noop);
   } catch (e) {
     console.log(e);
   }
 };
 export const setStarredMe = async (repoFullName: string) => {
   try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/setStarredMe?repoFullName=${repoFullName}`,
-      {
-        method: 'GET',
-      }
-    );
-    return await response.json();
+    fetch(`https://api.github.com/user/starred/${repoFullName}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+      },
+    }).then(noop);
   } catch (e) {
     console.log(e);
   }
@@ -190,7 +185,7 @@ export const getUser = ({
   url?: string;
 }) => {
   return new Observable((observer) => {
-    const execute = () => {
+    function execute() {
       let validUrl =
         url ||
         (org
@@ -230,7 +225,7 @@ export const getUser = ({
                       }
                     },
                   });
-                  return false;
+                  execute();
                 }
               }
               observer.next({
@@ -260,10 +255,8 @@ export const getUser = ({
       } else {
         return new Promise((resolve) => resolve(true));
       }
-    };
-    execute().then((status) => {
-      if (!status) execute();
-    });
+    }
+    execute().then(noop);
   }) as Observable<{ iterator: any }>;
 };
 export const getValidGQLProperties = async () => {

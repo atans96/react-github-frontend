@@ -121,7 +121,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
         </Then>
       </If>
       <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
-        <a href={githubData.html_url} target="_blank" rel="noopener noreferrer">
+        <a href={githubData.html_url} onClick={() => window.open(githubData.html_url)}>
           {githubData.html_url}
         </a>
       </div>

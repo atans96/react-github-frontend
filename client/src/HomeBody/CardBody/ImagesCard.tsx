@@ -47,7 +47,6 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
     return setClicked((prev) => !prev);
   });
   const [renderImages, setRenderImages] = useState<string[]>([]);
-  const [render, setRender] = useState<any>();
   const [state] = useTrackedState();
   const location = useLocation();
 
@@ -116,13 +115,15 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
                 image.length > 0 && <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />
             )}
       </div>
-      <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
-        <ListItemIcon>
-          <SupervisorAccountIcon />
-        </ListItemIcon>
-        <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
-        {renderChildren ? <ExpandLess /> : <ExpandMore />}
-      </ListItem>
+      {renderImages.length > 0 && (
+        <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
+          <ListItemIcon>
+            <SupervisorAccountIcon />
+          </ListItemIcon>
+          <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
+          {renderChildren ? <ExpandLess /> : <ExpandMore />}
+        </ListItem>
+      )}
       {clicked && <ImagesModalLayout clicked={clicked} handleClick={handleClick} renderImages={renderImages} />}
     </>
   );

@@ -3,7 +3,6 @@ import { StarIcon } from '../../util/icons';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
 import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
-import { useApolloFactory } from '../../hooks/useApolloFactory';
 import { removeStarredMe, setStarredMe } from '../../services';
 import { noop } from '../../util/util';
 import { MergedDataProps } from '../../typing/type';
@@ -14,32 +13,31 @@ import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../util';
 import Empty from '../../Layout/EmptyLayout';
+import { parallel } from 'async';
+import { useGetUserInfoStarredMutation } from '../../apolloFactory/useGetUserInfoStarredMutation';
+
 const LoginGQL = Loadable({
   loading: Empty,
   delay: 300,
   loader: () =>
     import(/* webpackChunkName: "LoginGQLDiscover" */ '../../HomeBody/CardBody/StargazersCardBody/LoginGQL'),
 });
+
 interface StargazerDiscover {
   data: MergedDataProps;
 }
-
 const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
-  const displayName: string = (StargazerDiscover as React.ComponentType<any>).displayName || '';
-  const { userStarred } = useApolloFactory(displayName!).query.getUserInfoStarred();
-  const addedStarredMe = useApolloFactory(displayName!).mutation.addedStarredMe;
-  const removeStarred = useApolloFactory(displayName!).mutation.removeStarred;
-
-  const [starClicked, setStarClicked] = useState(userStarred.getUserInfoStarred.starred.includes(data.id));
+  const { addedStarredMe, removeStarred } = useGetUserInfoStarredMutation();
+  const [stateShared] = useTrackedStateShared();
+  const [starClicked, setStarClicked] = useState(stateShared.starred.includes(data.id));
   const [clicked, setClicked] = useState(false);
   const [visible, setVisible] = useState(false);
   const modalWidth = useRef('400px');
+
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
-
   const notLoggedInRef = useRef<HTMLDivElement>(null);
-  useClickOutside(notLoggedInRef, () => setVisible(false));
 
-  const [stateShared] = useTrackedStateShared();
+  useClickOutside(notLoggedInRef, () => setVisible(false));
 
   const returnPortal = useStableCallback(() => {
     switch (visible) {
@@ -76,25 +74,31 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
       setCursorPosition({ x: event.pageX, y: event.pageY });
     }
   };
-  const handleClickStar = async () => {
+  const handleClickStar = () => {
     if (!starClicked) {
-      await setStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
-          addedStarredMe({
-            getUserInfoStarred: {
-              starred: [data.id],
-            },
-          }).then(noop);
-        }
-      });
+      parallel([
+        () => setStarredMe(data.full_name),
+        () => {
+          if (stateShared.isLoggedIn) {
+            addedStarredMe({
+              getUserInfoStarred: {
+                starred: [data.id],
+              },
+            }).then(noop);
+          }
+        },
+      ]);
     } else if (starClicked) {
-      await removeStarredMe(data.full_name).then(() => {
-        if (stateShared.isLoggedIn) {
-          removeStarred({
-            removeStarred: data.id,
-          }).then(noop);
-        }
-      });
+      parallel([
+        () => removeStarredMe(data.full_name),
+        () => {
+          if (stateShared.isLoggedIn) {
+            removeStarred({
+              removeStarred: data.id,
+            }).then(noop);
+          }
+        },
+      ]);
     }
   };
   return (
@@ -110,7 +114,7 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
             handleClickStargazers(e);
           } else {
             setStarClicked(!starClicked);
-            handleClickStar().then(noop);
+            handleClickStar();
           }
         }}
       >

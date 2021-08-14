@@ -5,8 +5,6 @@ import { If } from './util/react-if/If';
 import clsx from 'clsx';
 import useBottomHit from './hooks/useBottomHit';
 import { sortedRepoInfoSelector, starRankingFilteredSelector, useSelector } from './selectors/stateSelector';
-import { useApolloFactory } from './hooks/useApolloFactory';
-import { noop } from './util/util';
 import eye from './new_16-2.gif';
 import { StaticState } from './typing/interface';
 import { useScrollSaver } from './hooks/useScrollSaver';
@@ -18,7 +16,7 @@ import { useStableCallback } from './util';
 import { useDeepMemo } from './hooks/useDeepMemo';
 import './Discover.scss';
 import Empty from './Layout/EmptyLayout';
-import useDeepCompareEffect from './hooks/useDeepCompareEffect';
+import { useGetSeenMutation } from './apolloFactory/useGetSeenMutation';
 
 const ScrollToTopLayout = Loadable({
   loading: Empty,
@@ -33,6 +31,7 @@ const MasonryCard = Loadable({
 });
 
 const Discover = () => {
+  const seenAdded = useGetSeenMutation();
   const location = useLocation();
   const displayName: string = (Discover as React.ComponentType<any>).displayName || '';
   const {
@@ -49,7 +48,6 @@ const Discover = () => {
   } = useFetchUser({
     component: displayName,
   });
-  const seenAdded = useApolloFactory(displayName!).mutation.seenAdded;
   const { suggestedData, suggestedDataLoading, suggestedDataError } = useSelector(
     (data: StaticState) => data.SuggestedRepo
   );
@@ -124,7 +122,7 @@ const Discover = () => {
       }, [] as SeenProps[]);
       if (result.length > 0 && imagesDataDiscover.mapData.size > 0) {
         //don't add to database yet when imagesData still loading.
-        seenAdded(result).then(noop);
+        seenAdded(result);
       }
     }
   });
