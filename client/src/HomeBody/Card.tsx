@@ -53,6 +53,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
 
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     if (event.button === 1) {
       localStorage.setItem('detailsData', JSON.stringify({ data: data, path: '/' }));
       // history.push(`/detail/${data.id}`);
@@ -80,6 +81,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   };
   const handleDetailsClicked = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (stateShared.isLoggedIn) {
       const temp = [
         Object.assign(

@@ -14,6 +14,7 @@ const LanguageStarsInfo: React.FC<LanguageStarsInfoProps> = ({ languageStar, onC
     <tr
       onClick={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         onClickLanguageStarInfo(event)(languageStar[0], !clicked);
         setClicked(!clicked);
       }}

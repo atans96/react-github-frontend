@@ -53,6 +53,7 @@ const RowOne = () => {
   const classes = useStyles({ drawerWidth: '250px' });
   const handleOpenLanguages = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setOpenLanguages(!openLanguages);
   };
   const location = useLocation<LocationGraphQL>();
@@ -90,6 +91,7 @@ const RowOne = () => {
 
   const handleCheckboxChange = useStableCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
+    event.stopPropagation();
     setLanguagePreferences(
       [...languagePreferences].map((obj) => {
         if (obj.language === event.target.name) {

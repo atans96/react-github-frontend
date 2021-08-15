@@ -71,6 +71,7 @@ const DrawerBar = () => {
   const [, dispatch] = useTrackedStateShared();
   const handleClick = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setOpen((prev) => !prev);
   });
   useEffect(() => {
@@ -93,10 +94,10 @@ const DrawerBar = () => {
       });
     };
   }, [open]);
-  useClickOutside(drawerRef, () => setOpen(false));
+  useClickOutside(drawerRef, () => setOpen(false), ['hamburger', 'hamburger-parent']);
   return (
     <React.Fragment>
-      <div style={{ bottom: '-5px', left: '-10px', zIndex: 9999, position: 'fixed' }}>
+      <div style={{ bottom: '-5px', left: '-10px', zIndex: 9999, position: 'fixed' }} className={'hamburger-parent'}>
         <button
           className={clsx('hamburger hamburger--vortex', {
             'is-active': open,

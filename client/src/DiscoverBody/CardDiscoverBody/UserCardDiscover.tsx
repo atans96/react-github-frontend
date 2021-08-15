@@ -26,6 +26,7 @@ const UserCardDiscover: React.FC<UserCardDiscover> = React.memo(
     function onClick(e: React.MouseEvent) {
       e.preventDefault();
       e.stopPropagation();
+      e.stopPropagation();
       history.push('/');
       dispatchDiscover({
         type: 'REMOVE_ALL',

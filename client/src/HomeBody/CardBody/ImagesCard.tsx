@@ -38,12 +38,14 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
 
   const handleClickUnrenderImages = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     return setRenderChildren((prevState) => !prevState);
   });
   // useRef() is basically useState({current: initialValue })[0] so no need to re-render the component
 
   const handleClick = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     return setClicked((prev) => !prev);
   });
   const [renderImages, setRenderImages] = useState<string[]>([]);
@@ -55,7 +57,7 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
     if (location.pathname === '/' && !isFinished) {
       if (Array.isArray(state.imagesData) && state.imagesData.length > 0) {
         const temp = state.imagesMapData.get(index)?.value ?? [];
-        if (temp.length > 0 && renderImages.length === 0) {
+        if (temp.length > 0 && renderImages.length === 0 && !isFinished) {
           setRenderImages(temp);
         }
       }

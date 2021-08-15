@@ -10,6 +10,7 @@ interface Topic {
 const Topic: React.FC<Topic> = ({ idx, topic, getRootProps }) => {
   const handleClickTopic = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
+    e.stopPropagation();
   };
   return (
     <button className={'tag'} key={idx}>

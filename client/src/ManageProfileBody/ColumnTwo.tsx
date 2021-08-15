@@ -37,6 +37,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
   const onClickRepoInfo = useStableCallback(
     (e: React.MouseEvent) => (fullName: string, branch: string, html: string) => {
       e.preventDefault();
+      e.stopPropagation();
       setFullName(fullName);
       setBranch(branch);
       setHtmlUrl(html);

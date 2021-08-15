@@ -120,6 +120,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   useClickOutside(notLoggedInRef, () => setVisible(false));
   const handleNotLoggedInClick = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setVisible(false);
   };
   const returnPortal = useStableCallback(() => {
@@ -243,6 +244,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
           })}
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             setClicked(true);
             if (stateShared.tokenGQL === '') {
               handleClickStargazers(e);

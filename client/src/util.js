@@ -337,6 +337,7 @@ export const dragMove = function (target, handler, onStart, onEnd) {
   handler.addEventListener(_isTouch ? 'touchstart' : 'mousedown', function (e) {
     e.stopPropagation();
     e.preventDefault();
+    e.stopPropagation();
     if (target.dataset.dragEnabled === 'false') {
       return;
     }

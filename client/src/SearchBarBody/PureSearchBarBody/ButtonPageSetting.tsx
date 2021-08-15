@@ -26,6 +26,7 @@ const ButtonPageSetting: React.FC<ButtonPageSettingProps> = ({ showTipsText, por
   const [renderSlider, setExpandableSlider] = useState(false);
   const handleClickSlider = (event: React.MouseEvent): void => {
     event.preventDefault();
+    event.stopPropagation();
     setExpandableSlider(!renderSlider);
   };
   const [stateShared, dispatchShared] = useTrackedStateShared();

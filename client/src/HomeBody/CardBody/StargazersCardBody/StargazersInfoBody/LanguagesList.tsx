@@ -15,6 +15,7 @@ const LanguagesList = () => {
   const [languageInfo, setLanguageInfo] = useState([]);
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     localStorage.setItem('language', e.currentTarget.innerText);
     setSelectedLanguage(e.currentTarget.innerText);
     dispatchStargazers({
@@ -26,6 +27,7 @@ const LanguagesList = () => {
   };
   const handleClickSort = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     const temp = stateStargazers.stargazersData.reduce((acc: any[], stargazer: StargazerProps) => {
       const temp = stargazer.starredRepositories.nodes.map(
         (obj: any) => obj.languages.nodes.map((obj: any) => obj.name)[0]

@@ -69,7 +69,8 @@ const NavBar = () => {
     };
   }, []);
   const handleClick = useStableCallback((event: React.MouseEvent<HTMLElement>) => {
-    event.preventDefault(); // avoid the href "#/""e to be appended in the URL bar when click
+    event.preventDefault();
+    event.stopPropagation(); // avoid the href "#/""e to be appended in the URL bar when click
     const res = event.currentTarget.id;
     if (res !== 'home') {
       //this is because we don't want to render Home until the user submit form via SearchBar

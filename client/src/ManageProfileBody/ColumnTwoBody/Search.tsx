@@ -22,6 +22,7 @@ const Search: React.FC<SearchProps> = React.memo(
     const onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();
+      e.stopPropagation();
       e.persist();
       setValue(e.currentTarget.value);
     };

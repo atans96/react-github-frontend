@@ -28,7 +28,7 @@ const Contributors: React.FC<Props> = ({ fullName, openContributors }) => {
     let isFinished = false;
     if (stateManageProfile.contributors.length > 0 && location.pathname === '/profile' && !isFinished) {
       const contribution = stateManageProfile.contributors.find((xx: ContributorsProps) => fullName === xx.fullName);
-      if (contribution) {
+      if (contribution && !isFinished) {
         setContributionRepo(contribution.contributors);
       }
       return () => {

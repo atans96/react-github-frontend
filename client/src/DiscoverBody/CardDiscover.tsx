@@ -42,6 +42,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
 
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
+    event.stopPropagation();
     if (event.button === 1) {
       localStorage.setItem('detailsData', JSON.stringify({ data: githubData, path: location.pathname }));
       // history.push(`/detail/${githubData.id}`);
@@ -67,6 +68,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
   };
   const handleDetailsClicked = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const temp = [
       Object.assign(
         {},
