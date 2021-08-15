@@ -238,6 +238,7 @@ const RSSFeed = () => {
   };
   const handleOpenRSSShowMore = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setShowMoreRSS(!showMoreRSS);
   };
   const updaterWrapper = (tokenAdd: string, re: any) => {
@@ -281,6 +282,7 @@ const RSSFeed = () => {
   }, [stateShared.tokenRSS, token, openRSS]);
   const handleOpenRSS = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setOpenRSS(!openRSS);
     if (notificationBadge > 0) {
       setNotificationBadge(0);

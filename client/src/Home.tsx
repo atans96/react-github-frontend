@@ -483,6 +483,7 @@ const Home = () => {
         })}
         style={{
           zIndex: state.visible ? -1 : 0,
+          position: 'relative',
         }}
       >
         {
@@ -511,7 +512,13 @@ const Home = () => {
 
         <If condition={notification.notification}>
           <Then>
-            <div style={{ textAlign: 'center' }}>
+            <div
+              style={{
+                zIndex: state.visible ? -1 : 0,
+                textAlign: 'center',
+                position: 'relative',
+              }}
+            >
               <p>
                 <a className={'underlining'} style={{ fontSize: '30px', color: 'black' }}>
                   {notification.notification}

@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from 'react';
 //only use when you have a static database (doesn't depend on mutation action by the user)
 
 const useStarRanking = () => {
+  //TODO: should move to db.ctx.ts file?
   const [stateShared] = useTrackedStateShared();
   const [shouldSkip, setShouldSkip] = useState(true);
   const timeRef = useRef<any>();

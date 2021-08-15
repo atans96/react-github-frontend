@@ -72,6 +72,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         })
         .catch((error) => {
           actionResolvePromise({
+            username: stateShared.queryUsername,
             action: ActionResolvedPromise.error,
             displayName: component,
             error,
@@ -83,24 +84,28 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     // compare new with old data, if they differ, that means it still has data to fetch
     if (res.dataOne.length > 0) {
       actionResolvePromise({
+        username: stateShared.queryUsername,
         action: ActionResolvedPromise.append,
         displayName: component,
         data: res,
       });
     } else if (res?.error_404 || res?.error_403 || res?.error_message) {
       actionResolvePromise({
+        username: stateShared.queryUsername,
         action: ActionResolvedPromise.error,
         displayName: component,
         data: res,
       });
     } else if (res?.end) {
       actionResolvePromise({
+        username: stateShared.queryUsername,
         action: ActionResolvedPromise.end,
         displayName: component,
         data: res,
       });
     } else {
       actionResolvePromise({
+        username: stateShared.queryUsername,
         action: ActionResolvedPromise.noData,
         displayName: component,
         data: res,
@@ -196,6 +201,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
             },
             error(err: any) {
               actionResolvePromise({
+                username: stateShared.queryUsername,
                 action: ActionResolvedPromise.error,
                 displayName: component,
                 err,
@@ -230,6 +236,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           })
           .catch((error) => {
             actionResolvePromise({
+              username: stateShared.queryUsername,
               action: ActionResolvedPromise.error,
               error: error,
               displayName: component,

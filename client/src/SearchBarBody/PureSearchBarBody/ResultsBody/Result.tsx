@@ -41,7 +41,37 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
         return new RegExp(substring).test(event?.target?.parentElement?.className);
       })
     ) {
-      return;
+      parallel([
+        () =>
+          dispatch({
+            type: 'REMOVE_ALL',
+          }),
+        () =>
+          dispatchStargazers({
+            type: 'REMOVE_ALL',
+          }),
+        () =>
+          dispatchShared({
+            type: 'QUERY_USERNAME',
+            payload: {
+              queryUsername: [userName],
+            },
+          }),
+        () =>
+          dispatchShared({
+            type: 'SET_SHOULD_RENDER',
+            payload: {
+              shouldRender: ShouldRender.Home,
+            },
+          }),
+        () => {
+          if (stateShared.isLoggedIn) {
+            searchesAdded({
+              getSearches: { searches: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })] },
+            });
+          }
+        },
+      ]);
     }
     parallel([
       () => setVisible(false),
@@ -70,44 +100,9 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleClickOutside]);
-
-  const onClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    parallel([
-      () =>
-        dispatch({
-          type: 'REMOVE_ALL',
-        }),
-      () =>
-        dispatchStargazers({
-          type: 'REMOVE_ALL',
-        }),
-      () =>
-        dispatchShared({
-          type: 'QUERY_USERNAME',
-          payload: {
-            queryUsername: [userName],
-          },
-        }),
-      () =>
-        dispatchShared({
-          type: 'SET_SHOULD_RENDER',
-          payload: {
-            shouldRender: ShouldRender.Home,
-          },
-        }),
-      () => {
-        if (stateShared.isLoggedIn) {
-          searchesAdded({
-            getSearches: { searches: [Object.assign({}, { search: userName, updatedAt: new Date(), count: 1 })] },
-          });
-        }
-      },
-    ]);
-  };
   return (
     <li
-      {...getRootProps({ onClick })}
+      {...getRootProps(() => {})}
       className={`${isHovered ? 'hovered' : ''} clearfix`}
       onMouseOver={onMouseOver}
       onMouseLeave={onMouseLeave}

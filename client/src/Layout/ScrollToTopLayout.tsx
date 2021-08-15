@@ -18,6 +18,7 @@ const ScrollTopLayout = () => {
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
+    event.stopPropagation();
     const anchor = (event.currentTarget.ownerDocument || document).querySelector('.top');
     if (anchor) {
       anchor.scrollIntoView({ block: 'center' });

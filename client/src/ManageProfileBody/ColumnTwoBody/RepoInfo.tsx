@@ -35,6 +35,7 @@ const RepoInfo: React.FC<Props> = ({ obj, onClickRepoInfo, active }) => {
   const [openContributors, setOpen] = useState(false);
   const handleClick = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setOpen((prevState) => !prevState);
   });
   const classes = useStyles();

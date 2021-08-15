@@ -93,8 +93,8 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       acc.push(stargazer.login);
       return acc;
     }, []);
-    setUsername('');
     parallel([
+      () => setUsername(''),
       () => setIsFetchFinish({ isFetchFinish: false }),
       () =>
         dispatchShared({
@@ -203,12 +203,14 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             if (!result) {
               return;
             }
-            return dispatch({
-              type: 'MERGED_DATA_FILTER_BY_TAGS',
-              payload: {
-                filteredMergedData: result,
-              },
-            });
+            if (!isCancelled) {
+              dispatch({
+                type: 'MERGED_DATA_FILTER_BY_TAGS',
+                payload: {
+                  filteredMergedData: result,
+                },
+              });
+            }
           }
         );
       } else if (state.filteredTopics.length === 0 && state.filteredMergedData.length > 0) {
@@ -216,12 +218,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
             filteredMergedData: [],
-          },
-        });
-        dispatch({
-          type: 'SET_TOPICS_FILTERED',
-          payload: {
-            topicsFiltered: [],
           },
         });
       }
@@ -241,7 +237,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     if (location.pathname === '/' && !isCancelled) {
       // this is to render the new topic tags based on filteredMergedData when it throws new data
       const result: any[] = [];
-      (state.filterBySeen ? state.mergedData : state.filteredMergedData).forEach((obj: MergedDataProps) => {
+      state.mergedData.forEach((obj: MergedDataProps) => {
         const isTopicsNull = obj.topics ?? [];
         const topics = [...isTopicsNull];
         if (obj.language) {
@@ -251,9 +247,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
         each(
           languageAndTopics,
           (topic, cb) => {
-            const index = (state.filterBySeen ? state.topicsOriginal : state.topicsFiltered).findIndex(
-              (x) => x.topic === topic
-            );
+            const index = state.topicTags.findIndex((x) => x.topic === topic);
             if (!result.find((obj) => obj.topic === topic)) {
               result.push(
                 Object.assign(
@@ -261,10 +255,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                   {
                     topic: topic,
                     count: 1,
-                    clicked:
-                      index > -1
-                        ? (state.filterBySeen ? state.topicsOriginal : state.topicsFiltered)[index].clicked
-                        : false,
+                    clicked: index > -1 ? state.topicTags[index].clicked : false,
                   }
                 )
               );
@@ -284,22 +275,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             if (err) {
               throw new Error('err');
             }
-            if (result.length > 0) {
-              if (state.filterBySeen) {
-                dispatch({
-                  type: 'SET_TOPICS_ORIGINAL',
-                  payload: {
-                    topicsOriginal: result,
-                  },
-                });
-              } else {
-                dispatch({
-                  type: 'SET_TOPICS_FILTERED',
-                  payload: {
-                    topicsFiltered: result,
-                  },
-                });
-              }
+            if (result.length > 0 && !isCancelled) {
+              dispatch({
+                type: 'SET_TOPICS_TAGS',
+                payload: {
+                  topicTags: result,
+                },
+              });
             }
           }
         );
@@ -309,7 +291,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.mergedData, state.filterBySeen]);
+  }, [state.mergedData]);
 
   const filterJ = (
     searchesHistory: Array<{ search: string; count: number; updatedAt: Date }> | undefined,
@@ -327,6 +309,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   };
   const onClickCb = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     parallel([
       () => setValue(''),
       () =>

@@ -12,6 +12,7 @@ const MultiValueSearch: React.FC<SearchBarProps> = ({ stargazer }) => {
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const handleClickDelete = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     const updatedStargazersData = stateStargazers.stargazersData.find((obj: StargazerProps) => obj.id === stargazer.id);
     if (updatedStargazersData !== undefined) {
       try {

@@ -33,6 +33,7 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
   };
   const onClickQueue = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     dispatchStargazers({
       type: 'SET_QUEUE_STARGAZERS',
       payload: {
@@ -42,7 +43,13 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
     const ja = stateStargazers.stargazersData || [];
     detect(
       ja,
-      (obj: StargazerProps) => obj.id === stargazer.id,
+      (obj: StargazerProps, cb) => {
+        if (obj.id === stargazer.id) {
+          // @ts-ignore
+          cb(null, obj);
+          return obj;
+        }
+      },
       (err, updatedStargazersData) => {
         if (err) {
           throw new Error('err');

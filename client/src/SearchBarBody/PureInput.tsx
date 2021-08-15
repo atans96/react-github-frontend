@@ -154,7 +154,13 @@ const PureInput: React.FC<SearchBarProps> = ({ handleChange, style }) => {
     const stargazer = stateStargazers.stargazersQueueData.slice(-1)[0];
     detect(
       stateStargazers.stargazersData,
-      (obj: StargazerProps) => obj.id === stargazer.id,
+      (obj: StargazerProps, cb) => {
+        if (obj.id === stargazer.id) {
+          // @ts-ignore
+          cb(null, obj);
+          return obj;
+        }
+      },
       (err, updatedStargazersData) => {
         if (err) {
           throw new Error('err');

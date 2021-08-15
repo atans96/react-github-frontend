@@ -56,11 +56,15 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
 
     const handleClick = useStableCallback((e: React.MouseEvent) => {
       e.preventDefault();
+      e.stopPropagation();
+      e.stopPropagation();
       return setClicked((prev) => !prev);
     });
 
     const handleClickUnrenderImages = useStableCallback((e: React.MouseEvent) => {
       e.preventDefault();
+      e.stopPropagation();
+      e.stopPropagation();
       return setRenderChildren((prevState) => !prevState);
     });
     const [renderImages, setRenderImages] = useState<string[]>([]);

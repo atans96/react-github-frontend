@@ -31,6 +31,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
 
   const onClickLanguageStarInfo = (e: React.MouseEvent) => (language: string, clicked: boolean) => {
     e.preventDefault();
+    e.stopPropagation();
     if (clicked) {
       handleLanguageFilter(language);
     } else {

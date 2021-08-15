@@ -109,6 +109,8 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
         })}
         onClick={(e) => {
           e.preventDefault();
+          e.stopPropagation();
+          e.stopPropagation();
           setClicked(true);
           if (stateShared.tokenGQL === '') {
             handleClickStargazers(e);

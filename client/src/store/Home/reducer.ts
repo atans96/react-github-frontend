@@ -15,8 +15,7 @@ export type Action =
   | 'ADVANCE_PAGE'
   | 'SORTING_DATA_ADDED'
   | 'FILTER_CARDS_BY_SEEN'
-  | 'SET_TOPICS_ORIGINAL'
-  | 'SET_TOPICS_FILTERED'
+  | 'SET_TOPICS_TAGS'
   | 'FILTER_SET_TOPICS'
   | 'FILTER_SET_TOPICS_REMOVE'
   | 'MERGED_DATA_FILTER_BY_TAGS'
@@ -31,8 +30,7 @@ export const initialState: IState = {
   cardEnhancement: new Map<number, CardEnhancement>(),
   filterBySeen: true,
   filteredTopics: [],
-  topicsOriginal: [],
-  topicsFiltered: [],
+  topicTags: [],
   imagesData: [],
   imagesMapData: new Map<number, any>(),
   searchUsers: [], // for autocomplete function
@@ -86,23 +84,16 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         filteredMergedData: action.payload.filteredMergedData,
       };
     }
-    case 'SET_TOPICS_ORIGINAL': {
+    case 'SET_TOPICS_TAGS': {
       return {
         ...state,
-        topicsOriginal: action.payload.topicsOriginal,
-      };
-    }
-    case 'SET_TOPICS_FILTERED': {
-      return {
-        ...state,
-        topicsFiltered: action.payload.topicsFiltered,
+        topicTags: action.payload.topicTags,
       };
     }
     case 'REMOVE_ALL': {
       return {
         ...state,
-        topicsFiltered: [],
-        topicsOriginal: [],
+        topicTags: [],
         imagesData: [],
         imagesMapData: new Map<number, any>(),
         mergedData: [],

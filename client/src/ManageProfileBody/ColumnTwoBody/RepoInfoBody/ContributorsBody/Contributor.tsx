@@ -13,6 +13,7 @@ const Contributor: React.FC<Props> = ({ obj }) => {
   const [, dispatch] = useTrackedState();
   const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
     e.preventDefault();
+    e.stopPropagation();
     dispatchShared({
       type: 'QUERY_USERNAME',
       payload: {

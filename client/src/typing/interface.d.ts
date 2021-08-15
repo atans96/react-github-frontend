@@ -42,6 +42,7 @@ export interface LocationGraphQL {
 }
 
 export interface ActionResolvePromise {
+  username: string;
   action: ActionResolvedPromise;
   setLoading: any;
   setNotification: any;
@@ -122,8 +123,7 @@ export interface IState {
   imagesMapData: Map<number, any>;
   filterBySeen: boolean;
   cardEnhancement: Map<number, CardEnhancement>;
-  topicsOriginal: TopicsProps[];
-  topicsFiltered: TopicsProps[];
+  topicTags: TopicsProps[];
   filteredTopics: string[];
   mergedData: MergedDataProps[];
   undisplayMergedData: SeenProps[];

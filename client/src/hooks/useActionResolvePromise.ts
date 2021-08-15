@@ -101,7 +101,7 @@ const useActionResolvePromise = () => {
     }
   };
   const actionResolvePromise = useStableCallback(
-    ({ action, data = undefined, displayName, error = undefined }: ActionResolvePromise) => {
+    ({ action, username, data = undefined, displayName, error = undefined }: ActionResolvePromise) => {
       if (data && action === 'append') {
         setIsLoading({ isLoading: false });
         actionAppend(data, displayName)!.then(noop);
@@ -109,19 +109,19 @@ const useActionResolvePromise = () => {
       if (action === 'noData') {
         setIsLoading({ isLoading: false });
         setIsFetchFinish({ isFetchFinish: true });
-        if (stateShared.queryUsername.length > 2) {
+        if (username.length > 2) {
           setNotification({ notification: 'Sorry, no more data found' });
         } else {
-          setNotification({ notification: `Sorry, no more data found for: "${stateShared.queryUsername[0]}"` });
+          setNotification({ notification: `Sorry, no more data found for: "${username[0]}"` });
         }
       }
       if (action === 'end') {
         setIsLoading({ isLoading: false });
         setIsFetchFinish({ isFetchFinish: true });
-        if (stateShared.queryUsername.length > 2) {
+        if (username.length > 2) {
           setNotification({ notification: "That's all the data we get" });
         } else {
-          setNotification({ notification: `That's all the data we get for: "${stateShared.queryUsername[0]}"` });
+          setNotification({ notification: `That's all the data we get for: "${username[0]}"` });
         }
       }
       if (action === 'error' && error) {
@@ -130,7 +130,7 @@ const useActionResolvePromise = () => {
       }
       if (data && data.error_404) {
         setIsLoading({ isLoading: false });
-        setNotification({ notification: `Sorry, no data found for ${stateShared.queryUsername}` });
+        setNotification({ notification: `Sorry, no data found for ${username}` });
       } else if (data && data.error_403) {
         setIsLoading({ isLoading: false });
         setIsFetchFinish({ isFetchFinish: true });

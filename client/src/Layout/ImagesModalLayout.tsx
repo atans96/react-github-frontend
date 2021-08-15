@@ -76,10 +76,12 @@ const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = ({ handleClick, clic
           })}
           onMouseDown={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             setMouseGrabbing(true);
           }}
           onMouseUp={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             setMouseGrabbing(false);
           }}
         >

@@ -34,6 +34,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
     if (sortedDataRef.current.slice(stateShared.perPage).length === 0) {
       isFetchFinish.current = actionResolvePromise({
         action: ActionResolvedPromise.noData,
+        username: stateShared.queryUsername,
         setLoading,
         setNotification,
         isFetchFinish: isFetchFinish.current,
@@ -42,6 +43,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
     } else {
       actionResolvePromise({
         action: ActionResolvedPromise.append,
+        username: stateShared.queryUsername,
         setLoading,
         setNotification,
         isFetchFinish: isFetchFinish.current,
@@ -58,6 +60,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
       if (sortedDataRef.current.slice(paginationRef.current + stateShared.perPage).length === 0) {
         isFetchFinish.current = actionResolvePromise({
           action: ActionResolvedPromise.noData,
+          username: stateShared.queryUsername,
           setLoading,
           setNotification,
           isFetchFinish: isFetchFinish.current,
@@ -66,6 +69,7 @@ const useFetchUser = ({ component }: useFetchUser) => {
       } else {
         actionResolvePromise({
           action: ActionResolvedPromise.append,
+          username: stateShared.queryUsername,
           setLoading,
           setNotification,
           isFetchFinish: isFetchFinish.current,

@@ -11,6 +11,7 @@ import { If } from '../../util/react-if/If';
 import { Then } from '../../util/react-if/Then';
 import { ShouldRender } from '../../typing/enum';
 import { parallel } from 'async';
+import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
 
 const defaultTheme = createTheme();
 const theme = createTheme({
@@ -33,6 +34,7 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const handleClickSearchTopicTags = (event: React.MouseEvent): void => {
     event.preventDefault();
+    event.stopPropagation();
   };
   const [renderTopicTags, setExpandableTopicTags] = useState(false);
   const { getToggleProps: toogleTopicTags, getCollapseProps: collapseTopicTags } = useCollapse({
@@ -44,13 +46,23 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
       setExpandableTopicTags(false);
     },
   });
+  useDeepCompareEffect(() => {
+    let isCancelled = false;
+    if (!isCancelled) {
+      setExpandableTopicTags(false);
+    }
+    return () => {
+      isCancelled = true;
+    };
+  }, [stateShared.queryUsername]);
+
   const spawnTopicTags = () => {
     if (portalExpandable.current === null) {
       return null;
     } else {
       return createPortal(
         <div className={'tags'} {...collapseTopicTags()}>
-          {(state.filterBySeen ? state.topicsOriginal : state.topicsFiltered).map((obj: TopicsProps, idx: number) => {
+          {state.topicTags.map((obj: TopicsProps, idx: number) => {
             if (renderTopicTags) {
               return <Tags key={idx} obj={obj} clicked={obj.clicked} />;
             }
@@ -63,6 +75,7 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
   };
   const handleClickFilterSeenCards = (event: React.MouseEvent): void => {
     event.preventDefault();
+    event.stopPropagation();
     parallel([
       () => {
         if (!state.filterBySeen && renderTopicTags) {
@@ -104,7 +117,7 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
             <div
               {...toogleTopicTags({
                 onClick: handleClickSearchTopicTags,
-                disabled: state.mergedData.length > 0 ? false : true,
+                disabled: state.mergedData.length <= 0,
               })}
               className={clsx('btn', {
                 'btn-success': renderTopicTags,
