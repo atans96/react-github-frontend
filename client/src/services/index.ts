@@ -1,8 +1,9 @@
 import { detectBrowser, readEnvironmentVariable } from '../util';
 import { IDataOne } from '../typing/interface';
 import { ImagesDataProps, MergedDataProps } from '../typing/type';
-import { Observable } from '../utilities/observables/Observable';
 import { noop } from '../util/util';
+import { Observable } from '../link/observables/Observable';
+
 export const getAllGraphQLNavBar = async (username: string, signal: any) => {
   try {
     const response = await fetch(

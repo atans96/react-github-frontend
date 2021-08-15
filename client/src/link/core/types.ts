@@ -1,6 +1,6 @@
 import { DocumentNode, ExecutionResult } from 'graphql';
 
-import { Observable } from '../../utilities';
+import { Observable } from '../observables/Observable';
 
 export type { DocumentNode };
 

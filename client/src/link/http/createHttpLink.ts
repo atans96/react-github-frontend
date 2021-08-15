@@ -1,16 +1,12 @@
 import { visit, DefinitionNode, VariableDefinitionNode } from 'graphql';
 
 import { ApolloLink } from '../core';
-import { Observable } from '../../utilities';
+import { Observable } from '../observables/Observable';
 import { serializeFetchParameter } from './serializeFetchParameter';
 import { selectURI } from './selectURI';
 import { parseAndCheckHttpResponse } from './parseAndCheckHttpResponse';
 import { checkFetcher } from './checkFetcher';
-import {
-  selectHttpOptionsAndBody,
-  fallbackHttpConfig,
-  HttpOptions
-} from './selectHttpOptionsAndBody';
+import { selectHttpOptionsAndBody, fallbackHttpConfig, HttpOptions } from './selectHttpOptionsAndBody';
 import { createSignalIfSupported } from './createSignalIfSupported';
 import { rewriteURIForGET } from './rewriteURIForGET';
 import { fromError } from '../utils';
@@ -43,7 +39,7 @@ export const createHttpLink = (linkOptions: HttpOptions = {}) => {
     headers: requestOptions.headers,
   };
 
-  return new ApolloLink(operation => {
+  return new ApolloLink((operation) => {
     let chosenURI = selectURI(operation, uri);
 
     const context = operation.getContext();
@@ -79,12 +75,7 @@ export const createHttpLink = (linkOptions: HttpOptions = {}) => {
     };
 
     //uses fallback, link, and then context to build options
-    const { options, body } = selectHttpOptionsAndBody(
-      operation,
-      fallbackHttpConfig,
-      linkConfig,
-      contextConfig,
-    );
+    const { options, body } = selectHttpOptionsAndBody(operation, fallbackHttpConfig, linkConfig, contextConfig);
 
     if (body.variables && !includeUnusedVariables) {
       const unusedNames = new Set(Object.keys(body.variables));
@@ -103,7 +94,7 @@ export const createHttpLink = (linkOptions: HttpOptions = {}) => {
         // Make a shallow copy of body.variables (with keys in the same
         // order) and then delete unused variables from the copy.
         body.variables = { ...body.variables };
-        unusedNames.forEach(name => {
+        unusedNames.forEach((name) => {
           delete body.variables![name];
         });
       }
@@ -120,10 +111,7 @@ export const createHttpLink = (linkOptions: HttpOptions = {}) => {
     const definitionIsMutation = (d: DefinitionNode) => {
       return d.kind === 'OperationDefinition' && d.operation === 'mutation';
     };
-    if (
-      useGETForQueries &&
-      !operation.query.definitions.some(definitionIsMutation)
-    ) {
+    if (useGETForQueries && !operation.query.definitions.some(definitionIsMutation)) {
       options.method = 'GET';
     }
 
@@ -141,20 +129,20 @@ export const createHttpLink = (linkOptions: HttpOptions = {}) => {
       }
     }
 
-    return new Observable(observer => {
+    return new Observable((observer) => {
       fetcher!(chosenURI, options)
-        .then(response => {
+        .then((response) => {
           operation.setContext({ response });
           return response;
         })
         .then(parseAndCheckHttpResponse(operation))
-        .then(result => {
+        .then((result) => {
           // we have data and can send it to back up the link chain
           observer.next(result);
           observer.complete();
           return result;
         })
-        .catch(err => {
+        .catch((err) => {
           // fetch was cancelled so it's already been cleaned up in the unsubscribe
           if (err.name === 'AbortError') return;
           // if it is a network error, BUT there is graphql result info
