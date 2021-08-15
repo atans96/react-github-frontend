@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
 import { createTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import clsx from 'clsx';
@@ -50,7 +50,7 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
     } else {
       return createPortal(
         <div className={'tags'} {...collapseTopicTags()}>
-          {state.topics.map((obj: TopicsProps, idx: number) => {
+          {(state.filterBySeen ? state.topicsOriginal : state.topicsFiltered).map((obj: TopicsProps, idx: number) => {
             if (renderTopicTags) {
               return <Tags key={idx} obj={obj} clicked={obj.clicked} />;
             }

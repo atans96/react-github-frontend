@@ -9,11 +9,15 @@ interface TagsProps {
 
 export const Tags: React.FC<TagsProps> = ({ obj, clicked }) => {
   const [state, dispatch] = useTrackedState();
-  const index = state.topics.findIndex((x) => x.topic === obj.topic);
+  const index = (state.filterBySeen ? state.topicsOriginal : state.topicsFiltered).findIndex(
+    (x) => x.topic === obj.topic
+  );
   const handleClick = (event: React.MouseEvent) => {
     event.preventDefault();
-    state.topics[index].clicked = !state.topics[index].clicked;
-    const isClicked = state.topics[index].clicked;
+    (state.filterBySeen ? state.topicsOriginal : state.topicsFiltered)[index].clicked = !(
+      state.filterBySeen ? state.topicsOriginal : state.topicsFiltered
+    )[index].clicked;
+    const isClicked = (state.filterBySeen ? state.topicsOriginal : state.topicsFiltered)[index].clicked;
     if (state.filteredTopics.length === 0 || isClicked) {
       dispatch({
         type: 'FILTER_SET_TOPICS', // execute spawnTopicTags at PureSearchBar.tsx, then it will show the color actived
@@ -29,6 +33,21 @@ export const Tags: React.FC<TagsProps> = ({ obj, clicked }) => {
         type: 'FILTER_SET_TOPICS_REMOVE',
         payload: {
           filteredTopics: obj.topic,
+        },
+      });
+    }
+    if (state.filterBySeen) {
+      dispatch({
+        type: 'SET_TOPICS_ORIGINAL',
+        payload: {
+          topicsOriginal: state.topicsOriginal,
+        },
+      });
+    } else {
+      dispatch({
+        type: 'SET_TOPICS_FILTERED',
+        payload: {
+          topicsFiltered: state.topicsFiltered,
         },
       });
     }

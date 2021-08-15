@@ -10,6 +10,7 @@ export class ApolloCacheDB extends Dexie {
   public getUserInfoStarred: Dexie.Table<ApolloCache, number>;
   public getSeen: Dexie.Table<ApolloCache, number>;
   public getSearches: Dexie.Table<ApolloCache, number>;
+  public getClicked: Dexie.Table<ApolloCache, number>;
 
   public constructor() {
     super('ApolloCacheDB');
@@ -22,12 +23,14 @@ export class ApolloCacheDB extends Dexie {
       getUserInfoStarred: '++id,data',
       getSeen: '++id,data',
       getSearches: '++id,data',
+      getClicked: '++id,data',
     });
 
-    this.getUserData = this.table('getUserData');
+    this.getClicked = this.table('getClicked');
     this.getUserInfoData = this.table('getUserInfoData');
     this.getUserInfoStarred = this.table('getUserInfoStarred');
     this.getSeen = this.table('getSeen');
     this.getSearches = this.table('getSearches');
+    this.getUserData = this.table('getUserData');
   }
 }

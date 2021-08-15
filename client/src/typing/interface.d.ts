@@ -78,6 +78,7 @@ export interface IStateShared {
   width: number;
   userData: Partial<UserData>;
   searches: Searches[];
+  clicked: Clicked[];
   seenCards: number[];
   starred: number[];
   shouldRender: string;
@@ -118,11 +119,11 @@ export interface IStateManageProfile {
 }
 
 export interface IState {
-  repoStat: [];
   imagesMapData: Map<number, any>;
   filterBySeen: boolean;
   cardEnhancement: Map<number, CardEnhancement>;
-  topics: TopicsProps[];
+  topicsOriginal: TopicsProps[];
+  topicsFiltered: TopicsProps[];
   filteredTopics: string[];
   mergedData: MergedDataProps[];
   undisplayMergedData: SeenProps[];

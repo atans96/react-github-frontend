@@ -84,7 +84,6 @@ interface AppRoutes {
   shouldRender: string;
   isLoggedIn: boolean;
 }
-
 const AppRoutes = React.memo(
   ({ shouldRender, isLoggedIn }: AppRoutes) => {
     const location = useLocation();
@@ -128,7 +127,7 @@ const AppRoutes = React.memo(
           <Route path="/login" exact component={Login} />
           <Route path="/detail/:id" exact component={Details} />
         </Switch>
-        {!['/', '/profile', '/discover', '/login'].includes(location.pathname) && <NotFound />}
+        {!/\/|\/profile|\/discover|\/login|\/detail\/^\d+$/.test(location.pathname) && <NotFound />}
       </>
     );
   },
@@ -175,6 +174,7 @@ const MiddleAppRoute = () => {
           const newData: any = Object.values(obj)[0];
           if (newData && oldData) {
             console.log('NEW DATA');
+            //TODO: put to DexieDB also
             client.cache.writeQuery({
               query: associate[key],
               data: {
@@ -244,8 +244,7 @@ const MiddleAppRoute = () => {
 
   useEffect(() => {
     let isFinished = false;
-    if (!isFinished && stateShared.isLoggedIn && stateShared.username.length > 0) {
-      sendJsonMessage({ open: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') } });
+    if (!isFinished) {
       getFile('languages.json', abortController.signal).then((githubLanguages) => {
         if (abortController.signal.aborted) return;
         if (githubLanguages) {
@@ -257,6 +256,9 @@ const MiddleAppRoute = () => {
           });
         }
       });
+    }
+    if (!isFinished && stateShared.isLoggedIn && stateShared.username.length > 0) {
+      sendJsonMessage({ open: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') } });
       getTokenGQL(abortController.signal).then((res) => {
         if (abortController.signal.aborted) return;
         if (res.tokenGQL) {
@@ -299,34 +301,6 @@ const MiddleAppRoute = () => {
         close: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') },
       });
       Promise.all([
-        db?.transaction(
-          'rw',
-          [db.getUserData, db.getUserInfoData, db.getUserInfoStarred, db.getSeen, db.getSearches],
-          async () => {
-            const cache: any = client.cache.extract();
-            Object.entries(cache.ROOT_QUERY).forEach(([key, val]) => {
-              if (!(key === '__typename')) {
-                switch (key) {
-                  case 'getUserInfoData':
-                    db?.getUserInfoData?.update(1, { data: JSON.stringify({ getUserInfoData: val }) });
-                    break;
-                  case 'getUserInfoStarred':
-                    db?.getUserInfoStarred?.update(1, { data: JSON.stringify({ getUserInfoStarred: val }) });
-                    break;
-                  case 'getSeen':
-                    db?.getSeen?.update(1, { data: JSON.stringify({ getSeen: val }) });
-                    break;
-                  case 'getSearches':
-                    db?.getSearches?.update(1, { data: JSON.stringify({ getSearches: val }) });
-                    break;
-                  case 'getUserData':
-                    db?.getUserData?.update(1, { data: JSON.stringify({ getUserData: val }) });
-                    break;
-                }
-              }
-            });
-          }
-        ),
         endOfSession(stateShared.username, client.cache.extract()),
         // session(true),
       ]).then(noop);

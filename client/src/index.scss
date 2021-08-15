@@ -258,7 +258,6 @@ i.special {
 .navbar {
   width: 100%;
   vertical-align: middle;
-  z-index: 10;
   margin-bottom: 0;
   border: 0;
   ul {
@@ -518,6 +517,18 @@ https://stackoverflow.com/questions/17295219/overflow-scroll-css-is-not-working-
     margin-left: 4px;
     font-weight: bold;
   }
+}
+.backdrop {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  position: fixed;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 1;
 }
 .repo-info {
   background-color: transparent;

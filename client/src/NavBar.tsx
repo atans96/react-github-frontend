@@ -150,13 +150,7 @@ const NavBar = () => {
   }, [active]);
 
   return (
-    <div
-      className="navbar"
-      ref={navBarRef}
-      style={{
-        marginLeft: `${state.drawerWidth > 60 && location.pathname === '/' ? state.drawerWidth : 0}px`,
-      }}
-    >
+    <div className="navbar" ref={navBarRef}>
       <ul>
         <div
           style={{

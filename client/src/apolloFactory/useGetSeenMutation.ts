@@ -3,7 +3,6 @@ import { useApolloClient } from '@apollo/client';
 import { GET_SEEN } from '../graphql/queries';
 import { SeenProps } from '../typing/type';
 import { parallel } from 'async';
-import uniqBy from 'lodash.uniqby';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 
 export const useGetSeenMutation = () => {
@@ -22,14 +21,14 @@ export const useGetSeenMutation = () => {
               dispatchShared({
                 type: 'SET_SEEN',
                 payload: {
-                  seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
+                  seenCards: [...data, ...old?.getSeen?.seenCards],
                 },
               }),
             () =>
               dispatch({
                 type: 'UNDISPLAY_MERGED_DATA',
                 payload: {
-                  undisplayMergedData: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
+                  undisplayMergedData: [...data, ...old?.getSeen?.seenCards],
                 },
               }),
             () =>
@@ -37,7 +36,7 @@ export const useGetSeenMutation = () => {
                 query: GET_SEEN,
                 data: {
                   getSeen: {
-                    seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
+                    seenCards: [...data, ...old?.getSeen?.seenCards],
                   },
                 },
               }),
@@ -45,7 +44,7 @@ export const useGetSeenMutation = () => {
               db?.getSeen?.update(1, {
                 data: JSON.stringify({
                   getSeen: {
-                    seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
+                    seenCards: [...data, ...old?.getSeen?.seenCards],
                   },
                 }),
               }),

@@ -1,5 +1,5 @@
 import { useHistory, useLocation } from 'react-router-dom';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { markdownParsing } from './services';
 import { GoBook } from 'react-icons/go';
 import './markdown-body.css';
@@ -11,7 +11,7 @@ import { useSelector } from './selectors/stateSelector';
 import { StaticState } from './typing/interface';
 import { Nullable, starRanking } from './typing/type';
 import './Details.scss';
-import useDeepCompareEffect from './hooks/useDeepCompareEffect';
+import NotFoundLayout from './Layout/NotFoundLayout';
 
 interface StateProps {
   data: {
@@ -31,15 +31,16 @@ const Details = () => {
   const abortController = new AbortController();
   const location = useLocation<any>();
   const [readme, setReadme] = useState('');
+  const [notFound, setNotFound] = useState(false);
   const [data, setData] = useState<Nullable<StateProps>>(null);
   const [dataStarRanking, setDataStarRanking] = useState<any>();
   const { starRankingData, starRankingDataLoading, starRankingDataError } = useSelector(
     (state: StaticState) => state.StarRanking
   );
 
-  const isStarRankingExist = !starRankingDataLoading && !starRankingDataError && starRankingData.getStarRanking;
+  const isStarRankingExist = !starRankingDataLoading && !starRankingDataError && starRankingData?.getStarRanking;
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     let isFinished = false;
     if (isStarRankingExist && !isFinished && /detail/.test(location.pathname) && !!data) {
       const temp = starRankingData.getStarRanking.starRanking.find((obj: starRanking) => obj.id === data.data.id);
@@ -52,11 +53,13 @@ const Details = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starRankingData, starRankingDataLoading, starRankingDataError]);
+
   useEffect(() => {
     return () => {
       abortController.abort();
     };
   }, []);
+
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && /detail/.test(location.pathname)) {
@@ -73,20 +76,24 @@ const Details = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  useDeepCompareEffect(
+  useEffect(
     () => {
       let isFinished = false;
       if (!isFinished && /detail/.test(location.pathname) && !!data) {
-        markdownParsing(data.data.full_name, data.data.default_branch, abortController.signal).then(
-          (dataStarRanking) => {
+        markdownParsing(data.data.full_name, data.data.default_branch, abortController.signal)
+          .then((readme) => {
             if (abortController.signal.aborted) {
               return;
             }
-            if (dataStarRanking && !isFinished) {
-              setReadme(dataStarRanking.readme);
+            if (readme.error_404) {
+              setNotFound(true);
+            } else if (readme.error_401 || readme.error_403) {
+              throw new Error(readme);
+            } else if (readme && !isFinished) {
+              setReadme(readme.readme);
             }
-          }
-        );
+          })
+          .catch((e) => new Error(e));
       }
       return () => {
         isFinished = true;
@@ -95,6 +102,7 @@ const Details = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data]
   );
+
   const history = useHistory();
   return (
     <React.Fragment>
@@ -129,7 +137,14 @@ const Details = () => {
                   </div>
                 </Then>
               </If>
-              <If condition={readme === ''}>
+              <If condition={readme === '' && notFound}>
+                <Then>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <NotFoundLayout marginTop={'0rem'} />
+                  </div>
+                </Then>
+              </If>
+              <If condition={readme === '' && !notFound}>
                 <Then>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <CircularProgress />

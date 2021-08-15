@@ -482,7 +482,6 @@ const Home = () => {
           header: isMergedDataExist,
         })}
         style={{
-          marginLeft: `${stateShared.drawerWidth > 0 ? 170 : 50}px`,
           zIndex: state.visible ? -1 : 0,
         }}
       >
