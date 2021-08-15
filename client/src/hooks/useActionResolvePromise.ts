@@ -1,6 +1,6 @@
 import { ActionResolvePromise, IDataOne } from '../typing/interface';
 import { fastFilter, useStableCallback } from '../util';
-import { LanguagePreference, MergedDataProps } from '../typing/type';
+import { Clicked, LanguagePreference, MergedDataProps } from '../typing/type';
 import { filterActionResolvedPromiseData, noop } from '../util/util';
 import React from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
@@ -34,7 +34,9 @@ const useActionResolvePromise = () => {
               (obj: MergedDataProps) =>
                 filterActionResolvedPromiseData(
                   obj,
-                  !stateShared?.seenCards?.includes(obj.id) && !stateShared?.starred?.includes(obj.id),
+                  !stateShared?.seenCards?.includes(obj.id) &&
+                    !stateShared?.starred?.includes(obj.id) &&
+                    !stateShared?.clicked?.find((element: Clicked) => element.full_name === obj.full_name),
                   !!languagePreference?.get(obj.language)?.checked
                 ),
               data
@@ -59,7 +61,8 @@ const useActionResolvePromise = () => {
               (obj: MergedDataProps) =>
                 filterActionResolvedPromiseData(
                   obj,
-                  !stateShared?.seenCards?.includes(obj.id),
+                  !stateShared?.seenCards?.includes(obj.id) &&
+                    !stateShared?.clicked?.find((element: Clicked) => element.full_name === obj.full_name),
                   !!languagePreference?.get(obj.language)
                 ),
               data.dataOne

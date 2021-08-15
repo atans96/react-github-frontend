@@ -14,12 +14,6 @@ const ToolBar = Loadable({
   loader: () => import(/* webpackChunkName: "ToolBar" */ './BottomNavigationBarBody/ToolBar'),
 });
 
-const RepoStat = Loadable({
-  loading: Empty,
-  delay: 300,
-  loader: () => import(/* webpackChunkName: "RepoStat" */ './BottomNavigationBarBody/RepoStat'),
-});
-
 const RateLimit = Loadable({
   loading: Empty,
   delay: 300,
@@ -63,8 +57,6 @@ const BottomNavigationBar = () => {
     <React.Fragment>
       <AppBar position="fixed" color="primary" className={classes.appBar}>
         <ToolBar />
-        <RepoStat />
-
         <If condition={stateShared.width > 900}>
           <Then>
             <StateRateLimitProvider>

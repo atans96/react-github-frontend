@@ -7,7 +7,6 @@ import { MergedDataProps } from '../typing/type';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import clsx from 'clsx';
-import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import GitHubIcon from '@material-ui/icons/GitHub';
@@ -15,6 +14,7 @@ import Loadable from 'react-loadable';
 import { useStableCallback } from '../util';
 import './Card.scss';
 import Empty from '../Layout/EmptyLayout';
+import { useGetClickedMutation } from '../apolloFactory/useGetClickedMutation';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -22,6 +22,7 @@ export interface CardProps {
   index: number;
   getRootProps?: any;
 }
+
 const ImagesCard = Loadable({
   loading: Empty,
   loader: () => import(/* webpackChunkName: "ImagesCard" */ './CardBody/ImagesCard'),
@@ -36,8 +37,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
   const [stateShared] = useTrackedStateShared();
   const [state] = useTrackedState();
-  const displayName: string = (Card as React.ComponentType<any>).displayName || '';
-  const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
+  const clickedAdded = useGetClickedMutation();
 
   const userCardMemoizedData = useStableCallback(() => {
     return { owner: data.owner, id: data.id };

@@ -1,12 +1,11 @@
 import { getSearchTopics, getUser } from '../services';
 import { IDataOne } from '../typing/interface';
-import { ActionResolvedPromise, MergedDataProps, Nullable } from '../typing/type';
+import { ActionResolvedPromise, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
 import { useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
-import { Counter, useStableCallback } from '../util';
+import { useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
-import uniqBy from 'lodash.uniqby';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../Home';
 
 interface useFetchUser {
@@ -83,19 +82,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const actionController = (res: IDataOne) => {
     // compare new with old data, if they differ, that means it still has data to fetch
     if (res.dataOne.length > 0) {
-      const ja = Counter(uniqBy([...res.dataOne], 'id'), 'language');
-      const repoStat = Object.entries(ja)
-        .slice(0, 5)
-        .map((arr: any) => {
-          const ja = state.repoStat.find((xx) => xx[0] === arr[0]) || [0, 0];
-          return [arr[0], ja[1] + arr[1]];
-        });
-      dispatch({
-        type: 'REPO_STAT',
-        payload: {
-          repoStat: repoStat,
-        },
-      });
       actionResolvePromise({
         action: ActionResolvedPromise.append,
         displayName: component,

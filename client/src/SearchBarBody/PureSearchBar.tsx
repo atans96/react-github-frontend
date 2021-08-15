@@ -181,7 +181,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             const topics = [...x.topics];
             if (x.language) {
               topics.push(x.language.toLowerCase());
-              if (state.filteredTopics.join().includes(topics.join())) {
+              if (
+                state.filteredTopics.join().includes(topics.join(' ')) ||
+                topics.join(' ').includes(state.filteredTopics.join())
+              ) {
                 cb(null, x);
                 return x;
               } else {
@@ -215,22 +218,21 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             filteredMergedData: [],
           },
         });
+        dispatch({
+          type: 'SET_TOPICS_FILTERED',
+          payload: {
+            topicsFiltered: [],
+          },
+        });
       }
     }
     return () => {
       isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.filteredTopics, state.mergedData]); // we want this to be re-executed when the user scroll and fetchUserMore
+  }, [state.filteredTopics, state.mergedData, state.filterBySeen]); // we want this to be re-executed when the user scroll and fetchUserMore
   // being executed at Home.js, thus causing mergedData to change. Now if filteredTopics.length > 0, that means we only display new
   // cards that have been fetched that only match with filteredTopics.
-
-  const whichToUse = useStableCallback(() => {
-    if (state.filteredMergedData.length > 0) {
-      return state.filteredMergedData;
-    }
-    return state.mergedData;
-  });
 
   const handleChange = useStableCallback((value: string) => setValue(value));
 
@@ -239,7 +241,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     if (location.pathname === '/' && !isCancelled) {
       // this is to render the new topic tags based on filteredMergedData when it throws new data
       const result: any[] = [];
-      whichToUse().forEach((obj: MergedDataProps) => {
+      (state.filterBySeen ? state.mergedData : state.filteredMergedData).forEach((obj: MergedDataProps) => {
         const isTopicsNull = obj.topics ?? [];
         const topics = [...isTopicsNull];
         if (obj.language) {
@@ -249,7 +251,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
         each(
           languageAndTopics,
           (topic, cb) => {
-            const index = state.topics.findIndex((x) => x.topic === topic);
+            const index = (state.filterBySeen ? state.topicsOriginal : state.topicsFiltered).findIndex(
+              (x) => x.topic === topic
+            );
             if (!result.find((obj) => obj.topic === topic)) {
               result.push(
                 Object.assign(
@@ -257,7 +261,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                   {
                     topic: topic,
                     count: 1,
-                    clicked: index > -1 ? state.topics[index].clicked : false,
+                    clicked:
+                      index > -1
+                        ? (state.filterBySeen ? state.topicsOriginal : state.topicsFiltered)[index].clicked
+                        : false,
                   }
                 )
               );
@@ -278,12 +285,21 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
               throw new Error('err');
             }
             if (result.length > 0) {
-              dispatch({
-                type: 'SET_TOPICS',
-                payload: {
-                  topics: result,
-                },
-              });
+              if (state.filterBySeen) {
+                dispatch({
+                  type: 'SET_TOPICS_ORIGINAL',
+                  payload: {
+                    topicsOriginal: result,
+                  },
+                });
+              } else {
+                dispatch({
+                  type: 'SET_TOPICS_FILTERED',
+                  payload: {
+                    topicsFiltered: result,
+                  },
+                });
+              }
             }
           }
         );
@@ -293,7 +309,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       isCancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.mergedData]);
+  }, [state.mergedData, state.filterBySeen]);
 
   const filterJ = (
     searchesHistory: Array<{ search: string; count: number; updatedAt: Date }> | undefined,

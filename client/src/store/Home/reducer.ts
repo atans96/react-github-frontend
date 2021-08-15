@@ -5,7 +5,6 @@ import { CardEnhancement } from '../../typing/type';
 
 export type Action =
   | 'LOADING'
-  | 'REPO_STAT'
   | 'REMOVE_ALL'
   | 'VISIBLE'
   | 'SEARCH_USERS'
@@ -16,8 +15,8 @@ export type Action =
   | 'ADVANCE_PAGE'
   | 'SORTING_DATA_ADDED'
   | 'FILTER_CARDS_BY_SEEN'
-  | 'SET_TOPICS'
-  | 'SET_TOPICS_APPEND'
+  | 'SET_TOPICS_ORIGINAL'
+  | 'SET_TOPICS_FILTERED'
   | 'FILTER_SET_TOPICS'
   | 'FILTER_SET_TOPICS_REMOVE'
   | 'MERGED_DATA_FILTER_BY_TAGS'
@@ -28,12 +27,12 @@ export const initialState: IState = {
   // localStorage.getItem() can return either a string or null
   undisplayMergedData: [],
   mergedData: [],
-  repoStat: [],
   filteredMergedData: [],
   cardEnhancement: new Map<number, CardEnhancement>(),
   filterBySeen: true,
   filteredTopics: [],
-  topics: [],
+  topicsOriginal: [],
+  topicsFiltered: [],
   imagesData: [],
   imagesMapData: new Map<number, any>(),
   searchUsers: [], // for autocomplete function
@@ -45,12 +44,6 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
   switch (action.type) {
     //TODO: instead of blindly comparing each object at Component level, use metadata to tell object comparer to compare specific state
     // that contains mutation
-    case 'REPO_STAT': {
-      return {
-        ...state,
-        repoStat: action.payload.repoStat,
-      };
-    }
     case 'SET_CARD_ENHANCEMENT': {
       state.cardEnhancement = state.cardEnhancement.set(
         action.payload.cardEnhancement.id,
@@ -93,27 +86,23 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         filteredMergedData: action.payload.filteredMergedData,
       };
     }
-    case 'SET_TOPICS': {
+    case 'SET_TOPICS_ORIGINAL': {
       return {
         ...state,
-        topics: action.payload.topics,
+        topicsOriginal: action.payload.topicsOriginal,
       };
     }
-    case 'SET_TOPICS_APPEND': {
+    case 'SET_TOPICS_FILTERED': {
       return {
         ...state,
-        topics: Object.values(
-          [...state.topics, ...action.payload.topics].reduce((acc, { topic, count, clicked }) => {
-            acc[topic] = { topic, clicked, count: (acc[topic] ? acc[topic].count : 0) + count };
-            return acc;
-          }, {})
-        ),
+        topicsFiltered: action.payload.topicsFiltered,
       };
     }
     case 'REMOVE_ALL': {
       return {
         ...state,
-        topics: [],
+        topicsFiltered: [],
+        topicsOriginal: [],
         imagesData: [],
         imagesMapData: new Map<number, any>(),
         mergedData: [],

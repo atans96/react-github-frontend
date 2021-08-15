@@ -15,6 +15,7 @@ export type ActionShared =
   | 'SET_GITHUB_LANGUAGES'
   | 'SET_WIDTH'
   | 'SET_SEEN'
+  | 'SET_CLICKED'
   | 'SET_SEARCHES_HISTORY'
   | 'SET_STARRED'
   | 'QUERY_USERNAME'
@@ -30,6 +31,7 @@ export const initialStateShared: IStateShared = {
   width: window.innerWidth,
   shouldRender: '',
   seenCards: [],
+  clicked: [],
   searches: [],
   userData: {},
   starred: [],
@@ -58,6 +60,12 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
         ...initialStateStargazers,
         ...initialStateManageProfile,
         ...initialStateRateLimit,
+      };
+    }
+    case 'SET_CLICKED': {
+      return {
+        ...state,
+        clicked: action.payload.clicked,
       };
     }
     case 'SET_USERDATA': {

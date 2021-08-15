@@ -7,17 +7,15 @@ import Encryption from './Encryption';
 import Dexie from 'dexie';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { createStore } from '../util/hooksy';
-import { GraphQLRSSFeedData, GraphQLUserInfoData } from '../typing/interface';
+import { GraphQLUserInfoData } from '../typing/interface';
 import { SeenProps } from '../typing/type';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
-import { GET_SEARCHES, GET_SEEN, GET_USER_DATA, GET_USER_STARRED } from '../graphql/queries';
+import { GET_CLICKED, GET_SEARCHES, GET_SEEN, GET_USER_DATA, GET_USER_STARRED } from '../graphql/queries';
 import { parallel } from 'async';
 
 const conn = new ApolloCacheDB();
 
 const defaultUserInfoData: GraphQLUserInfoData | any = {};
-const defaultRSSFeed: GraphQLRSSFeedData | any = {};
-export const [useRSSFeedDexie] = createStore(defaultRSSFeed);
 export const [useUserInfoDataDexie] = createStore(defaultUserInfoData);
 
 const DbCtx = createContainer(() => {
@@ -43,8 +41,12 @@ const DbCtx = createContainer(() => {
       context: { clientName: 'mongo' },
     }
   );
+
+  const [getClicked, { data: clicked, loading: clickedLoading, error: clickedError }] = useLazyQuery(GET_CLICKED, {
+    context: { clientName: 'mongo' },
+  });
+
   const client = useApolloClient();
-  const [, setRSSFeedDexie] = useRSSFeedDexie();
   const [, setUserInfoDataDexie] = useUserInfoDataDexie();
 
   const [db, setDb] = useState<ApolloCacheDB | null>(null);
@@ -73,6 +75,10 @@ const DbCtx = createContainer(() => {
       symmetricKey,
       {
         getUserData: {
+          type: ENCRYPT_LIST,
+          fields: ['data'],
+        },
+        getClicked: {
           type: ENCRYPT_LIST,
           fields: ['data'],
         },
@@ -182,6 +188,44 @@ const DbCtx = createContainer(() => {
 
   useEffect(() => {
     let isFinished = false;
+    if (!isFinished && !clickedLoading && !clickedError && clicked?.getClicked?.clicked?.length > 0) {
+      parallel([
+        () =>
+          dispatchShared({
+            type: 'SET_CLICKED',
+            payload: {
+              starred: clicked.getClicked.clicked,
+            },
+          }),
+        () =>
+          client.cache.writeQuery({
+            query: GET_CLICKED,
+            data: {
+              getClicked: {
+                clicked: clicked.getClicked.clicked,
+              },
+            },
+          }),
+        () =>
+          db?.getClicked?.add(
+            {
+              data: JSON.stringify({
+                getClicked: {
+                  clicked: clicked.getClicked.clicked,
+                },
+              }),
+            },
+            1
+          ),
+      ]);
+    }
+    return () => {
+      isFinished = true;
+    };
+  }, [clickedLoading, clickedError]);
+
+  useEffect(() => {
+    let isFinished = false;
     if (
       !isFinished &&
       !loadingUserStarred &&
@@ -206,13 +250,16 @@ const DbCtx = createContainer(() => {
             },
           }),
         () =>
-          db?.getUserInfoStarred?.update(1, {
-            data: JSON.stringify({
-              getUserInfoStarred: {
-                starred: userStarred.getUserInfoStarred.starred,
-              },
-            }),
-          }),
+          db?.getUserInfoStarred?.add(
+            {
+              data: JSON.stringify({
+                getUserInfoStarred: {
+                  starred: userStarred.getUserInfoStarred.starred,
+                },
+              }),
+            },
+            1
+          ),
       ]);
     }
     return () => {
@@ -246,24 +293,21 @@ const DbCtx = createContainer(() => {
             query: GET_SEEN,
             data: {
               getSeen: {
-                seenCards: seenData?.getSeen?.seenCards?.reduce((acc: any[], obj: SeenProps) => {
-                  acc.push(obj.id);
-                  return acc;
-                }, []),
+                seenCards: seenData?.getSeen?.seenCards,
               },
             },
           }),
         () =>
-          db?.getSeen?.update(1, {
-            data: JSON.stringify({
-              getSeen: {
-                seenCards: seenData?.getSeen?.seenCards?.reduce((acc: any[], obj: SeenProps) => {
-                  acc.push(obj.id);
-                  return acc;
-                }, []),
-              },
-            }),
-          }),
+          db?.getSeen?.add(
+            {
+              data: JSON.stringify({
+                getSeen: {
+                  seenCards: seenData?.getSeen?.seenCards,
+                },
+              }),
+            },
+            1
+          ),
       ]);
     }
     return () => {
@@ -277,19 +321,32 @@ const DbCtx = createContainer(() => {
       handleOpenDb().then(() => {
         parallel([
           () =>
+            conn.getClicked.get(1).then((data: any) => {
+              if (data) {
+                const temp = JSON.parse(data.data).getClicked;
+                if (temp.clicked.length > 0 && !isFinished) {
+                  dispatchShared({
+                    type: 'SET_CLICKED',
+                    payload: {
+                      clicked: temp.clicked,
+                    },
+                  });
+                }
+              } else {
+                getClicked();
+              }
+            }),
+          () =>
             conn.getUserData.get(1).then((data: any) => {
               if (data) {
                 const temp = JSON.parse(data.data).getUserData;
                 if (Object.keys(temp).length > 0 && !isFinished) {
-                  parallel([
-                    () =>
-                      dispatchShared({
-                        type: 'SET_USERDATA',
-                        payload: {
-                          userData: temp,
-                        },
-                      }),
-                  ]);
+                  dispatchShared({
+                    type: 'SET_USERDATA',
+                    payload: {
+                      userData: temp,
+                    },
+                  });
                 }
               } else {
                 getUserData();
@@ -300,15 +357,12 @@ const DbCtx = createContainer(() => {
               if (data) {
                 const temp = JSON.parse(data.data).getSearches;
                 if (temp.searches.length > 0 && !isFinished) {
-                  parallel([
-                    () =>
-                      dispatchShared({
-                        type: 'SET_SEARCHES_HISTORY',
-                        payload: {
-                          searches: temp.searches,
-                        },
-                      }),
-                  ]);
+                  dispatchShared({
+                    type: 'SET_SEARCHES_HISTORY',
+                    payload: {
+                      searches: temp.searches,
+                    },
+                  });
                 }
               } else {
                 getSearches();
@@ -319,15 +373,12 @@ const DbCtx = createContainer(() => {
               if (data) {
                 const temp = JSON.parse(data.data).getUserInfoStarred;
                 if (temp.starred.length > 0 && !isFinished) {
-                  parallel([
-                    () =>
-                      dispatchShared({
-                        type: 'SET_STARRED',
-                        payload: {
-                          starred: temp.starred,
-                        },
-                      }),
-                  ]);
+                  dispatchShared({
+                    type: 'SET_STARRED',
+                    payload: {
+                      starred: temp.starred,
+                    },
+                  });
                 }
               } else {
                 getUserInfoStarred();

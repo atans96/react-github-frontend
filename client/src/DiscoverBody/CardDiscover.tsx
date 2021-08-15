@@ -2,7 +2,6 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { MergedDataProps } from '../typing/type';
 import clsx from 'clsx';
-import { useApolloFactory } from '../hooks/useApolloFactory';
 import { noop } from '../util/util';
 import UserCardDiscover from './CardDiscoverBody/UserCardDiscover';
 import StargazersDiscover from './CardDiscoverBody/StargazersDiscover';
@@ -13,6 +12,7 @@ import './CardDiscover.scss';
 import Empty from '../Layout/EmptyLayout';
 import { Then } from '../util/react-if/Then';
 import { If } from '../util/react-if/If';
+import { useGetClickedMutation } from '../apolloFactory/useGetClickedMutation';
 
 const ImagesCardDiscover = Loadable({
   loading: Empty,
@@ -38,8 +38,8 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
   const [stateShared] = useTrackedStateShared();
   const stargazersMemoizedGithubData = useStableCallback(() => githubData);
 
-  const displayName: string = (CardDiscover as React.ComponentType<any>).displayName || '';
-  const clickedAdded = useApolloFactory(displayName!).mutation.clickedAdded;
+  const clickedAdded = useGetClickedMutation();
+
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
     if (event.button === 1) {

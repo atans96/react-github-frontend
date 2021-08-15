@@ -199,7 +199,6 @@ const Discover = () => {
     isFetchFinish.current = false;
     return stateDiscover.mergedDataDiscover; // return this if filteredTopics.length === 0
   };
-  //TODO: only show image if size is....https://github.com/ShogunPanda/fastimage at backend
   useScrollSaver(location.pathname, '/discover');
   if (stateShared.isLoggedIn) return <Redirect to={'/login'} from={'/discover'} />;
   return (

@@ -10,6 +10,7 @@ import { useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useStableCallback } from '../../util';
 import Loadable from 'react-loadable';
 import Empty from '../../Layout/EmptyLayout';
+import { useClickOutside } from '../../hooks/hooks';
 const RSSFeed = Loadable({
   loading: Empty,
   delay: 300,
@@ -92,7 +93,7 @@ const DrawerBar = () => {
       });
     };
   }, [open]);
-
+  useClickOutside(drawerRef, () => setOpen(false));
   return (
     <React.Fragment>
       <div style={{ bottom: '-5px', left: '-10px', zIndex: 9999, position: 'fixed' }}>
@@ -132,6 +133,7 @@ const DrawerBar = () => {
           </>
         )}
       </Drawer>
+      {open && <div className={'backdrop'} />}
     </React.Fragment>
   );
 };
