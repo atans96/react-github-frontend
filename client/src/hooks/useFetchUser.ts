@@ -6,7 +6,7 @@ import { useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
-import { useIsFetchFinish, useIsLoading, useNotification } from '../Home';
+import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
 
 interface useFetchUser {
   component: string;

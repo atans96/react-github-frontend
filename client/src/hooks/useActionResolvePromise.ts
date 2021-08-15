@@ -4,7 +4,7 @@ import { Clicked, LanguagePreference, MergedDataProps } from '../typing/type';
 import { filterActionResolvedPromiseData, noop } from '../util/util';
 import React from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
-import { useIsFetchFinish, useIsLoading, useNotification } from '../Home';
+import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
 
 const useActionResolvePromise = () => {
   const [, setNotification] = useNotification();

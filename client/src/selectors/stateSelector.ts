@@ -3,42 +3,18 @@ import { createContainer } from 'unstated-next';
 import { useQuery } from '@apollo/client';
 import { GET_STAR_RANKING, GET_SUGGESTED_REPO, GET_SUGGESTED_REPO_IMAGES } from '../graphql/queries';
 import { StaticState } from '../typing/interface';
-import {
-  RepoInfoSuggested,
-  SeenProps,
-  starRanking,
-  StarRankingData,
-  SuggestedData,
-  SuggestedDataImages,
-} from '../typing/type';
+import { RepoInfoSuggested, starRanking, StarRankingData, SuggestedData, SuggestedDataImages } from '../typing/type';
 import { useTrackedStateShared } from './stateContextSelector';
 import { useEffect, useRef, useState } from 'react';
 //only use when you have a static database (doesn't depend on mutation action by the user)
 
 const useStarRanking = () => {
-  //TODO: should move to db.ctx.ts file?
-  const [stateShared] = useTrackedStateShared();
-  const [shouldSkip, setShouldSkip] = useState(true);
-  const timeRef = useRef<any>();
-
-  useEffect(() => {
-    timeRef.current = setTimeout(() => {
-      if (!stateShared.isLoggedIn) {
-        setShouldSkip(stateShared.isLoggedIn);
-      }
-    }, 3500);
-    return () => {
-      clearTimeout(timeRef.current);
-    };
-  }, [stateShared.isLoggedIn]);
-
   const {
     data: starRankingData,
     loading: starRankingDataLoading,
     error: starRankingDataError,
   } = useQuery(GET_STAR_RANKING, {
     context: { clientName: 'mongo' },
-    skip: shouldSkip,
   });
   return { starRankingData, starRankingDataLoading, starRankingDataError } as StarRankingData;
 };
@@ -96,6 +72,7 @@ const useSuggestedRepoImages = () => {
   return { suggestedDataImages, suggestedDataImagesError, suggestedDataImagesLoading } as SuggestedDataImages;
 };
 export const SuggestedRepoImagesContainer = createContainer(useSuggestedRepoImages);
+
 function useApolloData(): StaticState {
   return Object.assign(
     {},
@@ -106,9 +83,11 @@ function useApolloData(): StaticState {
     }
   );
 }
+
 export function useSelector(selector: any) {
   return selector(useApolloData());
 }
+
 //don't import createSelector to React component as it will re-create selector (not memoize) when the component gets rerender
 export const sortedRepoInfoSelector = (starRankingFiltered: starRanking[], sorted: string) =>
   createSelector<StaticState, any, any[]>(
