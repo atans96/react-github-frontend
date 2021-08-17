@@ -11,7 +11,6 @@ import { useLocation } from 'react-router-dom';
 import Loadable from 'react-loadable';
 import { useStableCallback } from '../../../util';
 import { useDeepMemo } from '../../../hooks/useDeepMemo';
-import { RepoInfoProps } from '../../../typing/type';
 import Empty from '../../Layout/EmptyLayout';
 
 const ImageComponentLayout = Loadable({
@@ -67,7 +66,7 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
       e.stopPropagation();
       return setRenderChildren((prevState) => !prevState);
     });
-    const [renderImages, setRenderImages] = useState<string[]>([]);
+    const [renderImages, setRenderImages] = useState<Array<{ webP: string; width: number; height: number }>>([]);
 
     useEffect(() => {
       let isCancelled = false;
@@ -87,28 +86,46 @@ const ImagesCardDiscover: React.FC<ImagesCardProps> = React.memo(
             useDeepMemo(() => {
               return renderImages
                 .slice(0, 2)
-                .map((image: string, idx) => (
-                  <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />
-                ));
+                .map(
+                  (image, idx) =>
+                    image.webP.length > 0 && (
+                      <ImageComponentLayout
+                        key={idx}
+                        urlLink={image.webP}
+                        height={image.height}
+                        width={image.width}
+                        handleClick={handleClick}
+                      />
+                    )
+                );
             }, [renderImages])}
         </div>
         <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
           {renderChildren &&
-            renderImages.length > 0 &&
+            renderImages.slice(2).length > 0 &&
             useDeepMemo(() => {
               return renderImages
                 .slice(2)
-                .map((image: string, idx) => (
-                  <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />
-                ));
+                .map(
+                  (image, idx) =>
+                    image.webP.length > 0 && (
+                      <ImageComponentLayout
+                        key={idx}
+                        urlLink={image.webP}
+                        height={image.height}
+                        width={image.width}
+                        handleClick={handleClick}
+                      />
+                    )
+                );
             }, [renderImages])}
         </div>
-        {renderImages.length > 0 && (
+        {renderImages.slice(2).length > 0 && (
           <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
             <ListItemIcon>
               <SupervisorAccountIcon />
             </ListItemIcon>
-            <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
+            <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.slice(2).length} More Images`} />
             {renderChildren && renderImages.length > 0 ? <ExpandLess /> : <ExpandMore />}
           </ListItem>
         )}

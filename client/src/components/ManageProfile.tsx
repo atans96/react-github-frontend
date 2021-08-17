@@ -43,13 +43,13 @@ const ManageProfile = () => {
       });
     }
   });
-  if (state.isLoggedIn) return <Redirect to={'/login'} from={'/profile'} />;
+  if (!state.isLoggedIn) return <Redirect to={'/login'} from={'/profile'} />;
   //TODO: highlight the search word in markdown using: https://github.com/jonschlinkert/remarkable (highlight.js)
   return (
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <StateManageProfileProvider>
         <ColumnOne handleLanguageFilter={handleLanguageFilter} />
-        <ColumnTwo languageFilter={languageFilter} />
+        {/*<ColumnTwo languageFilter={languageFilter} />*/}
       </StateManageProfileProvider>
     </div>
   );

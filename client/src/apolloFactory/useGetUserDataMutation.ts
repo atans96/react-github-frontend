@@ -19,7 +19,7 @@ export const useGetUserDataMutation = () => {
                 query: GET_USER_DATA,
                 data: {
                   getUserData: {
-                    ...old,
+                    ...old.getUserData,
                     languagePreference: [...data.getUserData.languagePreference],
                   },
                 },
@@ -28,7 +28,7 @@ export const useGetUserDataMutation = () => {
               db?.getUserData?.update(1, {
                 data: JSON.stringify({
                   getUserData: {
-                    ...old,
+                    ...old.getUserData,
                     languagePreference: [...data.getUserData.languagePreference],
                   },
                 }),

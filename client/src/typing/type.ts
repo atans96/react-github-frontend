@@ -146,7 +146,6 @@ export type SeenProps = {
   topics: string[];
   html_url: string;
   name: string;
-  imagesData: string[];
   is_queried: boolean;
 };
 export type TopicsProps = {
