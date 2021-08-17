@@ -35,7 +35,7 @@ export interface ActionResolvePromise {
 export interface LocationGraphQL {
   //follow NavBar.tsx at getAllGraphQLData
   data: {
-    userData: GraphQLUserData;
+    userData: UserData;
     userInfoData: GraphQLUserInfoData;
   };
   previousPath: string;

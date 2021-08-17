@@ -11,7 +11,6 @@ export type Action =
   | 'MERGED_DATA_APPEND'
   | 'MERGED_DATA_ADDED'
   | 'IMAGES_DATA_ADDED'
-  | 'IMAGES_DATA_REPLACE'
   | 'ADVANCE_PAGE'
   | 'SORTING_DATA_ADDED'
   | 'FILTER_CARDS_BY_SEEN'
@@ -142,13 +141,6 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         imagesMapData: new Map(
           uniqBy([...state.imagesData, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
         ),
-      };
-    }
-    case 'IMAGES_DATA_REPLACE': {
-      return {
-        ...state,
-        imagesData: action.payload.imagesData,
-        imagesMapData: new Map(action.payload.imagesData.map((obj: any) => [obj.id, obj])),
       };
     }
     case 'ADVANCE_PAGE': {

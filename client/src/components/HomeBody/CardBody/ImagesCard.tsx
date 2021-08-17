@@ -48,7 +48,7 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
     e.stopPropagation();
     return setClicked((prev) => !prev);
   });
-  const [renderImages, setRenderImages] = useState<string[]>([]);
+  const [renderImages, setRenderImages] = useState<Array<{ webP: string; width: number; height: number }>>([]);
   const [state] = useTrackedState();
   const location = useLocation();
 
@@ -103,26 +103,42 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
           renderImages
             .slice(0, 2)
             .map(
-              (image: string, idx) =>
-                image.length > 0 && <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />
+              (image, idx) =>
+                image.webP.length > 0 && (
+                  <ImageComponentLayout
+                    key={idx}
+                    urlLink={image.webP}
+                    height={image.height}
+                    width={image.width}
+                    handleClick={handleClick}
+                  />
+                )
             )}
       </div>
       <div {...getCollapseProps({ style: { textAlign: 'center' } })}>
         {renderChildren &&
-          renderImages.length > 0 &&
+          renderImages.slice(2).length > 0 &&
           renderImages
             .slice(2)
             .map(
-              (image: string, idx) =>
-                image.length > 0 && <ImageComponentLayout key={idx} urlLink={image} handleClick={handleClick} />
+              (image, idx) =>
+                image.webP.length > 0 && (
+                  <ImageComponentLayout
+                    key={idx}
+                    urlLink={image.webP}
+                    height={image.height}
+                    width={image.width}
+                    handleClick={handleClick}
+                  />
+                )
             )}
       </div>
-      {renderImages.length > 0 && (
+      {renderImages.slice(2).length > 0 && (
         <ListItem button {...getToggleProps({ onClick: handleClickUnrenderImages })}>
           <ListItemIcon>
             <SupervisorAccountIcon />
           </ListItemIcon>
-          <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.length} More Images`} />
+          <ListItemText primary={`${renderChildren ? 'Hide' : 'Load'} ${renderImages.slice(2).length} More Images`} />
           {renderChildren ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
       )}

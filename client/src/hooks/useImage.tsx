@@ -18,10 +18,10 @@ const promiseFind = (arr: string[], promiseFactory: (...args: any[]) => Promise<
       return promiseFactory(src).then((data: any) => {
         done = true;
         let sr: any = '';
-        if (data.src.original === src) {
+        if (data.src === src) {
           sr = src;
-        } else if (data.src.original.length > 0) {
-          sr = `data:image/webp;base64, ${data.src.original}`;
+        } else if (data.src.length > 0) {
+          sr = `data:image/webp;base64, ${data.src}`;
         } else {
           sr = '';
         }
@@ -50,7 +50,7 @@ export default function useImage({
   imgPromise = imagePromiseFactory({ decode: true }),
   useSuspense = true,
 }: useImageProps): {
-  src: { original: string } | undefined;
+  src: string | undefined;
   isLoading: boolean;
   error: any;
   width: number | undefined;

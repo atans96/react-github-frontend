@@ -3,13 +3,9 @@ import { Then } from '../../../util/react-if/Then';
 import { CircularProgress, List } from '@material-ui/core';
 import React, { useEffect, useRef, useState } from 'react';
 import LanguageStarsInfo from './RowTwoBody/LanguageStarsInfo';
-import { Counter, fastFilter, readEnvironmentVariable } from '../../../util';
-import { useApolloFactory } from '../../../hooks/useApolloFactory';
+import { Counter } from '../../../util';
 import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
-import { getTopContributors, getUser } from '../../../services';
-import moment from 'moment';
-import { consumers, epochToJsDate } from '../../../util/util';
-import { MergedDataProps } from '../../../typing/type';
+import { consumers } from '../../../util/util';
 import { useLocation } from 'react-router-dom';
 
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../../selectors/stateContextSelector';
@@ -39,7 +35,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
     }
   };
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     let isFinished = false;
     if (
       !isFinished &&

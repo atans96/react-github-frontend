@@ -9,7 +9,7 @@ import { LoadingSmall } from '../LoadingSmall';
 
 interface ImagesModalLayoutProps {
   clicked: boolean;
-  renderImages: string[];
+  renderImages: Array<{ webP: string; width: number; height: number }>;
   ref?: any;
   handleClick: (args: any) => void;
 }
@@ -86,8 +86,8 @@ const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = ({ handleClick, clic
           }}
         >
           <div className={'slides-inner'} ref={sliderInner}>
-            {renderImages.map((image: string, idx: number) => (
-              <ImageModal urlLink={image} loader={<LoadingSmall />} key={idx} />
+            {renderImages.map((image, idx: number) => (
+              <ImageModal urlLink={image.webP} loader={<LoadingSmall />} key={idx} />
             ))}
           </div>
         </div>

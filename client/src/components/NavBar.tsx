@@ -11,7 +11,6 @@ import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
-import { getAllGraphQLNavBar } from '../services';
 import { useStableCallback } from '../util';
 
 //why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
@@ -111,29 +110,22 @@ const NavBar = () => {
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
-      getAllGraphQLNavBar(stateShared.username, abortController.signal).then((data) => {
-        if (abortController.signal.aborted) {
-          return;
-        }
-        setIsFinished(true);
-        directionLogin.set(
-          active.toLowerCase(),
-          Object.assign({}, directionLogin.get(active.toLowerCase()), {
-            explored: true,
-          })
-        );
-        if (active === 'home') {
-          history.push('/');
-        } else if (active === 'logout') {
-          logoutAction(history, dispatch);
-        } else {
-          //TODO: don't push state to history for RowTwo and RowOne.
-          history.push({
-            pathname: `/${active.toLowerCase()}`,
-            state: { data, previousPath: location.pathname },
-          });
-        }
-      });
+      setIsFinished(true);
+      directionLogin.set(
+        active.toLowerCase(),
+        Object.assign({}, directionLogin.get(active.toLowerCase()), {
+          explored: true,
+        })
+      );
+      if (active === 'home') {
+        history.push('/');
+      } else if (active === 'logout') {
+        logoutAction(history, dispatch);
+      } else {
+        history.push({
+          pathname: `/${active.toLowerCase()}`,
+        });
+      }
     } else if (!isFinished && directionLogin?.get(active.toLowerCase())?.explored) {
       setIsFinished(true);
       if (active === 'home') {

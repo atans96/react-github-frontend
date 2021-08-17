@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Checkbox,
   Collapse,
@@ -13,13 +13,13 @@ import {
 } from '@material-ui/core';
 import SettingsIcon from '@material-ui/icons/Settings';
 import { makeStyles } from '@material-ui/core/styles';
-import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 import { noop } from '../../../util/util';
 import { LanguagePreference } from '../../../typing/type';
 import { useLocation } from 'react-router-dom';
-import { LocationGraphQL } from '../../../typing/interface';
 import { useStableCallback } from '../../../util';
 import { useGetUserDataMutation } from '../../../apolloFactory/useGetUserDataMutation';
+import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
+import { map } from 'async';
 
 interface StyleProps {
   drawerWidth: string;
@@ -49,6 +49,8 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
   },
 }));
 const RowOne = () => {
+  const [state] = useTrackedStateShared();
+  const location = useLocation();
   const [openLanguages, setOpenLanguages] = useState(false);
   const classes = useStyles({ drawerWidth: '250px' });
   const handleOpenLanguages = (e: React.MouseEvent) => {
@@ -56,54 +58,56 @@ const RowOne = () => {
     e.stopPropagation();
     setOpenLanguages(!openLanguages);
   };
-  const location = useLocation<LocationGraphQL>();
   const languagesPreferenceAdded = useGetUserDataMutation();
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     let isFinished = false;
     if (
-      location?.state?.data?.userData.getUserData.languagePreference.length > 0 &&
+      state?.userData?.languagePreference &&
+      state?.userData?.languagePreference?.length > 0 &&
       location.pathname === '/profile' &&
       !isFinished
     ) {
-      setLanguagePreferences(location.state.data.userData.getUserData.languagePreference);
+      setLanguagePreferences(state.userData.languagePreference);
     }
     return () => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location?.state?.data?.userData]);
-
-  useDeepCompareEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/profile' && !isFinished) {
-      languagesPreferenceAdded({
-        getUserData: {
-          languagePreference: languagePreferences,
-        },
-      }).then(noop);
-    }
-    return () => {
-      isFinished = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [languagePreferences]);
+  }, [state.userData.languagePreference]);
 
   const handleCheckboxChange = useStableCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    setLanguagePreferences(
-      [...languagePreferences].map((obj) => {
-        if (obj.language === event.target.name) {
+    map(
+      languagePreferences,
+      (languagePreference: LanguagePreference, cb) => {
+        if (languagePreference.language === event.target.name) {
+          cb(null, {
+            ...languagePreference,
+            language: event.target.name,
+            checked: event.target.checked,
+          });
           return {
-            ...obj,
+            ...languagePreference,
             language: event.target.name,
             checked: event.target.checked,
           };
-        } else {
-          return obj;
         }
-      })
+        cb(null, languagePreference);
+        return languagePreference;
+      },
+      (err, res: any) => {
+        if (err) {
+          throw new Error('Err');
+        }
+        languagesPreferenceAdded({
+          getUserData: {
+            languagePreference: res,
+          },
+        }).then(noop);
+        setLanguagePreferences(res);
+      }
     );
   });
 
@@ -116,20 +120,26 @@ const RowOne = () => {
         <ListItemText primary={'Languages Preference'} className={classes.typography} />
       </ListItem>
       <Collapse in={openLanguages} timeout="auto" unmountOnExit>
-        <div className="SelectMenu-list" style={{ background: 'var(--background-theme-color)', maxHeight: '300px' }}>
+        <div
+          className="SelectMenu-list"
+          style={{
+            background: 'var(--background-theme-color)',
+            maxHeight: '300px',
+            overflowX: 'hidden',
+            overflowY: 'auto',
+          }}
+        >
           <FormControl component="fieldset" className={classes.formControl}>
             <FormGroup>
-              {React.useMemo(() => {
-                return languagePreferences.map((obj: LanguagePreference) => {
-                  return (
-                    <FormControlLabel
-                      control={<Checkbox checked={obj.checked} onChange={handleCheckboxChange} name={obj.language} />}
-                      label={obj.language}
-                      key={obj.language}
-                    />
-                  );
-                });
-              }, [languagePreferences.length])}
+              {languagePreferences.map((obj: LanguagePreference) => {
+                return (
+                  <FormControlLabel
+                    control={<Checkbox checked={obj.checked} onChange={handleCheckboxChange} name={obj.language} />}
+                    label={obj.language}
+                    key={obj.language}
+                  />
+                );
+              })}
             </FormGroup>
           </FormControl>
         </div>
@@ -138,4 +148,4 @@ const RowOne = () => {
   );
 };
 RowOne.displayName = 'LanguagePreference';
-export default RowOne;
+export default React.memo(RowOne);

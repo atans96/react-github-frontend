@@ -4,22 +4,6 @@ import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
 import { Observable } from '../link/observables/Observable';
 
-export const getAllGraphQLNavBar = async (username: string, signal: any) => {
-  try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/graphqlUserData?username=${username}`,
-      {
-        method: 'GET',
-        signal,
-      }
-    );
-    return await response.json();
-  } catch (e) {
-    console.log(e);
-  }
-};
 export const getRSSFeed = async (rssUrl: string) => {
   try {
     const response = await fetch(
@@ -489,24 +473,6 @@ export const requestGithubGraphQLLogin = async (token: string) => {
   } catch (e) {
     console.log(e);
     return { success: false };
-  }
-};
-export const convertToWebP = async (imgUrl: string) => {
-  try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/convert_to_webp?imgUrl=${imgUrl}`,
-      {
-        method: 'GET',
-      }
-    );
-    return (await response.json()) as { original: string };
-  } catch (e) {
-    console.log(e);
-    return {
-      original: '',
-    };
   }
 };
 export const getFile = async (filename: string, signal: any) => {

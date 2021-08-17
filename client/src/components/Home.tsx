@@ -17,7 +17,7 @@ import useFetchUser from '../hooks/useFetchUser';
 import Empty from './Layout/EmptyLayout';
 import Mutex from '../util/mutex/mutex';
 import { createStore } from '../util/hooksy';
-import { filter, parallel } from 'async';
+import { parallel } from 'async';
 import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
 
 const mutex = new Mutex();
@@ -106,7 +106,6 @@ const Home = () => {
               topics: obj.topics,
               html_url: obj.html_url,
               id: obj.id,
-              imagesData: state.imagesData.filter((xx) => xx.id === obj.id).map((obj) => [...obj.value])[0] || [],
               name: obj.name,
               is_queried: false,
             }
@@ -208,78 +207,6 @@ const Home = () => {
 
   useEffect(() => {
     let isFinished = false;
-    if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && state.filterBySeen) {
-      const ids = state.undisplayMergedData.reduce((acc, obj) => {
-        acc.push(obj.id);
-        return acc;
-      }, [] as number[]);
-      parallel([
-        () =>
-          filter(
-            state.mergedData,
-            (obj: MergedDataProps, cb) => {
-              if (!ids.includes(obj.id)) {
-                // @ts-ignore
-                cb(null, obj);
-                return obj;
-              } else {
-                cb(null, undefined);
-                return undefined;
-              }
-            },
-            function (err, results: any) {
-              if (err) {
-                throw new Error('err');
-              }
-              if (!results) {
-                return;
-              }
-              return dispatch({
-                type: 'MERGED_DATA_ADDED',
-                payload: {
-                  data: results,
-                },
-              });
-            }
-          ),
-        () =>
-          filter(
-            state.imagesData,
-            (image: Record<string, any>, cb) => {
-              if (!ids.includes(image.id)) {
-                // @ts-ignore
-                cb(null, image);
-                return image;
-              } else {
-                cb(null, undefined);
-                return undefined;
-              }
-            },
-            function (err, images: any) {
-              if (err) {
-                throw new Error('err');
-              }
-              if (!images) {
-                return;
-              }
-              return dispatch({
-                type: 'IMAGES_DATA_REPLACE',
-                payload: {
-                  imagesData: images,
-                },
-              });
-            }
-          ),
-      ]);
-    }
-    return () => {
-      isFinished = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.filterBySeen, isSeenCardsExist]);
-
-  useEffect(() => {
-    let isFinished = false;
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
       parallel([
         () => {
@@ -287,27 +214,6 @@ const Home = () => {
         },
         () => {
           if (isLoading.isLoading) setIsLoading({ isLoading: false });
-        },
-        () => {
-          const temp = state.undisplayMergedData ?? [];
-          const images = temp!.reduce((acc: any[], obj: SeenProps) => {
-            acc.push(
-              Object.assign(
-                {},
-                {
-                  id: obj.id,
-                  value: [...obj.imagesData],
-                }
-              )
-            );
-            return acc;
-          }, [] as SeenProps[]);
-          dispatch({
-            type: 'IMAGES_DATA_ADDED',
-            payload: {
-              images: images,
-            },
-          });
         },
         () =>
           dispatch({

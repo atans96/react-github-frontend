@@ -108,7 +108,6 @@ export const GET_SEEN = gql`
         html_url
         name
         id
-        imagesData
         is_queried
       }
     }
