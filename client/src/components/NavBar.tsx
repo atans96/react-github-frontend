@@ -56,6 +56,15 @@ const NavBar = () => {
     if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active[1] !== '' ? Active[1] : 'home')) {
       setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
     }
+    if (location.pathname !== '/' && active.length === 0) {
+      dispatch({
+        //handle the case when the user directly go to /profile url
+        type: 'SET_SHOULD_RENDER',
+        payload: {
+          shouldRender: location.pathname.replace('/', ''),
+        },
+      });
+    }
     return () => {
       isFinished = true;
     };
