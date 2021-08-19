@@ -128,10 +128,6 @@ const Discover = React.memo(() => {
             topics: obj.topics,
             html_url: obj.html_url,
             id: obj.id,
-            imagesData:
-              imagesDataDiscover.arrayData
-                .filter((xx: RenderImages) => xx.id === obj.id)
-                .map((obj: RenderImages) => [...obj.value])[0] ?? [],
             name: obj.name,
             is_queried: false,
           }

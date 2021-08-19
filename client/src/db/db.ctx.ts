@@ -231,7 +231,7 @@ const DbCtx = createContainer(() => {
           dispatchShared({
             type: 'SET_STARRED',
             payload: {
-              starred: userStarred.getUserInfoStarred.starred,
+              starred: userStarred.getUserInfoStarred.starred.map((obj: any) => obj.id),
             },
           }),
         () =>
@@ -239,7 +239,7 @@ const DbCtx = createContainer(() => {
             query: GET_USER_STARRED,
             data: {
               getUserInfoStarred: {
-                starred: userStarred.getUserInfoStarred.starred,
+                starred: userStarred.getUserInfoStarred.starred.map((obj: any) => obj.id),
               },
             },
           }),
@@ -248,7 +248,7 @@ const DbCtx = createContainer(() => {
             {
               data: JSON.stringify({
                 getUserInfoStarred: {
-                  starred: userStarred.getUserInfoStarred.starred,
+                  starred: userStarred.getUserInfoStarred.starred.map((obj: any) => obj.id),
                 },
               }),
             },
