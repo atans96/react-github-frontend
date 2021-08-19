@@ -131,7 +131,7 @@ export interface GraphQLUserData {
 }
 
 export interface GraphQLUserStarred {
-  getUserInfoStarred: { starred: number[] | any[] };
+  getUserInfoStarred: { starred: Array<{ is_queried: boolean; id: number; full_name: string }> };
 }
 
 export interface GraphQLUserInfoData {
