@@ -15,6 +15,7 @@ import { useStableCallback } from '../../util';
 import './Card.scss';
 import Empty from '../Layout/EmptyLayout';
 import { useGetClickedMutation } from '../../apolloFactory/useGetClickedMutation';
+import Stargazers from './CardBody/Stargazers';
 
 export interface CardProps {
   data: MergedDataProps;
@@ -27,11 +28,7 @@ const ImagesCard = Loadable({
   loading: Empty,
   loader: () => import(/* webpackChunkName: "ImagesCard" */ './CardBody/ImagesCard'),
 });
-const Stargazers = Loadable({
-  loading: Empty,
-  delay: 300,
-  loader: () => import(/* webpackChunkName: "Stargazers" */ './CardBody/Stargazers'),
-});
+
 const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) => {
   // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)

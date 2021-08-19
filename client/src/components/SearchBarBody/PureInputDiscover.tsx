@@ -32,7 +32,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
   const debouncedValue = useDebouncedValue(query, 1000);
   useEffect(() => {
     let isFinished = false;
-    if (!isFinished && query.trim().length > 0) {
+    if (!isFinished && query.trim().length > 0 && debouncedValue) {
       getElasticSearchBertAutocomplete(query.trim(), abortController.signal).then((data) => {
         if (data.isSuggested.status) {
           data.result.unshift(

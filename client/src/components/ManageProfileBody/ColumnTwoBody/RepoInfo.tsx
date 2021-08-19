@@ -12,6 +12,22 @@ import Loadable from 'react-loadable';
 import { useStableCallback } from '../../../util';
 import Empty from '../../Layout/EmptyLayout';
 
+const intervals = [
+  { label: 'year', seconds: 31536000 },
+  { label: 'month', seconds: 2592000 },
+  { label: 'day', seconds: 86400 },
+  { label: 'hour', seconds: 3600 },
+  { label: 'minute', seconds: 60 },
+  { label: 'second', seconds: 1 },
+];
+
+function timeSince(date: Date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  const interval: any = intervals.find((i) => i.seconds < seconds);
+  const count = Math.floor(seconds / interval.seconds);
+  return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
+}
+
 const Contributors = Loadable({
   loading: Empty,
   delay: 300,
@@ -85,7 +101,7 @@ const RepoInfo: React.FC<Props> = ({ obj, onClickRepoInfo, active }) => {
             </div>
             <div style={{ display: 'flex', marginRight: '5px' }}>
               <UpdateIcon />
-              <p>{obj.updatedAt}</p>
+              <p>{`${timeSince(new Date(obj.updatedAt))}`}</p>
             </div>
           </div>
         </div>

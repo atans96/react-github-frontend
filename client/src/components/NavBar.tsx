@@ -41,7 +41,7 @@ const NavBar = () => {
   const [isHoveredProfile, bindProfile] = useHover();
   const [isHoveredDiscover, bindDiscover] = useHover();
   const [isHoveredHome, bindHome] = useHover();
-  const Active = location.pathname.split('/');
+  const Active = location.pathname.replace('/', '');
 
   const te = Active[1] !== '' ? Active[1] : 'home';
   const number = state.isLoggedIn ? directionLogin?.get(te)?.index : directionNotLogin?.get(te)?.index;
@@ -51,19 +51,11 @@ const NavBar = () => {
   const [isFinished, setIsFinished] = useState<boolean>(true);
   const [stateShared] = useTrackedStateShared();
   const history = useHistory();
+
   useEffect(() => {
     let isFinished = false;
-    if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active[1] !== '' ? Active[1] : 'home')) {
-      setActiveBar(Active[1] !== '' ? Active[1] : 'home'); //handle the case where you enter /profile directly instead of clicking
-    }
-    if (location.pathname !== '/' && active.length === 0) {
-      dispatch({
-        //handle the case when the user directly go to /profile url
-        type: 'SET_SHOULD_RENDER',
-        payload: {
-          shouldRender: location.pathname.replace('/', ''),
-        },
-      });
+    if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active !== '' ? Active : 'home')) {
+      setActiveBar(Active !== '' ? Active : 'home'); //handle the case where you enter /profile directly instead of clicking
     }
     return () => {
       isFinished = true;
@@ -72,23 +64,36 @@ const NavBar = () => {
   }, [location.pathname]);
 
   useEffect(() => {
+    let isFinished = false;
+    if (location.pathname !== '/' && !isFinished) {
+      dispatch({
+        //handle the case when the user directly go to /profile url
+        type: 'SET_SHOULD_RENDER',
+        payload: {
+          shouldRender: Active,
+        },
+      });
+      setActiveBar(Active !== '' ? Active : 'home');
+    }
     return () => {
       abortController.abort();
+      isFinished = true;
     };
   }, []);
+
   const handleClick = useStableCallback((event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation(); // avoid the href "#/""e to be appended in the URL bar when click
-    const res = event.currentTarget.id;
-    if (res !== 'home') {
+    if (event.currentTarget.id !== 'home') {
       //this is because we don't want to render Home until the user submit form via SearchBar
       dispatch({
         type: 'SET_SHOULD_RENDER',
         payload: {
-          shouldRender: res,
+          shouldRender: event.currentTarget.id,
         },
       });
     }
+    const res = event.currentTarget.id;
     setActiveBar((prevState: string) => {
       previousActive.current = prevState;
       return res;

@@ -4,7 +4,6 @@ import { readEnvironmentVariable, useStableCallback } from './util';
 import { HttpLink } from './link/http/HttpLink';
 import { ApolloClient, ApolloLink, getApolloContext, InMemoryCache } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
-import { getValidGQLProperties } from './services';
 import React from 'react';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
 
@@ -85,23 +84,6 @@ const CustomApolloProvider = ({ children }: any) => {
                 }
               }
               console.log(`[GraphQL error]: Message: ${message}, Path: ${path}`);
-              const validGQLProperties = await getValidGQLProperties();
-              if (
-                property &&
-                property.length > 0 &&
-                validGQLProperties?.data.includes(property) &&
-                stateShared.isLoggedIn
-              ) {
-                // if no data exist when the user logged-in
-                if (path) {
-                  dispatchShared({
-                    type: 'NO_DATA_FETCH',
-                    payload: {
-                      path: path[0],
-                    },
-                  });
-                }
-              }
             } else {
               throw new Error(message);
             }

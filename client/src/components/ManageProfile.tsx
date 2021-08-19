@@ -49,7 +49,7 @@ const ManageProfile = () => {
     <div style={{ display: 'flex' }} ref={manageProfileRef}>
       <StateManageProfileProvider>
         <ColumnOne handleLanguageFilter={handleLanguageFilter} />
-        {/*<ColumnTwo languageFilter={languageFilter} />*/}
+        <ColumnTwo languageFilter={languageFilter} />
       </StateManageProfileProvider>
     </div>
   );

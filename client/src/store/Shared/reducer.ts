@@ -24,8 +24,7 @@ export type ActionShared =
   | 'TOKEN_RSS_ADDED'
   | 'SET_SHOULD_RENDER'
   | 'SET_DRAWER_WIDTH'
-  | 'SET_CARD_ENHANCEMENT'
-  | 'NO_DATA_FETCH';
+  | 'SET_CARD_ENHANCEMENT';
 
 export const initialStateShared: IStateShared = {
   width: window.innerWidth,
@@ -40,7 +39,6 @@ export const initialStateShared: IStateShared = {
   tokenRSS: '', //setting
   tokenGQL: '', //setting
   isLoggedIn: false,
-  fetchDataPath: '',
   username: '',
   queryUsername: [], //multiple username or queue
   drawerWidth: 0, //persist drawer width once it's dragged and moved by the user
@@ -116,12 +114,6 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
       return {
         ...state,
         drawerWidth: action.payload.drawerWidth,
-      };
-    }
-    case 'NO_DATA_FETCH': {
-      return {
-        ...state,
-        fetchDataPath: action.payload.path,
       };
     }
     case 'TOKEN_RSS_ADDED': {

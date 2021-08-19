@@ -6,17 +6,12 @@ import { readEnvironmentVariable } from '../util';
 import Encryption from './Encryption';
 import Dexie from 'dexie';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
-import { createStore } from '../util/hooksy';
-import { GraphQLUserInfoData } from '../typing/interface';
 import { SeenProps } from '../typing/type';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
 import { GET_CLICKED, GET_SEARCHES, GET_SEEN, GET_USER_DATA, GET_USER_STARRED } from '../graphql/queries';
 import { parallel } from 'async';
 
 const conn = new ApolloCacheDB();
-
-const defaultUserInfoData: GraphQLUserInfoData | any = {};
-export const [useUserInfoDataDexie] = createStore(defaultUserInfoData);
 
 const DbCtx = createContainer(() => {
   const [getSeen, { data: seenData, loading: seenDataLoading, error: seenDataError }] = useLazyQuery(GET_SEEN, {
@@ -47,7 +42,6 @@ const DbCtx = createContainer(() => {
   });
 
   const client = useApolloClient();
-  const [, setUserInfoDataDexie] = useUserInfoDataDexie();
 
   const [db, setDb] = useState<ApolloCacheDB | null>(null);
   const [stateShared, dispatchShared] = useTrackedStateShared();
@@ -411,15 +405,6 @@ const DbCtx = createContainer(() => {
                 }
               } else {
                 getSeen();
-              }
-            }),
-          () =>
-            conn.getUserInfoData.get(1).then((data: any) => {
-              if (data) {
-                const temp = JSON.parse(data.data).getUserInfoData;
-                if (temp) {
-                  setUserInfoDataDexie({ getUserInfoData: temp });
-                }
               }
             }),
         ]);

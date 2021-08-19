@@ -8,6 +8,7 @@ import { ContributorProps, ContributorsProps } from '../../../../typing/type';
 import { useLocation } from 'react-router-dom';
 import Loadable from 'react-loadable';
 import Empty from '../../../Layout/EmptyLayout';
+import { useDeepMemo } from '../../../../hooks/useDeepMemo';
 
 const Contributor = Loadable({
   loading: Empty,
@@ -43,9 +44,9 @@ const Contributors: React.FC<Props> = ({ fullName, openContributors }) => {
         <Then>
           <Collapse in={openContributors} timeout={0.1} unmountOnExit>
             <div style={{ display: 'flex', flexFlow: 'wrap', justifyContent: 'center' }}>
-              {contributionRepo.map((obj, idx) => (
-                <Contributor key={idx} obj={obj} />
-              ))}
+              {useDeepMemo(() => {
+                return contributionRepo.map((obj, idx) => <Contributor key={idx} obj={obj} />);
+              }, [contributionRepo])}
             </div>
           </Collapse>
         </Then>

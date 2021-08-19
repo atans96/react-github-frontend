@@ -32,14 +32,6 @@ export interface ActionResolvePromise {
   data?: Nullable<IDataOne | any>;
   error?: string;
 }
-export interface LocationGraphQL {
-  //follow NavBar.tsx at getAllGraphQLData
-  data: {
-    userData: UserData;
-    userInfoData: GraphQLUserInfoData;
-  };
-  previousPath: string;
-}
 
 export interface ActionResolvePromise {
   username: string;
@@ -84,7 +76,6 @@ export interface IStateShared {
   starred: number[];
   shouldRender: string;
   perPage: number;
-  fetchDataPath: string;
   githubLanguages: Map<string, GithubLanguages>;
   drawerWidth: number;
   queryUsername: string[];
