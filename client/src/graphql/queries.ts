@@ -116,7 +116,8 @@ export const GET_SEEN = gql`
 export const GET_USER_STARRED = gql`
   query {
     getUserInfoStarred {
-      starred
+      starred {
+        id
     }
   }
 `;

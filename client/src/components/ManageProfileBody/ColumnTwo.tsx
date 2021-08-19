@@ -28,7 +28,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
   const [typedFilter, setTypedFilter] = useState('');
   const [active, setActive] = useState('');
   const [fullName, setFullName] = useState('');
-  const [renderJSX, setRenderJSX] = useState([]);
+  const [renderJSX, setRenderJSX] = useState<any[]>([]);
 
   const [branch, setBranch] = useState('');
   const [htmlUrl, setHtmlUrl] = useState('');
@@ -115,7 +115,6 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
       );
     }
   }, [state.repoInfo, checkedItems, languageFilter, typedFilter]);
-
   return (
     <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
       <table>
