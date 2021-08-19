@@ -215,7 +215,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
           if (stateShared.isLoggedIn) {
             addedStarredMe({
               getUserInfoStarred: {
-                starred: [data.id],
+                starred: [Object.assign({}, { is_queried: false, id: data.id, full_name: data.full_name })],
               },
             }).then(noop);
           }
