@@ -19,14 +19,9 @@ import Mutex from '../util/mutex/mutex';
 import { createStore } from '../util/hooksy';
 import { parallel } from 'async';
 import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
+import MasonryCard from './HomeBody/MasonryCard';
 
 const mutex = new Mutex();
-
-const MasonryCard = Loadable({
-  loader: () => import(/* webpackChunkName: "MasonryCard" */ './HomeBody/MasonryCard'),
-  loading: Empty,
-  delay: 300, // 0.3 seconds
-});
 
 const LoadingEye = Loadable({
   loading: Empty,

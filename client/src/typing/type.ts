@@ -209,7 +209,6 @@ export type RepoContributions = {
   contributors: Nullable<Contributors[] | []>;
 };
 export type UserInfoData = {
-  userName: string;
   repoInfo: RepoInfo[] | [];
   repoContributions: RepoContributions[];
   languages: string[];

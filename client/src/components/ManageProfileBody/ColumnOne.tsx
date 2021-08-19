@@ -56,14 +56,12 @@ const useStyles = makeStyles<Theme, StyleProps>((theme) => ({
 const ColumnOne: React.FC<ColumnOneProps> = ({ handleLanguageFilter }) => {
   const classes = useStyles({ drawerWidth: `250px` });
   return (
-    <React.Fragment>
-      <Drawer variant="permanent" className={classes.drawer} open={true}>
-        <div className={classes.toolbar} />
-        <RowOne />
-        <Divider />
-        <RowTwo handleLanguageFilter={handleLanguageFilter} />
-      </Drawer>
-    </React.Fragment>
+    <Drawer variant="permanent" className={classes.drawer} open={true}>
+      <div className={classes.toolbar} />
+      <RowOne />
+      <Divider />
+      <RowTwo handleLanguageFilter={handleLanguageFilter} />
+    </Drawer>
   );
 };
 ColumnOne.displayName = 'ColumnOne';

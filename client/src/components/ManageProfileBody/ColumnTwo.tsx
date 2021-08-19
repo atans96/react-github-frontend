@@ -1,23 +1,20 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import Search from './ColumnTwoBody/Search';
 import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../../typing/type';
-import { fastFilter, useStableCallback } from '../../util';
+import { useStableCallback } from '../../util';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
 import { useDeepMemo } from '../../hooks/useDeepMemo';
 import Loadable from 'react-loadable';
 import Empty from '../Layout/EmptyLayout';
+import { filter, waterfall } from 'async';
+import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
+import RepoInfo from './ColumnTwoBody/RepoInfo'; //RepoInfo need to be rendered along with ColumnOne together. Loadable make it slow to render
 
 const Details = Loadable({
   loading: Empty,
   delay: 300,
   loader: () => import(/* webpackChunkName: "Details" */ './ColumnTwoBody/Details'),
-});
-
-const RepoInfo = Loadable({
-  loading: Empty,
-  delay: 300,
-  loader: () => import(/* webpackChunkName: "RepoInfo" */ './ColumnTwoBody/RepoInfo'),
 });
 
 interface ColumnTwoProps {
@@ -27,11 +24,12 @@ interface ColumnTwoProps {
 const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
   const [state] = useTrackedStateManageProfile();
   const [stateShared] = useTrackedStateShared();
-  const searchRef = useRef<HTMLInputElement>(null);
   const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
   const [typedFilter, setTypedFilter] = useState('');
   const [active, setActive] = useState('');
   const [fullName, setFullName] = useState('');
+  const [renderJSX, setRenderJSX] = useState([]);
+
   const [branch, setBranch] = useState('');
   const [htmlUrl, setHtmlUrl] = useState('');
   const onClickRepoInfo = useStableCallback(
@@ -52,38 +50,79 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
   };
 
   //TODO: below ColumnTwo, show infinite scroll sliding window to show trending users/gists
-  const render = () => {
-    const filter1 = fastFilter((obj: RepoInfoProps) => {
-      if (languageFilter.length > 0 && languageFilter.includes(obj.language)) {
-        return obj;
-      } else if (languageFilter.length === 0) {
-        return obj;
-      }
-    }, state.repoInfo);
-    const filter2 = fastFilter((obj: RepoInfoProps) => {
-      if (
-        (typedFilter.length > 0 &&
-          checkedItems.descriptionTitle &&
-          !!obj.description &&
-          obj.description.includes(typedFilter)) ||
-        (checkedItems.descriptionTitle && !!obj.fullName && obj.fullName.includes(typedFilter)) ||
-        (checkedItems.descriptionTitle && !!obj.topics && obj.topics.includes(typedFilter)) ||
-        (checkedItems.readme && !!obj.readme && obj.readme.includes(typedFilter))
-      ) {
-        return obj;
-      } else if (typedFilter.length === 0) {
-        return obj;
-      }
-    }, filter1);
-    return fastFilter((obj: RepoInfoProps) => !!obj, filter2);
-  };
+  useDeepCompareEffect(() => {
+    if (state.repoInfo.length > 0) {
+      waterfall(
+        [
+          function (callback: any) {
+            filter(
+              state.repoInfo,
+              (obj: any, cb) => {
+                if (languageFilter.length > 0 && languageFilter.includes(obj.language)) {
+                  cb(null, obj);
+                  return obj;
+                } else if (languageFilter.length === 0) {
+                  cb(null, obj);
+                  return obj;
+                } else {
+                  cb(null, undefined);
+                  return undefined;
+                }
+              },
+              (err, res) => {
+                if (err) {
+                  new Error('err');
+                }
+                return callback(null, res);
+              }
+            );
+          },
+          function (res: any, callback: any) {
+            filter(
+              res,
+              (obj: any, cb) => {
+                if (
+                  (typedFilter.length > 0 &&
+                    checkedItems.descriptionTitle &&
+                    !!obj.description &&
+                    obj.description.includes(typedFilter)) ||
+                  (checkedItems.descriptionTitle && !!obj.fullName && obj.fullName.includes(typedFilter)) ||
+                  (checkedItems.descriptionTitle && !!obj.topics && obj.topics.includes(typedFilter)) ||
+                  (checkedItems.readme && !!obj.readme && obj.readme.includes(typedFilter))
+                ) {
+                  cb(null, obj);
+                  return obj;
+                } else if (typedFilter.length === 0) {
+                  cb(null, obj);
+                  return obj;
+                } else {
+                  cb(null, undefined);
+                  return undefined;
+                }
+              },
+              (err, result) => {
+                if (err) {
+                  new Error('err');
+                }
+                return callback(null, result);
+              }
+            );
+          },
+        ],
+        function (err, res: any) {
+          setRenderJSX(res);
+        }
+      );
+    }
+  }, [state.repoInfo, checkedItems, languageFilter, typedFilter]);
+
   return (
-    <div style={{ display: 'inline-flex', marginLeft: '2px', marginTop: '10rem' }}>
+    <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
       <table>
         <thead>
           <tr>
             <th>
-              <Search handleInputChange={handleInputChange} width={350} ref={searchRef} />
+              <Search handleInputChange={handleInputChange} width={350} />
               <p>Search in:</p>
               <Checkboxes checkedItems={checkedItems} handleCheckboxClick={handleCheckboxClick} />
             </th>
@@ -102,10 +141,10 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
                 }}
               >
                 {useDeepMemo(() => {
-                  return render().map((obj: RepoInfoProps, idx) => (
+                  return renderJSX.map((obj: RepoInfoProps, idx) => (
                     <RepoInfo active={active} obj={obj} key={idx} onClickRepoInfo={onClickRepoInfo} />
                   ));
-                }, [state.repoInfo, checkedItems, languageFilter, typedFilter])}
+                }, [renderJSX])}
               </div>
             </td>
             <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>

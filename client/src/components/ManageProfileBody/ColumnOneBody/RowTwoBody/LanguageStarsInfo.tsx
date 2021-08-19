@@ -19,7 +19,7 @@ const LanguageStarsInfo: React.FC<LanguageStarsInfoProps> = ({ languageStar, onC
         setClicked(!clicked);
       }}
       className={'language-stars-info'}
-      style={{ backgroundColor: clicked ? 'grey' : '' }}
+      style={{ backgroundColor: clicked ? 'antiquewhite' : '' }}
     >
       <th style={{ width: '80%' }}>{languageStar[0]}</th>
       <th

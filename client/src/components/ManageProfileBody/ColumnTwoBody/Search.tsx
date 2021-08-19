@@ -4,21 +4,22 @@ import { useDebouncedValue } from '../../../util/util';
 interface SearchProps {
   handleInputChange: any;
   width: number;
-  ref: any;
 }
 const Search: React.FC<SearchProps> = React.memo(
   ({ handleInputChange, width }) => {
     const [value, setValue] = useState('');
-    const debouncedValue = useDebouncedValue(value, 1500);
+    const debouncedValue = useDebouncedValue(value, 1000);
+
     useEffect(() => {
       let isFinished = false;
-      if (value.toString().trim().length > 0 && !isFinished) {
+      if (!isFinished && debouncedValue?.length >= 0) {
         handleInputChange(value);
       }
       return () => {
         isFinished = true;
       };
     }, [debouncedValue]);
+
     const onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
       e.preventDefault();
       e.stopPropagation();

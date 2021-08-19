@@ -40,23 +40,6 @@ export const endOfSession = async (username: string, cacheData: any) => {
     console.log(e);
   }
 };
-export const getTopContributors = async (fullName: string) => {
-  try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/getTopContributors?full_name=${fullName}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-      }
-    );
-    return await response.json();
-  } catch (e) {
-    console.log(e);
-    return undefined;
-  }
-};
 export const removeStarredMe = async (repoFullName: string) => {
   try {
     fetch(`https://api.github.com/user/starred/${repoFullName}`, {
@@ -243,17 +226,6 @@ export const getUser = ({
     }
     execute().then(noop);
   }) as Observable<{ iterator: any }>;
-};
-export const getValidGQLProperties = async () => {
-  try {
-    const response = await fetch(`${readEnvironmentVariable('FS_ADDRESS')}/get_gql_properties`, {
-      method: 'GET',
-    });
-    return await response.json();
-  } catch (e) {
-    console.log(e);
-    return undefined;
-  }
 };
 export const markdownParsing = async (full_name: string, branch: string, signal: any) => {
   try {

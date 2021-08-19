@@ -3,12 +3,8 @@ import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import Loadable from 'react-loadable';
 import Empty from './Layout/EmptyLayout';
 import { createStore } from '../util/hooksy';
+import PureSearchBar from './SearchBarBody/PureSearchBar';
 
-const PureSearchBar = Loadable({
-  loading: Empty,
-  delay: 300,
-  loader: () => import(/* webpackChunkName: "PureSearchBar" */ './SearchBarBody/PureSearchBar'),
-});
 const defaultVisible = false;
 const defaulQueryUsername = '';
 const defaultVisibleSearchesHistory = false;

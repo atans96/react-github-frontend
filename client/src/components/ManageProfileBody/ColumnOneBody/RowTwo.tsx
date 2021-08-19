@@ -1,29 +1,38 @@
 import { If } from '../../../util/react-if/If';
 import { Then } from '../../../util/react-if/Then';
 import { CircularProgress, List } from '@material-ui/core';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import LanguageStarsInfo from './RowTwoBody/LanguageStarsInfo';
 import { Counter } from '../../../util';
-import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
-import { consumers } from '../../../util/util';
-import { useLocation } from 'react-router-dom';
-
-import { useTrackedStateManageProfile, useTrackedStateShared } from '../../../selectors/stateContextSelector';
-import { LocationGraphQL } from '../../../typing/interface';
+import { useTrackedStateManageProfile } from '../../../selectors/stateContextSelector';
+import DbCtx from '../../../db/db.ctx';
+import { useApolloClient, useLazyQuery } from '@apollo/client';
+import { GET_USER_INFO_DATA } from '../../../graphql/queries';
+import { parallel } from 'async';
+import { RepoInfo } from '../../../typing/type';
 
 interface RowTwoProps {
   handleLanguageFilter: (...args: any) => void;
 }
-
+function cleanString(input: string) {
+  let output = '';
+  for (let i = 0; i < input.length; i++) {
+    if (input.charCodeAt(i) <= 127) {
+      output += input.charAt(i);
+    }
+  }
+  return output;
+}
 let axiosCancel = false;
 const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
+  const [getUserInfoData, { data: userInfoData, loading: userInfoDataLoading, error: userInfoDataError }] =
+    useLazyQuery(GET_USER_INFO_DATA, {
+      context: { clientName: 'mongo' },
+    });
+  const { db } = DbCtx.useContainer();
   const [, dispatchManageProfile] = useTrackedStateManageProfile();
-  const [stateShared] = useTrackedStateShared();
-  const location = useLocation<LocationGraphQL>();
   const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
-  const displayName: string = (RowTwo as React.ComponentType<any>).displayName || '';
   const [isLoading, setIsLoading] = useState(true);
-  const [notification, setNotification] = useState('');
 
   const onClickLanguageStarInfo = (e: React.MouseEvent) => (language: string, clicked: boolean) => {
     e.preventDefault();
@@ -35,166 +44,128 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
     }
   };
 
+  const abortController = new AbortController();
+
+  useEffect(() => {
+    let isFinished = false;
+    if (db && !isFinished) {
+      db.getUserInfoData.get(1).then((data: any) => {
+        if (data && !isFinished) {
+          const temp = JSON.parse(data.data).getUserInfoData;
+          if (temp.repoInfo.length > 0) {
+            dispatchManageProfile({
+              type: 'REPO_INFO_ADDED',
+              payload: {
+                repoInfo: temp.repoInfo,
+              },
+            });
+          }
+          if (temp.repoContributions.length > 0) {
+            dispatchManageProfile({
+              type: 'CONTRIBUTORS_ADDED',
+              payload: {
+                contributors: temp.repoContributions,
+              },
+            });
+          }
+          if (temp.languages.length > 0) {
+            setIsLoading(false);
+            const languages = Object.entries(Counter(temp.languages ?? []));
+            setLanguageStarsInfo(languages);
+          }
+        } else {
+          getUserInfoData();
+        }
+      });
+    }
+    return () => {
+      console.log('abort');
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+      axiosCancel = true;
+      isFinished = true;
+    };
+  }, [db]);
+
+  const client = useApolloClient();
   useEffect(() => {
     let isFinished = false;
     if (
       !isFinished &&
-      location?.state?.data?.userInfoData.getUserInfoData.repoContributions.length > 0 &&
-      location.pathname === '/profile'
+      !userInfoDataLoading &&
+      !userInfoDataError &&
+      userInfoData?.getUserInfoData?.repoInfo?.length > 0 &&
+      userInfoData?.getUserInfoData?.repoContributions?.length > 0 &&
+      userInfoData?.getUserInfoData?.languages?.length > 0
     ) {
+      parallel([
+        () => {
+          dispatchManageProfile({
+            type: 'REPO_INFO_ADDED',
+            payload: {
+              repoInfo: userInfoData?.getUserInfoData?.repoInfo,
+            },
+          });
+        },
+        () =>
+          dispatchManageProfile({
+            type: 'CONTRIBUTORS_ADDED',
+            payload: {
+              contributors: userInfoData?.getUserInfoData?.repoContributions,
+            },
+          }),
+        () =>
+          client.cache.writeQuery({
+            query: GET_USER_INFO_DATA,
+            data: {
+              getUserInfoData: userInfoData?.getUserInfoData,
+            },
+          }),
+        () => {
+          const temp = { ...userInfoData?.getUserInfoData };
+          temp.repoInfo = temp.repoInfo.map((obj: RepoInfo) => {
+            if (obj.description?.length > 0) {
+              const objClone = { ...obj };
+              return Object.assign(objClone, {
+                ...objClone,
+                description: cleanString(objClone.description),
+                readme: cleanString(objClone.readme),
+              });
+            } else {
+              return obj;
+            }
+          });
+          db?.getUserInfoData?.add(
+            {
+              data: JSON.stringify({
+                getUserInfoData: temp,
+              }),
+            },
+            1
+          );
+        },
+        () => {
+          setIsLoading(false);
+          const languages = Object.entries(Counter(userInfoData?.getUserInfoData?.languages ?? []));
+          setLanguageStarsInfo(languages);
+        },
+      ]);
+    }
+    return () => {
       dispatchManageProfile({
         type: 'REPO_INFO_ADDED',
         payload: {
-          repoInfo: location.state.data.userInfoData.getUserInfoData.repoInfo,
+          repoInfo: [],
         },
       });
       dispatchManageProfile({
         type: 'CONTRIBUTORS_ADDED',
         payload: {
-          contributors: location.state.data.userInfoData.getUserInfoData.repoContributions,
+          contributors: [],
         },
       });
-      setIsLoading(false);
-      const languages = Object.entries(Counter(location.state.data.userInfoData?.getUserInfoData?.languages ?? []));
-      setLanguageStarsInfo(languages);
-      return () => {
-        isFinished = true;
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location?.state?.data?.userInfoData]);
-
-  const alreadyFetch = useRef(false);
-  const abortController = new AbortController();
-  useDeepCompareEffect(() => {
-    if (
-      stateShared.fetchDataPath !== '' &&
-      consumers[displayName!] &&
-      consumers[displayName!].includes(stateShared.fetchDataPath) &&
-      !alreadyFetch.current &&
-      location.pathname === '/profile'
-    ) {
-      alreadyFetch.current = true;
-      (async () => {
-        let isApiExceeded = false;
-        const promises: Promise<any>[] = [];
-        // await getUser({
-        //   signal: abortController.signal,
-        //   username: location?.state?.data?.userData?.getUserData?.userName,
-        //   perPage: +readEnvironmentVariable('QUERY_GITHUB_API')!,
-        //   page: 1,
-        //   axiosCancel,
-        // }).then((data) => {
-        //   if (data && data.error_403) {
-        //     isApiExceeded = true;
-        //     setNotification('Sorry, API rate limit exceeded.');
-        //   } else if (data?.dataOne?.length > 0) {
-        //     const temp = data.dataOne.reduce(
-        //       (acc: any, obj: MergedDataProps) => {
-        //         const ja = Object.assign(
-        //           {},
-        //           {
-        //             fullName: obj.full_name,
-        //             description: obj.description,
-        //             stars: obj.stargazers_count,
-        //             forks: obj.forks,
-        //             updatedAt: moment(obj.updated_at).fromNow(),
-        //             language: obj.language ? obj.language : 'No Language',
-        //             topics: obj.topics,
-        //             defaultBranch: obj.default_branch,
-        //             html_url: obj.html_url,
-        //           }
-        //         );
-        //         return {
-        //           ...acc,
-        //           data: acc.data.concat(ja),
-        //           languages: acc.languages.concat(obj.language ? obj.language : 'No Language'),
-        //         };
-        //       },
-        //       { languages: [], data: [] }
-        //     );
-        //     temp.data.forEach((obj: any) => {
-        //       promises.push(
-        //         new Promise<any>((resolve, reject) => {
-        //           (async () => {
-        //             let timeout = 0;
-        //             let breakout = false;
-        //             let i = 0;
-        //             while (
-        //               // @ts-ignore
-        //               (await new Promise((resolve) => setTimeout(() => resolve(i++), timeout * 1000))) < 1000 &&
-        //               !breakout
-        //             ) {
-        //               if (timeout > 0) {
-        //                 timeout = 0; //clear the timeout
-        //               }
-        //               await getTopContributors(obj.fullName)
-        //                 .then((res) => {
-        //                   if (res) {
-        //                     if (res.error_403) {
-        //                       timeout = epochToJsDate(res.rateLimit.reset);
-        //                     } else {
-        //                       breakout = true;
-        //                       resolve(res);
-        //                     }
-        //                   }
-        //                 })
-        //                 .catch((err) => reject(err));
-        //             }
-        //           })();
-        //         })
-        //       );
-        //       return obj;
-        //     });
-        //     dispatchStateShared({
-        //       type: 'NO_DATA_FETCH',
-        //       payload: { path: '' },
-        //     });
-        //     dispatchManageProfile({
-        //       type: 'REPO_INFO_ADDED',
-        //       payload: {
-        //         repoInfo: temp.data,
-        //       },
-        //     });
-        //     setIsLoading(false);
-        //     const languages = Object.entries(Counter(temp.languages ?? []));
-        //     setLanguageStarsInfo(languages);
-        //   }
-        // });
-        // if (!isApiExceeded) {
-        //   Promise.allSettled(promises)
-        //     .then((result) => {
-        //       const temp = result.map((obj: any) => {
-        //         if (obj.status === 'fulfilled') {
-        //           return obj.value.data;
-        //         }
-        //       });
-        //       dispatchManageProfile({
-        //         type: 'CONTRIBUTORS_ADDED',
-        //         payload: {
-        //           contributors: [...fastFilter((x: any) => !!x, temp)],
-        //         },
-        //       });
-        //     })
-        //     .catch((err) => {
-        //       console.log(err);
-        //     });
-        // }
-      })().catch((err: any) => {
-        console.log(err);
-        throw new Error(`Something wrong at ${displayName}`);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.fetchDataPath, consumers, alreadyFetch.current, axiosCancel]);
-
-  useEffect(() => {
-    return () => {
-      console.log('abort');
-      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
-      axiosCancel = true;
+      isFinished = true;
     };
-  }, []);
+  }, [userInfoDataLoading, userInfoDataError]);
 
   return (
     <List>
@@ -214,32 +185,27 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
       </If>
       <If condition={!isLoading && Object.keys(languageStarsInfo)[0] !== ''}>
         <Then>
-          <React.Fragment>
-            <table
-              style={{
-                marginLeft: '5px',
-                display: 'table',
-                width: '100%',
-                borderCollapse: 'separate',
-                borderSpacing: '0 1em',
-              }}
-            >
-              <thead>
-                {React.useMemo(() => {
-                  return languageStarsInfo.map((languageStar) => (
-                    <LanguageStarsInfo
-                      languageStar={languageStar}
-                      onClickLanguageStarInfo={onClickLanguageStarInfo}
-                      key={languageStar[0]}
-                    />
-                  ));
-                }, [languageStarsInfo.length])}
-              </thead>
-            </table>
-            <div style={{ textAlign: 'center' }}>
-              <p>{notification}</p>
-            </div>
-          </React.Fragment>
+          <table
+            style={{
+              marginLeft: '5px',
+              display: 'table',
+              width: '100%',
+              borderCollapse: 'separate',
+              borderSpacing: '0 1em',
+            }}
+          >
+            <thead>
+              {React.useMemo(() => {
+                return languageStarsInfo.map((languageStar) => (
+                  <LanguageStarsInfo
+                    languageStar={languageStar}
+                    onClickLanguageStarInfo={onClickLanguageStarInfo}
+                    key={languageStar[0]}
+                  />
+                ));
+              }, [languageStarsInfo.length])}
+            </thead>
+          </table>
         </Then>
       </If>
     </List>
