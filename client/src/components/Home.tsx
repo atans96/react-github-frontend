@@ -261,6 +261,7 @@ const Home = () => {
                 : stateShared.queryUsername,
               page: state.page,
             }).then((response) => {
+              if (abortController.signal.aborted) return;
               if (response) {
                 const output = Object.assign(
                   {},
@@ -296,6 +297,7 @@ const Home = () => {
               signal: abortController.signal,
               data: chunk,
             }).then((response: any) => {
+              if (abortController.signal.aborted) return;
               if (response && response?.value?.length > 0) {
                 dispatch({
                   type: 'IMAGES_DATA_ADDED',

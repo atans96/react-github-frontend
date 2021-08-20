@@ -8,7 +8,6 @@ import sysend from 'sysend';
 import { useApolloClient } from '@apollo/client';
 import useWebSocket from './util/websocket';
 import { readEnvironmentVariable, urlBase64ToUint8Array } from './util';
-import { GraphQLUserData } from './typing/interface';
 import React, { useEffect } from 'react';
 import { associate } from './graphql/queries';
 import { endOfSession, getFile, getTokenGQL, session, subscribeToApollo } from './services';
@@ -20,19 +19,24 @@ import KeepMountedLayout from './components/Layout/KeepMountedLayout';
 import { ShouldRender } from './typing/enum';
 import { shallowEqual } from 'fast-equals';
 import {
-  SearchBarLoadable,
-  DiscoverLoadable,
-  LoginLoadable,
-  HomeLoadable,
   DetailsLoadable,
+  DiscoverLoadable,
+  HomeLoadable,
+  LoginLoadable,
   ManageProfileLoadable,
   NotFoundLoadable,
+  SearchBarLoadable,
 } from './AppRoutesLoadable';
+import { useGetUserInfoStarredMutation } from './apolloFactory/useGetUserInfoStarredMutation';
+import { useGetClickedMutation } from './apolloFactory/useGetClickedMutation';
+import { useGetSeenMutation } from './apolloFactory/useGetSeenMutation';
+import { useRSSFeedMutation } from './apolloFactory/useRSSFeedMutation';
 
 interface AppRoutes {
   shouldRender: string;
   isLoggedIn: boolean;
 }
+
 const channel = new BroadcastChannel('sw-messages');
 const Child = React.memo(
   ({ shouldRender, isLoggedIn }: AppRoutes) => {
@@ -96,35 +100,40 @@ const AppRoutes = () => {
     }
   );
 
-  const readQuery = (key: any) => {
-    return new Promise((resolve, reject) => {
-      (async () => {
-        const oldData: GraphQLUserData | null = (await client.cache.readQuery({ query: key })) || null;
-        resolve(oldData);
-      })();
-    });
-  };
+  const { addedStarredMe } = useGetUserInfoStarredMutation();
+  const clickedAdded = useGetClickedMutation();
+  const seenAdded = useGetSeenMutation();
+  const rssFeedAdded = useRSSFeedMutation();
+
   useEffect(() => {
-    if (lastJsonMessage?.impactedQuery?.length > 0) {
-      lastJsonMessage.impactedQuery.forEach((obj: any) => {
-        const key: string = Object.keys(obj)[0];
-        readQuery(associate[key]).then((oldData: any) => {
-          const newData: any = Object.values(obj)[0];
-          if (newData && oldData) {
-            console.log('NEW DATA');
-            //TODO: put to DexieDB also
-            client.cache.writeQuery({
-              query: associate[key],
-              data: {
-                [key]: {
-                  ...oldData[key],
-                  ...newData,
-                },
-              },
-            });
+    if (lastJsonMessage?.updateDescription && Object.keys(lastJsonMessage?.updateDescription).length > 0) {
+      const updatedFields = lastJsonMessage?.updateDescription.updatedFields;
+      for (let [key, value] of Object.entries<any>(updatedFields)) {
+        for (let [x, y] of Object.entries(associate)) {
+          if (x.includes(key) && y === y + '') {
+            switch (y) {
+              case 'getRSSFeed':
+                rssFeedAdded(value).then(noop);
+                break;
+              case 'getSeen':
+                if (Array.isArray(value) && value?.length > 0) {
+                  seenAdded(value);
+                }
+                break;
+              case 'getClicked':
+                if (Array.isArray(value) && value?.length > 0) {
+                  clickedAdded(value).then(noop);
+                }
+                break;
+              case 'getUserInfoStarred':
+                if (Array.isArray(value) && value?.length > 0) {
+                  addedStarredMe(value).then(noop);
+                }
+                break;
+            }
           }
-        });
-      });
+        }
+      }
     } else if (lastJsonMessage?.newUser) {
       //TODO: show dialog bar Tutorial https://github.com/shipshapecode/shepherd
       console.log('Welcome');
@@ -198,22 +207,24 @@ const AppRoutes = () => {
           }),
         () =>
           session(false, abortController.signal).then((data) => {
+            if (abortController.signal.aborted) return;
             if (data) {
-              if (abortController.signal.aborted) return;
               if (!data.data) {
                 localStorage.clear();
                 clear();
               }
-              dispatchShared({
-                type: 'SET_USERNAME',
-                payload: { username: data.username },
-              });
-              dispatchShared({
-                type: 'LOGIN',
-                payload: {
-                  isLoggedIn: data.data,
-                },
-              });
+              if (Boolean(data.data) && data.username.length > 0) {
+                dispatchShared({
+                  type: 'SET_USERNAME',
+                  payload: { username: data.username },
+                });
+                dispatchShared({
+                  type: 'LOGIN',
+                  payload: {
+                    isLoggedIn: data.data,
+                  },
+                });
+              }
             }
           }),
       ]);

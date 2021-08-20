@@ -12,7 +12,7 @@ export const useGetSeenMutation = () => {
   const [, dispatch] = useTrackedState();
 
   return function (data: SeenProps[]) {
-    db.getSeen.get(1).then((oldData: any) => {
+    db?.getSeen.get(1).then((oldData: any) => {
       if (oldData?.data) {
         const old = JSON.parse(oldData.data);
         if (old?.getSeen && old?.getSeen?.seenCards && old?.getSeen?.seenCards.length > 0) {

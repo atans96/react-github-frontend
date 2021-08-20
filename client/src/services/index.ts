@@ -4,7 +4,7 @@ import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
 import { Observable } from '../link/observables/Observable';
 
-export const getRSSFeed = async (rssUrl: string) => {
+export const getRSSFeed = async (rssUrl: string, signal: any) => {
   try {
     const response = await fetch(
       `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
@@ -12,6 +12,7 @@ export const getRSSFeed = async (rssUrl: string) => {
       )}/rssFeed?rssUrl=${rssUrl}`,
       {
         method: 'GET',
+        signal,
         keepalive: true,
         credentials: 'include',
       }
@@ -421,7 +422,7 @@ export const getElasticSearchBert = async (query: string, signal: any) => {
     console.log(e);
   }
 };
-export const requestGithubGraphQLLogin = async (token: string) => {
+export const requestGithubGraphQLLogin = async (token: string, signal: any) => {
   try {
     const response = await fetch(
       `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
@@ -429,6 +430,7 @@ export const requestGithubGraphQLLogin = async (token: string) => {
       )}/server_uwebsocket/auth_graphql`,
       {
         method: 'POST',
+        signal,
         keepalive: true,
         credentials: 'include',
         headers: {

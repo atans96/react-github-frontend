@@ -14,8 +14,8 @@ export const useGetSearchesMutation = () => {
   const client = useApolloClient();
 
   return function (data: GraphQLSearchesData) {
-    db?.transaction('rw', [db.getSearches], () => {
-      db.getSearches.get(1).then((oldData: any) => {
+    db?.transaction('rw', [db?.getSearches], () => {
+      db?.getSearches.get(1).then((oldData: any) => {
         if (oldData?.data) {
           let needAppend = true;
           map(
