@@ -58,6 +58,7 @@ const makeCancelable = (promise: Promise<any>) => {
 const re = new RegExp('href="([^"]+)"', 'g');
 
 const RSSFeed = () => {
+  const abortController = new AbortController();
   const isMounted = useRef<boolean>(true);
   const [stateShared, dispatch] = useTrackedStateShared();
   const isTokenRSSExist = stateShared.tokenRSS.length > 0;
@@ -77,7 +78,7 @@ const RSSFeed = () => {
 
   const updater = async (tokenAdd: any, re: any) => {
     return new Promise((resolve, reject) => {
-      getRSSFeed(tokenAdd)
+      getRSSFeed(tokenAdd, abortController.signal)
         .then((res) => {
           let matches;
           const output: any[] = [];
@@ -150,6 +151,7 @@ const RSSFeed = () => {
                           reject({ status: 400 });
                         });
                     }
+                    break;
                   case true:
                     switch (openRSS) {
                       case false:
@@ -182,6 +184,7 @@ const RSSFeed = () => {
                               reject({ status: 400 });
                             });
                         }
+                        break;
                       case true:
                         if (isMounted.current) {
                           const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
@@ -292,6 +295,7 @@ const RSSFeed = () => {
     return () => {
       isMounted.current = false;
       stop();
+      abortController.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -62,6 +62,7 @@ const RateLimit = () => {
             }),
           () =>
             getRateLimitInfo({ signal: abortController.signal }).then((data) => {
+              if (abortController.signal.aborted) return;
               if (data) {
                 parallel([
                   () =>

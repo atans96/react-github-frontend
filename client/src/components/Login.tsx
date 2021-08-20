@@ -39,10 +39,18 @@ const Login = () => {
         // Use code parameter and other parameters to make POST request to proxy_server
         requestGithubLogin(`${proxy_url}`, requestData, abortController.signal)
           .then((response: any) => {
+            if (abortController.signal.aborted) return;
             if (response && response.length > 0 && isMounted.current) {
-              let res: { token_type: string; token: string; data: { login: any } };
+              let res: { token_type: string; token: string; data: { login: any } | { message: string } };
               try {
                 res = JSON.parse(response);
+                if ('message' in res?.data && res?.data?.message?.includes('API')) {
+                  setData({
+                    isLoading: false,
+                    errorMessage: res?.data?.message,
+                  });
+                  return;
+                }
               } catch (e) {
                 setData({
                   isLoading: false,
@@ -61,11 +69,11 @@ const Login = () => {
                 () =>
                   dispatchShared({
                     type: 'SET_USERNAME',
-                    payload: { username: res.data.login },
+                    payload: { username: 'login' in res?.data ? res.data.login : '' },
                   }),
                 () =>
                   sysend.broadcast('Login', {
-                    username: res.data.login,
+                    username: 'login' in res?.data ? res.data.login : '',
                   }),
                 () => history.push('/'),
               ]);

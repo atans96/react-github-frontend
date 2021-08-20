@@ -232,7 +232,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           axiosCancel: axiosCancel.current,
         })
           .then((res) => {
-            if (res) actionController(res);
+            if (res && !abortController.signal.aborted) actionController(res);
           })
           .catch((error) => {
             actionResolvePromise({

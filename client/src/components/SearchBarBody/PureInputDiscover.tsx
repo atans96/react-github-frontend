@@ -34,6 +34,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
     let isFinished = false;
     if (!isFinished && query.trim().length > 0 && debouncedValue) {
       getElasticSearchBertAutocomplete(query.trim(), abortController.signal).then((data) => {
+        if (abortController.signal.aborted) return;
         if (data.isSuggested.status) {
           data.result.unshift(
             Object.assign({}, { full_name: `No result found for ${query}. Did you mean ${data.isSuggested.text}?` })

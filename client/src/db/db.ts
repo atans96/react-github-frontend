@@ -33,4 +33,20 @@ export class ApolloCacheDB extends Dexie {
     this.getSearches = this.table('getSearches');
     this.getUserData = this.table('getUserData');
   }
+  public match(key: string) {
+    switch (key) {
+      case 'getClicked':
+        return this.getClicked;
+      case 'getUserInfoData':
+        return this.getUserInfoData;
+      case 'getUserInfoStarred':
+        return this.getUserInfoStarred;
+      case 'getSeen':
+        return this.getSeen;
+      case 'getSearches':
+        return this.getSearches;
+      case 'getUserData':
+        return this.getUserData;
+    }
+  }
 }

@@ -9,7 +9,7 @@ export const useGetUserDataMutation = () => {
   const client = useApolloClient();
   const { db } = DbCtx.useContainer();
   return async function (data: Pick2<GraphQLUserData, 'getUserData', 'languagePreference'>) {
-    db.getUserData.get(1).then((oldData: any) => {
+    db?.getUserData.get(1).then((oldData: any) => {
       if (oldData?.data) {
         const old: GraphQLUserData = JSON.parse(oldData.data);
         if (old?.getUserData?.languagePreference?.length > 0) {

@@ -55,14 +55,14 @@ const PureInput: React.FC<SearchBarProps> = ({ handleChange, style }) => {
           }),
         () =>
           getSearchUsers({ query: username.toString().trim(), signal: abortController.signal }).then((data) => {
+            if (abortController.signal.aborted) {
+              return;
+            }
             const getUsers = data.items.reduce((acc: any, item: any) => {
               const result = Object.assign({}, { [item.login]: item.avatar_url });
               acc.push(result);
               return acc;
             }, []);
-            if (abortController.signal.aborted) {
-              return;
-            }
             if (getUsers) {
               dispatch({
                 type: 'SEARCH_USERS',

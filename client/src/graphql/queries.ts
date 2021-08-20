@@ -1,4 +1,5 @@
 import { gql } from '@apollo/client';
+import { print } from 'graphql/language/printer';
 export const GET_SEARCHES = gql`
   query {
     getSearches {
@@ -118,6 +119,7 @@ export const GET_USER_STARRED = gql`
     getUserInfoStarred {
       starred {
         id
+      }
     }
   }
 `;
@@ -333,14 +335,14 @@ export const SEARCH_FOR_MORE_TOPICS = gql`
   }
 `;
 export const associate = {
-  getSearches: GET_SEARCHES,
-  getStarRanking: GET_STAR_RANKING,
-  getSuggestedRepoImages: GET_SUGGESTED_REPO_IMAGES,
-  getSuggestedRepo: GET_SUGGESTED_REPO,
-  getClicked: GET_CLICKED,
-  getRSSFeed: GET_RSS_FEED,
-  getSeen: GET_SEEN,
-  getUserInfoStarred: GET_USER_STARRED,
-  getUserInfoData: GET_USER_INFO_DATA,
-  getUserData: GET_USER_DATA,
-} as any;
+  [print(GET_SEARCHES)]: 'getSearches',
+  [print(GET_STAR_RANKING)]: GET_STAR_RANKING,
+  [print(GET_SUGGESTED_REPO_IMAGES)]: GET_SUGGESTED_REPO_IMAGES,
+  [print(GET_SUGGESTED_REPO)]: GET_SUGGESTED_REPO,
+  [print(GET_CLICKED)]: 'getClicked',
+  [print(GET_RSS_FEED)]: GET_RSS_FEED,
+  [print(GET_SEEN)]: 'getSeen',
+  [print(GET_USER_STARRED)]: 'getUserInfoStarred',
+  [print(GET_USER_INFO_DATA)]: 'getUserInfoData',
+  [print(GET_USER_DATA)]: 'getUserData',
+} as { [x: string]: string };

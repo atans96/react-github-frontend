@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 import LoginLayout from '../../../Layout/LoginLayout';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import '../../../Login.scss';
@@ -17,14 +17,16 @@ interface LoginGQLProps {
 
 const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   const [token, setToken] = useState('');
+  const abortController = new AbortController();
   const [loginLayoutRef, setRef] = useState<Nullable<React.RefObject<HTMLDivElement>>>(null);
   const [notification, setNotification] = useState('');
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const [stateShared, dispatch] = useTrackedStateShared();
   const history = useHistory();
   const verifyTokenGQL = async () => {
-    await requestGithubGraphQLLogin(token)
+    await requestGithubGraphQLLogin(token, abortController.signal)
       .then((res) => {
+        if (abortController.signal.aborted) return;
         if (res.success) {
           parallel([
             () => setTokenGQL(token, stateShared.username).then(noop),
@@ -51,7 +53,11 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   };
 
   useClickOutside(loginLayoutRef, () => setVisible(false));
-
+  useEffect(() => {
+    return () => {
+      abortController.abort();
+    };
+  });
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     event.stopPropagation();
