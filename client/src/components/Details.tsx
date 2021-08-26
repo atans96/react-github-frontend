@@ -89,11 +89,11 @@ const Details = () => {
             if (abortController.signal.aborted) {
               return;
             }
-            if (readme.error_404) {
+            if (!isFinished && readme.error_404) {
               setNotFound(true);
-            } else if (readme.error_401 || readme.error_403) {
+            } else if ((!isFinished && readme.error_401) || readme.error_403) {
               throw new Error(readme);
-            } else if (readme && !isFinished) {
+            } else if (!isFinished && readme && !isFinished) {
               setReadme(readme.readme);
             }
           })
@@ -159,7 +159,7 @@ const Details = () => {
               </If>
             </div>
             <div className={'footer'}>
-              <a href={data?.data?.html_url} onClick={() => window.open(data?.data?.html_url)}>
+              <a href={data?.data?.html_url} onClick={() => window.open(data?.data?.html_url)} target="_blank">
                 View on GitHub
               </a>
             </div>

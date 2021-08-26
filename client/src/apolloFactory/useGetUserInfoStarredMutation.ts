@@ -38,16 +38,13 @@ export const useGetUserInfoStarredMutation = () => {
         }),
     ]);
   };
-  const oldExistAndNoProperty = (
-    data: Array<{ is_queried: boolean; id: number; full_name: string }>,
-    old: GraphQLUserStarred
-  ) => {
+  const oldExistAndNoProperty = (data: Array<{ is_queried: boolean; full_name: string }>, old: GraphQLUserStarred) => {
     return parallel([
       () =>
         dispatchShared({
           type: 'SET_STARRED',
           payload: {
-            starred: uniqBy([...data, ...old.getUserInfoStarred.starred], 'id'),
+            starred: uniqBy([...data, ...old.getUserInfoStarred.starred], 'full_name'),
           },
         }),
       () =>
@@ -55,7 +52,7 @@ export const useGetUserInfoStarredMutation = () => {
           query: GET_USER_STARRED,
           data: {
             getUserInfoStarred: {
-              starred: uniqBy([...data, ...old.getUserInfoStarred.starred], 'id'),
+              starred: uniqBy([...data, ...old.getUserInfoStarred.starred], 'full_name'),
             },
           },
         }),
@@ -63,7 +60,7 @@ export const useGetUserInfoStarredMutation = () => {
         db?.getUserInfoStarred?.update(1, {
           data: JSON.stringify({
             getUserInfoStarred: {
-              starred: uniqBy([...data, ...old.getUserInfoStarred.starred], 'id'),
+              starred: uniqBy([...data, ...old.getUserInfoStarred.starred], 'full_name'),
             },
           }),
         }),
@@ -93,7 +90,7 @@ export const useGetUserInfoStarredMutation = () => {
         ),
     ]);
   };
-  const oldNotExistAndNoProperty = (data: Array<{ is_queried: boolean; id: number; full_name: string }>) => {
+  const oldNotExistAndNoProperty = (data: Array<{ is_queried: boolean; full_name: string }>) => {
     return parallel([
       () =>
         client.cache.writeQuery({
@@ -152,9 +149,7 @@ export const useGetUserInfoStarredMutation = () => {
       }
     });
   };
-  const addedStarredMe = async (
-    data: GraphQLUserStarred | Array<{ is_queried: boolean; id: number; full_name: string }>
-  ) => {
+  const addedStarredMe = async (data: GraphQLUserStarred | Array<{ is_queried: boolean; full_name: string }>) => {
     db?.getUserInfoStarred.get(1).then((oldData: any) => {
       if (oldData?.data) {
         const old: GraphQLUserStarred = JSON.parse(oldData.data);

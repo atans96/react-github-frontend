@@ -35,7 +35,7 @@ const useActionResolvePromise = () => {
                 filterActionResolvedPromiseData(
                   obj,
                   !stateShared?.seenCards?.includes(obj.id) &&
-                    !stateShared?.starred?.includes(obj.id) &&
+                    !stateShared?.starred?.includes(obj.full_name) &&
                     !stateShared?.clicked?.find((element: Clicked) => element.full_name === obj.full_name),
                   !!languagePreference?.get(obj.language)?.checked
                 ),

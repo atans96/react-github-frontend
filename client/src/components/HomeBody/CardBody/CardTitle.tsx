@@ -13,6 +13,7 @@ const CardTitle: React.FC<CardTitleProps> = ({ data }) => {
   return (
     <a
       onClick={() => window.open(state?.cardEnhancement?.get(data.id)?.webLink)}
+      target="_blank"
       href={state?.cardEnhancement?.get(data.id)?.webLink}
       className={clsx('', {
         'title-href-available':
