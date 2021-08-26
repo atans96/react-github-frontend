@@ -118,7 +118,8 @@ export const GET_USER_STARRED = gql`
   query {
     getUserInfoStarred {
       starred {
-        id
+        is_queried
+        full_name
       }
     }
   }

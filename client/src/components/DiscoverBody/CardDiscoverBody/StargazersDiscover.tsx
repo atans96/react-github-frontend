@@ -29,7 +29,7 @@ interface StargazerDiscover {
 const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
   const { addedStarredMe, removeStarred } = useGetUserInfoStarredMutation();
   const [stateShared] = useTrackedStateShared();
-  const [starClicked, setStarClicked] = useState(stateShared.starred.includes(data.id));
+  const [starClicked, setStarClicked] = useState(stateShared.starred.includes(data.full_name));
   const [clicked, setClicked] = useState(false);
   const [visible, setVisible] = useState(false);
   const modalWidth = useRef('400px');

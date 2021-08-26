@@ -1,6 +1,6 @@
 import { IAction, IStateManageProfile } from '../../typing/interface';
 
-export type ActionManageProfile = 'CONTRIBUTORS_ADDED' | 'REPO_INFO_ADDED';
+export type ActionManageProfile = 'CONTRIBUTORS_ADDED' | 'REPO_INFO_ADDED' | 'REMOVE_ALL';
 
 export const initialStateManageProfile: IStateManageProfile = {
   contributors: [],
@@ -11,6 +11,11 @@ export const reducerManageProfile = (
   action: IAction<ActionManageProfile>
 ): IStateManageProfile => {
   switch (action.type) {
+    case 'REMOVE_ALL': {
+      return {
+        ...initialStateManageProfile,
+      };
+    }
     case 'REPO_INFO_ADDED': {
       return {
         ...state,

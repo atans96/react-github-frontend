@@ -73,7 +73,7 @@ export interface IStateShared {
   searches: Searches[];
   clicked: Clicked[];
   seenCards: number[];
-  starred: number[];
+  starred: string[];
   shouldRender: string;
   perPage: number;
   githubLanguages: Map<string, GithubLanguages>;
@@ -131,7 +131,7 @@ export interface GraphQLUserData {
 }
 
 export interface GraphQLUserStarred {
-  getUserInfoStarred: { starred: Array<{ is_queried: boolean; id: number; full_name: string }> };
+  getUserInfoStarred: { starred: Array<{ is_queried: boolean; full_name: string }> };
 }
 
 export interface GraphQLUserInfoData {

@@ -139,7 +139,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         </Then>
       </If>
       <div style={{ textAlign: 'center', overflowWrap: 'anywhere' }} onClick={handleDetailsClicked}>
-        <a href={data.html_url} onClick={() => window.open(data.html_url)}>
+        <a href={data.html_url} onClick={() => window.open(data.html_url)} target="_blank">
           <GitHubIcon />
         </a>
       </div>

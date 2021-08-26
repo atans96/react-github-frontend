@@ -152,16 +152,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
     }
     return () => {
       dispatchManageProfile({
-        type: 'REPO_INFO_ADDED',
-        payload: {
-          repoInfo: [],
-        },
-      });
-      dispatchManageProfile({
-        type: 'CONTRIBUTORS_ADDED',
-        payload: {
-          contributors: [],
-        },
+        type: 'REMOVE_ALL',
       });
       isFinished = true;
     };

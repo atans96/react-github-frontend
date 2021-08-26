@@ -7,6 +7,7 @@ import { If } from '../../../util/react-if/If';
 import { Then } from '../../../util/react-if/Then';
 import { useLocation } from 'react-router-dom';
 import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
+import NotFoundLayout from '../../Layout/NotFoundLayout';
 
 interface DetailsProps {
   branch: string;
@@ -21,13 +22,18 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
   const location = useLocation();
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(
     () => {
       if ((_isMounted.current && location.pathname === '/profile') || location.pathname === '/detail') {
         markdownParsing(fullName, branch, abortController.signal).then((data) => {
           if (abortController.signal.aborted) return;
-          if (data && _isMounted.current) {
+          if (_isMounted.current && data.error_404) {
+            setNotFound(true);
+          } else if ((_isMounted.current && data.error_401) || data.error_403) {
+            throw new Error(data);
+          } else if (_isMounted.current && data && _isMounted.current) {
             setReadme(data.readme);
           }
         });
@@ -70,7 +76,14 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
               </div>
             </Then>
           </If>
-          <If condition={readme === ''}>
+          <If condition={readme === '' && notFound}>
+            <Then>
+              <div style={{ display: 'flex', justifyContent: 'center', width: 'fit-content' }}>
+                <NotFoundLayout marginTop={'0rem'} />
+              </div>
+            </Then>
+          </If>
+          <If condition={readme === '' && !notFound}>
             <Then>
               <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <CircularProgress />
@@ -79,7 +92,9 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
           </If>
         </div>
         <div className={'footer'}>
-          <a href={html_url}>View on GitHub</a>
+          <a href={html_url} target="_blank" onClick={() => window.open(html_url)}>
+            View on GitHub
+          </a>
         </div>
       </div>
     </div>

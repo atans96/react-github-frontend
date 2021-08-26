@@ -98,7 +98,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickCb });
 
   const modalWidth = useRef('400px');
-  const [starClicked, setStarClicked] = useState(stateShared?.starred?.includes(data.id));
+  const [starClicked, setStarClicked] = useState(stateShared?.starred?.includes(data.full_name));
 
   const [visible, setVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
