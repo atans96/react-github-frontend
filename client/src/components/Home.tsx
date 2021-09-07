@@ -151,6 +151,9 @@ const Home = () => {
       fetchUser();
     }
     return () => {
+      dispatch({
+        type: 'REMOVE_ALL',
+      });
       isFinished = true;
     };
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again

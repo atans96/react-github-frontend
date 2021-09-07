@@ -1,7 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import Loadable from 'react-loadable';
-import Empty from './Layout/EmptyLayout';
 import { createStore } from '../util/hooksy';
 import PureSearchBar from './SearchBarBody/PureSearchBar';
 
