@@ -13,6 +13,7 @@ import Empty from '../Layout/EmptyLayout';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import { useGetClickedMutation } from '../../apolloFactory/useGetClickedMutation';
+import GitHubIcon from "@material-ui/icons/GitHub";
 
 const ImagesCardDiscover = Loadable({
   loading: Empty,
@@ -122,9 +123,9 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
           </ul>
         </Then>
       </If>
-      <div style={{ textAlign: 'center' }} onClick={handleDetailsClicked}>
+      <div style={{ textAlign: 'center', overflowWrap: 'anywhere' }} onClick={handleDetailsClicked}>
         <a href={githubData.html_url} onClick={() => window.open(githubData.html_url)} target="_blank">
-          {githubData.html_url}
+          <GitHubIcon />
         </a>
       </div>
       <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>

@@ -190,44 +190,54 @@ const AppRoutes = () => {
   }, [stateShared.isLoggedIn]);
 
   useEffect(() => {
+    if (stateShared.shouldRender == ShouldRender.Profile) {
+      getFile('languages.json', abortController.signal).then((githubLanguages) => {
+        if (abortController.signal.aborted) return;
+        if (githubLanguages) {
+          dispatchShared({
+            type: 'SET_GITHUB_LANGUAGES',
+            payload: {
+              githubLanguages,
+            },
+          });
+        }
+      });
+    } else {
+      if (stateShared.githubLanguages.size > 0) {
+        dispatchShared({
+          type: 'SET_GITHUB_LANGUAGES',
+          payload: {
+            githubLanguages: [],
+          },
+        });
+      }
+    }
+  }, [stateShared.shouldRender]);
+
+  useEffect(() => {
     let isFinished = false;
     if (!isFinished) {
-      parallel([
-        () =>
-          getFile('languages.json', abortController.signal).then((githubLanguages) => {
-            if (abortController.signal.aborted) return;
-            if (githubLanguages) {
-              dispatchShared({
-                type: 'SET_GITHUB_LANGUAGES',
-                payload: {
-                  githubLanguages,
-                },
-              });
-            }
-          }),
-        () =>
-          session(false, abortController.signal).then((data) => {
-            if (abortController.signal.aborted) return;
-            if (data) {
-              if (!data.data) {
-                localStorage.clear();
-                clear();
-              }
-              if (Boolean(data.data) && data.username.length > 0) {
-                dispatchShared({
-                  type: 'SET_USERNAME',
-                  payload: { username: data.username },
-                });
-                dispatchShared({
-                  type: 'LOGIN',
-                  payload: {
-                    isLoggedIn: data.data,
-                  },
-                });
-              }
-            }
-          }),
-      ]);
+      session(false, abortController.signal).then((data) => {
+        if (abortController.signal.aborted) return;
+        if (data) {
+          if (!data.data) {
+            localStorage.clear();
+            clear();
+          }
+          if (Boolean(data.data) && data.username.length > 0) {
+            dispatchShared({
+              type: 'SET_USERNAME',
+              payload: { username: data.username },
+            });
+            dispatchShared({
+              type: 'LOGIN',
+              payload: {
+                isLoggedIn: data.data,
+              },
+            });
+          }
+        }
+      });
       if (stateShared.isLoggedIn && stateShared.username.length > 0) {
         sendJsonMessage({
           open: {

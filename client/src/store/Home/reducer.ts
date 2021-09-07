@@ -95,6 +95,7 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         topicTags: [],
         imagesData: [],
         imagesMapData: new Map<number, any>(),
+        cardEnhancement: new Map<number, CardEnhancement>(),
         mergedData: [],
         searchUsers: [],
         filteredMergedData: [],
