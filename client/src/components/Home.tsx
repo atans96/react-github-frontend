@@ -131,7 +131,26 @@ const Home = () => {
       });
     }
   });
-
+  const release = () => {
+    dispatchShared({
+      type: 'SET_SEEN',
+      payload: {
+        seenCards: [],
+      },
+    });
+    dispatchShared({
+      type: 'SET_CLICKED',
+      payload: {
+        seenCards: [],
+      },
+    });
+    dispatchShared({
+      type: 'SET_STARRED',
+      payload: {
+        seenCards: [],
+      },
+    });
+  };
   useDeepCompareEffect(() => {
     let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
@@ -148,12 +167,9 @@ const Home = () => {
       // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
       // otherwise, don't re-fetch. in this way, stateShared.queryUsername and state.mergedData are still preserved
       dataAlreadyFetch.current = 0;
-      fetchUser();
+      fetchUser().then(() => release());
     }
     return () => {
-      dispatch({
-        type: 'REMOVE_ALL',
-      });
       isFinished = true;
     };
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
@@ -168,7 +184,7 @@ const Home = () => {
     if (location.pathname === '/' && !isFinished && state.page > 1 && !isFetchFinish.isFetchFinish) {
       dataAlreadyFetch.current = 0;
       if (stateShared.queryUsername.length > 0) {
-        fetchUser();
+        fetchUser().then(() => release());
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         fetchTopics();
       }
@@ -182,6 +198,9 @@ const Home = () => {
   useEffect(() => {
     return () => {
       console.log('abort');
+      dispatch({
+        type: 'REMOVE_ALL',
+      });
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
       axiosCancel.current = true;
     };

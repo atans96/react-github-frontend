@@ -12,7 +12,6 @@ import React, { useEffect } from 'react';
 import { associate } from './graphql/queries';
 import { endOfSession, getFile, getTokenGQL, session, subscribeToApollo } from './services';
 import { noop } from './util/util';
-import { parallel } from 'async';
 import { Route, Switch, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import KeepMountedLayout from './components/Layout/KeepMountedLayout';
@@ -190,7 +189,7 @@ const AppRoutes = () => {
   }, [stateShared.isLoggedIn]);
 
   useEffect(() => {
-    if (stateShared.shouldRender == ShouldRender.Profile) {
+    if (stateShared.shouldRender == ('home' || 'profile')) {
       getFile('languages.json', abortController.signal).then((githubLanguages) => {
         if (abortController.signal.aborted) return;
         if (githubLanguages) {
