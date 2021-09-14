@@ -10,6 +10,7 @@ import { parallel } from 'async';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
 import { GET_CLICKED, GET_SEEN, GET_USER_STARRED } from '../graphql/queries';
 import { useDexieDB } from '../db/db.ctx';
+import { useLocation } from 'react-router-dom';
 
 const conn = new ApolloCacheDB();
 const useActionResolvePromise = () => {
@@ -30,6 +31,7 @@ const useActionResolvePromise = () => {
   const [, setNotification] = useNotification();
   const [, setIsFetchFinish] = useIsFetchFinish();
   const [, setIsLoading] = useIsLoading();
+  const location = useLocation();
 
   const [data, setData] = useState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
@@ -44,13 +46,11 @@ const useActionResolvePromise = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared?.userData?.languagePreference]);
 
-  const actionAppend = (data: IDataOne | any, displayName: string) => {
+  const actionAppend = (data: IDataOne | any) => {
     if (state.filterBySeen) {
       return new Promise(function (resolve, reject) {
-        switch (displayName) {
-          case displayName.match(/^discover/gi) && displayName!.match(/^discover/gi)![0].length > 0
-            ? displayName
-            : undefined: {
+        switch (location.pathname) {
+          case '/discover': {
             let filter1 = fastFilter(
               (obj: MergedDataProps) =>
                 filterActionResolvedPromiseData(
@@ -77,7 +77,7 @@ const useActionResolvePromise = () => {
             resolve();
             break;
           }
-          case 'Home': {
+          default: {
             const filter1 = fastFilter(
               (obj: MergedDataProps) =>
                 filterActionResolvedPromiseData(
@@ -113,9 +113,6 @@ const useActionResolvePromise = () => {
             }
             resolve();
             break;
-          }
-          default: {
-            throw new Error('No valid component found!');
           }
         }
       });
@@ -167,12 +164,12 @@ const useActionResolvePromise = () => {
         ],
         () => {
           if (data) {
-            actionAppend(data, '')!.then(noop);
+            actionAppend(data)!.then(noop);
           }
         }
       );
     } else if (!seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length > 0 && data) {
-      actionAppend(data, '')!.then(noop);
+      actionAppend(data)!.then(noop);
     }
     return () => {
       isFinished = true;
@@ -214,12 +211,12 @@ const useActionResolvePromise = () => {
         ],
         () => {
           if (data) {
-            actionAppend(data, '')!.then(noop);
+            actionAppend(data)!.then(noop);
           }
         }
       );
     } else if (!clickedLoading && !clickedError && clicked?.getClicked?.clicked?.length === 0 && data) {
-      actionAppend(data, '')!.then(noop);
+      actionAppend(data)!.then(noop);
     }
     return () => {
       isFinished = true;
@@ -273,7 +270,7 @@ const useActionResolvePromise = () => {
         ],
         () => {
           if (data) {
-            actionAppend(data, '')!.then(noop);
+            actionAppend(data)!.then(noop);
           }
         }
       );
@@ -283,7 +280,7 @@ const useActionResolvePromise = () => {
       userStarred?.getUserInfoStarred?.starred?.length === 0 &&
       data
     ) {
-      actionAppend(data, '')!.then(noop);
+      actionAppend(data)!.then(noop);
     }
     return () => {
       isFinished = true;

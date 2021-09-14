@@ -113,106 +113,113 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     }
     return false;
   };
+
   const fetchUser = () => {
-    if (!isFetchFinish.isFetchFinish) {
-      setLoading({ isLoading: true });
-      setNotification({ notification: '' });
-      let userNameTransformed: string[];
-      if (!Array.isArray(stateShared.queryUsername)) {
-        userNameTransformed = [stateShared.queryUsername];
-      } else {
-        userNameTransformed = stateShared.queryUsername;
-      }
-      const mainIter = async ({ value, actionController }: { value: any; actionController: any }) => {
-        let dataOne: {
-          dataOne: MergedDataProps[];
-          error_404: boolean;
-          error_403: boolean;
-          end: boolean;
-          error_message: string | undefined;
-        } = {
-          dataOne: [],
-          error_404: false,
-          error_403: false,
-          end: false,
-          error_message: undefined,
-        };
-        let chunk = '';
-        for await (const data of value()) {
-          let array1;
-          chunk += new TextDecoder().decode(data);
-          while ((array1 = regexJSON.exec(chunk)) !== undefined) {
-            try {
-              const data = JSON.parse(array1![0]);
-              if (data.id && data.full_name && data.default_branch) {
-                dataOne.dataOne.push(data);
-              } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
-                dataOne.error_404 = true;
-                return actionController(dataOne);
-              } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
-                dataOne.error_403 = true;
-                return actionController(dataOne);
-              } else {
-                dataOne.error_message = data.message;
-                return actionController(dataOne);
+    return new Promise((resolve) => {
+      if (!isFetchFinish.isFetchFinish) {
+        setLoading({ isLoading: true });
+        setNotification({ notification: '' });
+        let userNameTransformed: string[];
+        if (!Array.isArray(stateShared.queryUsername)) {
+          userNameTransformed = [stateShared.queryUsername];
+        } else {
+          userNameTransformed = stateShared.queryUsername;
+        }
+        const mainIter = async ({ value, actionController }: { value: any; actionController: any }) => {
+          let dataOne: {
+            dataOne: MergedDataProps[];
+            error_404: boolean;
+            error_403: boolean;
+            end: boolean;
+            error_message: string | undefined;
+          } = {
+            dataOne: [],
+            error_404: false,
+            error_403: false,
+            end: false,
+            error_message: undefined,
+          };
+          let chunk = '';
+          for await (const data of value()) {
+            let array1;
+            chunk += new TextDecoder().decode(data);
+            while ((array1 = regexJSON.exec(chunk)) !== undefined) {
+              try {
+                const data = JSON.parse(array1![0]);
+                if (data.id && data.full_name && data.default_branch) {
+                  dataOne.dataOne.push(data);
+                } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
+                  dataOne.error_404 = true;
+                  return actionController(dataOne);
+                } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
+                  dataOne.error_403 = true;
+                  return actionController(dataOne);
+                } else {
+                  dataOne.error_message = data.message;
+                  return actionController(dataOne);
+                }
+              } catch (e) {
+                break;
               }
-            } catch (e) {
-              break;
+            }
+            //When the regex is global, if you call a method on the same regex object,
+            // it will start from the index past the end of the last match. so we need to reset it to start the new loop
+            regexJSON.lastIndex = 0;
+            if (dataOne.dataOne.length > 0) return actionController(dataOne);
+            if (chunk === '[\n\n]\n') {
+              dataOne.end = true;
+              return actionController(dataOne);
             }
           }
-          //When the regex is global, if you call a method on the same regex object,
-          // it will start from the index past the end of the last match. so we need to reset it to start the new loop
-          regexJSON.lastIndex = 0;
-          if (dataOne.dataOne.length > 0) return actionController(dataOne);
-          if (chunk === '[\n\n]\n') {
-            dataOne.end = true;
-            return actionController(dataOne);
-          }
-        }
-        return state.mergedData.length === 0 && dataOne.dataOne.length === 0;
-      };
-      let fetcher = (name: string, org: boolean) =>
-        getUser({
-          signal: abortController.signal,
-          username: name,
-          perPage: stateShared.perPage,
-          page: state.page,
-          org,
-        });
-      let observer: undefined | any;
-      userNameTransformed.forEach((name) => {
-        const execute = async () => {
-          observer = !observer ? fetcher(name, false) : observer;
-          observer.subscribe({
-            async next(value: { iterator: any }) {
-              if (value.iterator) {
-                try {
-                  const shouldFetchOrg = await mainIter({ value: value.iterator, actionController });
-                  if (shouldFetchOrg) {
-                    observer = fetcher(name, true);
-                    execute().then(noop);
-                  }
-                } catch (e) {
-                  throw new Error(e.message);
-                }
-              } else {
-                throw new Error('no value iterator');
-              }
-            },
-            error(err: any) {
-              actionResolvePromise({
-                username: stateShared.queryUsername,
-                action: ActionResolvedPromise.error,
-                displayName: component,
-                err,
-              });
-            },
-            complete() {},
-          });
+          return state.mergedData.length === 0 && dataOne.dataOne.length === 0;
         };
-        execute().then(noop);
-      });
-    }
+        let fetcher = (name: string, org: boolean) =>
+          getUser({
+            signal: abortController.signal,
+            username: name,
+            perPage: stateShared.perPage,
+            page: state.page,
+            org,
+          });
+        let observer: undefined | any;
+        userNameTransformed.forEach((name) => {
+          const execute = async () => {
+            observer = !observer ? fetcher(name, false) : observer;
+            observer.subscribe({
+              async next(value: { iterator: any }) {
+                if (value.iterator) {
+                  try {
+                    const shouldFetchOrg = await mainIter({ value: value.iterator, actionController });
+                    if (shouldFetchOrg) {
+                      observer = fetcher(name, true);
+                      execute().then(noop);
+                    }
+                  } catch (e) {
+                    throw new Error(e.message);
+                  }
+                } else {
+                  throw new Error('no value iterator');
+                }
+              },
+              error(err: any) {
+                actionResolvePromise({
+                  username: stateShared.queryUsername,
+                  action: ActionResolvedPromise.error,
+                  displayName: component,
+                  err,
+                });
+              },
+              complete() {
+                resolve();
+              },
+            });
+          };
+          execute().then(noop);
+        });
+      } else {
+        resolve();
+      }
+    });
   };
   const fetchTopics = () => {
     // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
