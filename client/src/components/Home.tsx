@@ -363,6 +363,7 @@ const Home = () => {
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
   const whichToUse = () => {
+    //
     // useCallback will avoid unnecessary child re-renders due to something changing in the parent that
     // is not part of the dependencies for the callback.
     if (state.filteredMergedData.length > 0) {
