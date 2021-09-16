@@ -22,7 +22,7 @@ interface SearchBarProps {
   handleChange: any;
 }
 
-// separate setState from SearchBar so that SearchBar won't get rerender by onChange
+// separate setState from SearchBar so that SearchBar won't get rerender by onChange.
 const PureInput: React.FC<SearchBarProps> = ({ handleChange, style }) => {
   const [, setVisible] = useVisible();
   const [username, setUsername] = useQueryUsername();
