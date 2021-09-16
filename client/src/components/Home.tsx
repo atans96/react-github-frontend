@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { MergedDataProps, SeenProps } from '../typing/type';
-import { useStableCallback } from '../util';
+import { cleanString, useStableCallback } from '../util';
 import { crawlerPython, getRepoImages } from '../services';
 import useBottomHit from '../hooks/useBottomHit';
 import { useEventHandlerComposer } from '../hooks/hooks';
@@ -96,7 +96,7 @@ const Home = () => {
                 avatar_url: obj.owner.avatar_url,
                 html_url: obj.owner.html_url,
               },
-              description: obj.description,
+              description: cleanString(obj.description || ''),
               language: obj.language,
               topics: obj.topics,
               html_url: obj.html_url,
@@ -159,7 +159,8 @@ const Home = () => {
       state.mergedData.length === 0 &&
       location.pathname === '/' &&
       !isFinished &&
-      !isFetchFinish.isFetchFinish
+      !isFetchFinish.isFetchFinish &&
+      state.filterBySeen
     ) {
       // we want to preserve stateShared.queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
       // we still want to retain the memory of username so that's why we use reducer of stateShared.queryUsername.
@@ -245,13 +246,19 @@ const Home = () => {
       isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateShared.seenCards, location.pathname, state.filterBySeen]);
+  }, [isSeenCardsExist, location.pathname, state.filterBySeen, state.undisplayMergedData]);
 
   useEffect(
     () => {
       let isFinished = false;
       (async () => {
-        if (location.pathname === '/' && !isFinished && !isFetchFinish.isFetchFinish && isMergedDataExist) {
+        if (
+          location.pathname === '/' &&
+          !isFinished &&
+          !isFetchFinish.isFetchFinish &&
+          isMergedDataExist &&
+          state.filterBySeen
+        ) {
           const release = await mutex.acquire(); //if no MUTEX, there's no guarantee fetch will be executed too much
           // so we need to use mutex so any pending execution of asnyc here will be put in Event Loop and after the lock released will resume
 
@@ -278,10 +285,6 @@ const Home = () => {
             crawlerPython({
               signal: abortController.signal,
               data: data,
-              topic: Array.isArray(stateShared.queryUsername)
-                ? stateShared.queryUsername[0]
-                : stateShared.queryUsername,
-              page: state.page,
             }).then((response) => {
               if (abortController.signal.aborted) return;
               if (response) {
@@ -336,15 +339,16 @@ const Home = () => {
               }
             });
           };
-          const executeImages = () => {
+          const execute = () => {
             return new Promise((resolve, reject) => {
-              for (let index = 0; index < 2; index++) {
+              for (let index = 0; index < data.length; index++) {
                 const chunk = iters.next();
                 nextExecuteImages(chunk.value, resolve);
+                nextExecuteCrawler(chunk.value, resolve);
               }
             });
           };
-          Promise.all([executeImages()]).then(() => {
+          Promise.all([execute()]).then(() => {
             release();
           });
           // while (promises.length) {
@@ -358,7 +362,7 @@ const Home = () => {
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [state.mergedData.length, axiosCancel.current]
+    [state.mergedData.length, axiosCancel.current, state.filterBySeen]
   );
   const { getRootProps } = useEventHandlerComposer({ onClickCb: onClickTopic });
 
@@ -417,7 +421,7 @@ const Home = () => {
           // so no need to use state.imagesData condition on top of state.mergedData?.length > 0 && !shouldRenderSkeleton
           // below, otherwise it's going to slow to wait for ImagesCard as the Card won't get re-render instantly consequently
         }
-        <If condition={!state.filterBySeen && isSeenCardsExist}>
+        <If condition={!state.filterBySeen}>
           <Then>
             <div style={{ textAlign: 'center' }}>
               <h3>Your {whichToUse().length || 0} Card History:</h3>
@@ -432,9 +436,11 @@ const Home = () => {
           </Then>
         </If>
 
-        {isLoading && renderLoading && notification.notification.length === 0 && !isFetchFinish.isFetchFinish && (
-          <LoadingEye queryUsername={stateShared.queryUsername} />
-        )}
+        {state.filterBySeen &&
+          isLoading &&
+          renderLoading &&
+          notification.notification.length === 0 &&
+          !isFetchFinish.isFetchFinish && <LoadingEye queryUsername={stateShared.queryUsername} />}
 
         <If condition={notification.notification}>
           <Then>

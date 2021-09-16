@@ -3,6 +3,7 @@ import { logoutAction } from './util/util';
 import { readEnvironmentVariable, useStableCallback } from './util';
 import { HttpLink } from './link/http/HttpLink';
 import { ApolloClient, ApolloLink, getApolloContext, InMemoryCache } from '@apollo/client';
+import { HttpLink as HttpLink1 } from '@apollo/client';
 import { onError } from '@apollo/client/link/error';
 import React from 'react';
 import { useTrackedStateShared } from './selectors/stateContextSelector';
@@ -16,12 +17,13 @@ const CustomApolloProvider = ({ children }: any) => {
   };
 
   const clientWrapped = useStableCallback(() => {
-    const githubGateway = new HttpLink({
+    const githubGateway = new HttpLink1({
       uri: 'https://api.github.com/graphql',
       headers: {
         Authorization: `Bearer ${stateShared.tokenGQL}`,
+        'Content-Type': 'application/json',
       },
-    }) as unknown as ApolloLink;
+    });
 
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({

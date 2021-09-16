@@ -19,7 +19,7 @@ import useResizeObserver from '../hooks/useResizeObserver';
 import Loadable from 'react-loadable';
 import useFetchUser from '../hooks/useFetcnUserDiscover';
 import { Redirect, useLocation } from 'react-router-dom';
-import { useStableCallback } from '../util';
+import { cleanString, useStableCallback } from '../util';
 import { useDeepMemo } from '../hooks/useDeepMemo';
 import './Discover.scss';
 import Empty from './Layout/EmptyLayout';
@@ -123,7 +123,7 @@ const Discover = React.memo(() => {
               avatar_url: obj.owner.avatar_url,
               html_url: obj.owner.html_url,
             },
-            description: obj.description,
+            description: cleanString(obj.description || ''),
             language: obj.language,
             topics: obj.topics,
             html_url: obj.html_url,

@@ -7,12 +7,15 @@ import { Then } from '../../../../util/react-if/Then';
 import { If } from '../../../../util/react-if/If';
 import './StargazersInfoStyle.scss';
 import LanguagesList from './StargazersInfoBody/LanguagesList';
+import RenderLanguageList from './StargazersInfoBody/RenderLanguageList';
+
 import { StargazerProps } from '../../../../typing/type';
 import { useClickOutside } from '../../../../hooks/hooks';
 import { dragMove } from '../../../../util';
 import { useLocation } from 'react-router-dom';
-import { useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
-import { useDeepMemo } from '../../../../hooks/useDeepMemo';
+import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
+import { map } from 'async';
+import { useApolloClient } from '@apollo/client';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -34,9 +37,11 @@ const StargazersInfo = ({
   modalWidth,
 }: StargazersInfo) => {
   const [isLoadingFetchMore, setIsLoadingFetchMore] = useState(false);
-  const simulateClick = useRef<HTMLElement>();
   const stargazerModalRef = useRef<HTMLDivElement>(null);
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
+  const [stateShared] = useTrackedStateShared();
+  const client = useApolloClient();
+
   const handleClickFilterResult = () => {
     setIsLoadingFetchMore(true);
     dispatchStargazers({
@@ -49,6 +54,40 @@ const StargazersInfo = ({
       event.preventDefault();
       event.stopPropagation();
       setIsLoadingFetchMore(true);
+      if (stateShared.tokenGQL !== '') {
+        client // return Promise
+          .query({
+            query: stateStargazers.hasNextPage.hasNextPage ? SEARCH_FOR_MORE_REPOS : SEARCH_FOR_REPOS,
+            variables: stateStargazers.hasNextPage.hasNextPage
+              ? { ...GQL_VARIABLES.GQL_pagination_variables }
+              : { ...GQL_VARIABLES.GQL_variables },
+            context: { clientName: 'github' },
+          })
+          .then((result) => {
+            dispatchStargazers({
+              type: 'STARGAZERS_HAS_NEXT_PAGE',
+              payload: {
+                hasNextPage: result.data.repository.stargazers.pageInfo || {},
+              },
+            });
+            map(result.data.repository.stargazers.nodes, (node: any) => {
+              const newNode = { ...node };
+              newNode['isQueue'] = false;
+              dispatchStargazers({
+                type: 'STARGAZERS_ADDED',
+                payload: {
+                  stargazersData: newNode,
+                },
+              });
+            });
+          })
+          .catch((e) => {
+            throw new Error(e);
+          })
+          .finally(() => {
+            setIsLoadingFetchMore(false);
+          });
+      }
     }
   };
   //don't close modal if the click is multivalue-cross from PureInputBody\MultiValueSearch.tsx or when you open drawerbar (hamburger)
@@ -65,7 +104,6 @@ const StargazersInfo = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragRef.current]);
-
   return (
     <div className="SelectMenu" ref={stargazerModalRef}>
       <div className="SelectMenu-modal" style={{ width: modalWidth }}>
@@ -96,22 +134,19 @@ const StargazersInfo = ({
                 <th style={{ width: '30%' }} className="sticky-column-table">
                   <LanguagesList />
                 </th>
+                <RenderLanguageList />
               </tr>
             </thead>
             <If condition={!isLoading || !isLoadingFetchMore}>
               <Then>
-                {useDeepMemo(() => {
-                  return (
-                    stateStargazers.stargazersData.map((stargazer: StargazerProps, idx: number) => (
-                      <Result
-                        key={idx}
-                        getRootPropsCard={getRootPropsCard}
-                        stargazer={stargazer}
-                        stateStargazers={stateStargazers}
-                      />
-                    )) || <></>
-                  );
-                }, [stateStargazers.stargazersData])}
+                {stateStargazers.stargazersData.map((stargazer: StargazerProps, idx: number) => (
+                  <Result
+                    key={idx}
+                    getRootPropsCard={getRootPropsCard}
+                    stargazer={stargazer}
+                    stateStargazers={stateStargazers}
+                  />
+                )) || <></>}
               </Then>
             </If>
           </table>
@@ -161,20 +196,18 @@ const StargazersInfo = ({
 
         <footer
           className="SelectMenu-footer"
-          {...getRootProps({
-            onClick: handleClickLoadMore,
-            params: {
-              query: stateStargazers.hasNextPage.hasNextPage ? SEARCH_FOR_MORE_REPOS : SEARCH_FOR_REPOS,
-              variables: stateStargazers.hasNextPage.hasNextPage
-                ? { ...GQL_VARIABLES.GQL_pagination_variables }
-                : { ...GQL_VARIABLES.GQL_variables },
-            },
-            firstCallback: () => setIsLoadingFetchMore(false),
-          })}
+          onClick={handleClickLoadMore}
           style={{ cursor: isLoadingFetchMore ? '' : 'pointer' }}
-          ref={simulateClick}
         >
-          Load {stateStargazers.hasNextPage.hasNextPage ? `${stateStargazers.stargazersUsers}` : 0} More Users
+          Load{' '}
+          {stateStargazers.hasNextPage.hasNextPage
+            ? `${
+                stargazers_count - stateStargazers.stargazersUsers < stateStargazers.stargazersUsers
+                  ? stargazers_count - stateStargazers.stargazersUsers
+                  : stateStargazers.stargazersUsers
+              }`
+            : 0}{' '}
+          More Users
         </footer>
         <footer className="SelectMenu-footer">
           Showing {stateStargazers.stargazersData.length} of {stargazers_count} Users

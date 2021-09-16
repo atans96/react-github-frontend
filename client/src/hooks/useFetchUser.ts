@@ -14,11 +14,9 @@ interface useFetchUser {
 }
 
 //TO extract all JSON field
-const regex = new RegExp(
-  /(?:\"|\')(?<key>[^"]*)(?:\"|\')(?=:)(?:\:\s*)(?:\"|\')?(?<value>true|false|https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)|[0-9a-zA-Z\+\-\,\.\\/$]*)/gim
-);
-//To extract all json objects
-const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
+// const regex = new RegExp(
+//   /(?:\"|\')(?<key>[^"]*)(?:\"|\')(?=:)(?:\:\s*)(?:\"|\')?(?<value>true|false|https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)|[0-9a-zA-Z\+\-\,\.\\/$]*)/gim
+// );
 const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const [, setNotification] = useNotification();
   const [isFetchFinish, setIsFetchFinish] = useIsFetchFinish();
@@ -143,6 +141,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           for await (const data of value()) {
             let array1;
             chunk += new TextDecoder().decode(data);
+            const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
             while ((array1 = regexJSON.exec(chunk)) !== undefined) {
               try {
                 const data = JSON.parse(array1![0]);

@@ -22,7 +22,6 @@ import { useStableCallback } from '../../../util';
 import Empty from '../../Layout/EmptyLayout';
 import { noop } from '../../../util/util';
 import { useGetUserInfoStarredMutation } from '../../../apolloFactory/useGetUserInfoStarredMutation';
-
 const StargazersInfo = Loadable({
   loading: Empty,
   delay: 300,
@@ -72,26 +71,25 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
           context: { clientName: 'github' },
         })
         .then((result) => {
-          parallel([
-            () =>
-              dispatchStargazers({
-                type: 'STARGAZERS_HAS_NEXT_PAGE',
-                payload: {
-                  hasNextPage: result.data.repository.stargazers.pageInfo || {},
-                },
-              }),
-            () =>
-              map(result.data.repository.stargazers.nodes, (node: any) => {
-                const newNode = { ...node };
-                newNode['isQueue'] = false;
-                dispatchStargazers({
-                  type: 'STARGAZERS_ADDED',
-                  payload: {
-                    stargazersData: newNode,
-                  },
-                });
-              }),
-          ]);
+          dispatchStargazers({
+            type: 'STARGAZERS_HAS_NEXT_PAGE',
+            payload: {
+              hasNextPage: result.data.repository.stargazers.pageInfo || {},
+            },
+          });
+          map(result.data.repository.stargazers.nodes, (node: any) => {
+            const newNode = { ...node };
+            newNode['isQueue'] = false;
+            dispatchStargazers({
+              type: 'STARGAZERS_ADDED',
+              payload: {
+                stargazersData: newNode,
+              },
+            });
+          });
+        })
+        .catch((e) => {
+          throw new Error(e);
         });
     }
   });

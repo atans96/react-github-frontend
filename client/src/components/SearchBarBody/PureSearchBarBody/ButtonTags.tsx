@@ -30,8 +30,8 @@ interface ButtonTagsProps {
 }
 
 const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable }) => {
-  const [state, dispatch] = useTrackedState();
-  const [stateShared, dispatchShared] = useTrackedStateShared();
+  const [state] = useTrackedState();
+  const [stateShared] = useTrackedStateShared();
   const handleClickSearchTopicTags = (event: React.MouseEvent): void => {
     event.preventDefault();
     event.stopPropagation();
@@ -73,41 +73,6 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
       );
     }
   };
-  const handleClickFilterSeenCards = (event: React.MouseEvent): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    parallel([
-      () => {
-        if (!state.filterBySeen && renderTopicTags) {
-          setExpandableTopicTags(false);
-        }
-      },
-      () =>
-        dispatch({
-          type: 'FILTER_CARDS_BY_SEEN',
-          payload: {
-            filterBySeen: !state.filterBySeen,
-          },
-        }),
-      () => {
-        if (stateShared.shouldRender === ShouldRender.Home) {
-          dispatchShared({
-            type: 'SET_SHOULD_RENDER',
-            payload: {
-              shouldRender: '',
-            },
-          });
-        } else {
-          dispatchShared({
-            type: 'SET_SHOULD_RENDER',
-            payload: {
-              shouldRender: ShouldRender.Home,
-            },
-          });
-        }
-      },
-    ]);
-  };
   return (
     <React.Fragment>
       {renderTopicTags && spawnTopicTags()}
@@ -128,29 +93,6 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
               <span className="glyphicon glyphicon-tags" />
             </div>
           </Tooltip>
-        </MuiThemeProvider>
-      </MuiThemeProvider>
-
-      <MuiThemeProvider theme={defaultTheme}>
-        <MuiThemeProvider theme={theme}>
-          <If condition={stateShared.isLoggedIn}>
-            <Then>
-              <Tooltip title={showTipsText(`${state.filterBySeen ? 'noFilterSeen' : 'filterSeen'}`)}>
-                <div onClick={handleClickFilterSeenCards} className="btn" style={{ cursor: 'pointer' }}>
-                  <span className={`glyphicon ${state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`} />
-                </div>
-              </Tooltip>
-            </Then>
-          </If>
-          <If condition={!stateShared.isLoggedIn}>
-            <Then>
-              <Tooltip title={showTipsText(`login`)}>
-                <div className="btn" style={{ cursor: 'not-allowed', opacity: 0.6 }}>
-                  <span className={`glyphicon ${state.filterBySeen ? 'glyphicon-eye-close' : 'glyphicon-eye-open'}`} />
-                </div>
-              </Tooltip>
-            </Then>
-          </If>
         </MuiThemeProvider>
       </MuiThemeProvider>
     </React.Fragment>

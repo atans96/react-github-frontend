@@ -44,7 +44,7 @@ export const endOfSession = async (username: string, cacheData: any) => {
 export const removeStarredMe = async (repoFullName: string) => {
   try {
     fetch(`https://api.github.com/user/starred/${repoFullName}`, {
-      method: 'GET',
+      method: 'DELETE',
       headers: {
         Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
       },
@@ -72,10 +72,14 @@ export const setTokenGQL = async (tokenGQL: string, username: string) => {
         'GOLANG_PORT'
       )}/server_uwebsocket/setTokenGQL?username=${username}`,
       {
-        method: 'GET',
+        method: 'POST',
         headers: {
-          Authorization: `${tokenGQL}`,
+          //trigger preflight request to browser
+          'Content-Type': 'application/json',
+          'Sec-Fetch-Site': 'same-origin',
+          'Sec-Fetch-Mode': 'cors',
         },
+        body: JSON.stringify({ token: tokenGQL }),
       }
     );
     return await response.json();
@@ -225,7 +229,7 @@ export const getUser = ({
         return new Promise((resolve) => resolve(true));
       }
     }
-    execute().then(noop);
+    execute().then(() => (lastUrls = {}));
   }) as Observable<{ iterator: any }>;
 };
 export const markdownParsing = async (full_name: string, branch: string, signal: any) => {
@@ -298,7 +302,6 @@ export const requestGithubLogin = async (proxy_url: string, data: any, signal: a
   try {
     const response = await fetch(proxy_url, {
       method: 'POST',
-      keepalive: true,
       credentials: 'include',
       headers: {
         //trigger preflight request to browser
@@ -431,7 +434,6 @@ export const requestGithubGraphQLLogin = async (token: string, signal: any) => {
       {
         method: 'POST',
         signal,
-        keepalive: true,
         credentials: 'include',
         headers: {
           'Sec-Fetch-Mode': 'cors',
@@ -499,26 +501,13 @@ export const getRepoImages = async ({ signal, data }: { signal: any | undefined;
     }
   }
 };
-export const crawlerPython = async ({
-  signal,
-  data,
-  topic,
-  page,
-}: {
-  signal: any | undefined;
-  data: any[];
-  topic: string;
-  page: number;
-}) => {
+export const crawlerPython = async ({ signal, data }: { signal: any | undefined; data: any[] }) => {
   try {
-    const response = await fetch(`${readEnvironmentVariable('PYTHON_CRAWLER')}?query_topic=${topic}&page=${page}`, {
+    const response = await fetch(`${readEnvironmentVariable('PYTHON_CRAWLER')}`, {
       method: 'POST',
       keepalive: true,
-      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
       },
       body: JSON.stringify({
         data: data,

@@ -46,7 +46,6 @@ const DbCtx = createContainer(() => {
       // generate a random key to encrypt DB then encrypt the key with the user password
       // we do this in case the user changes the password so we don't have to re-encrypt the whole db
       symmetricKey = await Encryption.generateRandomKeyBuffer();
-
       // encrypt the symmetric key with the password
       await Encryption.encryptKey(symmetricKey, readEnvironmentVariable('DB_KEY')!);
     }

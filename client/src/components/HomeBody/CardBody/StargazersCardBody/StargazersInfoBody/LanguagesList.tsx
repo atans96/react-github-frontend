@@ -1,30 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { If } from '../../../../../util/react-if/If';
-import { Then } from '../../../../../util/react-if/Then';
+import React, { useEffect, useRef } from 'react';
 import './LanguageListStyle.scss';
 import { StargazerProps } from '../../../../../typing/type';
 import { fastFilter } from '../../../../../util';
 import { useTrackedStateStargazers } from '../../../../../selectors/stateContextSelector';
-import { getFile } from '../../../../../services';
+import { useSelectedLanguage } from './RenderLanguageList';
+import { useOuterClick } from '../../../../../hooks/hooks';
 
 const LanguagesList = () => {
   const abortController = new AbortController();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
-  const [selectedLanguage, setSelectedLanguage] = useState(stateStargazers.language);
   const evenOdd = useRef(0);
-  const [languageInfo, setLanguageInfo] = useState([]);
-  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    localStorage.setItem('language', e.currentTarget.innerText);
-    setSelectedLanguage(e.currentTarget.innerText);
-    dispatchStargazers({
-      type: 'SET_LANGUAGE',
-      payload: {
-        language: e.currentTarget.innerText,
-      },
-    });
-  };
+  const [selectedLanguage] = useSelectedLanguage();
+
   const handleClickSort = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -38,11 +25,11 @@ const LanguagesList = () => {
     }, []);
     if (evenOdd.current % 2 === 0) {
       //the first click start at 0 will sort from bigger to smaller
-      temp.sortBy((a: any, b: any) => {
+      temp.sort((a: any, b: any) => {
         return b.languages - a.languages;
       });
     } else {
-      temp.sortBy((a: any, b: any) => {
+      temp.sort((a: any, b: any) => {
         //the second click start at odd will sort from smaller to bigger
         return a.languages - b.languages;
       });
@@ -65,25 +52,20 @@ const LanguagesList = () => {
   };
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished) {
-      getFile('languages.yml', abortController.signal).then((data) => {
-        if (abortController.signal.aborted) return;
-        if (data) setLanguageInfo(data);
-      });
-    }
-    return () => {
-      isFinished = true;
-    };
-  }, []);
-
-  useEffect(() => {
     return () => {
       console.log('abort');
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     };
   }, []);
 
+  const innerRef = useOuterClick(() =>
+    dispatchStargazers({
+      type: 'SET_DISPLAY',
+      payload: {
+        display: false,
+      },
+    })
+  ) as any;
   return (
     <div className="btn-group" style={{ display: 'flex', justifyContent: 'center', border: 'solid' }}>
       <button
@@ -103,25 +85,18 @@ const LanguagesList = () => {
         aria-haspopup="true"
         aria-expanded="false"
         style={{ borderRadius: 0 }}
+        ref={innerRef}
+        onClick={() => {
+          dispatchStargazers({
+            type: 'SET_DISPLAY',
+            payload: {
+              display: !stateStargazers.display,
+            },
+          });
+        }}
       >
         <span className="caret" />
       </button>
-      <ul className="dropdown-menu scrollable-menu">
-        {languageInfo.map((language: string, idx: number) => {
-          return (
-            <li key={idx}>
-              <a href="/" onClick={handleClick}>
-                <If condition={selectedLanguage === language}>
-                  <Then>
-                    <span id="private-tick" className="glyphicon glyphicon-ok" />
-                  </Then>
-                </If>
-                {language}
-              </a>
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 };

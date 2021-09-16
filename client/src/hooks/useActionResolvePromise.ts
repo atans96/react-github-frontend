@@ -5,14 +5,15 @@ import { filterActionResolvedPromiseData, noop } from '../util/util';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
-import { ApolloCacheDB } from '../db/db';
 import { parallel } from 'async';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
 import { GET_CLICKED, GET_SEEN, GET_USER_STARRED } from '../graphql/queries';
 import { useDexieDB } from '../db/db.ctx';
 import { useLocation } from 'react-router-dom';
 
-const conn = new ApolloCacheDB();
+let getSeenRef = false;
+let getClickedRef = false;
+let getUserInfoStarredRef = false;
 const useActionResolvePromise = () => {
   const [getSeen, { data: seenData, loading: seenDataLoading, error: seenDataError }] = useLazyQuery(GET_SEEN, {
     context: { clientName: 'mongo' },
@@ -287,18 +288,18 @@ const useActionResolvePromise = () => {
     };
   }, [loadingUserStarred, errorUserStarred, data]);
 
-  const getSeenRef = useRef(false);
-  const getClickedRef = useRef(false);
-  const getUserInfoStarredRef = useRef(false);
-
   const actionResolvePromise = useStableCallback(
     ({ action, username, data = undefined, displayName, error = undefined }: ActionResolvePromise) => {
       if (data && action === 'append') {
+        if (getSeenRef && getClickedRef && getUserInfoStarredRef) {
+          actionAppend(data)!.then(noop);
+          return;
+        }
         setData(data);
         setIsLoading({ isLoading: false });
-        if (!getSeenRef.current) {
-          getSeenRef.current = true; //mark as queried
-          conn.getSeen.get(1).then((data: any) => {
+        if (!getSeenRef) {
+          getSeenRef = true; //mark as queried
+          db.getSeen.get(1).then((data: any) => {
             if (data) {
               const temp = JSON.parse(data.data).getSeen;
               if (temp.seenCards.length > 0) {
@@ -327,9 +328,9 @@ const useActionResolvePromise = () => {
             }
           });
         }
-        if (!getClickedRef.current) {
-          getClickedRef.current = true; //mark as queried
-          conn.getClicked.get(1).then((data: any) => {
+        if (!getClickedRef) {
+          getClickedRef = true; //mark as queried
+          db.getClicked.get(1).then((data: any) => {
             if (data) {
               const temp = JSON.parse(data.data).getClicked;
               if (temp.clicked.length > 0) {
@@ -345,9 +346,9 @@ const useActionResolvePromise = () => {
             }
           });
         }
-        if (!getUserInfoStarredRef.current) {
-          getUserInfoStarredRef.current = true; //mark as queried
-          conn.getUserInfoStarred.get(1).then((data: any) => {
+        if (!getUserInfoStarredRef) {
+          getUserInfoStarredRef = true; //mark as queried
+          db.getUserInfoStarred.get(1).then((data: any) => {
             if (data) {
               const temp = JSON.parse(data.data).getUserInfoStarred;
               if (temp.starred.length > 0) {
