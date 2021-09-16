@@ -57,7 +57,7 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
     return () => {
       abortController.abort();
     };
-  });
+  }, []);
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     event.stopPropagation();

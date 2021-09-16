@@ -63,7 +63,7 @@ const RateLimit = () => {
           () =>
             getRateLimitInfo({ signal: abortController.signal }).then((data) => {
               if (abortController.signal.aborted) return;
-              if (data) {
+              if (data && !isFinished) {
                 parallel([
                   () =>
                     dispatchRateLimit({
@@ -92,7 +92,7 @@ const RateLimit = () => {
                     }),
                 ]);
               }
-              setRefetch(false); // turn back to default after setting to true from RateLimit
+              if (!isFinished) setRefetch(false); // turn back to default after setting to true from RateLimit
             }),
           () => setRefetch(false),
         ]);

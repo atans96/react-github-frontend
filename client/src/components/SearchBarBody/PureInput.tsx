@@ -240,17 +240,19 @@ const PureInput: React.FC<SearchBarProps> = ({ handleChange, style }) => {
           autoComplete="off"
           value={username}
           onChange={onInputChange}
+          disabled={!state.filterBySeen}
           ref={isInputFocused}
           onBlur={() => setUsername('')}
           style={
             username.length > 0 || stateStargazers.stargazersQueueData.length > 0
-              ? { width: `${65 + username.length * 2}px` }
-              : { width: style.width }
+              ? { width: `${65 + username.length * 2}px`, cursor: !state.filterBySeen ? 'not-allowed' : '' }
+              : { width: style.width, cursor: !state.filterBySeen ? 'not-allowed' : '' }
           }
           type="text"
           className="input-multi"
           name="query"
           placeholder={'Search...'}
+          title={state.filterBySeen ? 'Search github username or organization' : 'Please disable the Eye button first!'}
           required={stateStargazers.stargazersQueueData.length <= 0}
         />
       </div>

@@ -23,6 +23,7 @@ import { useQueryUsername, useVisible, useVisibleSearchesHistory } from '../Sear
 import { each, filter, map, parallel } from 'async';
 import { useIsFetchFinish } from '../Home';
 import { useGetSearchesMutation } from '../../apolloFactory/useGetSearchesMutation';
+import ButtonEye from './PureSearchBarBody/ButtonEye';
 
 const SearchHistories = Loadable({
   loading: Empty,
@@ -99,6 +100,13 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     }, []);
     parallel([
       () => setUsername(''),
+      () =>
+        dispatch({
+          type: 'FILTER_CARDS_BY_SEEN',
+          payload: {
+            filterBySeen: true,
+          },
+        }),
       () => setIsFetchFinish({ isFetchFinish: false }),
       () =>
         dispatchShared({
@@ -380,6 +388,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             {/* no need to separate since click event is only 1x rendering unlike onChange input at PureInput.tsx */}
             <ButtonPageSetting showTipsText={showTipsText} portal={portal} />
             <ButtonTags showTipsText={showTipsText} portalExpandable={portalExpandable} />
+            <ButtonEye showTipsText={showTipsText} />
             <button className="btn btn-primary" type="submit">
               <span className="glyphicon glyphicon-search" />
             </button>

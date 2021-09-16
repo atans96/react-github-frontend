@@ -12,6 +12,7 @@ import { Then } from '../util/react-if/Then';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { useStableCallback } from '../util';
+import DbCtx from '../db/db.ctx';
 
 //why default is explored to true? because some component doesn't use useApolloFactory to fetch at first mounted
 const directionLogin = new Map(
@@ -30,6 +31,7 @@ const directionNotLogin = new Map(
 );
 
 const NavBar = () => {
+  const { clear } = DbCtx.useContainer();
   const abortController = new AbortController();
   const [state, dispatch] = useTrackedStateShared();
   const [active, setActiveBar] = useState<any>('');
@@ -134,6 +136,7 @@ const NavBar = () => {
       if (active === 'home') {
         history.push('/');
       } else if (active === 'logout') {
+        clear();
         logoutAction(history, dispatch);
       } else {
         history.push({
@@ -145,6 +148,7 @@ const NavBar = () => {
       if (active === 'home') {
         history.push('/');
       } else if (active === 'logout') {
+        clear();
         logoutAction(history, dispatch);
       } else {
         history.push({ pathname: `/${active.toLowerCase()}` });

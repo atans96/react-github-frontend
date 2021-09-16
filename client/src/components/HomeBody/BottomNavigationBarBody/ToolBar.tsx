@@ -24,7 +24,7 @@ const useStyles = makeStyles<Theme>((theme) => ({
   },
   paginationInfo: {
     position: 'fixed',
-    left: '50%',
+    left: '45vw',
     bottom: '-10px',
     transform: 'translate(-50%, -50%)',
     margin: '0 auto',

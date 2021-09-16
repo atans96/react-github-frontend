@@ -66,6 +66,7 @@ export interface IStateStargazers {
   hasNextPage: HasNextPage;
   stargazersUsers: number;
   stargazersUsersStarredRepositories: number;
+  display: boolean;
 }
 export interface IStateShared {
   width: number;

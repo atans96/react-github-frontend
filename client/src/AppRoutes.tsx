@@ -1,4 +1,3 @@
-import DbCtx from './db/db.ctx';
 import {
   StateDiscoverProvider,
   StateStargazersProvider,
@@ -78,7 +77,6 @@ const Child = React.memo(
 );
 const AppRoutes = () => {
   const abortController = new AbortController();
-  const { db, clear } = DbCtx.useContainer();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   sysend.on('Login', function (fn) {
     dispatchShared({
@@ -187,30 +185,18 @@ const AppRoutes = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn]);
-
   useEffect(() => {
-    if (stateShared.shouldRender == ('home' || 'profile')) {
-      getFile('languages.json', abortController.signal).then((githubLanguages) => {
-        if (abortController.signal.aborted) return;
-        if (githubLanguages) {
-          dispatchShared({
-            type: 'SET_GITHUB_LANGUAGES',
-            payload: {
-              githubLanguages,
-            },
-          });
-        }
-      });
-    } else {
-      if (stateShared.githubLanguages.size > 0) {
+    getFile('languages.json', abortController.signal).then((githubLanguages) => {
+      if (abortController.signal.aborted) return;
+      if (githubLanguages) {
         dispatchShared({
           type: 'SET_GITHUB_LANGUAGES',
           payload: {
-            githubLanguages: [],
+            githubLanguages,
           },
         });
       }
-    }
+    });
   }, [stateShared.shouldRender]);
 
   useEffect(() => {
@@ -219,10 +205,6 @@ const AppRoutes = () => {
       session(false, abortController.signal).then((data) => {
         if (abortController.signal.aborted) return;
         if (data) {
-          if (!data.data) {
-            localStorage.clear();
-            clear();
-          }
           if (Boolean(data.data) && data.username.length > 0) {
             dispatchShared({
               type: 'SET_USERNAME',

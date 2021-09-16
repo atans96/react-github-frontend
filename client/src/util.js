@@ -14,6 +14,16 @@ export function urlBase64ToUint8Array(base64String) {
   }
   return outputArray;
 }
+export function cleanString(input) {
+  var output = '';
+  for (var i = 0; i < input.length; i++) {
+    if (input.charCodeAt(i) <= 127 || (input.charCodeAt(i) >= 160 && input.charCodeAt(i) <= 255)) {
+      output += input.charAt(i);
+    }
+  }
+  return output;
+}
+
 export function memoizeFn(func) {
   const memo = {};
   const slice = Array.prototype.slice;
