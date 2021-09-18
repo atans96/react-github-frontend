@@ -14,6 +14,7 @@ const ListBoxes = ({ keys, index }: { keys: string; index: number }) => {
   const style = { background: isFocused ? '#96CCFF' : '' };
   const [selectedLanguage, setSelectedLanguage] = useSelectedLanguage();
   const { dispatch } = useSelectContext();
+
   const handleClick = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();

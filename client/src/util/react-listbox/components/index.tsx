@@ -84,6 +84,7 @@ interface ISelectContext {
   expanded?: boolean;
   dispatch: Dispatch<SelectActionTypes>;
   onChange: (option: IOption | SelectedValues) => void;
+  onSelects: (option: IOption | SelectedValues, exclude: boolean) => void;
 }
 
 const SelectContext = createContext<ISelectContext | undefined>(undefined);
@@ -98,9 +99,19 @@ export const useSelectContext = () => {
 };
 
 export const List = forwardRef<HTMLUListElement, IListboxPropsAttributes>((props, ref) => {
-  const { index, labelId, buttonId, listboxId, expanded, dispatch, onChange } = useSelectContext();
+  const { index, labelId, buttonId, listboxId, expanded, dispatch, onChange, onSelects } = useSelectContext();
 
   const onSelect = useCallback(
+    (option: IOption | SelectedValues, excluded) => {
+      if (expanded) {
+        dispatch({ type: 'select option', payload: option });
+        onSelects(option, excluded);
+      }
+    },
+    [expanded, dispatch, onSelects]
+  );
+
+  const onChanges = useCallback(
     (option: IOption | SelectedValues) => {
       if (expanded) {
         dispatch({ type: 'select option', payload: option });
@@ -123,10 +134,33 @@ export const List = forwardRef<HTMLUListElement, IListboxPropsAttributes>((props
       id={listboxId}
       ref={listboxRef}
       onSelect={onSelect}
-      onChange={onSelect}
+      onChange={onChanges}
       selectedIndex={props.selectedIndex ? props.selectedIndex : index}
       focusedIndex={typeof props.selectedIndex === 'number' ? props.selectedIndex : index}
       aria-labelledby={labelId}
+      onKeyDown={(e) => {
+        if (e.keyCode === KEY_CODES.RETURN || e.keyCode === KEY_CODES.ESC) {
+          e.preventDefault();
+          dispatch({ type: 'collapse' });
+          document.getElementById(buttonId)?.focus();
+        }
+
+        if (e.keyCode === KEY_CODES.UP) {
+          e.preventDefault();
+          if (index > 0) {
+            dispatch({ type: 'select index', payload: index - 1 });
+          }
+        }
+
+        if (e.keyCode === KEY_CODES.DOWN) {
+          if (listboxRef.current) {
+            if (index < listboxRef.current?.children.length - 1) {
+              e.preventDefault();
+              dispatch({ type: 'select index', payload: index + 1 });
+            }
+          }
+        }
+      }}
       {...props}
       style={{ display: expanded ? 'block' : 'none', ...props.style }}
     />
@@ -197,8 +231,9 @@ const reducer: ReducerType = (state, action) => {
 export interface ISelectProps {
   expanded?: boolean;
   onChange: (option: IOption | SelectedValues) => void;
+  onSelects: (option: IOption | SelectedValues, exclude: boolean) => void;
 }
-export const Select: React.FC<ISelectProps> = ({ expanded, onChange, children }) => {
+export const Select: React.FC<ISelectProps> = ({ expanded, onChange, onSelects, children }) => {
   const id = useId();
   const labelId = `select-label-${id}`;
   const buttonId = `select-button-${id}`;
@@ -212,6 +247,7 @@ export const Select: React.FC<ISelectProps> = ({ expanded, onChange, children })
     listboxId,
     expanded: controlled ? expanded : state.expanded,
     onChange,
+    onSelects,
     dispatch,
     controlled,
   };
