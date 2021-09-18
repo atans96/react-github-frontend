@@ -91,6 +91,7 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
         }
       });
     } else {
+      setClicked(false);
       dispatchShared({
         type: 'SET_SEEN',
         payload: {
@@ -132,6 +133,13 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
     let isFinished = false;
     if (!isFinished && !seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length > 0) {
       parallel([
+        () =>
+          dispatchShared({
+            type: 'SET_SHOULD_RENDER',
+            payload: {
+              shouldRender: 'home',
+            },
+          }),
         () =>
           dispatchShared({
             type: 'SET_SEEN',

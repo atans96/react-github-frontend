@@ -1,9 +1,6 @@
 import { GraphQLRequest, Operation } from '../core';
 
-export function createOperation(
-  starting: any,
-  operation: GraphQLRequest,
-): Operation {
+export function createOperation(starting: any, operation: GraphQLRequest): Operation {
   let context = { ...starting };
   const setContext = (next: any) => {
     if (typeof next === 'function') {

@@ -146,8 +146,10 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
               {
                 // filter will get updated when state.language changes due to LanguagesList.tsx click event
                 stargazer.starredRepositories.nodes
-                  .map((obj: { languages: { nodes: any[] } }) => obj.languages.nodes[0])
-                  .map((x: { name: string }) => x && x.name)
+                  .map((obj) => {
+                    const sorted = Array.from(obj.languages.edges).sort((a, b) => b.size - a.size);
+                    return sorted[0].node.name;
+                  })
                   .filter((language: string) => language === stateStargazers.language).length || 0
               }
             </Typography>

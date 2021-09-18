@@ -16,19 +16,21 @@ export const MonthlyTrendsItem = React.memo<TrendSummaryProps>(({ item, trends }
   );
 });
 
-export const getDeltaByDay = (period: string) => ({ trends }: any) => {
-  const periods: any = {
-    daily: 1,
-    weekly: 7,
-    monthly: 30,
-    quarterly: 90,
-    yearly: 365,
-  };
+export const getDeltaByDay =
+  (period: string) =>
+  ({ trends }: any) => {
+    const periods: any = {
+      daily: 1,
+      weekly: 7,
+      monthly: 30,
+      quarterly: 90,
+      yearly: 365,
+    };
 
-  const delta = trends[period];
-  const numberOfDays = periods[period];
-  return average(delta, numberOfDays);
-};
+    const delta = trends[period];
+    const numberOfDays = periods[period];
+    return average(delta, numberOfDays);
+  };
 
 function average(delta: number, numberOfDays: number) {
   if (delta === undefined) return undefined; // handle recently added projects, without `yearly`, `monthly` data available

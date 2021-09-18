@@ -101,8 +101,11 @@ const Discover = React.memo(() => {
     }
     return { mapData: new Map(), arrayData: [] };
   }, [suggestedDataImages?.suggestedDataImages?.getSuggestedRepoImages?.renderImages]);
-
+  const countRef = useRef(0);
   const handleBottomHit = useStableCallback(() => {
+    if (countRef.current > 0 && isFetchFinish.current) {
+      return;
+    }
     if (
       !isFetchFinish.current &&
       stateDiscover.mergedDataDiscover.length > 0 &&
@@ -110,6 +113,7 @@ const Discover = React.memo(() => {
       location.pathname === '/discover' &&
       notification === ''
     ) {
+      countRef.current += 1;
       dispatchDiscover({ type: 'ADVANCE_PAGE_DISCOVER' });
       const result = stateDiscover.mergedDataDiscover.reduce((acc, obj: MergedDataProps) => {
         const temp = Object.assign(

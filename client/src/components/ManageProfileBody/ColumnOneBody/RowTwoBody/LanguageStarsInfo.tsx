@@ -24,7 +24,7 @@ const LanguageStarsInfo: React.FC<LanguageStarsInfoProps> = ({ languageStar, onC
       <th style={{ width: '80%' }}>{languageStar[0]}</th>
       <th
         style={{
-          backgroundColor: stateShared.githubLanguages.get(languageStar[0])?.color,
+          backgroundColor: stateShared.githubLanguages.get(languageStar[0])?.obj.color,
         }}
         className={`badge language`}
       >

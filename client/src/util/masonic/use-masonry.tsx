@@ -379,16 +379,16 @@ const getCachedSize = memoizeOne(
 );
 
 const getRefSetter = memoizeOne(
-  (positioner: Positioner, resizeObserver?: UseMasonryOptions<any>['resizeObserver']) => (index: number) => (
-    el: HTMLElement | null
-  ): void => {
-    if (el === null) return;
-    if (resizeObserver) {
-      resizeObserver.observe(el);
-      elementsCache.set(el, index);
-    }
-    if (positioner.get(index) === void 0) positioner.set(index, el.offsetHeight);
-  },
+  (positioner: Positioner, resizeObserver?: UseMasonryOptions<any>['resizeObserver']) =>
+    (index: number) =>
+    (el: HTMLElement | null): void => {
+      if (el === null) return;
+      if (resizeObserver) {
+        resizeObserver.observe(el);
+        elementsCache.set(el, index);
+      }
+      if (positioner.get(index) === void 0) positioner.set(index, el.offsetHeight);
+    },
   // @ts-ignore
   cmp2
 );

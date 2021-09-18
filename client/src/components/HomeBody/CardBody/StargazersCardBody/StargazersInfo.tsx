@@ -6,8 +6,6 @@ import { SEARCH_FOR_MORE_REPOS, SEARCH_FOR_REPOS } from '../../../../graphql/que
 import { Then } from '../../../../util/react-if/Then';
 import { If } from '../../../../util/react-if/If';
 import './StargazersInfoStyle.scss';
-import LanguagesList from './StargazersInfoBody/LanguagesList';
-import RenderLanguageList from './StargazersInfoBody/RenderLanguageList';
 
 import { StargazerProps } from '../../../../typing/type';
 import { useClickOutside } from '../../../../hooks/hooks';
@@ -16,6 +14,7 @@ import { useLocation } from 'react-router-dom';
 import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../selectors/stateContextSelector';
 import { map } from 'async';
 import { useApolloClient } from '@apollo/client';
+import LanguageButtons from './LanguageButtons';
 
 export interface StargazersInfo {
   getRootPropsCard: any;
@@ -131,10 +130,7 @@ const StargazersInfo = ({
               <tr>
                 <th style={{ width: '10%' }} className="sticky-column-table" />
                 <th style={{ width: '100%' }} className="sticky-column-table" />
-                <th style={{ width: '30%' }} className="sticky-column-table">
-                  <LanguagesList />
-                </th>
-                <RenderLanguageList />
+                <LanguageButtons />
               </tr>
             </thead>
             <If condition={!isLoading || !isLoadingFetchMore}>

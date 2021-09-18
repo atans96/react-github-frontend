@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
@@ -47,7 +47,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   const topicsCardMemoizedData = useStableCallback(() => data.topics);
 
   const stargazersMemoizedGithubData = useStableCallback(() => data);
-
+  const clickedRef = useRef(0);
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -61,6 +61,8 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
             {},
             {
               full_name: data.full_name,
+              count: clickedRef.current + 1,
+              dateClicked: new Date(),
               owner: {
                 login: data.owner.login,
               },
@@ -72,7 +74,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
           getClicked: {
             clicked: temp,
           },
-        }).then(noop);
+        }).then(() => (clickedRef.current += 1));
       }
     }
   };
@@ -85,6 +87,8 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
           {},
           {
             full_name: data.full_name,
+            count: clickedRef.current + 1,
+            dateClicked: new Date(),
             owner: {
               login: data.owner.login,
             },
@@ -96,7 +100,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         getClicked: {
           clicked: temp,
         },
-      }).then(noop);
+      }).then(() => (clickedRef.current += 1));
     }
   });
   // TODO: show network data graph visualization
@@ -126,7 +130,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
       <Stargazers data={stargazersMemoizedGithubData()} />
       <If condition={data.language !== null}>
         <Then>
-          <ul className={'language'} style={{ color: stateShared.githubLanguages.get(data?.language)?.color }}>
+          <ul className={'language'} style={{ color: stateShared.githubLanguages.get(data?.language)?.obj.color }}>
             <li className={'language-list'}>
               <h6 style={{ color: 'black', width: 'max-content' }}>{data.language}</h6>
             </li>

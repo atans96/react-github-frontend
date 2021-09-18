@@ -9,7 +9,7 @@ export type ActionStargazers =
   | 'STARGAZERS_USERS_REPOS'
   | 'STARGAZERS_HAS_NEXT_PAGE'
   | 'REMOVE_ALL'
-  | 'SET_DISPLAY'
+  | 'SET_FOCUS_LANGUAGE'
   | 'SET_LANGUAGE'
   | 'STARGAZERS_UPDATED'
   | 'STARGAZERS_ADDED_WITHOUT_FILTER'
@@ -20,7 +20,7 @@ export const initialStateStargazers: IStateStargazers = {
   stargazersData: [], // graphql request
   hasNextPage: {} as HasNextPage, // graphql request
   stargazersQueueData: [],
-  display: false,
+  focusIndex: 0,
   stargazersUsers: parseInt(localStorage.getItem('users')!) || 2, //setting
   stargazersUsersStarredRepositories: parseInt(localStorage.getItem('repos')!) || 2, //setting
 };
@@ -42,10 +42,10 @@ export const reducerStargazers = (
         stargazersQueueData: [],
       };
     }
-    case 'SET_DISPLAY': {
+    case 'SET_FOCUS_LANGUAGE': {
       return {
         ...state,
-        display: action.payload.display,
+        focusIndex: action.payload.focusIndex,
       };
     }
     case 'STARGAZERS_SORTED_LANGUAGE': {

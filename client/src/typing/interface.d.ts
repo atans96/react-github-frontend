@@ -61,12 +61,12 @@ export interface IDataOne {
 
 export interface IStateStargazers {
   stargazersData: StargazerProps[];
+  focusIndex: number;
   stargazersQueueData: StargazerProps[];
   language: string;
   hasNextPage: HasNextPage;
   stargazersUsers: number;
   stargazersUsersStarredRepositories: number;
-  display: boolean;
 }
 export interface IStateShared {
   width: number;
@@ -77,7 +77,7 @@ export interface IStateShared {
   starred: string[];
   shouldRender: string;
   perPage: number;
-  githubLanguages: Map<string, GithubLanguages>;
+  githubLanguages: Map<string, { obj: GithubLanguages; index: number }>;
   drawerWidth: number;
   queryUsername: string[];
   username: string;

@@ -4,6 +4,7 @@ import { GET_SEEN } from '../graphql/queries';
 import { SeenProps } from '../typing/type';
 import { parallel } from 'async';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
+import uniqBy from 'lodash.uniqby';
 
 export const useGetSeenMutation = () => {
   const { db } = DbCtx.useContainer();
@@ -21,14 +22,14 @@ export const useGetSeenMutation = () => {
               dispatchShared({
                 type: 'SET_SEEN',
                 payload: {
-                  seenCards: [...data, ...old?.getSeen?.seenCards],
+                  seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
                 },
               }),
             () =>
               dispatch({
                 type: 'UNDISPLAY_MERGED_DATA',
                 payload: {
-                  undisplayMergedData: [...data, ...old?.getSeen?.seenCards],
+                  undisplayMergedData: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
                 },
               }),
             () =>
@@ -36,7 +37,7 @@ export const useGetSeenMutation = () => {
                 query: GET_SEEN,
                 data: {
                   getSeen: {
-                    seenCards: [...data, ...old?.getSeen?.seenCards],
+                    seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
                   },
                 },
               }),
@@ -44,7 +45,7 @@ export const useGetSeenMutation = () => {
               db?.getSeen?.update(1, {
                 data: JSON.stringify({
                   getSeen: {
-                    seenCards: [...data, ...old?.getSeen?.seenCards],
+                    seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
                   },
                 }),
               }),

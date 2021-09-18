@@ -76,6 +76,8 @@ export const GET_CLICKED = gql`
       clicked {
         is_queried
         full_name
+        count
+        dateClicked
         owner {
           login
         }
@@ -170,9 +172,12 @@ export const SEARCH_FOR_REPOS = gql`
         nodes {
           starredRepositories(first: $starredRepoCount) {
             nodes {
-              languages(first: 1) {
-                nodes {
-                  name
+              languages(first: 10) {
+                edges {
+                  node {
+                    name
+                  }
+                  size
                 }
               }
             }
@@ -203,9 +208,12 @@ export const SEARCH_FOR_MORE_REPOS = gql`
         nodes {
           starredRepositories(first: $starredRepoCount) {
             nodes {
-              languages(first: 1) {
-                nodes {
-                  name
+              languages(first: 10) {
+                edges {
+                  node {
+                    name
+                  }
+                  size
                 }
               }
             }
