@@ -50,7 +50,7 @@ const ListBoxes = ({ keys, index }: { keys: string; index: number }) => {
 
 const RenderLanguageList = () => {
   const [, setClicked] = useClicked();
-  const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
+  const [stateStargazers] = useTrackedStateStargazers();
   const [stateShared] = useTrackedStateShared();
   const [, setSelectedLanguage] = useSelectedLanguage();
   const iterator1 = stateShared.githubLanguages[Symbol.iterator]();

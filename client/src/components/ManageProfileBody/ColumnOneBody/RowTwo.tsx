@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import LanguageStarsInfo from './RowTwoBody/LanguageStarsInfo';
 import { Counter } from '../../../util';
 import { useTrackedStateManageProfile } from '../../../selectors/stateContextSelector';
-import DbCtx from '../../../db/db.ctx';
+import DbCtx, { useDexieDB } from '../../../db/db.ctx';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
 import { GET_USER_INFO_DATA } from '../../../graphql/queries';
 import { parallel } from 'async';
@@ -29,7 +29,8 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
     useLazyQuery(GET_USER_INFO_DATA, {
       context: { clientName: 'mongo' },
     });
-  const { db } = DbCtx.useContainer();
+  // const { db } = DbCtx.useContainer();
+  const [db, setDb] = useDexieDB();
   const [, dispatchManageProfile] = useTrackedStateManageProfile();
   const [languageStarsInfo, setLanguageStarsInfo] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);

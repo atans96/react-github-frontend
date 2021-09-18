@@ -3,11 +3,12 @@ import { GET_USER_DATA } from '../graphql/queries';
 import { GraphQLUserData } from '../typing/interface';
 import { Pick2 } from '../typing/type';
 import { parallel } from 'async';
-import DbCtx from '../db/db.ctx';
+import DbCtx, { useDexieDB } from '../db/db.ctx';
 
 export const useGetUserDataMutation = () => {
   const client = useApolloClient();
-  const { db } = DbCtx.useContainer();
+  // const { db } = DbCtx.useContainer();
+  const [db, setDb] = useDexieDB();
   return async function (data: Pick2<GraphQLUserData, 'getUserData', 'languagePreference'>) {
     db?.getUserData.get(1).then((oldData: any) => {
       if (oldData?.data) {

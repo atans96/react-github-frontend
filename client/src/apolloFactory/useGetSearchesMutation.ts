@@ -1,4 +1,4 @@
-import DbCtx from '../db/db.ctx';
+import DbCtx, { useDexieDB } from '../db/db.ctx';
 import { GraphQLSearchesData } from '../typing/interface';
 import { createStore } from '../util/hooksy';
 import { useApolloClient } from '@apollo/client';
@@ -10,7 +10,8 @@ const defaultSearchesData: GraphQLSearchesData | any = {};
 export const [useSearchesDataDexie] = createStore(defaultSearchesData);
 
 export const useGetSearchesMutation = () => {
-  const { db } = DbCtx.useContainer();
+  // const { db } = DbCtx.useContainer();
+  const [db, setDb] = useDexieDB();
   const client = useApolloClient();
 
   return function (data: GraphQLSearchesData) {

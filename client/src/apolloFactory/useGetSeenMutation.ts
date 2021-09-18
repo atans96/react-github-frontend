@@ -1,4 +1,4 @@
-import DbCtx from '../db/db.ctx';
+import DbCtx, { useDexieDB } from '../db/db.ctx';
 import { useApolloClient } from '@apollo/client';
 import { GET_SEEN } from '../graphql/queries';
 import { SeenProps } from '../typing/type';
@@ -7,7 +7,8 @@ import { useTrackedState, useTrackedStateShared } from '../selectors/stateContex
 import uniqBy from 'lodash.uniqby';
 
 export const useGetSeenMutation = () => {
-  const { db } = DbCtx.useContainer();
+  // const { db } = DbCtx.useContainer();
+  const [db, setDb] = useDexieDB();
   const client = useApolloClient();
   const [, dispatchShared] = useTrackedStateShared();
   const [, dispatch] = useTrackedState();

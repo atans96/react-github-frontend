@@ -2,13 +2,14 @@ import { useApolloClient } from '@apollo/client';
 import { GET_CLICKED } from '../graphql/queries';
 import { GraphQLClickedData } from '../typing/interface';
 import { parallel } from 'async';
-import DbCtx from '../db/db.ctx';
+import DbCtx, { useDexieDB } from '../db/db.ctx';
 import { Clicked, Nullable } from '../typing/type';
 import uniqBy from 'lodash.uniqby';
 
 export const useGetClickedMutation = () => {
   const client = useApolloClient();
-  const { db } = DbCtx.useContainer();
+  // const { db } = DbCtx.useContainer();
+  const [db, setDb] = useDexieDB();
   const oldExistAndProperty = (data: GraphQLClickedData, old: GraphQLClickedData) => {
     return parallel([
       () =>
