@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { useFindItemToFocus } from './useFindItemToFocus';
 import { KEY_CODES, composeEventHandlers, focusElement } from '../utils';
+import { SelectActionTypes } from '../components';
 
 export const FOCUS_OPTION = 'focus option';
 export const SELECT_OPTION = 'select option';
@@ -79,7 +80,7 @@ export interface IDefaultProps {
 
 export interface IListboxProps {
   onChange?: (option: IOption) => void;
-  onSelect?: (value: IOption | SelectedValues) => void;
+  onSelect?: (value: IOption | SelectedValues, exclude: boolean) => void;
   multiSelect?: boolean;
   focusedIndex?: number;
   defaultSelectedIndex?: number;
@@ -95,6 +96,7 @@ export interface IControlledHandlerArgs extends IListboxProps {
   options: MutableRefObject<IOption[]>;
   listboxRef: RefObject<HTMLUListElement>;
   optionsRef: MutableRefObject<MutableRefObject<HTMLLIElement>[]>;
+  dispatch: Dispatch<SelectActionTypes>;
 }
 
 export interface IHandlerArg extends IListboxProps {
@@ -174,7 +176,7 @@ const handleClickControlled =
   (e: FocusEvent<HTMLUListElement>) => {
     const option = options.current[index];
     onChange && onChange(option);
-    onSelect && onSelect(option);
+    onSelect && onSelect(option, false);
   };
 
 const handleFocus =
@@ -212,7 +214,7 @@ const handleFocus =
   };
 
 const handleKeyDownControlled =
-  ({ state, options, onChange, onSelect, listboxRef, optionsRef }: IControlledHandlerArgs) =>
+  ({ state, options, onChange, onSelect, listboxRef, optionsRef, dispatch }: IControlledHandlerArgs) =>
   (e: KeyboardEvent<HTMLUListElement>) => {
     const key = e.which || e.keyCode;
 
@@ -243,7 +245,7 @@ const handleKeyDownControlled =
         break;
       case KEY_CODES.RETURN:
         const option = options.current[focusedIndex];
-        onSelect && onSelect(option);
+        onSelect && onSelect(option, true);
         break;
     }
   };
@@ -351,21 +353,22 @@ export const useListbox: UseListboxType = ({
       selectedIndex: controlledSelectedIndex,
     },
     options,
+    dispatch,
     onChange,
     onSelect,
     optionsRef,
     listboxRef,
-  };
+  } as IControlledHandlerArgs;
 
   const { focusedIndex, selectedIndex, selectedValue, selectedValues } = state;
 
   useEffect(() => {
     if (!isControlled) {
       if (multiSelect) {
-        onSelect && onSelect(selectedValues);
+        onSelect && onSelect(selectedValues, false);
       } else {
         const option = options.current[selectedIndex];
-        selectedIndex > -1 && option && onSelect && onSelect(option);
+        selectedIndex > -1 && option && onSelect && onSelect(option, false);
       }
     }
   }, [onSelect, multiSelect, selectedIndex, selectedValues, selectedValue, isControlled]);
@@ -384,7 +387,7 @@ export const useListbox: UseListboxType = ({
     dispatch({ type: SELECT_OPTION, payload: option });
 
     if (isControlled && option) {
-      onSelect && onSelect(option);
+      onSelect && onSelect(option, false);
     }
 
     focusElement(optionsRef.current[index].current, listboxRef.current);
