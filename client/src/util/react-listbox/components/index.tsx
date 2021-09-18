@@ -102,7 +102,7 @@ export const List = forwardRef<HTMLUListElement, IListboxPropsAttributes>((props
   const { index, labelId, buttonId, listboxId, expanded, dispatch, onChange, onSelects } = useSelectContext();
 
   const onSelect = useCallback(
-    (option: IOption | SelectedValues, excluded) => {
+    (option: IOption | SelectedValues, excluded: boolean) => {
       if (expanded) {
         dispatch({ type: 'select option', payload: option });
         onSelects(option, excluded);
