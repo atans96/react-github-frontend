@@ -34,7 +34,7 @@ export const initialStateShared: IStateShared = {
   searches: [],
   userData: {},
   starred: [],
-  githubLanguages: new Map<string, GithubLanguages>(),
+  githubLanguages: new Map<string, { obj: GithubLanguages; index: number }>(),
   perPage: parseInt(localStorage.getItem('perPage')!) || 10, //setting
   tokenRSS: '', //setting
   tokenGQL: '', //setting
@@ -106,7 +106,8 @@ export const reducerShared = (state = initialStateShared, action: IAction<Action
       return {
         ...state,
         githubLanguages: new Map(
-          action.payload.githubLanguages.map((obj: GithubLanguages) => [obj.language, obj]) || []
+          action.payload.githubLanguages.map((obj: GithubLanguages, index: number) => [obj.language, { obj, index }]) ||
+            []
         ),
       };
     }

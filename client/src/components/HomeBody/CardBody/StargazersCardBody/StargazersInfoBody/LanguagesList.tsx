@@ -1,14 +1,16 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import './LanguageListStyle.scss';
 import { StargazerProps } from '../../../../../typing/type';
 import { fastFilter } from '../../../../../util';
-import { useTrackedStateStargazers } from '../../../../../selectors/stateContextSelector';
-import { useSelectedLanguage } from './RenderLanguageList';
+import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../../selectors/stateContextSelector';
 import { useOuterClick } from '../../../../../hooks/hooks';
+import { useSelectContext } from '../../../../../util/react-listbox';
+import { useClicked, useSelectedLanguage } from '../LanguageButtons';
 
 const LanguagesList = () => {
   const abortController = new AbortController();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
+  const [stateShared] = useTrackedStateShared();
   const evenOdd = useRef(0);
   const [selectedLanguage] = useSelectedLanguage();
 
@@ -16,9 +18,7 @@ const LanguagesList = () => {
     e.preventDefault();
     e.stopPropagation();
     const temp = stateStargazers.stargazersData.reduce((acc: any[], stargazer: StargazerProps) => {
-      const temp = stargazer.starredRepositories.nodes.map(
-        (obj: any) => obj.languages.nodes.map((obj: any) => obj.name)[0]
-      );
+      const temp = stargazer.starredRepositories.nodes.map((obj) => obj.languages.edges.map((obj) => obj.node.name)[0]);
       const languages = fastFilter((language: string) => language === stateStargazers.language, temp);
       acc.push(Object.assign({}, { id: stargazer.id, languages: languages.length }));
       return acc;
@@ -53,19 +53,41 @@ const LanguagesList = () => {
 
   useEffect(() => {
     return () => {
-      console.log('abort');
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     };
   }, []);
 
-  const innerRef = useOuterClick(() =>
+  const { size, expanded, index, dispatch, labelId, buttonId } = useSelectContext();
+  const [clicked, setClicked] = useClicked();
+  const innerRef = useOuterClick(() => {
+    dispatch({ type: 'collapse' });
+    setClicked(false);
+  }) as any;
+
+  useEffect(() => {
     dispatchStargazers({
-      type: 'SET_DISPLAY',
+      type: 'SET_FOCUS_LANGUAGE',
       payload: {
-        display: false,
+        focusIndex: index,
       },
-    })
-  ) as any;
+    });
+  }, [index]);
+
+  useEffect(() => {
+    if (size === stateShared.githubLanguages.size) {
+      dispatch({ type: 'expand' });
+      dispatch({ type: 'reset_size' });
+    }
+  }, [size]);
+
+  const onClick = () => {
+    if (!clicked) {
+      setClicked(true);
+    } else {
+      dispatch({ type: 'collapse' });
+      setClicked(false);
+    }
+  };
   return (
     <div className="btn-group" style={{ display: 'flex', justifyContent: 'center', border: 'solid' }}>
       <button
@@ -79,21 +101,14 @@ const LanguagesList = () => {
       </button>
       <button
         title={'Filter by language'}
-        type="button"
         className="btn btn-default dropdown-toggle"
-        data-toggle="dropdown"
-        aria-haspopup="true"
-        aria-expanded="false"
         style={{ borderRadius: 0 }}
+        id={buttonId}
+        onClick={onClick}
+        aria-haspopup="listbox"
+        aria-expanded={expanded}
+        aria-labelledby={`${labelId} ${buttonId}`}
         ref={innerRef}
-        onClick={() => {
-          dispatchStargazers({
-            type: 'SET_DISPLAY',
-            payload: {
-              display: !stateStargazers.display,
-            },
-          });
-        }}
       >
         <span className="caret" />
       </button>

@@ -19,6 +19,7 @@
     "@material-ui/icons": "^4.9.1",
     "@material-ui/lab": "^4.0.0-alpha.56",
     "@primer/css": "^15.2.0",
+    "@reach/auto-id": "^0.16.0",
     "@react-hook/event": "^1.2.2",
     "@react-hook/latest": "^1.0.3",
     "@react-hook/passive-layout-effect": "^1.2.0",

@@ -116,7 +116,7 @@ export const selectHttpOptionsAndBody = (
    * use the rest of the configs to populate the options
    * configs later in the list will overwrite earlier fields
    */
-  configs.forEach(config => {
+  configs.forEach((config) => {
     options = {
       ...options,
       ...config.options,
@@ -148,12 +148,10 @@ export const selectHttpOptionsAndBody = (
   };
 };
 
-function headersToLowerCase(
-  headers: Record<string, string> | undefined
-): typeof headers {
+function headersToLowerCase(headers: Record<string, string> | undefined): typeof headers {
   if (headers) {
     const normalized = Object.create(null);
-    Object.keys(Object(headers)).forEach(name => {
+    Object.keys(Object(headers)).forEach((name) => {
       normalized[name.toLowerCase()] = headers[name];
     });
     return normalized;

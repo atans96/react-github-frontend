@@ -4,11 +4,7 @@ export type ServerError = Error & {
   statusCode: number;
 };
 
-export const throwServerError = (
-  response: Response,
-  result: any,
-  message: string
-) => {
+export const throwServerError = (response: Response, result: any, message: string) => {
   const error = new Error(message) as ServerError;
   error.name = 'ServerError';
   error.response = response;

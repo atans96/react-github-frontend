@@ -70,16 +70,13 @@ const Home = () => {
   const isMergedDataExist = state.mergedData.length > 0;
   const isSeenCardsExist = stateShared?.seenCards?.length > 0 || false;
   const isTokenRSSExist = (localStorage.getItem('tokenRSS') || '').length > 0;
-
+  const countRef = useRef(0);
   const handleBottomHit = useStableCallback(() => {
-    if (
-      !isFetchFinish.isFetchFinish &&
-      state.mergedData.length > 0 &&
-      !isLoading.isLoading &&
-      location.pathname === '/' &&
-      notification.notification === '' &&
-      state.filterBySeen
-    ) {
+    if (countRef.current > 0 && isFetchFinish.isFetchFinish) {
+      return;
+    }
+    if (state.mergedData.length > 0 && !isLoading.isLoading && location.pathname === '/' && state.filterBySeen) {
+      countRef.current += 1;
       dispatch({
         type: 'ADVANCE_PAGE',
       });
@@ -118,7 +115,7 @@ const Home = () => {
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
-    isLoading.isLoading || !isMergedDataExist || isFetchFinish.isFetchFinish // include isFetchFinish to indicate not to listen anymore
+    isLoading.isLoading || !isMergedDataExist || !isFetchFinish.isFetchFinish // include isFetchFinish to indicate not to listen anymore
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {

@@ -82,7 +82,7 @@ const RepoInfo: React.FC<Props> = ({ obj, onClickRepoInfo, active }) => {
                   width: 'fit-content',
                   padding: '2px 1em',
                   borderRadius: '5px',
-                  backgroundColor: stateShared.githubLanguages.get(obj?.language)?.color,
+                  backgroundColor: stateShared.githubLanguages.get(obj?.language)?.obj.color,
                 }}
                 className={`language`}
               >

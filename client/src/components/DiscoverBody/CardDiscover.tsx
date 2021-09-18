@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { MergedDataProps } from '../../typing/type';
 import clsx from 'clsx';
@@ -13,7 +13,7 @@ import Empty from '../Layout/EmptyLayout';
 import { Then } from '../../util/react-if/Then';
 import { If } from '../../util/react-if/If';
 import { useGetClickedMutation } from '../../apolloFactory/useGetClickedMutation';
-import GitHubIcon from "@material-ui/icons/GitHub";
+import GitHubIcon from '@material-ui/icons/GitHub';
 
 const ImagesCardDiscover = Loadable({
   loading: Empty,
@@ -40,7 +40,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
   const stargazersMemoizedGithubData = useStableCallback(() => githubData);
 
   const clickedAdded = useGetClickedMutation();
-
+  const clickedRef = useRef(0);
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -50,21 +50,22 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
       window.open(`/detail/${githubData.id}`);
       const temp = [
         Object.assign(
-            {},
-            {
-              full_name: githubData.full_name,
-              owner: {
-                login: githubData.owner.login,
-              },
-              is_queried: false,
-            }
+          {},
+          {
+            full_name: githubData.full_name,
+            count: clickedRef.current + 1,
+            owner: {
+              login: githubData.owner.login,
+            },
+            is_queried: false,
+          }
         ),
       ];
       clickedAdded({
         getClicked: {
           clicked: temp,
         },
-      }).then(noop);
+      }).then(() => (clickedRef.current += 1));
     }
   };
   const handleDetailsClicked = (e: React.MouseEvent) => {
@@ -72,74 +73,75 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
     e.stopPropagation();
     const temp = [
       Object.assign(
-          {},
-          {
-            full_name: githubData.full_name,
-            owner: {
-              login: githubData.owner.login,
-            },
-            is_queried: false,
-          }
+        {},
+        {
+          full_name: githubData.full_name,
+          count: clickedRef.current + 1,
+          owner: {
+            login: githubData.owner.login,
+          },
+          is_queried: false,
+        }
       ),
     ];
     clickedAdded({
       getClicked: {
         clicked: temp,
       },
-    }).then(noop);
+    }).then(() => (clickedRef.current += 1));
   };
   const location = useLocation();
   if (!githubData) return <p>No githubData, sorry</p>;
   return (
-      <div
-          className={clsx('card bg-light fade-in', {
-            'card-width-mobile': columnCount === 1,
-          })}
-      >
-        <UserCardDiscover data={userCardMemoizedData()} sorted={sorted} />
-        <h3 style={{ textAlign: 'center' }}>
-          <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
-        </h3>
-        {imagesMapDataDiscover.size > 0 && (
-            <ImagesCardDiscover index={index} imagesMapDataDiscover={imagesMapDataDiscover} />
-        )}
+    <div
+      className={clsx('card bg-light fade-in', {
+        'card-width-mobile': columnCount === 1,
+      })}
+    >
+      <UserCardDiscover data={userCardMemoizedData()} sorted={sorted} />
+      <h3 style={{ textAlign: 'center' }}>
+        <strong>{githubData.name.toUpperCase().replace(/[_-]/g, ' ')}</strong>
+      </h3>
+      {imagesMapDataDiscover.size > 0 && (
+        <ImagesCardDiscover index={index} imagesMapDataDiscover={imagesMapDataDiscover} />
+      )}
 
-        <div className="trunctuatedTexts">
-          <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
-        </div>
-        <StargazersDiscover data={stargazersMemoizedGithubData()} />
-        <If condition={githubData.language !== null}>
-          <Then>
-            <ul
-                className={'language'}
-                style={{
-                  backgroundColor: 'transparent',
-                  color: stateShared.githubLanguages.get(githubData?.language)?.color,
-                }}
-            >
-              <li className={'language-list'}>
-                <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
-              </li>
-            </ul>
-          </Then>
-        </If>
-        <div style={{ textAlign: 'center', overflowWrap: 'anywhere' }} onClick={handleDetailsClicked}>
-          <a href={githubData.html_url} onClick={() => window.open(githubData.html_url)} target="_blank">
-            <GitHubIcon />
-          </a>
-        </div>
-        <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
-          <NavLink
-              to={{
-                pathname: `/detail/${githubData.id}`,
-                state: JSON.stringify({ data: githubData, path: location.pathname }),
-              }}
-              className="btn-clear nav-link"
-          >
-            <p>MORE DETAILS</p>
-          </NavLink>
-        </div>
+      <div className="trunctuatedTexts">
+        <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
       </div>
+      <StargazersDiscover data={stargazersMemoizedGithubData()} />
+      <If condition={githubData.language !== null}>
+        <Then>
+          <ul
+            className={'language'}
+            style={{
+              backgroundColor: 'transparent',
+              color: stateShared.githubLanguages.get(githubData?.language)?.obj.color,
+            }}
+          >
+            <li className={'language-list'}>
+              <h6 style={{ color: 'black', width: 'max-content' }}>{githubData.language}</h6>
+            </li>
+          </ul>
+        </Then>
+      </If>
+      <div style={{ textAlign: 'center', overflowWrap: 'anywhere' }} onClick={handleDetailsClicked}>
+        <a href={githubData.html_url} onClick={() => window.open(githubData.html_url)} target="_blank">
+          <GitHubIcon />
+        </a>
+      </div>
+      <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
+        <NavLink
+          to={{
+            pathname: `/detail/${githubData.id}`,
+            state: JSON.stringify({ data: githubData, path: location.pathname }),
+          }}
+          className="btn-clear nav-link"
+        >
+          <p>MORE DETAILS</p>
+        </NavLink>
+      </div>
+    </div>
   );
 };
 CardDiscover.displayName = 'CardDiscover';

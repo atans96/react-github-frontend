@@ -10,7 +10,7 @@ export const serializeFetchParameter = (p: any, label: string) => {
     serialized = JSON.stringify(p);
   } catch (e) {
     const parseError = new InvariantError(
-      `Network request failed. ${label} is not serializable: ${e.message}`,
+      `Network request failed. ${label} is not serializable: ${e.message}`
     ) as ClientParseError;
     parseError.parseError = e;
     throw parseError;

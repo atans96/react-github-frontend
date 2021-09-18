@@ -124,8 +124,9 @@ export type StargazerProps = {
       [x: string]: any;
       languages: {
         [x: string]: any;
-        nodes: Array<{
-          name: string;
+        edges: Array<{
+          node: { name: string };
+          size: number;
         }>;
       };
     }>;
