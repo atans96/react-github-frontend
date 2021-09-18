@@ -47,7 +47,6 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   const topicsCardMemoizedData = useStableCallback(() => data.topics);
 
   const stargazersMemoizedGithubData = useStableCallback(() => data);
-  const clickedRef = useRef(0);
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -61,7 +60,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
             {},
             {
               full_name: data.full_name,
-              count: clickedRef.current + 1,
+              count: 1,
               dateClicked: new Date(),
               owner: {
                 login: data.owner.login,
@@ -74,7 +73,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
           getClicked: {
             clicked: temp,
           },
-        }).then(() => (clickedRef.current += 1));
+        }).then(noop);
       }
     }
   };
@@ -87,7 +86,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
           {},
           {
             full_name: data.full_name,
-            count: clickedRef.current + 1,
+            count: 1,
             dateClicked: new Date(),
             owner: {
               login: data.owner.login,
@@ -100,7 +99,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         getClicked: {
           clicked: temp,
         },
-      }).then(() => (clickedRef.current += 1));
+      }).then(noop);
     }
   });
   // TODO: show network data graph visualization

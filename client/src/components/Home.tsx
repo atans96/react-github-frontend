@@ -115,7 +115,7 @@ const Home = () => {
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
-    isLoading.isLoading || !isMergedDataExist || !isFetchFinish.isFetchFinish // include isFetchFinish to indicate not to listen anymore
+    isLoading.isLoading || !isMergedDataExist || isFetchFinish.isFetchFinish // include isFetchFinish to indicate not to listen anymore
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {

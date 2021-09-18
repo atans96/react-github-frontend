@@ -1,4 +1,4 @@
-import DbCtx from '../db/db.ctx';
+import DbCtx, { useDexieDB } from '../db/db.ctx';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useApolloClient } from '@apollo/client';
 import { GET_USER_STARRED } from '../graphql/queries';
@@ -7,7 +7,8 @@ import { GraphQLUserStarred } from '../typing/interface';
 import uniqBy from 'lodash.uniqby';
 
 export const useGetUserInfoStarredMutation = () => {
-  const { db } = DbCtx.useContainer();
+  // const { db } = DbCtx.useContainer();
+  const [db, setDb] = useDexieDB();
   const [, dispatchShared] = useTrackedStateShared();
   const client = useApolloClient();
   const oldExistAndProperty = (data: GraphQLUserStarred, old: GraphQLUserStarred) => {

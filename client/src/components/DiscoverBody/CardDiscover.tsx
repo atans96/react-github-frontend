@@ -40,7 +40,6 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
   const stargazersMemoizedGithubData = useStableCallback(() => githubData);
 
   const clickedAdded = useGetClickedMutation();
-  const clickedRef = useRef(0);
   const mouseDownHandler = (event: React.MouseEvent) => {
     event.preventDefault();
     event.stopPropagation();
@@ -53,7 +52,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
           {},
           {
             full_name: githubData.full_name,
-            count: clickedRef.current + 1,
+            count: 1,
             owner: {
               login: githubData.owner.login,
             },
@@ -65,7 +64,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
         getClicked: {
           clicked: temp,
         },
-      }).then(() => (clickedRef.current += 1));
+      }).then(noop);
     }
   };
   const handleDetailsClicked = (e: React.MouseEvent) => {
@@ -76,7 +75,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
         {},
         {
           full_name: githubData.full_name,
-          count: clickedRef.current + 1,
+          count: 1,
           owner: {
             login: githubData.owner.login,
           },
@@ -88,7 +87,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
       getClicked: {
         clicked: temp,
       },
-    }).then(() => (clickedRef.current += 1));
+    }).then(noop);
   };
   const location = useLocation();
   if (!githubData) return <p>No githubData, sorry</p>;

@@ -25,10 +25,6 @@ import {
   NotFoundLoadable,
   SearchBarLoadable,
 } from './AppRoutesLoadable';
-import { useGetUserInfoStarredMutation } from './apolloFactory/useGetUserInfoStarredMutation';
-import { useGetClickedMutation } from './apolloFactory/useGetClickedMutation';
-import { useGetSeenMutation } from './apolloFactory/useGetSeenMutation';
-import { useRSSFeedMutation } from './apolloFactory/useRSSFeedMutation';
 
 interface AppRoutes {
   shouldRender: string;
@@ -97,11 +93,6 @@ const AppRoutes = () => {
     }
   );
 
-  const { addedStarredMe } = useGetUserInfoStarredMutation();
-  const clickedAdded = useGetClickedMutation();
-  const seenAdded = useGetSeenMutation();
-  const rssFeedAdded = useRSSFeedMutation();
-
   useEffect(() => {
     if (lastJsonMessage?.updateDescription && Object.keys(lastJsonMessage?.updateDescription).length > 0) {
       const updatedFields = lastJsonMessage?.updateDescription.updatedFields;
@@ -109,22 +100,9 @@ const AppRoutes = () => {
         for (let [x, y] of Object.entries(associate)) {
           if (x.includes(key) && y === y + '') {
             switch (y) {
-              case 'getRSSFeed':
-                rssFeedAdded(value).then(noop);
-                break;
-              case 'getSeen':
+              case 'getSuggested': //TODO: only subscribe to suggested topic
                 if (Array.isArray(value) && value?.length > 0) {
-                  seenAdded(value);
-                }
-                break;
-              case 'getClicked':
-                if (Array.isArray(value) && value?.length > 0) {
-                  clickedAdded(value).then(noop);
-                }
-                break;
-              case 'getUserInfoStarred':
-                if (Array.isArray(value) && value?.length > 0) {
-                  addedStarredMe(value).then(noop);
+                  console.log('suggested updated');
                 }
                 break;
             }
