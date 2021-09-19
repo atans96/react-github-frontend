@@ -7,9 +7,9 @@ import sysend from 'sysend';
 import { useApolloClient } from '@apollo/client';
 import useWebSocket from './util/websocket';
 import { readEnvironmentVariable, urlBase64ToUint8Array } from './util';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { associate } from './graphql/queries';
-import { endOfSession, getFile, getTokenGQL, session, subscribeToApollo } from './services';
+import { endOfSession, getFile, getTokenGQL, session, startOfSessionDexie, subscribeToApollo } from './services';
 import { noop } from './util/util';
 import { Route, Switch, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar';
@@ -73,7 +73,7 @@ const Child = React.memo(
   }
 );
 const AppRoutes = () => {
-  const { db } = DbCtx.useContainer();
+  const { db, clear } = DbCtx.useContainer();
   const abortController = new AbortController();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   sysend.on('Login', function (fn) {
@@ -178,7 +178,7 @@ const AppRoutes = () => {
       }
     });
   }, [stateShared.shouldRender]);
-
+  const [doneFetch, setDoneFetch] = useState(false);
   useEffect(() => {
     let isFinished = false;
     if (!isFinished) {
@@ -198,6 +198,7 @@ const AppRoutes = () => {
             });
           }
         }
+        setDoneFetch(true);
       });
       if (stateShared.isLoggedIn && stateShared.username.length > 0) {
         sendJsonMessage({
@@ -223,58 +224,97 @@ const AppRoutes = () => {
     return () => {
       isFinished = true;
     };
-  }, [stateShared.isLoggedIn, stateShared.username]);
+  }, [stateShared.isLoggedIn, stateShared.username, db]);
 
   useEffect(() => {
-    if (db) {
-      Promise.all([
-        new Promise((resolve) => {
+    if (db && doneFetch && stateShared.isLoggedIn) {
+      Promise.allSettled([
+        new Promise((resolve, reject) => {
           db?.getSeen.get(1).then((oldData: any) => {
             if (oldData && oldData?.data) {
               resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            } else {
+              reject('');
             }
           });
         }),
-        new Promise((resolve) => {
+        new Promise((resolve, reject) => {
           db?.getClicked.get(1).then((oldData: any) => {
             if (oldData && oldData?.data) {
               resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            } else {
+              reject('');
             }
           });
         }),
-        new Promise((resolve) => {
+        new Promise((resolve, reject) => {
           db?.getSearches.get(1).then((oldData: any) => {
             if (oldData && oldData?.data) {
               resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            } else {
+              reject('');
             }
           });
         }),
-        new Promise((resolve) => {
+        new Promise((resolve, reject) => {
           db?.getUserInfoStarred.get(1).then((oldData: any) => {
             if (oldData && oldData?.data) {
               resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            } else {
+              reject('');
             }
           });
         }),
-        new Promise((resolve) => {
+        new Promise((resolve, reject) => {
           db?.getUserInfoStarred.get(1).then((oldData: any) => {
             if (oldData && oldData?.data) {
               resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            } else {
+              reject('');
+            }
+          });
+        }),
+        new Promise((resolve, reject) => {
+          db?.getUserData.get(1).then((oldData: any) => {
+            if (oldData && oldData?.data) {
+              resolve({
+                [Object.keys(JSON.parse(oldData.data))[0]]: {
+                  languagePreference: JSON.parse(oldData.data).getUserData.languagePreference,
+                  avatar: JSON.parse(oldData.data).getUserData.avatar,
+                },
+              });
+            } else {
+              reject('');
             }
           });
         }),
       ]).then((res) => {
-        console.log(res);
+        const result = res
+          .map((obj) => {
+            if (obj.status === 'fulfilled') {
+              return obj.value;
+            }
+          })
+          .filter((e) => !!e);
+        if (result.length > 0) startOfSessionDexie(stateShared.username, result).then(noop);
+      });
+    } else if (doneFetch && !stateShared.isLoggedIn) {
+      clear();
+      localStorage.clear();
+      navigator?.serviceWorker?.controller?.postMessage({
+        type: 'logout',
       });
     }
-  }, [db]);
+  }, [db, doneFetch]);
 
   window.onbeforeunload = () => {
     if (stateShared.isLoggedIn) {
       sendJsonMessage({
         close: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') },
       });
-      // Promise.all([endOfSession(stateShared.username, client.cache.extract())]).then(noop);
+      if ((client.cache.extract() as any).ROOT_QUERY.getRSSFeed) {
+        Promise.all([endOfSession(stateShared.username, client.cache.extract())]).then(noop);
+      }
     }
     return window.close();
   };

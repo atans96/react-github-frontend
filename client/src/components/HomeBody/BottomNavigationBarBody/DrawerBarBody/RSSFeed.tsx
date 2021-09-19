@@ -78,73 +78,98 @@ const RSSFeed = () => {
 
   const updater = async (tokenAdd: any, re: any) => {
     return new Promise((resolve, reject) => {
-      getRSSFeed(tokenAdd, abortController.signal)
+      getRSSFeed(stateShared.username, tokenAdd, abortController.signal)
         .then((res) => {
           let matches;
           const output: any[] = [];
           let HTML: string[] = [];
           const HTMLRender: Array<{ content: string; update: Date }> = [];
           try {
-            forEach(
-              res.items,
-              (obj: any) => {
-                const ja = JSON.parse(obj);
-                while ((matches = re.exec(ja.content))) {
-                  if (matches) {
-                    const match = matches[0].match('href="(.*?)"')[1];
-                    output.push(
-                      Object.assign(
-                        {},
-                        {
-                          index: matches.index,
-                          value: 'href=https://github.com' + match,
-                          len: matches[0].match('href="(.*?)"')[0].length,
-                        }
-                      )
-                    );
-                  } else {
-                    break;
-                  }
+            res.items.forEach((str: string) => {
+              const ja = JSON.parse(str);
+              while ((matches = re.exec(ja.content))) {
+                if (matches) {
+                  const match = matches[0].match('href="(.*?)"')[1];
+                  output.push(
+                    Object.assign(
+                      {},
+                      {
+                        index: matches.index,
+                        value: 'href=https://github.com' + match,
+                        len: matches[0].match('href="(.*?)"')[0].length,
+                      }
+                    )
+                  );
+                } else {
+                  break;
                 }
-                const a = ja.content.toString().replace(/./g, (c: any, i: any) => {
-                  if (output.length > 0 && i === parseInt(output[0].index)) {
-                    const returnOutput = output[0].value + ' ';
-                    output.shift();
-                    return returnOutput;
-                  } else {
-                    return c;
-                  }
-                });
-                HTMLRender.push({ update: new Date(ja.updatedParsed), content: a });
-              },
-              (err) => {
-                if (err) {
-                  throw new Error('err');
+              }
+              const a = ja.content.toString().replace(/./g, (c: any, i: any) => {
+                if (output.length > 0 && i === parseInt(output[0].index)) {
+                  const returnOutput = output[0].value + ' ';
+                  output.shift();
+                  return returnOutput;
+                } else {
+                  return c;
                 }
-                HTMLRender.sortBy(function (o: any) {
-                  return -o.update;
-                });
-                HTML = HTMLRender.map((obj) => obj.content);
-                switch (isTokenRSSExist) {
+              });
+              HTMLRender.push({ update: new Date(ja.updatedParsed), content: a });
+            });
+            HTML = HTMLRender.map((obj) => obj.content);
+            switch (isTokenRSSExist) {
+              case false:
+                if (isMounted.current) {
+                  setLoading(false);
+                  setToken('');
+                  dispatch({
+                    type: 'TOKEN_RSS_ADDED',
+                    payload: {
+                      tokenRSS: token,
+                    },
+                  });
+                  localStorage.setItem('tokenRSS', token);
+                  setRSSFeed(HTML);
+                  rssFeedAdded({
+                    getRSSFeed: {
+                      rss: HTML,
+                      lastSeen: HTML,
+                    },
+                  })
+                    .then(noop)
+                    .catch((e: any) => {
+                      setLoading(false);
+                      setNotification(e.message);
+                      reject({ status: 400 });
+                    });
+                }
+                break;
+              case true:
+                switch (openRSS) {
                   case false:
                     if (isMounted.current) {
-                      setLoading(false);
-                      setToken('');
-                      dispatch({
-                        type: 'TOKEN_RSS_ADDED',
-                        payload: {
-                          tokenRSS: token,
-                        },
-                      });
-                      localStorage.setItem('tokenRSS', token);
-                      setRSSFeed(HTML);
+                      unseenFeeds.current = [];
+                      //TODO: need to get different betweeen string in lastSeen and string in rss array
                       rssFeedAdded({
                         getRSSFeed: {
                           rss: HTML,
-                          lastSeen: HTML,
+                          lastSeen: [],
                         },
                       })
-                        .then(noop)
+                        .then((res) => {
+                          if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
+                            setRSSFeed(HTML);
+                            resolve({ status: 200 });
+                            return;
+                          }
+                          if (res.getRSSFeed.lastSeen) {
+                            unseenFeeds.current = fastFilter(
+                              (x: string) => res.getRSSFeed.lastSeen.indexOf(x) === -1,
+                              res.getRSSFeed.rss
+                            );
+                            setNotificationBadge(unseenFeeds.current.length);
+                            resolve({ status: 200 });
+                          }
+                        })
                         .catch((e: any) => {
                           setLoading(false);
                           setNotification(e.message);
@@ -153,70 +178,35 @@ const RSSFeed = () => {
                     }
                     break;
                   case true:
-                    switch (openRSS) {
-                      case false:
-                        if (isMounted.current) {
-                          unseenFeeds.current = [];
-                          rssFeedAdded({
-                            getRSSFeed: {
-                              rss: HTML,
-                              lastSeen: [],
-                            },
-                          })
-                            .then((res) => {
-                              if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
-                                setRSSFeed(HTML);
-                                resolve({ status: 200 });
-                                return;
-                              }
-                              if (res.getRSSFeed.lastSeen) {
-                                unseenFeeds.current = fastFilter(
-                                  (x: string) => res.getRSSFeed.lastSeen.indexOf(x) === -1,
-                                  res.getRSSFeed.rss
-                                );
-                                setNotificationBadge(unseenFeeds.current.length);
-                                resolve({ status: 200 });
-                              }
-                            })
-                            .catch((e: any) => {
-                              setLoading(false);
-                              setNotification(e.message);
-                              reject({ status: 400 });
-                            });
-                        }
-                        break;
-                      case true:
-                        if (isMounted.current) {
-                          const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
-                          rssFeedAdded({
-                            getRSSFeed: {
-                              rss: HTML,
-                              lastSeen: uniqq,
-                            },
-                          })
-                            .then((res) => {
-                              if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
-                                setRSSFeed(HTML);
-                                resolve({ status: 200 });
-                                return;
-                              }
-                              const uniqq = uniqFast([...res.getRSSFeed.lastSeen, ...res.getRSSFeed.rss]);
-                              setRSSFeed(uniqq); //show it to the user
-                              if (notificationBadge > 0) {
-                                setNotificationBadge(0);
-                              }
-                              resolve({ status: 200 });
-                            })
-                            .catch((e: any) => {
-                              setLoading(false);
-                              setNotification(e.message);
-                              reject({ status: 400 });
-                            });
-                        }
+                    if (isMounted.current) {
+                      const uniqq = uniqFast([...HTML, ...unseenFeeds.current]);
+                      rssFeedAdded({
+                        getRSSFeed: {
+                          rss: HTML,
+                          lastSeen: uniqq,
+                        },
+                      })
+                        .then((res) => {
+                          if (res.getRSSFeed.rss.length === 0 && res.getRSSFeed.lastSeen.length === 0) {
+                            setRSSFeed(HTML);
+                            resolve({ status: 200 });
+                            return;
+                          }
+                          const uniqq = uniqFast([...res.getRSSFeed.lastSeen, ...res.getRSSFeed.rss]);
+                          setRSSFeed(uniqq); //show it to the user
+                          if (notificationBadge > 0) {
+                            setNotificationBadge(0);
+                          }
+                          resolve({ status: 200 });
+                        })
+                        .catch((e: any) => {
+                          setLoading(false);
+                          setNotification(e.message);
+                          reject({ status: 400 });
+                        });
                     }
                 }
-              }
-            );
+            }
           } catch (error) {
             if (isMounted.current) {
               console.log(error);

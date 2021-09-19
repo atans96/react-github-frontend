@@ -1,9 +1,7 @@
-import DbCtx, { useDexieDB } from '../db/db.ctx';
+import { useDexieDB } from '../db/db.ctx';
 import { GraphQLSearchesData } from '../typing/interface';
 import { createStore } from '../util/hooksy';
-import { useApolloClient } from '@apollo/client';
-import { GET_SEARCHES } from '../graphql/queries';
-import { map, parallel } from 'async';
+import { map } from 'async';
 import { Searches } from '../typing/type';
 
 const defaultSearchesData: GraphQLSearchesData | any = {};
@@ -12,7 +10,6 @@ export const [useSearchesDataDexie] = createStore(defaultSearchesData);
 export const useGetSearchesMutation = () => {
   // const { db } = DbCtx.useContainer();
   const [db, setDb] = useDexieDB();
-  const client = useApolloClient();
 
   return function (data: GraphQLSearchesData) {
     db?.transaction('rw', [db?.getSearches], () => {
@@ -42,50 +39,26 @@ export const useGetSearchesMutation = () => {
               if (err) {
                 throw new Error('Err');
               }
-              parallel([
-                () =>
-                  client.cache.writeQuery({
-                    query: GET_SEARCHES,
-                    data: {
-                      getSearches: {
-                        searches: needAppend ? [...data.getSearches.searches, ...res] : res,
-                      },
-                    },
-                  }),
-                () =>
-                  db?.getSearches?.update(1, {
-                    data: JSON.stringify({
-                      getSearches: {
-                        searches: needAppend ? [...data.getSearches.searches, ...res] : res,
-                      },
-                    }),
-                  }),
-              ]);
+              db?.getSearches?.update(1, {
+                data: JSON.stringify({
+                  getSearches: {
+                    searches: needAppend ? [...data.getSearches.searches, ...res] : res,
+                  },
+                }),
+              });
             }
           );
         } else {
-          parallel([
-            () =>
-              client.cache.writeQuery({
-                query: GET_SEARCHES,
-                data: {
-                  getSearches: {
-                    searches: [...data.getSearches.searches],
-                  },
+          db?.getSearches?.add(
+            {
+              data: JSON.stringify({
+                getSearches: {
+                  searches: [...data.getSearches.searches],
                 },
               }),
-            () =>
-              db?.getSearches?.add(
-                {
-                  data: JSON.stringify({
-                    getSearches: {
-                      searches: [...data.getSearches.searches],
-                    },
-                  }),
-                },
-                1
-              ),
-          ]);
+            },
+            1
+          );
         }
       });
     });
