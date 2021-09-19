@@ -51,7 +51,6 @@ const NavBar = () => {
   const previousClickedId = useRef<number>(number || 0);
   const previousActive = useRef<string>('');
   const [isFinished, setIsFinished] = useState<boolean>(true);
-  const [stateShared] = useTrackedStateShared();
   const history = useHistory();
 
   useEffect(() => {
@@ -109,7 +108,7 @@ const NavBar = () => {
       if (event.currentTarget.id === 'home') {
         history.push('/');
       } else if (event.currentTarget.id === 'logout') {
-        logoutAction(history, dispatch);
+        logoutAction(history, dispatch, state.username);
       } else {
         history.push(`/${event.currentTarget.id.toLowerCase()}`);
       }
@@ -137,7 +136,7 @@ const NavBar = () => {
         history.push('/');
       } else if (active === 'logout') {
         clear();
-        logoutAction(history, dispatch);
+        logoutAction(history, dispatch, state.username);
       } else {
         history.push({
           pathname: `/${active.toLowerCase()}`,
@@ -149,7 +148,7 @@ const NavBar = () => {
         history.push('/');
       } else if (active === 'logout') {
         clear();
-        logoutAction(history, dispatch);
+        logoutAction(history, dispatch, state.username);
       } else {
         history.push({ pathname: `/${active.toLowerCase()}` });
       }
@@ -268,7 +267,7 @@ const NavBar = () => {
                     onClick: handleClick,
                     active: active,
                     binder: bindProfile,
-                    avatar: stateShared.userData.avatar || '',
+                    avatar: state.userData.avatar || '',
                     style:
                       isHoveredProfile && active !== 'profile'
                         ? {

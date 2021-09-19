@@ -462,13 +462,13 @@ export async function addRSSFeed(url: string) {
   }
 }
 
-export function logoutAction(history: any, dispatch: React.Dispatch<IAction<ActionShared>>) {
+export function logoutAction(history: any, dispatch: React.Dispatch<IAction<ActionShared>>, username: string) {
   history.push('/');
   // eslint-disable-next-line  @typescript-eslint/no-unused-expressions
   navigator?.serviceWorker?.controller?.postMessage({
     type: 'logout',
   });
-  session(true).then(noop);
+  session(true, username).then(noop);
   removeTokenGQL().then(noop);
   removeToken().then(() => {});
   dispatch({ type: 'LOGOUT' });

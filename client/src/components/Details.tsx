@@ -12,6 +12,7 @@ import './Details.scss';
 import NotFoundLayout from './Layout/NotFoundLayout';
 import { useQuery } from '@apollo/client';
 import { GET_STAR_RANKING } from '../graphql/queries';
+import { useTrackedStateShared } from '../selectors/stateContextSelector';
 
 interface StateProps {
   data: {
@@ -28,6 +29,7 @@ interface StateProps {
 }
 
 const Details = () => {
+  const [stateShared] = useTrackedStateShared();
   const abortController = new AbortController();
   const location = useLocation<any>();
   const [readme, setReadme] = useState('');
@@ -84,7 +86,7 @@ const Details = () => {
     () => {
       let isFinished = false;
       if (!isFinished && /detail/.test(location.pathname) && !!data) {
-        markdownParsing(data.data.full_name, data.data.default_branch, abortController.signal)
+        markdownParsing(stateShared.username, data.data.full_name, data.data.default_branch, abortController.signal)
           .then((readme) => {
             if (abortController.signal.aborted) {
               return;

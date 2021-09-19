@@ -77,7 +77,7 @@ const Login = () => {
                   }),
                 () => history.push('/'),
               ]);
-              // window.location.reload(false);
+              window.location.reload(false);
             } else {
               if (!isMounted.current) {
                 return;

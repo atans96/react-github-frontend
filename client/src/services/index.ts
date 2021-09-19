@@ -70,16 +70,17 @@ export const setTokenGQL = async (tokenGQL: string, username: string) => {
     const response = await fetch(
       `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
         'GOLANG_PORT'
-      )}/server_uwebsocket/setTokenGQL?username=${username}`,
+      )}/server_uwebsocket/setTokenGQL`,
       {
         method: 'POST',
+        credentials: 'include',
         headers: {
           //trigger preflight request to browser
           'Content-Type': 'application/json',
           'Sec-Fetch-Site': 'same-origin',
           'Sec-Fetch-Mode': 'cors',
         },
-        body: JSON.stringify({ token: tokenGQL }),
+        body: JSON.stringify({ token: tokenGQL, username }),
       }
     );
     return await response.json();
@@ -87,12 +88,12 @@ export const setTokenGQL = async (tokenGQL: string, username: string) => {
     console.log(e);
   }
 };
-export const getTokenGQL = async (signal: any) => {
+export const getTokenGQL = async (username: string, signal: any) => {
   try {
     const response = await fetch(
       `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
         'GOLANG_PORT'
-      )}/server_uwebsocket/getTokenGQL`,
+      )}/server_uwebsocket/getTokenGQL?username=${username}`,
       {
         method: 'GET',
         signal,
@@ -232,12 +233,12 @@ export const getUser = ({
     execute().then(() => (lastUrls = {}));
   }) as Observable<{ iterator: any }>;
 };
-export const markdownParsing = async (full_name: string, branch: string, signal: any) => {
+export const markdownParsing = async (username: string, full_name: string, branch: string, signal: any) => {
   try {
     const response = await fetch(
       `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
         'GOLANG_PORT'
-      )}/server_uwebsocket/markdown?full_name=${full_name}&branch=${branch}`,
+      )}/server_uwebsocket/markdown?full_name=${full_name}&branch=${branch}&username=${username}`,
       {
         method: 'GET',
         signal,
@@ -249,10 +250,12 @@ export const markdownParsing = async (full_name: string, branch: string, signal:
     return undefined;
   }
 };
-export const session = async (end: boolean, signal?: any) => {
+export const session = async (end: boolean, username: string, signal?: any) => {
   try {
     const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable('GOLANG_PORT')}/start?&end=${end}`,
+      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+        'GOLANG_PORT'
+      )}/start?end=${end}&username=${username}`,
       {
         method: 'GET',
         credentials: 'include',
@@ -425,7 +428,7 @@ export const getElasticSearchBert = async (query: string, signal: any) => {
     console.log(e);
   }
 };
-export const requestGithubGraphQLLogin = async (token: string, signal: any) => {
+export const requestGithubGraphQLLogin = async (username: string, token: string, signal: any) => {
   try {
     const response = await fetch(
       `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
@@ -442,6 +445,7 @@ export const requestGithubGraphQLLogin = async (token: string, signal: any) => {
         },
         body: JSON.stringify({
           token: token,
+          username,
         }),
       }
     );
