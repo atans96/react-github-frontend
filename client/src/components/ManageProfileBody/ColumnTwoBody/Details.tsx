@@ -8,6 +8,7 @@ import { Then } from '../../../util/react-if/Then';
 import { useLocation } from 'react-router-dom';
 import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 import NotFoundLayout from '../../Layout/NotFoundLayout';
+import { useTrackedStateShared } from '../../../selectors/stateContextSelector';
 
 interface DetailsProps {
   branch: string;
@@ -18,6 +19,7 @@ interface DetailsProps {
 
 const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) => {
   const abortController = new AbortController();
+  const [stateShared] = useTrackedStateShared();
   const _isMounted = useRef(true);
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
@@ -27,7 +29,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
   useEffect(
     () => {
       if ((_isMounted.current && location.pathname === '/profile') || location.pathname === '/detail') {
-        markdownParsing(fullName, branch, abortController.signal).then((data) => {
+        markdownParsing(stateShared.username, fullName, branch, abortController.signal).then((data) => {
           if (abortController.signal.aborted) return;
           if (_isMounted.current && data.error_404) {
             setNotFound(true);

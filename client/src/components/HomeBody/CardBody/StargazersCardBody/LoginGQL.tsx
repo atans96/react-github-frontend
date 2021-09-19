@@ -24,7 +24,7 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   const [stateShared, dispatch] = useTrackedStateShared();
   const history = useHistory();
   const verifyTokenGQL = async () => {
-    await requestGithubGraphQLLogin(token, abortController.signal)
+    await requestGithubGraphQLLogin(stateShared.username, token, abortController.signal)
       .then((res) => {
         if (abortController.signal.aborted) return;
         if (res.success) {
@@ -47,7 +47,7 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
         }
       })
       .catch(() => {
-        logoutAction(history, dispatch);
+        logoutAction(history, dispatch, stateShared.username);
         window.alert('Your token has expired. We will logout you out.');
       });
   };

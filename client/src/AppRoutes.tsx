@@ -25,6 +25,7 @@ import {
   NotFoundLoadable,
   SearchBarLoadable,
 } from './AppRoutesLoadable';
+import DbCtx, { useDexieDB } from './db/db.ctx';
 
 interface AppRoutes {
   shouldRender: string;
@@ -72,6 +73,7 @@ const Child = React.memo(
   }
 );
 const AppRoutes = () => {
+  const { db } = DbCtx.useContainer();
   const abortController = new AbortController();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   sysend.on('Login', function (fn) {
@@ -180,7 +182,7 @@ const AppRoutes = () => {
   useEffect(() => {
     let isFinished = false;
     if (!isFinished) {
-      session(false, abortController.signal).then((data) => {
+      session(false, stateShared.username, abortController.signal).then((data) => {
         if (abortController.signal.aborted) return;
         if (data) {
           if (Boolean(data.data) && data.username.length > 0) {
@@ -204,7 +206,7 @@ const AppRoutes = () => {
             topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO'),
           },
         });
-        getTokenGQL(abortController.signal).then((res) => {
+        getTokenGQL(stateShared.username, abortController.signal).then((res) => {
           if (abortController.signal.aborted) return;
           if (res.tokenGQL) {
             dispatchShared({
@@ -215,6 +217,7 @@ const AppRoutes = () => {
             });
           }
         });
+        // endOfSession(stateShared.username, client.cache.extract()).then(noop);
       }
     }
     return () => {
@@ -222,15 +225,56 @@ const AppRoutes = () => {
     };
   }, [stateShared.isLoggedIn, stateShared.username]);
 
+  useEffect(() => {
+    if (db) {
+      Promise.all([
+        new Promise((resolve) => {
+          db?.getSeen.get(1).then((oldData: any) => {
+            if (oldData && oldData?.data) {
+              resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            }
+          });
+        }),
+        new Promise((resolve) => {
+          db?.getClicked.get(1).then((oldData: any) => {
+            if (oldData && oldData?.data) {
+              resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            }
+          });
+        }),
+        new Promise((resolve) => {
+          db?.getSearches.get(1).then((oldData: any) => {
+            if (oldData && oldData?.data) {
+              resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            }
+          });
+        }),
+        new Promise((resolve) => {
+          db?.getUserInfoStarred.get(1).then((oldData: any) => {
+            if (oldData && oldData?.data) {
+              resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            }
+          });
+        }),
+        new Promise((resolve) => {
+          db?.getUserInfoStarred.get(1).then((oldData: any) => {
+            if (oldData && oldData?.data) {
+              resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
+            }
+          });
+        }),
+      ]).then((res) => {
+        console.log(res);
+      });
+    }
+  }, [db]);
+
   window.onbeforeunload = () => {
     if (stateShared.isLoggedIn) {
       sendJsonMessage({
         close: { user: stateShared.username, topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO') },
       });
-      Promise.all([
-        endOfSession(stateShared.username, client.cache.extract()),
-        // session(true),
-      ]).then(noop);
+      // Promise.all([endOfSession(stateShared.username, client.cache.extract())]).then(noop);
     }
     return window.close();
   };

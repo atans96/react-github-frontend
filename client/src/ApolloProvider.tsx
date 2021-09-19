@@ -12,7 +12,7 @@ const CustomApolloProvider = ({ children }: any) => {
   const history = useHistory();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const unAuthorizedAction = () => {
-    logoutAction(history, dispatchShared);
+    logoutAction(history, dispatchShared, stateShared.username);
     window.alert('Your token has expired. We will log you out.');
   };
 
@@ -28,7 +28,10 @@ const CustomApolloProvider = ({ children }: any) => {
     // Create Second Link for appending data to MongoDB using GQL
     const mongoGateway = new HttpLink({
       uri: `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable('GOLANG_PORT')}/graphql/`,
-      headers: { origin: `${readEnvironmentVariable('CLIENT_HOST')}:${readEnvironmentVariable('CLIENT_PORT')}` },
+      headers: {
+        Authorization: `${stateShared.username}`,
+        origin: `${readEnvironmentVariable('CLIENT_HOST')}:${readEnvironmentVariable('CLIENT_PORT')}`,
+      },
       credentials: 'include',
     }) as unknown as ApolloLink;
 
