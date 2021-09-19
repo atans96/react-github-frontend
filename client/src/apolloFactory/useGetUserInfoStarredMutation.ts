@@ -1,7 +1,5 @@
-import DbCtx, { useDexieDB } from '../db/db.ctx';
+import { useDexieDB } from '../db/db.ctx';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import { useApolloClient } from '@apollo/client';
-import { GET_USER_STARRED } from '../graphql/queries';
 import { parallel } from 'async';
 import { GraphQLUserStarred } from '../typing/interface';
 import uniqBy from 'lodash.uniqby';
@@ -10,7 +8,6 @@ export const useGetUserInfoStarredMutation = () => {
   // const { db } = DbCtx.useContainer();
   const [db, setDb] = useDexieDB();
   const [, dispatchShared] = useTrackedStateShared();
-  const client = useApolloClient();
   const oldExistAndProperty = (data: GraphQLUserStarred, old: GraphQLUserStarred) => {
     return parallel([
       () =>
@@ -18,15 +15,6 @@ export const useGetUserInfoStarredMutation = () => {
           type: 'SET_STARRED',
           payload: {
             starred: [...data.getUserInfoStarred.starred, ...old.getUserInfoStarred.starred],
-          },
-        }),
-      () =>
-        client.cache.writeQuery({
-          query: GET_USER_STARRED,
-          data: {
-            getUserInfoStarred: {
-              starred: [...data.getUserInfoStarred.starred, ...old.getUserInfoStarred.starred],
-            },
           },
         }),
       () =>
@@ -49,15 +37,6 @@ export const useGetUserInfoStarredMutation = () => {
           },
         }),
       () =>
-        client.cache.writeQuery({
-          query: GET_USER_STARRED,
-          data: {
-            getUserInfoStarred: {
-              starred: uniqBy([...data, ...old.getUserInfoStarred.starred], 'full_name'),
-            },
-          },
-        }),
-      () =>
         db?.getUserInfoStarred?.update(1, {
           data: JSON.stringify({
             getUserInfoStarred: {
@@ -68,52 +47,28 @@ export const useGetUserInfoStarredMutation = () => {
     ]);
   };
   const oldNotExistAndProperty = (data: GraphQLUserStarred) => {
-    return parallel([
-      () =>
-        client.cache.writeQuery({
-          query: GET_USER_STARRED,
-          data: {
-            getUserInfoStarred: {
-              starred: data.getUserInfoStarred.starred,
-            },
+    return db?.getUserInfoStarred?.add(
+      {
+        data: JSON.stringify({
+          getUserInfoStarred: {
+            starred: data.getUserInfoStarred.starred,
           },
         }),
-      () =>
-        db?.getUserInfoStarred?.add(
-          {
-            data: JSON.stringify({
-              getUserInfoStarred: {
-                starred: data.getUserInfoStarred.starred,
-              },
-            }),
-          },
-          1
-        ),
-    ]);
+      },
+      1
+    );
   };
   const oldNotExistAndNoProperty = (data: Array<{ is_queried: boolean; full_name: string }>) => {
-    return parallel([
-      () =>
-        client.cache.writeQuery({
-          query: GET_USER_STARRED,
-          data: {
-            getUserInfoStarred: {
-              starred: data,
-            },
+    return db?.getUserInfoStarred?.add(
+      {
+        data: JSON.stringify({
+          getUserInfoStarred: {
+            starred: data,
           },
         }),
-      () =>
-        db?.getUserInfoStarred?.add(
-          {
-            data: JSON.stringify({
-              getUserInfoStarred: {
-                starred: data,
-              },
-            }),
-          },
-          1
-        ),
-    ]);
+      },
+      1
+    );
   };
   const removeStarred = async (data: { removeStarred: number }) => {
     db?.getUserInfoStarred.get(1).then((oldData: any) => {
@@ -126,15 +81,6 @@ export const useGetUserInfoStarredMutation = () => {
                 type: 'SET_STARRED',
                 payload: {
                   starred: old.getUserInfoStarred.starred.filter((old: any) => old !== data.removeStarred),
-                },
-              }),
-            () =>
-              client.cache.writeQuery({
-                query: GET_USER_STARRED,
-                data: {
-                  getUserInfoStarred: {
-                    starred: old.getUserInfoStarred.starred.filter((old: any) => old !== data.removeStarred),
-                  },
                 },
               }),
             () =>

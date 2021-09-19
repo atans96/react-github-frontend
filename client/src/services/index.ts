@@ -4,12 +4,12 @@ import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
 import { Observable } from '../link/observables/Observable';
 
-export const getRSSFeed = async (rssUrl: string, signal: any) => {
+export const getRSSFeed = async (username: string, rssUrl: string, signal: any) => {
   try {
     const response = await fetch(
       `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
         'GOLANG_PORT'
-      )}/rssFeed?rssUrl=${rssUrl}`,
+      )}/rssFeed?rssUrl=${rssUrl}&username=${username}`,
       {
         method: 'GET',
         signal,
@@ -18,6 +18,25 @@ export const getRSSFeed = async (rssUrl: string, signal: any) => {
       }
     );
     return await response.json();
+  } catch (e) {
+    console.log(e);
+  }
+};
+export const startOfSessionDexie = async (username: string, data: any[]) => {
+  try {
+    if (data.length > 0) {
+      const response = await fetch(
+        `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+          'GOLANG_PORT'
+        )}/server_uwebsocket/start_of_session`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ data, username }),
+          credentials: 'include',
+        }
+      );
+      return await response.json();
+    }
   } catch (e) {
     console.log(e);
   }

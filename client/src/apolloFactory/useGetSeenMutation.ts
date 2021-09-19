@@ -1,6 +1,4 @@
-import DbCtx, { useDexieDB } from '../db/db.ctx';
-import { useApolloClient } from '@apollo/client';
-import { GET_SEEN } from '../graphql/queries';
+import { useDexieDB } from '../db/db.ctx';
 import { SeenProps } from '../typing/type';
 import { parallel } from 'async';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
@@ -9,7 +7,6 @@ import uniqBy from 'lodash.uniqby';
 export const useGetSeenMutation = () => {
   // const { db } = DbCtx.useContainer();
   const [db, setDb] = useDexieDB();
-  const client = useApolloClient();
   const [, dispatchShared] = useTrackedStateShared();
   const [, dispatch] = useTrackedState();
 
@@ -31,15 +28,6 @@ export const useGetSeenMutation = () => {
                 type: 'UNDISPLAY_MERGED_DATA',
                 payload: {
                   undisplayMergedData: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
-                },
-              }),
-            () =>
-              client.cache.writeQuery({
-                query: GET_SEEN,
-                data: {
-                  getSeen: {
-                    seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
-                  },
                 },
               }),
             () =>
@@ -65,15 +53,6 @@ export const useGetSeenMutation = () => {
                 type: 'UNDISPLAY_MERGED_DATA',
                 payload: {
                   undisplayMergedData: data,
-                },
-              }),
-            () =>
-              client.cache.writeQuery({
-                query: GET_SEEN,
-                data: {
-                  getSeen: {
-                    seenCards: data,
-                  },
                 },
               }),
             () =>
@@ -103,15 +82,6 @@ export const useGetSeenMutation = () => {
               type: 'UNDISPLAY_MERGED_DATA',
               payload: {
                 undisplayMergedData: data,
-              },
-            }),
-          () =>
-            client.cache.writeQuery({
-              query: GET_SEEN,
-              data: {
-                getSeen: {
-                  seenCards: data,
-                },
               },
             }),
           () =>
