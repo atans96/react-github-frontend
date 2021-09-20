@@ -13,7 +13,7 @@ import { fastFilter } from '../../../../util';
 const Result = Loadable({
   loading: Empty,
   delay: 300,
-  loader: () => import(/* webpackChunkName: "Result" */ './Result'),
+  loader: () => import(/* webpackChunkName: "SearchesHistoriesResult" */ './Result'),
 });
 interface SearchHistories {
   searches: Searches[];

@@ -54,7 +54,7 @@ const Home = () => {
   const [isLoading, setIsLoading] = useIsLoading();
 
   const displayName: string = (Home as React.ComponentType<any>).displayName || '';
-  const { fetchTopics, fetchUser, onClickTopic, clickedGQLTopic } = useFetchUser({
+  const { fetchMoreTopics, fetchUser, onClickTopic, clickedGQLTopic } = useFetchUser({
     component: displayName,
     abortController,
   });
@@ -184,7 +184,7 @@ const Home = () => {
       if (stateShared.queryUsername.length > 0) {
         fetchUser().then(() => release());
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
-        fetchTopics();
+        fetchMoreTopics();
       }
     }
     return () => {

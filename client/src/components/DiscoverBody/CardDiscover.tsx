@@ -109,7 +109,7 @@ const CardDiscover: React.FC<CardRef> = ({ githubData, index, columnCount, image
         <h4 style={{ textAlign: 'center' }}>{githubData.description}</h4>
       </div>
       <StargazersDiscover data={stargazersMemoizedGithubData()} />
-      <If condition={githubData.language !== null}>
+      <If condition={stateShared.githubLanguages.has(githubData.language)}>
         <Then>
           <ul
             className={'language'}

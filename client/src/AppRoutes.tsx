@@ -25,7 +25,7 @@ import {
   NotFoundLoadable,
   SearchBarLoadable,
 } from './AppRoutesLoadable';
-import DbCtx, { useDexieDB } from './db/db.ctx';
+import DbCtx from './db/db.ctx';
 
 interface AppRoutes {
   shouldRender: string;

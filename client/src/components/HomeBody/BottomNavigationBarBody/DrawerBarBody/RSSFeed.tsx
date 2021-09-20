@@ -20,7 +20,6 @@ import RssFeedIcon from '@material-ui/icons/RssFeed';
 import { NavLink } from 'react-router-dom';
 import { useTrackedStateShared } from '../../../../selectors/stateContextSelector';
 import { getRSSFeed } from '../../../../services';
-import { forEach } from 'async';
 import { useRSSFeedMutation } from '../../../../apolloFactory/useRSSFeedMutation';
 
 const useStyles = makeStyles<Theme>(() => ({

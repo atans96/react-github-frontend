@@ -55,8 +55,6 @@ export interface IDataOne {
   error_403: boolean;
   error_message: string | undefined;
   end: boolean;
-  paginationInfoData: number;
-  renderImages: RenderImagesProps[];
 }
 
 export interface IStateStargazers {
@@ -125,6 +123,7 @@ export interface IState {
   visible: boolean;
   isLoading: boolean;
   page: number;
+  lastPage: number;
 }
 
 export interface GraphQLUserData {

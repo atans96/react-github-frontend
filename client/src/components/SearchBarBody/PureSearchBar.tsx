@@ -33,7 +33,7 @@ const SearchHistories = Loadable({
 const Searches = Loadable({
   loading: Empty,
   delay: 300,
-  loader: () => import(/* webpackChunkName: "SearchHistories" */ './PureSearchBarBody/Searches'),
+  loader: () => import(/* webpackChunkName: "Searches" */ './PureSearchBarBody/Searches'),
 });
 
 interface SearchBarProps {

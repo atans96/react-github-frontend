@@ -370,32 +370,6 @@ export const getSearchUsers = async ({
     return undefined;
   }
 };
-export const getSearchTopics = async ({
-  axiosCancel = false,
-  signal,
-  topic,
-}: {
-  axiosCancel: boolean;
-  signal: any | undefined;
-  topic: string;
-}) => {
-  try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/search_topics?topic=${topic}&axiosCancel=${axiosCancel}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        signal,
-      }
-    );
-    return (await response.json()) as IDataOne;
-  } catch (e) {
-    console.log(e);
-    return undefined;
-  }
-};
 export const subscribeToApollo = async ({
   signal,
   subscription,

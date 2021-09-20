@@ -1,12 +1,13 @@
-import { getSearchTopics, getUser } from '../services';
+import { getUser } from '../services';
 import { IDataOne } from '../typing/interface';
 import { ActionResolvedPromise, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
+import { SEARCH_FOR_MORE_TOPICS, SEARCH_FOR_TOPICS } from '../graphql/queries';
 
 interface useFetchUser {
   component: string;
@@ -16,27 +17,46 @@ interface useFetchUser {
 //TO extract all JSON field
 // const regex = new RegExp(
 //   /(?:\"|\')(?<key>[^"]*)(?:\"|\')(?=:)(?:\:\s*)(?:\"|\')?(?<value>true|false|https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)|[0-9a-zA-Z\+\-\,\.\\/$]*)/gim
-// );
+// );+
+const transform = (obj: any) => {
+  const owner = Object.assign({}, { login: obj.owner.login, avatar_url: obj.owner.avatarUrl, html_url: obj.owner.url });
+  return Object.assign(
+    {},
+    {
+      id: obj.id,
+      default_branch: obj.defaultBranchRef.name,
+      stargazers_count: obj.stargazerCount,
+      full_name: obj.nameWithOwner,
+      owner: owner,
+      description: obj.description,
+      language:
+        obj.languages.edges.length > 0 && obj.languages.edges.sort((a: any, b: any) => b.size - a.size)[0].node.name,
+      topics: obj.repositoryTopics.nodes.length > 0 && obj.repositoryTopics.nodes.map((obj: any) => obj.topic.name),
+      html_url: obj.url,
+      name: obj.name,
+      is_queried: false,
+    }
+  );
+};
 const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const [, setNotification] = useNotification();
   const [isFetchFinish, setIsFetchFinish] = useIsFetchFinish();
   const [, setLoading] = useIsLoading();
-
   const { actionResolvePromise } = useActionResolvePromise();
-  const axiosCancel = useRef<boolean>(false);
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchStargazers] = useTrackedStateStargazers();
   // useState is used when the HTML depends on it directly to render something
   const [clickedGQLTopic, setGQLTopic] = useState({
     variables: '',
+    nextPageUrl: '',
   } as any);
   // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
   const onClickTopic = useStableCallback(async ({ variables }: any) => {
     if (abortController.signal.aborted) return;
-    if (stateShared.tokenGQL !== '' && state.filterBySeen) {
+    if (stateShared.tokenGQL !== '') {
       setLoading({ isLoading: true });
       dispatch({
         type: 'REMOVE_ALL',
@@ -52,20 +72,48 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       });
       setIsFetchFinish({ isFetchFinish: false });
       setNotification({ notification: '' });
-      setGQLTopic({
-        variables,
-      });
-      let paginationInfo = 0;
-      return getSearchTopics({
-        signal: abortController.signal,
-        topic: variables.queryTopic,
-        axiosCancel: axiosCancel.current,
+      return fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${stateShared.tokenGQL}`,
+        },
+        body: JSON.stringify({
+          query: SEARCH_FOR_TOPICS,
+          variables: { queryTopic: variables.queryTopic + ' sort:updated-desc', perPage: 70 },
+        }),
       })
+        .then((res) => res.json())
         .then((result) => {
           if (abortController.signal.aborted) return;
           if (result) {
-            paginationInfo += result.paginationInfoData;
-            actionController(result);
+            setGQLTopic({
+              variables,
+              nextPageUrl: result.data.search.pageInfo.hasNextPage ? result.data.search.pageInfo.endCursor : '',
+            });
+            const data = result.data.search.nodes.map((obj: any) => {
+              return transform(obj);
+            });
+            let dataOne: {
+              dataOne: MergedDataProps[];
+              error_404: boolean;
+              error_403: boolean;
+              end: boolean;
+              error_message: string | undefined;
+            } = {
+              dataOne: data,
+              error_404: false,
+              error_403: false,
+              end: false,
+              error_message: undefined,
+            };
+            dispatch({
+              type: 'LAST_PAGE',
+              payload: {
+                lastPage: result.data.search.repositoryCount,
+              },
+            });
+            actionController(dataOne);
           }
         })
         .catch((error) => {
@@ -220,7 +268,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       }
     });
   };
-  const fetchTopics = () => {
+  const fetchMoreTopics = () => {
     // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
     // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
     // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
@@ -231,14 +279,49 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
       setLoading({ isLoading: true }); // spawn loading spinner at bottom page
       setNotification({ notification: '' });
-      if (clickedGQLTopic.queryTopic !== undefined) {
-        getSearchTopics({
-          signal: abortController.signal,
-          topic: clickedGQLTopic.queryTopic,
-          axiosCancel: axiosCancel.current,
+      if (clickedGQLTopic.variables.queryTopic !== undefined) {
+        fetch('https://api.github.com/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${stateShared.tokenGQL}`,
+          },
+          body: JSON.stringify({
+            query: SEARCH_FOR_MORE_TOPICS,
+            variables: {
+              after: clickedGQLTopic.nextPageUrl,
+              queryTopic: clickedGQLTopic.variables.queryTopic + ' sort:updated-desc',
+              perPage: 70,
+            },
+          }),
         })
-          .then((res) => {
-            if (res && !abortController.signal.aborted) actionController(res);
+          .then((res) => res.json())
+          .then((result) => {
+            if (result && !abortController.signal.aborted) {
+              setGQLTopic((prev: any) => {
+                return {
+                  ...prev,
+                  nextPageUrl: result.data.search.pageInfo.hasNextPage ? result.data.search.pageInfo.endCursor : '',
+                };
+              });
+              const data = result.data.search.nodes.map((obj: any) => {
+                return transform(obj);
+              });
+              let dataOne: {
+                dataOne: MergedDataProps[];
+                error_404: boolean;
+                error_403: boolean;
+                end: boolean;
+                error_message: string | undefined;
+              } = {
+                dataOne: data,
+                error_404: false,
+                error_403: false,
+                end: false,
+                error_message: undefined,
+              };
+              actionController(dataOne);
+            }
           })
           .catch((error) => {
             actionResolvePromise({
@@ -252,7 +335,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     }
   };
   return {
-    fetchTopics,
+    fetchMoreTopics,
     fetchUser,
     onClickTopic,
     clickedGQLTopic,
