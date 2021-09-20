@@ -37,7 +37,7 @@ const ToolBar = () => {
   return (
     <Toolbar>
       <div className={classes.paginationInfo}>
-        <Pagination className={classes.buttonPagination} page={state.page} count={state.page} color="secondary" />
+        <Pagination className={classes.buttonPagination} page={state.page} count={state.lastPage} color="secondary" />
       </div>
       <div className={classes.grow} />
     </Toolbar>

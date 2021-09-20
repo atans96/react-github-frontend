@@ -237,48 +237,46 @@ export const SEARCH_FOR_MORE_REPOS = gql`
     }
   }
 `;
-export const SEARCH_FOR_TOPICS = gql`
+export const SEARCH_FOR_TOPICS = `
   query ($queryTopic: String!, $perPage: Int!) {
-    search(query: $queryTopic, type: REPOSITORY, last: $perPage) {
+    search(query: $queryTopic, type: REPOSITORY, first: $perPage) {
+      repositoryCount
       nodes {
         ... on Repository {
-          name
-          nameWithOwner
-          description
           id
-          primaryLanguage {
-            name
-            color
-          }
-          stargazerCount
-          url
-          owner {
-            avatarUrl
-            id
-            login
-            url
-          }
           defaultBranchRef {
             name
           }
-          repositoryTopics(first: 2) {
+          stargazerCount
+          nameWithOwner
+          owner {
+            login
+            avatarUrl
+            url
+          }
+          description
+          languages(first: 10) {
             edges {
               node {
-                topic {
-                  name
-                  relatedTopics {
-                    name
-                  }
-                }
+                name
+              }
+              size
+            }
+          }
+          repositoryTopics(first: 10) {
+            nodes {
+              topic {
+                name
               }
             }
           }
-          viewerHasStarred
+          url
+          name
         }
       }
       pageInfo {
-        endCursor
         hasNextPage
+        endCursor
         startCursor
       }
     }
@@ -290,48 +288,46 @@ export const SEARCH_FOR_TOPICS = gql`
     }
   }
 `;
-export const SEARCH_FOR_MORE_TOPICS = gql`
+export const SEARCH_FOR_MORE_TOPICS = `
   query ($queryTopic: String!, $after: String!, $perPage: Int!) {
-    search(query: $queryTopic, type: REPOSITORY, last: $perPage, after: $after) {
+    search(query: $queryTopic, type: REPOSITORY, first: $perPage, after: $after) {
+      repositoryCount
       nodes {
         ... on Repository {
-          name
-          nameWithOwner
-          description
           id
-          primaryLanguage {
-            name
-            color
-          }
-          stargazerCount
-          url
-          owner {
-            avatarUrl
-            id
-            login
-            url
-          }
           defaultBranchRef {
             name
           }
-          repositoryTopics(first: 2) {
+          stargazerCount
+          nameWithOwner
+          owner {
+            login
+            avatarUrl
+            url
+          }
+          description
+          languages(first: 10) {
             edges {
               node {
-                topic {
-                  name
-                  relatedTopics {
-                    name
-                  }
-                }
+                name
+              }
+              size
+            }
+          }
+          repositoryTopics(first: 10) {
+            nodes {
+              topic {
+                name
               }
             }
           }
-          viewerHasStarred
+          url
+          name
         }
       }
       pageInfo {
-        endCursor
         hasNextPage
+        endCursor
         startCursor
       }
     }

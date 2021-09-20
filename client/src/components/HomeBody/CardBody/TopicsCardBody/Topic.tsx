@@ -10,7 +10,7 @@ interface Topic {
 const Topic: React.FC<Topic> = ({ idx, topic, getRootProps }) => {
   const handleClickTopic = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
-    e.stopPropagation();
+    // e.stopPropagation(); //if you do this, onClickCb at Home.tsx won't execute
   };
   return (
     <button className={'tag'} key={idx}>

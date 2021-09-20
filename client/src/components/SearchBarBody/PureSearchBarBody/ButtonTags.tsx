@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
 import { createTheme, MuiThemeProvider } from '@material-ui/core/styles';
 import clsx from 'clsx';
@@ -7,11 +7,6 @@ import { useTrackedState, useTrackedStateShared } from '../../../selectors/state
 import useCollapse from '../../../hooks/useCollapse';
 import { TopicsProps } from '../../../typing/type';
 import { Tags } from './Tags';
-import { If } from '../../../util/react-if/If';
-import { Then } from '../../../util/react-if/Then';
-import { ShouldRender } from '../../../typing/enum';
-import { parallel } from 'async';
-import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 
 const defaultTheme = createTheme();
 const theme = createTheme({
@@ -46,7 +41,7 @@ const ButtonTags: React.FC<ButtonTagsProps> = ({ showTipsText, portalExpandable 
       setExpandableTopicTags(false);
     },
   });
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     let isCancelled = false;
     if (!isCancelled) {
       setExpandableTopicTags(false);

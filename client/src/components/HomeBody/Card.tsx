@@ -127,7 +127,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
         <h4 style={{ textAlign: 'center' }}>{data.description}</h4>
       </div>
       <Stargazers data={stargazersMemoizedGithubData()} />
-      <If condition={data.language !== null}>
+      <If condition={stateShared.githubLanguages.has(data.language)}>
         <Then>
           <ul className={'language'} style={{ color: stateShared.githubLanguages.get(data?.language)?.obj.color }}>
             <li className={'language-list'}>

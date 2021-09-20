@@ -11,7 +11,7 @@ import Empty from '../../Layout/EmptyLayout';
 const Result = Loadable({
   loading: Empty,
   delay: 300,
-  loader: () => import(/* webpackChunkName: "Result" */ './ResultsBody/Result'),
+  loader: () => import(/* webpackChunkName: "SearchesResult" */ './ResultsBody/Result'),
 });
 interface Searches {
   isLoading: boolean;

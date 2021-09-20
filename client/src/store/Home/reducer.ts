@@ -12,6 +12,7 @@ export type Action =
   | 'MERGED_DATA_ADDED'
   | 'IMAGES_DATA_ADDED'
   | 'ADVANCE_PAGE'
+  | 'LAST_PAGE'
   | 'SORTING_DATA_ADDED'
   | 'FILTER_CARDS_BY_SEEN'
   | 'SET_TOPICS_TAGS'
@@ -36,6 +37,7 @@ export const initialState: IState = {
   visible: false,
   isLoading: false,
   page: 1,
+  lastPage: 1,
 };
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
@@ -141,6 +143,12 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         imagesMapData: new Map(
           uniqBy([...state.imagesData, ...action.payload.images], 'id').map((obj) => [obj.id, obj])
         ),
+      };
+    }
+    case 'LAST_PAGE': {
+      return {
+        ...state,
+        lastPage: action.payload.lastPage,
       };
     }
     case 'ADVANCE_PAGE': {
