@@ -1,5 +1,4 @@
 import { detectBrowser, readEnvironmentVariable } from '../util';
-import { IDataOne } from '../typing/interface';
 import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
 import { Observable } from '../link/observables/Observable';
@@ -38,7 +37,7 @@ export const startOfSessionDexie = async (username: string, data: any[]) => {
       return await response.json();
     }
   } catch (e) {
-    console.log(e);
+    return undefined;
   }
 };
 export const endOfSession = async (username: string, cacheData: any) => {
@@ -60,24 +59,26 @@ export const endOfSession = async (username: string, cacheData: any) => {
     console.log(e);
   }
 };
-export const removeStarredMe = async (repoFullName: string) => {
+export const removeStarredMe = async (repoFullName: string, tokenGQL: string) => {
   try {
     fetch(`https://api.github.com/user/starred/${repoFullName}`, {
       method: 'DELETE',
       headers: {
-        Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+        Accept: 'application/vnd.github.v3+json',
+        Authorization: `${localStorage.getItem('token_type')} ${tokenGQL}`,
       },
     }).then(noop);
   } catch (e) {
     console.log(e);
   }
 };
-export const setStarredMe = async (repoFullName: string) => {
+export const setStarredMe = async (repoFullName: string, tokenGQL: string) => {
   try {
     fetch(`https://api.github.com/user/starred/${repoFullName}`, {
       method: 'PUT',
       headers: {
-        Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+        Accept: 'application/vnd.github.v3+json',
+        Authorization: `${localStorage.getItem('token_type')} ${tokenGQL}`,
       },
     }).then(noop);
   } catch (e) {
@@ -122,22 +123,6 @@ export const getTokenGQL = async (username: string, signal: any) => {
   } catch (e) {
     console.log(e);
     return { tokenGQL: '' };
-  }
-};
-export const removeTokenGQL = async () => {
-  try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/destroyTokenGQL`,
-      {
-        method: 'GET',
-        credentials: 'include',
-      }
-    );
-    return await response.json();
-  } catch (e) {
-    console.log(e);
   }
 };
 export const removeToken = async () => {
@@ -471,7 +456,7 @@ export const getRepoImages = async ({ signal, data }: { signal: any | undefined;
       //must contain a different URL to save each request
       const response = await fetch(
         `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-          'GOLANG_PORT'
+          'GOLANG_PORT_IMG'
         )}/images_from_markdown`,
         {
           method: 'POST',

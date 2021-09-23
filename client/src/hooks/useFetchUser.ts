@@ -8,6 +8,7 @@ import { useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
 import { SEARCH_FOR_MORE_TOPICS, SEARCH_FOR_TOPICS } from '../graphql/queries';
+import { ShouldRender } from '../typing/enum';
 
 interface useFetchUser {
   component: string;
@@ -23,7 +24,7 @@ const transform = (obj: any) => {
   return Object.assign(
     {},
     {
-      id: obj.id,
+      id: obj.databaseId,
       default_branch: obj.defaultBranchRef.name,
       stargazers_count: obj.stargazerCount,
       full_name: obj.nameWithOwner,
@@ -124,6 +125,13 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
             error,
           });
         });
+    } else {
+      dispatchShared({
+        type: 'SET_SHOULD_RENDER',
+        payload: {
+          shouldRender: ShouldRender.LoginGQL,
+        },
+      });
     }
   });
   const actionController = (res: IDataOne) => {
@@ -191,21 +199,25 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
             chunk += new TextDecoder().decode(data);
             const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
             while ((array1 = regexJSON.exec(chunk)) !== undefined) {
-              try {
-                const data = JSON.parse(array1![0]);
-                if (data.id && data.full_name && data.default_branch) {
-                  dataOne.dataOne.push(data);
-                } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
-                  dataOne.error_404 = true;
-                  return actionController(dataOne);
-                } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
-                  dataOne.error_403 = true;
-                  return actionController(dataOne);
-                } else {
-                  dataOne.error_message = data.message;
-                  return actionController(dataOne);
+              if (array1) {
+                try {
+                  const data = JSON.parse(array1![0]);
+                  if (data.id && data.full_name && data.default_branch) {
+                    dataOne.dataOne.push(data);
+                  } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
+                    dataOne.error_404 = true;
+                    return actionController(dataOne);
+                  } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
+                    dataOne.error_403 = true;
+                    return actionController(dataOne);
+                  } else {
+                    dataOne.error_message = data.message;
+                    return actionController(dataOne);
+                  }
+                } catch (e) {
+                  break;
                 }
-              } catch (e) {
+              } else {
                 break;
               }
             }

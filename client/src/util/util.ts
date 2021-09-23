@@ -2,7 +2,7 @@ import React, { RefObject, useCallback, useDebugValue, useEffect, useLayoutEffec
 import warning from 'tiny-warning';
 import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
-import { removeToken, removeTokenGQL, session } from '../services';
+import { removeToken, session } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
 import { Key } from '../typing/enum';
 
@@ -16,7 +16,9 @@ export function once(fn: any) {
     return result;
   };
 }
+
 export const consumers: Record<string, Array<string>> = {};
+
 export function pushConsumers(property: Key, path: string) {
   if (consumers[path] && !consumers[path].includes(property)) {
     consumers[path].push(property);
@@ -24,6 +26,7 @@ export function pushConsumers(property: Key, path: string) {
     consumers[path] = [property];
   }
 }
+
 export function useDebouncedValue<T>(input: T, time = 1500) {
   const [debouncedValue, setDebouncedValue] = useState<any>(input);
 
@@ -41,9 +44,11 @@ export function useDebouncedValue<T>(input: T, time = 1500) {
 
   return debouncedValue;
 }
+
 type AnyFunction = (...args: any[]) => unknown;
 type TTestFunction<T> = (data: T, index: number, list: SinglyLinkedList<T>) => boolean;
 type TMapFunction<T> = (data: any, index: number, list: SinglyLinkedList<T>) => any;
+
 class SinglyLinkedListNode<T> {
   data: T | any;
   next: SinglyLinkedListNode<T> | null;
@@ -303,6 +308,7 @@ export const callAll =
   (...fns: AnyFunction[]) =>
   (...args: any[]): void =>
     fns.forEach((fn) => fn && fn(...args));
+
 // https://github.com/mui-org/material-ui/blob/da362266f7c137bf671d7e8c44c84ad5cfc0e9e2/packages/material-ui/src/styles/transitions.js#L89-L98
 export function getAutoHeightDuration(height: number | string): number {
   if (!height || typeof height === 'string') {
@@ -469,7 +475,6 @@ export function logoutAction(history: any, dispatch: React.Dispatch<IAction<Acti
     type: 'logout',
   });
   session(true, username).then(noop);
-  removeTokenGQL().then(noop);
   removeToken().then(() => {});
   dispatch({ type: 'LOGOUT' });
   window.location.reload(false);

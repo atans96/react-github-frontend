@@ -4,12 +4,12 @@ import Checkboxes from './ColumnTwoBody/Checkboxes';
 import { RepoInfoProps } from '../../typing/type';
 import { useStableCallback } from '../../util';
 import { useTrackedStateManageProfile, useTrackedStateShared } from '../../selectors/stateContextSelector';
-import { useDeepMemo } from '../../hooks/useDeepMemo';
 import Loadable from 'react-loadable';
 import Empty from '../Layout/EmptyLayout';
 import { filter, waterfall } from 'async';
 import useDeepCompareEffect from '../../hooks/useDeepCompareEffect';
-import RepoInfo from './ColumnTwoBody/RepoInfo'; //RepoInfo need to be rendered along with ColumnOne together. Loadable make it slow to render
+import RepoInfo from './ColumnTwoBody/RepoInfo';
+import { createStore } from '../../util/hooksy';
 
 const Details = Loadable({
   loading: Empty,
@@ -20,12 +20,13 @@ const Details = Loadable({
 interface ColumnTwoProps {
   languageFilter: string[];
 }
-
+const defaultTypedFilter = '';
+export const [useTypedFilter] = createStore(defaultTypedFilter);
 const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
   const [state] = useTrackedStateManageProfile();
   const [stateShared] = useTrackedStateShared();
   const [checkedItems, setCheckedItems] = useState<any>({ descriptionTitle: true, readme: true });
-  const [typedFilter, setTypedFilter] = useState('');
+  const [typedFilter, setTypedFilter] = useTypedFilter();
   const [active, setActive] = useState('');
   const [fullName, setFullName] = useState('');
   const [renderJSX, setRenderJSX] = useState<any[]>([]);
@@ -139,11 +140,11 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
                   display: 'inline-block',
                 }}
               >
-                {useDeepMemo(() => {
+                {React.useMemo(() => {
                   return renderJSX.map((obj: RepoInfoProps, idx) => (
                     <RepoInfo active={active} obj={obj} key={idx} onClickRepoInfo={onClickRepoInfo} />
                   ));
-                }, [renderJSX])}
+                }, [renderJSX.length])}
               </div>
             </td>
             <td style={{ paddingRight: '10px', paddingLeft: '10px' }}>

@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { MergedDataProps, SeenProps } from '../typing/type';
-import { cleanString, useStableCallback } from '../util';
+import { cleanString, readEnvironmentVariable, useStableCallback } from '../util';
 import { crawlerPython, getRepoImages } from '../services';
 import useBottomHit from '../hooks/useBottomHit';
-import { useEventHandlerComposer } from '../hooks/hooks';
+import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
 import { useScrollSaver } from '../hooks/useScrollSaver';
 import clsx from 'clsx';
@@ -20,6 +20,9 @@ import { createStore } from '../util/hooksy';
 import { parallel } from 'async';
 import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
 import MasonryCard from './HomeBody/MasonryCard';
+import { noop } from '../util/util';
+import { ShouldRender } from '../typing/enum';
+import { useMouseSpawn } from './HomeBody/CardBody/TopicsCardBody/Topic';
 
 const mutex = new Mutex();
 
@@ -28,7 +31,11 @@ const LoadingEye = Loadable({
   loader: () => import(/* webpackChunkName: "LoadingEye" */ './LoadingEye'),
   delay: 300, // 0.3 seconds
 });
-
+const LoginGQL = Loadable({
+  loading: Empty,
+  loader: () => import(/* webpackChunkName: "LoginGQL" */ './HomeBody/CardBody/StargazersCardBody/LoginGQL'),
+  delay: 300, // 0.3 seconds
+});
 const BottomNavigationBar = Loadable({
   loading: Empty,
   loader: () => import(/* webpackChunkName: "BottomNavigationBar" */ './HomeBody/BottomNavigationBar'),
@@ -75,7 +82,7 @@ const Home = () => {
     if (countRef.current > 0 && isFetchFinish.isFetchFinish) {
       return;
     }
-    if (state.mergedData.length > 0 && !isLoading.isLoading && location.pathname === '/' && state.filterBySeen) {
+    if (state.mergedData.length > 0 && location.pathname === '/' && state.filterBySeen) {
       countRef.current += 1;
       dispatch({
         type: 'ADVANCE_PAGE',
@@ -111,11 +118,10 @@ const Home = () => {
       }
     }
   });
-
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
-    isLoading.isLoading || !isMergedDataExist || isFetchFinish.isFetchFinish // include isFetchFinish to indicate not to listen anymore
+    isLoading.isLoading || !isMergedDataExist || (isFetchFinish.isFetchFinish && state.filterBySeen) // include isFetchFinish to indicate not to listen anymore
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
@@ -147,6 +153,7 @@ const Home = () => {
         seenCards: [],
       },
     });
+    setIsLoading({ isLoading: false });
   };
   useDeepCompareEffect(() => {
     let isFinished = false;
@@ -195,7 +202,6 @@ const Home = () => {
 
   useEffect(() => {
     return () => {
-      console.log('abort');
       dispatch({
         type: 'REMOVE_ALL',
       });
@@ -223,21 +229,14 @@ const Home = () => {
   useEffect(() => {
     let isFinished = false;
     if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
-      parallel([
-        () => {
-          if (notification.notification.length > 0) setNotification({ notification: '' });
+      if (notification.notification.length > 0) setNotification({ notification: '' });
+      if (isLoading.isLoading) setIsLoading({ isLoading: false });
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: state.undisplayMergedData,
         },
-        () => {
-          if (isLoading.isLoading) setIsLoading({ isLoading: false });
-        },
-        () =>
-          dispatch({
-            type: 'MERGED_DATA_ADDED',
-            payload: {
-              data: state.undisplayMergedData,
-            },
-          }),
-      ]);
+      });
     }
     return () => {
       isFinished = true;
@@ -341,7 +340,7 @@ const Home = () => {
               for (let index = 0; index < data.length; index++) {
                 const chunk = iters.next();
                 nextExecuteImages(chunk.value, resolve);
-                nextExecuteCrawler(chunk.value, resolve);
+                // nextExecuteCrawler(chunk.value, resolve);
               }
             });
           };
@@ -397,7 +396,38 @@ const Home = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading.isLoading, isMergedDataExist]);
-
+  window.onbeforeunload = () => {
+    Promise.all([
+      fetch(
+        `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+          'GOLANG_PORT'
+        )}/images_from_markdown`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: '',
+        }
+      ),
+    ]).then(noop);
+    abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    return window.close();
+  };
+  const [mouse] = useMouseSpawn();
+  const notLoggedInRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(stateShared.shouldRender === ShouldRender.LoginGQL);
+  useClickOutside(notLoggedInRef, () => setVisible(false));
+  useEffect(() => {
+    let isFinished = false;
+    if (!isFinished && stateShared.shouldRender === ShouldRender.LoginGQL) {
+      setVisible(true);
+    }
+    return () => {
+      isFinished = true;
+    };
+  }, [mouse.x, mouse.y]);
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position
@@ -462,6 +492,18 @@ const Home = () => {
           <BottomNavigationBar />
         </Then>
       </If>
+      <div
+        style={{
+          left: `${mouse.x + 20}px`,
+          top: `${mouse.y - 40}px`,
+          position: 'absolute',
+        }}
+        ref={notLoggedInRef}
+      >
+        {visible && stateShared.shouldRender === ShouldRender.LoginGQL && stateShared.tokenGQL.length === 0 && (
+          <LoginGQL setVisible={setVisible} style={{ display: 'absolute', width: 'fit-content' }} />
+        )}
+      </div>
     </React.Fragment>
   );
 };

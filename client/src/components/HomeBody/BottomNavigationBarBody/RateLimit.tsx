@@ -15,91 +15,84 @@ const RateLimit = () => {
   const [stateRateLimit] = useTrackedStateRateLimit();
   const [resetTime, setResetTime] = useState<string>('');
   const location = useLocation();
+  const isFinished = useRef(false);
 
   useEffect(() => {
     return () => {
-      console.log('abort');
+      isFinished.current = false;
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     };
   }, []);
 
   const intervalRef = useRef<any>();
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && location.pathname === '/') {
+    if (!isFinished.current && location.pathname === '/' && stateRateLimit.rateLimit.reset) {
       intervalRef.current = setInterval(() => {
-        setResetTime(epochToJsDate(stateRateLimit.rateLimit.reset));
+        const { render, ms } = epochToJsDate(stateRateLimit.rateLimit.reset);
+        if (ms! > 0) {
+          setResetTime(render);
+        } else {
+          // prevent the interval to be changed further after hit 00 seconds
+          clearInterval(intervalRef.current);
+          setRefetch(true); // setState from parent here so that it will refetch the rate_limit_info again
+          setResetTime(''); // setState here to set back the resetTime from '00 second' to '' to be cleared
+          // otherwise after setRefetch(true), the condition here won't get hit
+        }
       }, 1000);
-      if (resetTime === '00 second') {
-        // prevent the interval to be changed further after hit 00 seconds
-        clearInterval(intervalRef.current);
-        setRefetch(true); // setState from parent here so that it will refetch the rate_limit_info again
-        setResetTime(''); // setState here to set back the resetTime from '00 second' to '' to be cleared
-        // otherwise after setRefetch(true), the condition here won't get hit
-      }
     }
     return () => {
-      isFinished = true;
       clearInterval(intervalRef.current);
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateRateLimit.rateLimit.reset, resetTime]);
+  }, [stateRateLimit.rateLimit.reset]);
 
   useEffect(
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and
       // persist when switching the component
-      let isFinished = false;
-      if (location.pathname === '/' && !isFinished) {
-        parallel([
-          () =>
-            dispatchRateLimit({
-              type: 'RATE_LIMIT_ADDED',
-              payload: {
-                rateLimitAnimationAdded: false,
-              },
-            }),
-          () =>
-            getRateLimitInfo({ signal: abortController.signal }).then((data) => {
-              if (abortController.signal.aborted) return;
-              if (data && !isFinished) {
-                parallel([
-                  () =>
-                    dispatchRateLimit({
-                      type: 'RATE_LIMIT_ADDED',
-                      payload: {
-                        rateLimitAnimationAdded: true,
-                      },
-                    }),
-                  () =>
-                    dispatchRateLimit({
-                      type: 'RATE_LIMIT',
-                      payload: {
-                        limit: data.rate.limit,
-                        used: data.rate.used,
-                        reset: data.rate.reset,
-                      },
-                    }),
-                  () =>
-                    dispatchRateLimit({
-                      type: 'RATE_LIMIT_GQL',
-                      payload: {
-                        limit: data.resources.graphql.limit,
-                        used: data.resources.graphql.used,
-                        reset: data.resources.graphql.reset,
-                      },
-                    }),
-                ]);
-              }
-              if (!isFinished) setRefetch(false); // turn back to default after setting to true from RateLimit
-            }),
-          () => setRefetch(false),
-        ]);
+      if (location.pathname === '/' && !isFinished.current && refetch) {
+        dispatchRateLimit({
+          type: 'RATE_LIMIT_ADDED',
+          payload: {
+            rateLimitAnimationAdded: false,
+          },
+        });
+        getRateLimitInfo({ signal: abortController.signal }).then((data) => {
+          if (abortController.signal.aborted) return;
+          if (data && !isFinished.current) {
+            parallel([
+              () =>
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT_ADDED',
+                  payload: {
+                    rateLimitAnimationAdded: true,
+                  },
+                }),
+              () =>
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT',
+                  payload: {
+                    limit: data.rate.limit,
+                    used: data.rate.used,
+                    reset: data.rate.reset,
+                  },
+                }),
+              () =>
+                dispatchRateLimit({
+                  type: 'RATE_LIMIT_GQL',
+                  payload: {
+                    limit: data.resources.graphql.limit,
+                    used: data.resources.graphql.used,
+                    reset: data.resources.graphql.reset,
+                  },
+                }),
+            ]);
+          }
+          if (!isFinished.current) setRefetch(false); // turn back to default after setting to true from RateLimit
+        });
+        setRefetch(false);
       }
-      return () => {
-        isFinished = true;
-      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [refetch, state.mergedData.length, state.searchUsers.length]

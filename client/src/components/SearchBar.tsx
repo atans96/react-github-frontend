@@ -15,7 +15,6 @@ const SearchBar = () => {
   //TODO: https://github.com/moroshko/react-autosuggest
   const [stateShared] = useTrackedStateShared();
   const portalExpandable = useRef<any>();
-
   return (
     //  use display: grid so that when PureSearchBar is expanded with its multi-select, the div of this parent
     //won't move to the top direction. It will stay as it is while the Search Bar is expanding to the bottom

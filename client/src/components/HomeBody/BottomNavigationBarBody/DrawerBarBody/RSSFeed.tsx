@@ -318,6 +318,8 @@ const RSSFeed = () => {
                   className="input-group"
                   style={{ padding: '1em' }}
                   onSubmit={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (isTokenRSSExist || token !== '') {
                       const tokenAdd = isTokenRSSExist ? stateShared.tokenRSS : token;
                       if (token !== '') {

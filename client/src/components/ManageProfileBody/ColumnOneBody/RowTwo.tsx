@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import LanguageStarsInfo from './RowTwoBody/LanguageStarsInfo';
 import { Counter } from '../../../util';
 import { useTrackedStateManageProfile } from '../../../selectors/stateContextSelector';
-import DbCtx, { useDexieDB } from '../../../db/db.ctx';
+import { useDexieDB } from '../../../db/db.ctx';
 import { useApolloClient, useLazyQuery } from '@apollo/client';
 import { GET_USER_INFO_DATA } from '../../../graphql/queries';
 import { parallel } from 'async';
@@ -50,7 +50,7 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
   useEffect(() => {
     let isFinished = false;
     if (db && !isFinished) {
-      db.getUserInfoData.get(1).then((data: any) => {
+      db?.getUserInfoData.get(1).then((data: any) => {
         if (data && !isFinished) {
           const temp = JSON.parse(data.data).getUserInfoData;
           if (temp.repoInfo.length > 0) {
@@ -87,7 +87,6 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
     };
   }, [db]);
 
-  const client = useApolloClient();
   useEffect(() => {
     let isFinished = false;
     if (
@@ -112,13 +111,6 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
             type: 'CONTRIBUTORS_ADDED',
             payload: {
               contributors: userInfoData?.getUserInfoData?.repoContributions,
-            },
-          }),
-        () =>
-          client.cache.writeQuery({
-            query: GET_USER_INFO_DATA,
-            data: {
-              getUserInfoData: userInfoData?.getUserInfoData,
             },
           }),
         () => {

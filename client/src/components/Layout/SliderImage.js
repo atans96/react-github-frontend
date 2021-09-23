@@ -81,6 +81,7 @@ class SliderImage {
   setPos(e) {
     if (!this.isDragging) return;
     this.currentX = this.offX + (e.clientX - this.onX) * this.opts.speed;
+    console.log(this.currentX);
     this.clamp();
   }
 
@@ -111,6 +112,7 @@ class SliderImage {
     this.snap();
     this.isDragging = false;
     this.offX = this.currentX;
+    console.log(this.offX);
     this.slider.classList.remove('is-grabbing');
   }
 

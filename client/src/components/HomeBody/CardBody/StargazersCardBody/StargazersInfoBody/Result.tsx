@@ -9,6 +9,7 @@ import { detect, map } from 'async';
 
 import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../../selectors/stateContextSelector';
 import { IStateStargazers } from '../../../../../typing/interface';
+import { useDeepMemo } from '../../../../../hooks/useDeepMemo';
 
 export interface Result {
   getRootPropsCard: any;
@@ -143,15 +144,23 @@ const Result: React.FC<Result> = ({ stargazer, stateStargazers, getRootPropsCard
         >
           <div className="result-languages">
             <Typography variant="subtitle2" className={classes.typography}>
-              {
-                // filter will get updated when state.language changes due to LanguagesList.tsx click event
-                stargazer.starredRepositories.nodes
-                  .map((obj) => {
-                    const sorted = Array.from(obj.languages.edges).sort((a, b) => b.size - a.size);
-                    return sorted[0].node.name;
-                  })
-                  .filter((language: string) => language === stateStargazers.language).length || 0
-              }
+              {useDeepMemo(() => {
+                return stargazer.starredRepositories.nodes.reduce((acc, obj) => {
+                  if (Array.from(obj.languages.edges).length > 0) {
+                    acc += Array.from(obj.languages.edges)
+                      .sort((a, b) => b.size - a.size)
+                      .reduce((count, obj) => {
+                        if (obj.node.name === stateStargazers.language) {
+                          count += 1;
+                        }
+                        return count;
+                      }, 0);
+                    return acc;
+                  } else {
+                    return acc;
+                  }
+                }, 0);
+              }, [stateStargazers.stargazersData, stateStargazers.language])}
             </Typography>
           </div>
         </td>

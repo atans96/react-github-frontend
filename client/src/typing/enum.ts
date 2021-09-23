@@ -3,6 +3,7 @@ export enum ShouldRender {
   Profile = 'profile',
   Discover = 'discover',
   Login = 'login',
+  LoginGQL = 'loginGQL',
 }
 export enum Key {
   getUserData = 'getUserData',

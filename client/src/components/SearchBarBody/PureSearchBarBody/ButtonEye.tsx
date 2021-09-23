@@ -45,8 +45,8 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
           filterBySeen: !state.filterBySeen,
         },
       });
-      db.getSeen.get(1).then((data: any) => {
-        if (data) {
+      db?.getSeen.get(1).then((data: any) => {
+        if (data && data?.data) {
           const temp = JSON.parse(data.data).getSeen;
           if (temp.seenCards.length > 0) {
             parallel([
@@ -119,7 +119,7 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
       dispatchShared({
         type: 'SET_SHOULD_RENDER',
         payload: {
-          shouldRender: !state.filterBySeen ? '' : 'home',
+          shouldRender: !state.filterBySeen ? '' : ShouldRender.Home,
         },
       });
     }
@@ -137,7 +137,7 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
           dispatchShared({
             type: 'SET_SHOULD_RENDER',
             payload: {
-              shouldRender: 'home',
+              shouldRender: ShouldRender.Home,
             },
           }),
         () =>
@@ -155,15 +155,6 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
             type: 'UNDISPLAY_MERGED_DATA',
             payload: {
               undisplayMergedData: seenData?.getSeen?.seenCards,
-            },
-          }),
-        () =>
-          client.cache.writeQuery({
-            query: GET_SEEN,
-            data: {
-              getSeen: {
-                seenCards: seenData?.getSeen?.seenCards,
-              },
             },
           }),
         () =>
@@ -188,7 +179,7 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
       dispatchShared({
         type: 'SET_SHOULD_RENDER',
         payload: {
-          shouldRender: 'home',
+          shouldRender: ShouldRender.Home,
         },
       });
     }

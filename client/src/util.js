@@ -206,9 +206,9 @@ export function epochToJsDate(ts) {
     const dateNow = new Date();
     const dateReset = new Date(ts * 1000);
     const diffTime = Math.abs(dateReset - dateNow);
-    return millisToMinutesAndSeconds(diffTime);
+    return { render: millisToMinutesAndSeconds(diffTime), ms: diffTime };
   }
-  return '';
+  return { render: '', ms: undefined };
 }
 export function offScreen(ref) {
   const rect = ref.current.getBoundingClientRect();

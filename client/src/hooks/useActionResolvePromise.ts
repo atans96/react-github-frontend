@@ -2,11 +2,11 @@ import { ActionResolvePromise, IDataOne } from '../typing/interface';
 import { fastFilter, useStableCallback } from '../util';
 import { Clicked, LanguagePreference, MergedDataProps, SeenProps } from '../typing/type';
 import { filterActionResolvedPromiseData, noop } from '../util/util';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
 import { parallel } from 'async';
-import { useApolloClient, useLazyQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import { GET_CLICKED, GET_SEEN, GET_USER_STARRED } from '../graphql/queries';
 import { useDexieDB } from '../db/db.ctx';
 import { useLocation } from 'react-router-dom';
@@ -26,7 +26,6 @@ const useActionResolvePromise = () => {
       context: { clientName: 'mongo' },
     });
 
-  const client = useApolloClient();
   const [db] = useDexieDB();
 
   const [, setNotification] = useNotification();
@@ -143,15 +142,6 @@ const useActionResolvePromise = () => {
               },
             }),
           () =>
-            client.cache.writeQuery({
-              query: GET_SEEN,
-              data: {
-                getSeen: {
-                  seenCards: seenData?.getSeen?.seenCards,
-                },
-              },
-            }),
-          () =>
             db?.getSeen?.add(
               {
                 data: JSON.stringify({
@@ -187,15 +177,6 @@ const useActionResolvePromise = () => {
               type: 'SET_CLICKED',
               payload: {
                 starred: clicked.getClicked.clicked,
-              },
-            }),
-          () =>
-            client.cache.writeQuery({
-              query: GET_CLICKED,
-              data: {
-                getClicked: {
-                  clicked: clicked.getClicked.clicked,
-                },
               },
             }),
           () =>
@@ -245,24 +226,11 @@ const useActionResolvePromise = () => {
               },
             }),
           () =>
-            client.cache.writeQuery({
-              query: GET_USER_STARRED,
-              data: {
-                getUserInfoStarred: {
-                  starred: userStarred.getUserInfoStarred.starred.map(
-                    (obj: { is_queried: boolean; full_name: string }) => obj.full_name
-                  ),
-                },
-              },
-            }),
-          () =>
             db?.getUserInfoStarred?.add(
               {
                 data: JSON.stringify({
                   getUserInfoStarred: {
-                    starred: userStarred.getUserInfoStarred.starred.map(
-                      (obj: { is_queried: boolean; full_name: string }) => obj.full_name
-                    ),
+                    starred: userStarred.getUserInfoStarred.starred,
                   },
                 }),
               },
@@ -295,12 +263,16 @@ const useActionResolvePromise = () => {
           actionAppend(data)!.then(noop);
           return;
         }
+        if (!stateShared.isLoggedIn) {
+          actionAppend(data)!.then(noop);
+          return;
+        }
         setData(data);
         setIsLoading({ isLoading: false });
         if (!getSeenRef) {
           getSeenRef = true; //mark as queried
-          db.getSeen.get(1).then((data: any) => {
-            if (data) {
+          db?.getSeen.get(1).then((data: any) => {
+            if (data && data?.data) {
               const temp = JSON.parse(data.data).getSeen;
               if (temp.seenCards.length > 0) {
                 parallel([
@@ -330,8 +302,8 @@ const useActionResolvePromise = () => {
         }
         if (!getClickedRef) {
           getClickedRef = true; //mark as queried
-          db.getClicked.get(1).then((data: any) => {
-            if (data) {
+          db?.getClicked.get(1).then((data: any) => {
+            if (data && data?.data) {
               const temp = JSON.parse(data.data).getClicked;
               if (temp.clicked.length > 0) {
                 dispatchShared({
@@ -348,8 +320,8 @@ const useActionResolvePromise = () => {
         }
         if (!getUserInfoStarredRef) {
           getUserInfoStarredRef = true; //mark as queried
-          db.getUserInfoStarred.get(1).then((data: any) => {
-            if (data) {
+          db?.getUserInfoStarred.get(1).then((data: any) => {
+            if (data && data?.data) {
               const temp = JSON.parse(data.data).getUserInfoStarred;
               if (temp.starred.length > 0) {
                 dispatchShared({

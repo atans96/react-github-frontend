@@ -35,7 +35,7 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
   const onMouseLeave = () => {
     setIsHovered(false);
   };
-  const handleClickOutside = useStableCallback((event: any) => {
+  const handleClick = useStableCallback((event: any) => {
     dispatch({
       type: 'REMOVE_ALL',
     });
@@ -94,7 +94,7 @@ const Result: React.FC<Result> = ({ children, userName, getRootProps }) => {
       className={`${isHovered ? 'hovered' : ''} clearfix`}
       onMouseOver={onMouseOver}
       onMouseLeave={onMouseLeave}
-      onClick={handleClickOutside}
+      onClick={handleClick}
       ref={innerRef}
     >
       <div>{children()}</div>

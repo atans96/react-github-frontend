@@ -93,6 +93,7 @@ const Details = () => {
             }
             if (!isFinished && readme.error_404) {
               setNotFound(true);
+              setReadme('');
             } else if ((!isFinished && readme.error_401) || readme.error_403) {
               throw new Error(readme);
             } else if (!isFinished && readme && !isFinished) {
@@ -145,7 +146,7 @@ const Details = () => {
                   </div>
                 </Then>
               </If>
-              <If condition={readme === '' && notFound}>
+              <If condition={notFound}>
                 <Then>
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
                     <NotFoundLayout marginTop={'0rem'} />
