@@ -49,7 +49,6 @@ const ListBoxes = ({ keys, index }: { keys: string; index: number }) => {
 };
 
 const RenderLanguageList = () => {
-  const [, setClicked] = useClicked();
   const [stateStargazers] = useTrackedStateStargazers();
   const [stateShared] = useTrackedStateShared();
   const [, setSelectedLanguage] = useSelectedLanguage();
@@ -61,11 +60,6 @@ const RenderLanguageList = () => {
     }
     return output;
   };
-  useEffect(() => {
-    return () => {
-      setClicked(false);
-    };
-  }, []);
   useEffect(() => {
     let isFinished = false;
     if (!isFinished) setSelectedLanguage(stateStargazers.language);

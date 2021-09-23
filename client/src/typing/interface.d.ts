@@ -67,6 +67,7 @@ export interface IStateStargazers {
   stargazersUsersStarredRepositories: number;
 }
 export interface IStateShared {
+  abortController: void;
   width: number;
   userData: Partial<UserData>;
   searches: Searches[];

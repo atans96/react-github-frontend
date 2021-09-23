@@ -2,6 +2,8 @@ import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { useTrackedState, useTrackedStateShared } from '../../../../../selectors/stateContextSelector';
 import { ContributorProps } from '../../../../../typing/type';
+import { useGetSearchesMutation } from '../../../../../apolloFactory/useGetSearchesMutation';
+import { ShouldRender } from '../../../../../typing/enum';
 
 interface Props {
   obj: ContributorProps;
@@ -11,13 +13,34 @@ const Contributor: React.FC<Props> = ({ obj }) => {
   const history = useHistory();
   const [, dispatchShared] = useTrackedStateShared();
   const [, dispatch] = useTrackedState();
+  const searchesAdded = useGetSearchesMutation();
   const handleContributorsClicked = (e: React.MouseEvent) => (contributor: string) => {
     e.preventDefault();
     e.stopPropagation();
+    searchesAdded({
+      getSearches: {
+        searches: [
+          Object.assign(
+            {},
+            {
+              search: contributor,
+              updatedAt: new Date(),
+              count: 1,
+            }
+          ),
+        ],
+      },
+    });
     dispatchShared({
       type: 'QUERY_USERNAME',
       payload: {
         queryUsername: contributor,
+      },
+    });
+    dispatchShared({
+      type: 'SET_SHOULD_RENDER',
+      payload: {
+        shouldRender: ShouldRender.Home,
       },
     });
     dispatch({

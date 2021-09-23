@@ -4,11 +4,12 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import '../../../Login.scss';
 import { requestGithubGraphQLLogin, setTokenGQL } from '../../../../services';
 import { Nullable } from '../../../../typing/type';
-import { useClickOutside } from '../../../../hooks/hooks';
+import { useClickOutside, useOuterClick } from '../../../../hooks/hooks';
 import { logoutAction, noop } from '../../../../util/util';
 import { useTrackedStateShared } from '../../../../selectors/stateContextSelector';
 import { useHistory } from 'react-router-dom';
 import { parallel } from 'async';
+import { ShouldRender } from '../../../../typing/enum';
 
 interface LoginGQLProps {
   style: CSSProperties;
@@ -30,13 +31,20 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
         if (res.success) {
           parallel([
             () => setTokenGQL(token, stateShared.username).then(noop),
-            () =>
+            () => {
               dispatch({
                 type: 'TOKEN_ADDED',
                 payload: {
                   tokenGQL: token,
                 },
-              }),
+              });
+              dispatch({
+                type: 'SET_SHOULD_RENDER',
+                payload: {
+                  shouldRender: ShouldRender.Home,
+                },
+              });
+            },
             () => setVisible(false),
           ]);
         } else {
@@ -51,8 +59,9 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
         window.alert('Your token has expired. We will logout you out.');
       });
   };
-
-  useClickOutside(loginLayoutRef, () => setVisible(false));
+  const innerRef = useOuterClick(() => {
+    setVisible(false);
+  }) as any;
   useEffect(() => {
     return () => {
       abortController.abort();
@@ -80,7 +89,7 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
     ]);
   };
   return (
-    <LoginLayout style={style} apiType={'GraphQL'} data={data} notification={notification}>
+    <LoginLayout style={style} apiType={'GraphQL'} data={data} notification={notification} ref={innerRef}>
       {() => (
         <React.Fragment>
           <div className={'login-link-container'}>

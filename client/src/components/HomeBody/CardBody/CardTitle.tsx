@@ -12,7 +12,12 @@ const CardTitle: React.FC<CardTitleProps> = ({ data }) => {
   const [state] = useTrackedState();
   return (
     <a
-      onClick={() => window.open(state?.cardEnhancement?.get(data.id)?.webLink)}
+      onClick={(e) => {
+        e.preventDefault();
+        if (state?.cardEnhancement.has(data.id)) {
+          window.open(state?.cardEnhancement?.get(data.id)?.webLink);
+        }
+      }}
       target="_blank"
       href={state?.cardEnhancement?.get(data.id)?.webLink}
       className={clsx('', {

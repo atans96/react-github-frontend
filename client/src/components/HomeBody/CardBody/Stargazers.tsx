@@ -77,7 +77,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
               hasNextPage: result.data.repository.stargazers.pageInfo || {},
             },
           });
-          map(result.data.repository.stargazers.nodes, (node: any) => {
+          result.data.repository.stargazers.nodes.forEach((node: any) => {
             const newNode = { ...node };
             newNode['isQueue'] = false;
             dispatchStargazers({
@@ -208,7 +208,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
   const handleClickStar = () => {
     if (!starClicked) {
       parallel([
-        () => setStarredMe(data.full_name),
+        () => setStarredMe(data.full_name, stateShared.tokenGQL || ''),
         () => {
           if (stateShared.isLoggedIn) {
             addedStarredMe({
@@ -221,7 +221,7 @@ const Stargazers: React.FC<StargazersProps> = ({ data }) => {
       ]);
     } else if (starClicked) {
       parallel([
-        () => removeStarredMe(data.full_name),
+        () => removeStarredMe(data.full_name, stateShared.tokenGQL || ''),
         () => {
           if (stateShared.isLoggedIn) {
             removeStarred({

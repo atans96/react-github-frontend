@@ -18,9 +18,19 @@ const LanguagesList = () => {
     e.preventDefault();
     e.stopPropagation();
     const temp = stateStargazers.stargazersData.reduce((acc: any[], stargazer: StargazerProps) => {
-      const temp = stargazer.starredRepositories.nodes.map((obj) => obj.languages.edges.map((obj) => obj.node.name)[0]);
-      const languages = fastFilter((language: string) => language === stateStargazers.language, temp);
-      acc.push(Object.assign({}, { id: stargazer.id, languages: languages.length }));
+      let count = 0;
+      const temp = stargazer.starredRepositories.nodes
+        .map((obj) => Array.from(obj.languages.edges).sort((a, b) => b.size - a.size))
+        .map((obj) => obj.map((obj) => obj.node.name));
+      temp.forEach((arr) => {
+        for (const lang of arr) {
+          if (lang === stateStargazers.language) {
+            count += 1;
+            break;
+          }
+        }
+      });
+      acc.push(Object.assign({}, { id: stargazer.id, languages: count }));
       return acc;
     }, []);
     if (evenOdd.current % 2 === 0) {

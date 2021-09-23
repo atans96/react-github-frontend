@@ -8,14 +8,14 @@ interface DataProps {
 
 interface LoginLayout {
   children(): React.ReactNode;
-
+  ref?: any;
   apiType: string;
   notification: string;
   style?: React.CSSProperties;
   data: DataProps;
 }
 
-const LoginLayout: React.FC<LoginLayout> = ({ style, notification, data, apiType, children }) => {
+const LoginLayout: React.FC<LoginLayout> = React.forwardRef(({ style, notification, data, apiType, children }, ref) => {
   return (
     <section className="container" style={style?.display ? { display: style?.display } : { display: 'flex' }}>
       <div style={{ backgroundColor: 'white', textAlign: 'center' }}>
@@ -46,6 +46,6 @@ const LoginLayout: React.FC<LoginLayout> = ({ style, notification, data, apiType
       </div>
     </section>
   );
-};
+});
 LoginLayout.displayName = 'LoginLayout';
 export default LoginLayout;

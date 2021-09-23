@@ -20,28 +20,28 @@ interface DetailsProps {
 const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) => {
   const abortController = new AbortController();
   const [stateShared] = useTrackedStateShared();
-  const _isMounted = useRef(true);
   const readmeRef = useRef<HTMLDivElement>(null);
   const [readme, setReadme] = useState('');
   const location = useLocation();
   const [notFound, setNotFound] = useState(false);
-
   useEffect(
     () => {
-      if ((_isMounted.current && location.pathname === '/profile') || location.pathname === '/detail') {
+      let _isMounted = true;
+      if ((_isMounted && location.pathname === '/profile') || location.pathname === '/detail') {
         markdownParsing(stateShared.username, fullName, branch, abortController.signal).then((data) => {
           if (abortController.signal.aborted) return;
-          if (_isMounted.current && data.error_404) {
+          if (_isMounted && data.error_404) {
             setNotFound(true);
-          } else if ((_isMounted.current && data.error_401) || data.error_403) {
+            setReadme('');
+          } else if ((_isMounted && data.error_401) || data.error_403) {
             throw new Error(data);
-          } else if (_isMounted.current && data && _isMounted.current) {
+          } else if (_isMounted && data && _isMounted) {
             setReadme(data.readme);
           }
         });
       }
       return () => {
-        _isMounted.current = false;
+        _isMounted = false;
       };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -50,7 +50,6 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
 
   useEffect(() => {
     return () => {
-      _isMounted.current = false;
       console.log('abort');
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     };
@@ -78,7 +77,7 @@ const Details: React.FC<DetailsProps> = ({ width, branch, fullName, html_url }) 
               </div>
             </Then>
           </If>
-          <If condition={readme === '' && notFound}>
+          <If condition={notFound}>
             <Then>
               <div style={{ display: 'flex', justifyContent: 'center', width: 'fit-content' }}>
                 <NotFoundLayout marginTop={'0rem'} />

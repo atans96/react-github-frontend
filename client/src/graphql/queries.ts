@@ -243,7 +243,7 @@ export const SEARCH_FOR_TOPICS = `
       repositoryCount
       nodes {
         ... on Repository {
-          id
+          databaseId
           defaultBranchRef {
             name
           }
@@ -294,7 +294,7 @@ export const SEARCH_FOR_MORE_TOPICS = `
       repositoryCount
       nodes {
         ... on Repository {
-          id
+          databaseId
           defaultBranchRef {
             name
           }

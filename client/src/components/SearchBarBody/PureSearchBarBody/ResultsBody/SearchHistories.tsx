@@ -5,7 +5,6 @@ import { Typography } from '@material-ui/core';
 import { If } from '../../../../util/react-if/If';
 import { Then } from '../../../../util/react-if/Then';
 import { LoadingSmall } from '../../../LoadingSmall';
-import { Searches } from '../../../../typing/type';
 import Loadable from 'react-loadable';
 import Empty from '../../../Layout/EmptyLayout';
 import { fastFilter } from '../../../../util';
@@ -16,8 +15,7 @@ const Result = Loadable({
   loader: () => import(/* webpackChunkName: "SearchesHistoriesResult" */ './Result'),
 });
 interface SearchHistories {
-  searches: Searches[];
-  filter: any;
+  searches: string[];
   valueRef: string;
   getRootProps: any;
   width: number;
@@ -53,7 +51,6 @@ const Child1 = ({ result }: any) => {
 };
 const SearchHistories: React.FC<SearchHistories> = ({
   searches,
-  filter,
   valueRef,
   getRootProps,
   stateSearchUsers,
@@ -79,19 +76,17 @@ const SearchHistories: React.FC<SearchHistories> = ({
   return (
     <div className="resultsContainer" style={style}>
       <ul className={'results'}>
-        {filter(searches, valueRef)
-          .sort((a: Searches, b: Searches) => b.count - a.count) //the most frequent searches at the top
-          .map((search: { search: string; count: number; updatedAt: Date }, idx: number) => {
-            const newBody = search.search.replace(
-              new RegExp(valueRef.toLowerCase(), 'gi'),
-              (match: string) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
-            );
-            return (
-              <Result key={idx} getRootProps={getRootProps} userName={search.search}>
-                {() => <Child newBody={newBody} />}
-              </Result>
-            );
-          })}
+        {searches.map((search: string, idx: number) => {
+          const newBody = search.replace(
+            new RegExp(valueRef.toLowerCase(), 'gi'),
+            (match: string) => `<mark style="background: #2769AA; color: white;">${match}</mark>`
+          );
+          return (
+            <Result key={idx} getRootProps={getRootProps} userName={search}>
+              {() => <Child newBody={newBody} />}
+            </Result>
+          );
+        })}
         <If condition={isLoading}>
           <Then>
             <li className={'clearfix'}>
@@ -102,12 +97,7 @@ const SearchHistories: React.FC<SearchHistories> = ({
         <If condition={!isLoading}>
           <Then>
             {fastFilter((search: Array<{ search: string; count: number; updatedAt: Date }>) => {
-              const temp =
-                searches.reduce((acc: any, obj: { search: string; count: number; updatedAt: Date }) => {
-                  acc.push(obj.search);
-                  return acc;
-                }, []) ?? [];
-              return !temp.includes(Object.keys(search)[0]);
+              return !searches.includes(Object.keys(search)[0]);
             }, stateSearchUsers).map((result, idx) => (
               <Result key={idx} getRootProps={getRootProps} userName={Object.keys(result).toString()}>
                 {() => <Child1 result={result} />}

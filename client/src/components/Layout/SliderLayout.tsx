@@ -58,14 +58,17 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
       localStorage.setItem(type, newValue);
       if (newValue <= minSliderRange || !newValue) {
         setValue(minSliderRange); // don't set dispatcher here since it will trigger re-render to all component that
+        dispatch(minSliderRange);
         // use useContext in the component
       } else {
         setValue(newValue);
+        dispatch(newValue);
       }
     };
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setValue(parseInt(event.target.value));
+      dispatch(event.target.value);
       localStorage.setItem(type, event.target.value);
     };
     const shouldShowInputFn = () => {

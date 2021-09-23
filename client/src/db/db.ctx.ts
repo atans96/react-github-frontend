@@ -6,7 +6,7 @@ import { readEnvironmentVariable } from '../util';
 import Encryption from './Encryption';
 import Dexie from 'dexie';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import { useApolloClient, useLazyQuery } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 import { GET_SEARCHES, GET_USER_DATA } from '../graphql/queries';
 import { parallel } from 'async';
 import { createStore } from '../util/hooksy';
@@ -30,17 +30,15 @@ const DbCtx = createContainer(() => {
     }
   );
 
-  const client = useApolloClient();
   const [db, setDb] = useDexieDB();
   const [stateShared, dispatchShared] = useTrackedStateShared();
-
   const handleOpenDb = async () => {
     let symmetricKey;
     if (await Dexie.exists('ApolloCacheDB')) {
       try {
         symmetricKey = await Encryption.decryptKey(readEnvironmentVariable('DB_KEY')!);
       } catch (error) {
-        throw new Error('Password is not correct');
+        throw new Error(error);
       }
     } else {
       // generate a random key to encrypt DB then encrypt the key with the user password
@@ -97,15 +95,6 @@ const DbCtx = createContainer(() => {
     ) {
       parallel([
         () =>
-          client.cache.writeQuery({
-            query: GET_USER_DATA,
-            data: {
-              getUserData: {
-                ...userData?.getUserData,
-              },
-            },
-          }),
-        () =>
           db?.getUserData?.add(
             {
               data: JSON.stringify({
@@ -134,13 +123,6 @@ const DbCtx = createContainer(() => {
     let isFinished = false;
     if (!isFinished && !loadingSearchesData && !errorSearchesData && searchesData?.getSearches?.searches?.length > 0) {
       parallel([
-        () =>
-          client.cache.writeQuery({
-            query: GET_SEARCHES,
-            data: {
-              getSearches: { searches: searchesData.getSearches.searches },
-            },
-          }),
         () =>
           db?.getSearches?.add(
             {
@@ -173,7 +155,7 @@ const DbCtx = createContainer(() => {
         parallel([
           () =>
             conn.getUserData.get(1).then((data: any) => {
-              if (data) {
+              if (data && data?.data) {
                 const temp = JSON.parse(data.data).getUserData;
                 if (Object.keys(temp).length > 0 && !isFinished) {
                   dispatchShared({
@@ -189,7 +171,7 @@ const DbCtx = createContainer(() => {
             }),
           () =>
             conn.getSearches.get(1).then((data: any) => {
-              if (data) {
+              if (data && data?.data) {
                 const temp = JSON.parse(data.data).getSearches;
                 if (temp.searches.length > 0 && !isFinished) {
                   dispatchShared({

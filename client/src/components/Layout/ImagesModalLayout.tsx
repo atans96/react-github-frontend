@@ -2,10 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Modal } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import clsx from 'clsx';
-import useImage from '../../hooks/useImage';
 import SliderImage from './SliderImage';
 import { useClickOutside } from '../../hooks/hooks';
-import { LoadingSmall } from '../LoadingSmall';
 
 interface ImagesModalLayoutProps {
   clicked: boolean;
@@ -14,27 +12,6 @@ interface ImagesModalLayoutProps {
   handleClick: (args: any) => void;
 }
 
-interface ImageComponentProps {
-  urlLink: string;
-  loader?: JSX.Element;
-}
-
-const ImageModal: React.FC<ImageComponentProps> = ({ urlLink }) => {
-  const { isLoading, error, height, width } = useImage({
-    srcList: urlLink,
-    useSuspense: false,
-  });
-  if (!isLoading && height && width) {
-    if (height > 193 && width > 64) {
-      return (
-        <div className={'slide'}>
-          <img src={error === null ? urlLink : ''} className={'images'} alt="" />
-        </div>
-      );
-    }
-  }
-  return <></>;
-};
 const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = ({ handleClick, clicked, renderImages }) => {
   const [mouseGrabbing, setMouseGrabbing] = useState(false);
   const sliderInner = useRef<HTMLDivElement | null>(null);
@@ -86,9 +63,13 @@ const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = ({ handleClick, clic
           }}
         >
           <div className={'slides-inner'} ref={sliderInner}>
-            {renderImages.map((image, idx: number) => (
-              <ImageModal urlLink={image.webP} loader={<LoadingSmall />} key={idx} />
-            ))}
+            {React.useMemo(() => {
+              return renderImages.map((image, idx: number) => (
+                <div className={'slide'} key={idx}>
+                  <img src={`data:image/webp;base64, ${image.webP}`} className={'images'} alt="" />
+                </div>
+              ));
+            }, [renderImages.length])}
           </div>
         </div>
       </React.Fragment>

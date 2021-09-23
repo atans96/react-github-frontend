@@ -23,10 +23,12 @@ export type ActionShared =
   | 'SET_USERNAME'
   | 'TOKEN_RSS_ADDED'
   | 'SET_SHOULD_RENDER'
+  | 'ABORT'
   | 'SET_DRAWER_WIDTH'
   | 'SET_CARD_ENHANCEMENT';
 
 export const initialStateShared: IStateShared = {
+  abortController: undefined,
   width: window.innerWidth,
   shouldRender: '',
   seenCards: [],

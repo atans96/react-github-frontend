@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import SearchBarLayout from '../Layout/SearchBarLayout';
 import { useEventHandlerComposer } from '../../hooks/hooks';
-import { MergedDataProps, StargazerProps } from '../../typing/type';
+import { MergedDataProps, StargazerProps, Searches as SearchesType } from '../../typing/type';
 import { useStableCallback } from '../../util';
 import { useLocation } from 'react-router-dom';
 import {
@@ -43,13 +43,13 @@ interface SearchBarProps {
 const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   const searchesAdded = useGetSearchesMutation();
   const [visible, setVisible] = useVisible();
+  const [recentHistory, setRecentHistory] = useState<string[]>([]);
   const [visibleSearchesHistory, setVisibleSearchesHistory] = useVisibleSearchesHistory();
   const [username, setUsername] = useQueryUsername();
   const [, setIsFetchFinish] = useIsFetchFinish();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const [state, dispatch] = useTrackedState();
-
   const size = {
     width: '500px',
     minWidth: '100px',
@@ -65,7 +65,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
       minWidth: size.minWidth,
     };
   }
-  const [valueRef, setValue] = useState<string>('');
 
   const showTipsText = (type: string) => {
     switch (type) {
@@ -150,21 +149,22 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                   return undefined;
                 }
               },
-              (err, results: any) => {
+              (err, searches: any) => {
                 if (err) {
                   throw new Error('err');
                 }
-                if (!results) {
+                if (!searches) {
                   return;
                 }
-                each(results, (char: string) => {
+                setRecentHistory(searches);
+                searches.forEach((search: string) => {
                   searchesAdded({
                     getSearches: {
                       searches: [
                         Object.assign(
                           {},
                           {
-                            search: char,
+                            search: search,
                             updatedAt: new Date(),
                             count: 1,
                           }
@@ -183,6 +183,20 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
 
   const location = useLocation();
 
+  useEffect(() => {
+    let isMounted = true;
+    if (isMounted && stateShared.searches.length > 0) {
+      let ja: string[] = [];
+      stateShared.searches.forEach((obj: SearchesType) => {
+        ja.push(obj.search);
+      });
+      setRecentHistory(ja);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [stateShared.searches]);
+
   useDeepCompareEffect(() => {
     let isCancelled = false;
     if (location.pathname === '/' && !isCancelled) {
@@ -194,8 +208,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             if (x.language) {
               topics.push(x.language.toLowerCase());
               if (
-                state.filteredTopics.join().includes(topics.join(' ')) ||
-                topics.join(' ').includes(state.filteredTopics.join())
+                topics.some(function (v) {
+                  return Array.from(state.filteredTopics).indexOf(v) >= 0;
+                })
               ) {
                 cb(null, x);
                 return x;
@@ -225,7 +240,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             }
           }
         );
-      } else if (state.filteredTopics.length === 0 && state.filteredMergedData.length > 0) {
+      } else if (Array.from(state.filteredTopics).length === 0 && state.filteredMergedData.length > 0) {
         dispatch({
           type: 'MERGED_DATA_FILTER_BY_TAGS',
           payload: {
@@ -241,8 +256,6 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
   }, [state.filteredTopics, state.mergedData, state.filterBySeen]); // we want this to be re-executed when the user scroll and fetchUserMore
   // being executed at Home.js, thus causing mergedData to change. Now if filteredTopics.length > 0, that means we only display new
   // cards that have been fetched that only match with filteredTopics.
-
-  const handleChange = useStableCallback((value: string) => setValue(value));
 
   useDeepCompareEffect(() => {
     let isCancelled = false;
@@ -305,20 +318,28 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.mergedData]);
 
-  const filterJ = (
-    searchesHistory: Array<{ search: string; count: number; updatedAt: Date }> | undefined,
-    valueRef: string
-  ) => {
+  const filterJ = (searchesHistory: SearchesType[], valueRef: string, recentHistory: string[]) => {
     const result: any[] = [];
-    if (searchesHistory && searchesHistory.length > 0) {
+    if (searchesHistory && searchesHistory?.length > 0 && recentHistory?.length > 0) {
       for (const searchHistory of searchesHistory) {
         if (searchHistory.search.toLowerCase().indexOf(valueRef.toLowerCase()) >= 0) {
-          result.push(searchHistory);
+          result.push(searchHistory.search);
         }
+      }
+    }
+    for (const x of recentHistory) {
+      if (x.toLowerCase().includes(valueRef.toLowerCase()) && !result.includes(x)) {
+        result.push(x);
       }
     }
     return result;
   };
+  const [filtering, setFiltering] = useState<string[]>([]);
+  const [valueRef, setValue] = useState<string>('');
+  const handleChange = useStableCallback((value: string) => {
+    setValue(value);
+    setFiltering(filterJ(stateShared.searches, value, recentHistory));
+  });
   const onClickCb = useStableCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -350,18 +371,10 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
             thus causing heavy rendering. To prevent setState takes effect of rendering the children component
             to Home.tsx, we put it in new component */}
           <PureInput style={style} handleChange={handleChange} />
-          <If
-            condition={
-              stateShared?.searches?.length > 0 &&
-              valueRef.length > 0 &&
-              visibleSearchesHistory &&
-              filterJ(stateShared?.searches, valueRef).length > 0
-            }
-          >
+          <If condition={valueRef.length > 0 && visibleSearchesHistory && filtering.length > 0}>
             <Then>
               <SearchHistories
-                searches={stateShared?.searches}
-                filter={filterJ}
+                searches={filtering}
                 valueRef={valueRef}
                 isLoading={state.isLoading}
                 getRootProps={getRootProps}
@@ -370,7 +383,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
               />
             </Then>
           </If>
-          <If condition={visible && filterJ(stateShared?.searches, valueRef).length === 0}>
+          <If condition={visible && filtering.length === 0}>
             <Then>
               <Searches
                 data={state.searchUsers}

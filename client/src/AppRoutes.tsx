@@ -10,8 +10,8 @@ import { readEnvironmentVariable, urlBase64ToUint8Array } from './util';
 import React, { useEffect, useState } from 'react';
 import { associate } from './graphql/queries';
 import { endOfSession, getFile, getTokenGQL, session, startOfSessionDexie, subscribeToApollo } from './services';
-import { noop } from './util/util';
-import { Route, Switch, useLocation } from 'react-router-dom';
+import { logoutAction, noop } from './util/util';
+import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import KeepMountedLayout from './components/Layout/KeepMountedLayout';
 import { ShouldRender } from './typing/enum';
@@ -25,7 +25,7 @@ import {
   NotFoundLoadable,
   SearchBarLoadable,
 } from './AppRoutesLoadable';
-import DbCtx from './db/db.ctx';
+import DbCtx, { useDexieDB } from './db/db.ctx';
 
 interface AppRoutes {
   shouldRender: string;
@@ -44,7 +44,7 @@ const Child = React.memo(
           render={() => (
             <StateStargazersProvider>
               <SearchBarLoadable />
-              {shouldRender === ShouldRender.Home && (
+              {(shouldRender === ShouldRender.Home || shouldRender === ShouldRender.LoginGQL) && (
                 <StateDiscoverProvider>
                   <HomeLoadable />
                 </StateDiscoverProvider>
@@ -73,7 +73,9 @@ const Child = React.memo(
   }
 );
 const AppRoutes = () => {
-  const { db, clear } = DbCtx.useContainer();
+  const history = useHistory();
+  const { clear } = DbCtx.useContainer();
+  const [db] = useDexieDB();
   const abortController = new AbortController();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   sysend.on('Login', function (fn) {
@@ -185,7 +187,7 @@ const AppRoutes = () => {
       session(false, stateShared.username, abortController.signal).then((data) => {
         if (abortController.signal.aborted) return;
         if (data) {
-          if (Boolean(data.data) && data.username.length > 0) {
+          if (Boolean(data.data) && data.username.length > 0 && !isFinished) {
             dispatchShared({
               type: 'SET_USERNAME',
               payload: { username: data.username },
@@ -200,7 +202,7 @@ const AppRoutes = () => {
         }
         setDoneFetch(true);
       });
-      if (stateShared.isLoggedIn && stateShared.username.length > 0) {
+      if (stateShared.isLoggedIn) {
         sendJsonMessage({
           open: {
             user: stateShared.username,
@@ -209,7 +211,7 @@ const AppRoutes = () => {
         });
         getTokenGQL(stateShared.username, abortController.signal).then((res) => {
           if (abortController.signal.aborted) return;
-          if (res.tokenGQL) {
+          if (res.tokenGQL && !isFinished) {
             dispatchShared({
               type: 'TOKEN_ADDED',
               payload: {
@@ -224,7 +226,7 @@ const AppRoutes = () => {
     return () => {
       isFinished = true;
     };
-  }, [stateShared.isLoggedIn, stateShared.username, db]);
+  }, [stateShared.isLoggedIn, stateShared.username]);
 
   useEffect(() => {
     if (db && doneFetch && stateShared.isLoggedIn) {
@@ -266,15 +268,6 @@ const AppRoutes = () => {
           });
         }),
         new Promise((resolve, reject) => {
-          db?.getUserInfoStarred.get(1).then((oldData: any) => {
-            if (oldData && oldData?.data) {
-              resolve({ [Object.keys(JSON.parse(oldData.data))[0]]: JSON.parse(oldData.data) });
-            } else {
-              reject('');
-            }
-          });
-        }),
-        new Promise((resolve, reject) => {
           db?.getUserData.get(1).then((oldData: any) => {
             if (oldData && oldData?.data) {
               resolve({
@@ -296,7 +289,12 @@ const AppRoutes = () => {
             }
           })
           .filter((e) => !!e);
-        if (result.length > 0) startOfSessionDexie(stateShared.username, result).then(noop);
+        if (result.length > 0)
+          startOfSessionDexie(stateShared.username, result).then((res) => {
+            if (!res) {
+              logoutAction(history, dispatchShared, stateShared.username);
+            }
+          });
       });
     } else if (doneFetch && !stateShared.isLoggedIn) {
       clear();
@@ -316,6 +314,22 @@ const AppRoutes = () => {
         Promise.all([endOfSession(stateShared.username, client.cache.extract())]).then(noop);
       }
     }
+    Promise.all([
+      fetch(
+        `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+          'GOLANG_PORT'
+        )}/images_from_markdown`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: '',
+        }
+      ),
+    ]).then(noop);
+    abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     return window.close();
   };
   useEffect(() => {
