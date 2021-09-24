@@ -1,5 +1,5 @@
 import { useHistory, useLocation } from 'react-router-dom';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { markdownParsing } from '../services';
 import { GoBook } from 'react-icons/go';
 import './markdown-body.css';
@@ -29,6 +29,7 @@ interface StateProps {
 }
 
 const Details = () => {
+  const isFinished = useRef(false);
   const [stateShared] = useTrackedStateShared();
   const abortController = new AbortController();
   const location = useLocation<any>();
@@ -45,30 +46,24 @@ const Details = () => {
   });
 
   const isStarRankingExist = !starRankingDataLoading && !starRankingDataError && starRankingData?.getStarRanking;
-
   useEffect(() => {
-    let isFinished = false;
-    if (isStarRankingExist && !isFinished && /detail/.test(location.pathname) && !!data) {
+    return () => {
+      isFinished.current = true;
+      abortController.abort();
+    };
+  }, []);
+  useEffect(() => {
+    if (isStarRankingExist && !isFinished.current && /detail/.test(location.pathname) && !!data) {
       const temp = starRankingData.getStarRanking.starRanking.find((obj: starRanking) => obj.id === data.data.id);
-      if (!!temp && !isFinished) {
+      if (!!temp && !isFinished.current) {
         setDataStarRanking(temp);
       }
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starRankingData, starRankingDataLoading, starRankingDataError]);
 
   useEffect(() => {
-    return () => {
-      abortController.abort();
-    };
-  }, []);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && /detail/.test(location.pathname)) {
+    if (!isFinished.current && /detail/.test(location.pathname)) {
       if (location.state) {
         setData(JSON.parse(location.state));
       } else {
@@ -76,35 +71,28 @@ const Details = () => {
         localStorage.removeItem('detailsData');
       }
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   useEffect(
     () => {
-      let isFinished = false;
-      if (!isFinished && /detail/.test(location.pathname) && !!data) {
+      if (!isFinished.current && /detail/.test(location.pathname) && !!data) {
         markdownParsing(stateShared.username, data.data.full_name, data.data.default_branch, abortController.signal)
           .then((readme) => {
             if (abortController.signal.aborted) {
               return;
             }
-            if (!isFinished && readme.error_404) {
+            if (!isFinished.current && readme.error_404) {
               setNotFound(true);
               setReadme('');
-            } else if ((!isFinished && readme.error_401) || readme.error_403) {
+            } else if ((!isFinished.current && readme.error_401) || readme.error_403) {
               throw new Error(readme);
-            } else if (!isFinished && readme && !isFinished) {
+            } else if (!isFinished.current && readme && !isFinished.current) {
               setReadme(readme.readme);
             }
           })
           .catch((e) => new Error(e));
       }
-      return () => {
-        isFinished = true;
-      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [data]

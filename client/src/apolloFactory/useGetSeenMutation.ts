@@ -40,62 +40,52 @@ export const useGetSeenMutation = () => {
               }),
           ]);
         } else {
-          parallel([
-            () =>
-              dispatchShared({
-                type: 'SET_SEEN',
-                payload: {
+          dispatchShared({
+            type: 'SET_SEEN',
+            payload: {
+              seenCards: data,
+            },
+          });
+          dispatch({
+            type: 'UNDISPLAY_MERGED_DATA',
+            payload: {
+              undisplayMergedData: data,
+            },
+          });
+          db?.getSeen?.add(
+            {
+              data: JSON.stringify({
+                getSeen: {
                   seenCards: data,
                 },
               }),
-            () =>
-              dispatch({
-                type: 'UNDISPLAY_MERGED_DATA',
-                payload: {
-                  undisplayMergedData: data,
-                },
-              }),
-            () =>
-              db?.getSeen?.add(
-                {
-                  data: JSON.stringify({
-                    getSeen: {
-                      seenCards: data,
-                    },
-                  }),
-                },
-                1
-              ),
-          ]);
+            },
+            1
+          );
         }
       } else {
-        parallel([
-          () =>
-            dispatchShared({
-              type: 'SET_SEEN',
-              payload: {
+        dispatchShared({
+          type: 'SET_SEEN',
+          payload: {
+            seenCards: data,
+          },
+        });
+        dispatch({
+          type: 'UNDISPLAY_MERGED_DATA',
+          payload: {
+            undisplayMergedData: data,
+          },
+        });
+        db?.getSeen?.add(
+          {
+            data: JSON.stringify({
+              getSeen: {
                 seenCards: data,
               },
             }),
-          () =>
-            dispatch({
-              type: 'UNDISPLAY_MERGED_DATA',
-              payload: {
-                undisplayMergedData: data,
-              },
-            }),
-          () =>
-            db?.getSeen?.add(
-              {
-                data: JSON.stringify({
-                  getSeen: {
-                    seenCards: data,
-                  },
-                }),
-              },
-              1
-            ),
-        ]);
+          },
+          1
+        );
       }
     });
   };

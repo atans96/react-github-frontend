@@ -19,17 +19,17 @@ const RateLimit = () => {
 
   useEffect(() => {
     return () => {
-      isFinished.current = false;
+      isFinished.current = true;
       abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     };
   }, []);
 
   const intervalRef = useRef<any>();
   useEffect(() => {
-    if (!isFinished.current && location.pathname === '/' && stateRateLimit.rateLimit.reset) {
+    if (!refetch && !isFinished.current && location.pathname === '/' && stateRateLimit.rateLimit.reset) {
       intervalRef.current = setInterval(() => {
         const { render, ms } = epochToJsDate(stateRateLimit.rateLimit.reset);
-        if (ms! > 0) {
+        if (render !== '00 second') {
           setResetTime(render);
         } else {
           // prevent the interval to be changed further after hit 00 seconds
@@ -45,13 +45,13 @@ const RateLimit = () => {
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateRateLimit.rateLimit.reset]);
+  }, [stateRateLimit.rateLimit.reset, refetch]);
 
   useEffect(
     () => {
       // the first time Home component is mounting fetch it, otherwise it will use the data from store and
       // persist when switching the component
-      if (location.pathname === '/' && !isFinished.current && refetch) {
+      if (location.pathname === '/' && !isFinished.current) {
         dispatchRateLimit({
           type: 'RATE_LIMIT_ADDED',
           payload: {
@@ -61,33 +61,28 @@ const RateLimit = () => {
         getRateLimitInfo({ signal: abortController.signal }).then((data) => {
           if (abortController.signal.aborted) return;
           if (data && !isFinished.current) {
-            parallel([
-              () =>
-                dispatchRateLimit({
-                  type: 'RATE_LIMIT_ADDED',
-                  payload: {
-                    rateLimitAnimationAdded: true,
-                  },
-                }),
-              () =>
-                dispatchRateLimit({
-                  type: 'RATE_LIMIT',
-                  payload: {
-                    limit: data.rate.limit,
-                    used: data.rate.used,
-                    reset: data.rate.reset,
-                  },
-                }),
-              () =>
-                dispatchRateLimit({
-                  type: 'RATE_LIMIT_GQL',
-                  payload: {
-                    limit: data.resources.graphql.limit,
-                    used: data.resources.graphql.used,
-                    reset: data.resources.graphql.reset,
-                  },
-                }),
-            ]);
+            dispatchRateLimit({
+              type: 'RATE_LIMIT_ADDED',
+              payload: {
+                rateLimitAnimationAdded: true,
+              },
+            });
+            dispatchRateLimit({
+              type: 'RATE_LIMIT',
+              payload: {
+                limit: data.rate.limit,
+                used: data.rate.used,
+                reset: data.rate.reset,
+              },
+            });
+            dispatchRateLimit({
+              type: 'RATE_LIMIT_GQL',
+              payload: {
+                limit: data.resources.graphql.limit,
+                used: data.resources.graphql.used,
+                reset: data.resources.graphql.reset,
+              },
+            });
           }
           if (!isFinished.current) setRefetch(false); // turn back to default after setting to true from RateLimit
         });

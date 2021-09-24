@@ -33,95 +33,81 @@ const PureInput: React.FC<SearchBarProps> = ({ handleChange, style }) => {
   const [stateStargazers, dispatchStargazers] = useTrackedStateStargazers();
   const isInputFocused = useRef<HTMLInputElement>(null);
   const debouncedValue = useDebouncedValue(username, 1500); // this value will pick real time value, but will change it's result only when it's seattled for 500ms
+  const isFinished = useRef(false);
 
   useEffect(() => {
-    let isFinished = false;
-    if (username.toString().trim().length > 0 && !isFinished && debouncedValue) {
-      parallel([
-        () => setVisible(true),
-        () =>
+    return () => {
+      isFinished.current = true;
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, []);
+
+  useEffect(() => {
+    if (username.toString().trim().length > 0 && !isFinished.current && debouncedValue && debouncedValue >= 0) {
+      setVisible(true);
+      dispatch({
+        type: 'VISIBLE',
+        payload: {
+          visible: true,
+        },
+      });
+      dispatch({
+        type: 'LOADING',
+        payload: {
+          isLoading: true,
+        },
+      });
+      getSearchUsers({ query: username.toString().trim(), signal: abortController.signal }).then((data) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+        const getUsers = data.items.reduce((acc: any, item: any) => {
+          const result = Object.assign({}, { [item.login]: item.avatar_url });
+          acc.push(result);
+          return acc;
+        }, []);
+        if (getUsers) {
           dispatch({
-            type: 'VISIBLE',
+            type: 'SEARCH_USERS',
             payload: {
-              visible: true,
+              data: getUsers,
             },
-          }),
-        () =>
+          });
           dispatch({
             type: 'LOADING',
             payload: {
-              isLoading: true,
+              isLoading: false,
             },
-          }),
-        () =>
-          getSearchUsers({ query: username.toString().trim(), signal: abortController.signal }).then((data) => {
-            if (abortController.signal.aborted) {
-              return;
-            }
-            const getUsers = data.items.reduce((acc: any, item: any) => {
-              const result = Object.assign({}, { [item.login]: item.avatar_url });
-              acc.push(result);
-              return acc;
-            }, []);
-            if (getUsers) {
-              dispatch({
-                type: 'SEARCH_USERS',
-                payload: {
-                  data: getUsers,
-                },
-              });
-              dispatch({
-                type: 'LOADING',
-                payload: {
-                  isLoading: false,
-                },
-              });
-            }
-          }),
-        () => setVisible(true),
-        () =>
-          dispatch({
-            type: 'VISIBLE',
-            payload: {
-              visible: true,
-            },
-          }),
-      ]);
+          });
+        }
+      });
+      setVisible(true);
+      dispatch({
+        type: 'VISIBLE',
+        payload: {
+          visible: true,
+        },
+      });
     }
-    return () => {
-      isFinished = true;
-    };
   }, [debouncedValue]);
-
-  useEffect(() => {
-    return () => {
-      abortController.abort();
-    };
-  }, []);
 
   const onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
     e.preventDefault();
     e.stopPropagation();
     e.persist();
-    parallel([
-      () => handleChange(e.currentTarget.value),
-      () => setUsername(e.currentTarget.value),
-      () => {
-        if (!visibleSearchesHistory) {
-          setVisibleSearchesHistory(true);
-        }
-      },
-      () => {
-        if (!state.visible) {
-          dispatch({
-            type: 'VISIBLE',
-            payload: {
-              visible: true,
-            },
-          });
-        }
-      },
-    ]);
+    handleChange(e.currentTarget.value);
+    setUsername(e.currentTarget.value);
+    if (!visibleSearchesHistory) {
+      setVisibleSearchesHistory(true);
+    }
+    if (!state.visible) {
+      dispatch({
+        type: 'VISIBLE',
+        payload: {
+          visible: true,
+        },
+      });
+    }
   };
   const handleKey = (e: any) => {
     if (
@@ -137,15 +123,13 @@ const PureInput: React.FC<SearchBarProps> = ({ handleChange, style }) => {
   const location = useLocation();
 
   useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished.current) {
       // Bind the event listener
       document.addEventListener('keydown', handleKey);
     }
     return () => {
       // Unbind the event listener on clean up
       document.removeEventListener('keydown', handleKey);
-      isFinished = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleKey]);
@@ -204,22 +188,18 @@ const PureInput: React.FC<SearchBarProps> = ({ handleChange, style }) => {
           ]);
         } else {
           stargazer.isQueue = false;
-          parallel([
-            () =>
-              dispatchStargazers({
-                type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
-                payload: {
-                  stargazersData: stargazer,
-                },
-              }),
-            () =>
-              dispatchStargazers({
-                type: 'SET_QUEUE_STARGAZERS',
-                payload: {
-                  stargazersQueueData: stargazer,
-                },
-              }),
-          ]);
+          dispatchStargazers({
+            type: 'STARGAZERS_ADDED_WITHOUT_FILTER',
+            payload: {
+              stargazersData: stargazer,
+            },
+          });
+          dispatchStargazers({
+            type: 'SET_QUEUE_STARGAZERS',
+            payload: {
+              stargazersQueueData: stargazer,
+            },
+          });
         }
       }
     );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
 import { useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useLocation } from 'react-router-dom';
@@ -19,9 +19,16 @@ const SearchBarDiscover = () => {
   });
 
   const location = useLocation();
+  const isFinished = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+
   useDeepCompareEffect(() => {
-    let isFinished = false;
-    if (stateDiscover.filterMergedDataDiscover.length > 0 && location.pathname === '/discover' && !isFinished) {
+    if (stateDiscover.filterMergedDataDiscover.length > 0 && location.pathname === '/discover' && !isFinished.current) {
       dispatchDiscover({
         type: 'MERGED_DATA_ADDED_DISCOVER',
         payload: {
@@ -29,9 +36,6 @@ const SearchBarDiscover = () => {
           notificationDiscover: '',
         },
       });
-      return () => {
-        isFinished = true;
-      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateDiscover.filterMergedDataDiscover]);

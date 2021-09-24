@@ -30,9 +30,17 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
   const isInputFocused = useRef<HTMLInputElement>(null);
   const resultsRef = useRef(null);
   const debouncedValue = useDebouncedValue(query, 1000);
+  const isFinished = useRef(false);
+
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && query.trim().length > 0 && debouncedValue) {
+    return () => {
+      isFinished.current = true;
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isFinished.current && query.trim().length > 0 && debouncedValue && debouncedValue >= 0) {
       getElasticSearchBertAutocomplete(query.trim(), abortController.signal).then((data) => {
         if (abortController.signal.aborted) return;
         if (data.isSuggested.status) {
@@ -51,16 +59,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
         });
       });
     }
-    return () => {
-      isFinished = true;
-    };
   }, [debouncedValue]);
-
-  useEffect(() => {
-    return () => {
-      abortController.abort();
-    };
-  }, []);
 
   useImperativeHandle(
     ref,
@@ -75,6 +74,7 @@ const PureInputDiscover: React.FC<SearchBarProps> = React.forwardRef(({ style, d
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [setQuery, query]
   );
+
   useClickOutside(resultsRef, () => {
     setVisible(false);
     dispatchDiscover({

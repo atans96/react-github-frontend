@@ -36,26 +36,21 @@ const UserCard: React.FC<UserCard> = ({ data }) => {
   function onClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    parallel([
-      () => setNotification({ ...defaultNotification }),
-      () => setIsFetchFinish({ ...defaultIsFetchFinish }),
-      () => setIsLoading({ ...defaultIsLoading }),
-      () =>
-        dispatch({
-          type: 'REMOVE_ALL',
-        }),
-      () =>
-        dispatchStargazers({
-          type: 'REMOVE_ALL',
-        }),
-      () =>
-        dispatchShared({
-          type: 'QUERY_USERNAME',
-          payload: {
-            queryUsername: login,
-          },
-        }),
-    ]);
+    setNotification({ ...defaultNotification });
+    setIsFetchFinish({ ...defaultIsFetchFinish });
+    setIsLoading({ ...defaultIsLoading });
+    dispatch({
+      type: 'REMOVE_ALL',
+    });
+    dispatchStargazers({
+      type: 'REMOVE_ALL',
+    });
+    dispatchShared({
+      type: 'QUERY_USERNAME',
+      payload: {
+        queryUsername: login,
+      },
+    });
   }
   return (
     <div className="avatarBackground">

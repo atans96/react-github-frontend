@@ -142,7 +142,6 @@ export const removeToken = async () => {
   }
 };
 let multiplier = 0;
-let lastUrls: any = {};
 export const getUser = ({
   signal,
   username,
@@ -167,74 +166,67 @@ export const getUser = ({
       let validUrl =
         url ||
         (org
-          ? `https://api.github.com/orgs/${username}/repos?page=${page}&per_page=${perPage}`
-          : `https://api.github.com/users/${username}/starred?page=${page}&per_page=${perPage}`);
-      if (!lastUrls[validUrl]) {
-        lastUrls[validUrl] = setInterval(() => {
-          delete lastUrls[validUrl];
-        }, 300000);
-        return fetch(validUrl, {
-          method: 'GET',
-          signal,
-          headers: {
-            Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
-            'Content-Type': 'application/json;charset=UTF-8',
-            'User-Agent': `${detectBrowser()}`,
-            Accept: `application/vnd.github.${AcceptHeader}${
-              raw ? '.raw' : '+json'
-            },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
-          },
-        })
-          .then((res: any) => {
-            try {
-              const reader = res!.body!.getReader();
-              if (perPage > 100) {
-                multiplier += 1;
-                if (perPage - multiplier * 100 > 0) {
-                  page += 1;
-                  observer.next({
-                    iterator: async function* () {
-                      while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) {
-                          break;
-                        }
-                        yield value; //pause the while loop until the caller below continue to call iterator again
+          ? `https://api.github.com/orgs/${username}/repos?page=${page}&per_page=${Math.min(100, perPage)}`
+          : `https://api.github.com/users/${username}/starred?page=${page}&per_page=${Math.min(100, perPage)}`);
+      return fetch(validUrl, {
+        method: 'GET',
+        signal,
+        headers: {
+          Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json;charset=UTF-8',
+          'User-Agent': `${detectBrowser()}`,
+          Accept: `application/vnd.github.${AcceptHeader}${
+            raw ? '.raw' : '+json'
+          },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
+        },
+      })
+        .then((res: any) => {
+          try {
+            const reader = res!.body!.getReader();
+            if (perPage > 100 && res.status === 200) {
+              multiplier += 1;
+              if (perPage - multiplier * 100 > 0) {
+                page += 1;
+                observer.next({
+                  iterator: async function* () {
+                    while (true) {
+                      const { done, value } = await reader.read();
+                      if (done) {
+                        break;
                       }
-                    },
-                  });
-                  execute();
-                }
-              }
-              observer.next({
-                iterator: async function* () {
-                  while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) {
-                      break;
+                      yield value; //pause the while loop until the caller below continue to call iterator again
                     }
-                    yield value; //pause the while loop until the caller below continue to call iterator again
-                  }
-                },
-              });
-              observer.complete();
-              return true;
-            } catch (e) {
-              observer.error(e);
-              observer.complete();
-              return true;
+                  },
+                });
+                execute();
+              }
             }
-          })
-          .catch((e) => {
+            observer.next({
+              iterator: async function* () {
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) {
+                    break;
+                  }
+                  yield value; //pause the while loop until the caller below continue to call iterator again
+                }
+              },
+            });
+            observer.complete();
+            return true;
+          } catch (e) {
             observer.error(e);
             observer.complete();
             return true;
-          });
-      } else {
-        return new Promise((resolve) => resolve(true));
-      }
+          }
+        })
+        .catch((e) => {
+          observer.error(e);
+          observer.complete();
+          return true;
+        });
     }
-    execute().then(() => (lastUrls = {}));
+    execute().then(noop);
   }) as Observable<{ iterator: any }>;
 };
 export const markdownParsing = async (username: string, full_name: string, branch: string, signal: any) => {

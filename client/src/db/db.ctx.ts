@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createContainer } from 'unstated-next';
 import { applyEncryptionMiddleware, clearAllTables, ENCRYPT_LIST } from 'dexie-encrypted';
 import { ApolloCacheDB } from './db';
@@ -29,7 +29,7 @@ const DbCtx = createContainer(() => {
       context: { clientName: 'mongo' },
     }
   );
-
+  const isFinished = useRef(false);
   const [db, setDb] = useDexieDB();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const handleOpenDb = async () => {
@@ -85,79 +85,73 @@ const DbCtx = createContainer(() => {
   };
 
   useEffect(() => {
-    let isFinished = false;
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (
-      !isFinished &&
+      !isFinished.current &&
       !userDataLoading &&
       !userDataError &&
       userData?.getUserData &&
       Object.keys(userData?.getUserData).length > 0
     ) {
-      parallel([
-        () =>
-          db?.getUserData?.add(
-            {
-              data: JSON.stringify({
-                getUserData: {
-                  ...userData?.getUserData,
-                },
-              }),
-            },
-            1
-          ),
-        () =>
-          dispatchShared({
-            type: 'SET_USERDATA',
-            payload: {
-              userData: userData?.getUserData,
+      db?.getUserData?.add(
+        {
+          data: JSON.stringify({
+            getUserData: {
+              ...userData?.getUserData,
             },
           }),
-      ]);
+        },
+        1
+      );
+      dispatchShared({
+        type: 'SET_USERDATA',
+        payload: {
+          userData: userData?.getUserData,
+        },
+      });
     }
-    return () => {
-      isFinished = true;
-    };
   }, [userDataLoading, userDataError]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && !loadingSearchesData && !errorSearchesData && searchesData?.getSearches?.searches?.length > 0) {
-      parallel([
-        () =>
-          db?.getSearches?.add(
-            {
-              data: JSON.stringify({
-                getSearches: {
-                  searches: searchesData.getSearches.searches,
-                },
-              }),
-            },
-            1
-          ),
-        () =>
-          dispatchShared({
-            type: 'SET_SEARCHES_HISTORY',
-            payload: {
+    if (
+      !isFinished.current &&
+      !loadingSearchesData &&
+      !errorSearchesData &&
+      searchesData?.getSearches?.searches?.length > 0
+    ) {
+      db?.getSearches?.add(
+        {
+          data: JSON.stringify({
+            getSearches: {
               searches: searchesData.getSearches.searches,
             },
           }),
-      ]);
+        },
+        1
+      );
+      dispatchShared({
+        type: 'SET_SEARCHES_HISTORY',
+        payload: {
+          searches: searchesData.getSearches.searches,
+        },
+      });
     }
-    return () => {
-      isFinished = true;
-    };
   }, [loadingSearchesData, errorSearchesData]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && stateShared.isLoggedIn) {
+    if (!isFinished.current && stateShared.isLoggedIn) {
       handleOpenDb().then(() => {
         parallel([
           () =>
             conn.getUserData.get(1).then((data: any) => {
               if (data && data?.data) {
                 const temp = JSON.parse(data.data).getUserData;
-                if (Object.keys(temp).length > 0 && !isFinished) {
+                if (Object.keys(temp).length > 0 && !isFinished.current) {
                   dispatchShared({
                     type: 'SET_USERDATA',
                     payload: {
@@ -173,7 +167,7 @@ const DbCtx = createContainer(() => {
             conn.getSearches.get(1).then((data: any) => {
               if (data && data?.data) {
                 const temp = JSON.parse(data.data).getSearches;
-                if (temp.searches.length > 0 && !isFinished) {
+                if (temp.searches.length > 0 && !isFinished.current) {
                   dispatchShared({
                     type: 'SET_SEARCHES_HISTORY',
                     payload: {
@@ -188,9 +182,6 @@ const DbCtx = createContainer(() => {
         ]);
       }); // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-    return () => {
-      isFinished = true;
-    };
   }, [stateShared.isLoggedIn]);
 
   // avoid ts async

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Drawer, IconButton, Theme } from '@material-ui/core';
 import clsx from 'clsx';
@@ -74,18 +74,11 @@ const DrawerBar = () => {
     e.stopPropagation();
     setOpen((prev) => !prev);
   });
+  const isFinished = useRef(false);
+
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished) {
-      dispatch({
-        type: 'SET_DRAWER_WIDTH',
-        payload: {
-          drawerWidth: open ? 200 : 0,
-        },
-      });
-    }
     return () => {
-      isFinished = true;
+      isFinished.current = true;
       dispatch({
         type: 'SET_DRAWER_WIDTH',
         payload: {
@@ -93,6 +86,17 @@ const DrawerBar = () => {
         },
       });
     };
+  }, []);
+
+  useEffect(() => {
+    if (!isFinished.current) {
+      dispatch({
+        type: 'SET_DRAWER_WIDTH',
+        payload: {
+          drawerWidth: open ? 200 : 0,
+        },
+      });
+    }
   }, [open]);
   useClickOutside(drawerRef, () => setOpen(false), ['hamburger', 'hamburger-parent']);
   return (

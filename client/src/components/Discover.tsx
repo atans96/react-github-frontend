@@ -50,6 +50,7 @@ const MasonryCard = Loadable({
 });
 
 const Discover = React.memo(() => {
+  const isFinished = useRef(false);
   const seenAdded = useGetSeenMutation();
   const location = useLocation();
   const displayName: string = (Discover as React.ComponentType<any>).displayName || '';
@@ -146,6 +147,12 @@ const Discover = React.memo(() => {
     }
   });
 
+  useEffect(() => {
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
@@ -162,49 +169,38 @@ const Discover = React.memo(() => {
       });
     }
   });
+
   useEffect(() => {
     dispatchDiscover({ type: 'MERGED_DATA_APPEND_DISCOVER_EMPTY' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortedClicked]);
 
   useEffect(() => {
-    let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedDataDiscover([]) there
     if (
       !suggestedDataLoading &&
       !!suggestedData?.getSuggestedRepo &&
       !suggestedDataError &&
       location.pathname === '/discover' &&
-      !isFinished
+      !isFinished.current
     ) {
       fetchUser();
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestedDataLoading, suggestedDataError, sortedClicked]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (stateDiscover.pageDiscover > 1 && notification === '' && !isFinished) {
+    if (stateDiscover.pageDiscover > 1 && notification === '' && !isFinished.current) {
       fetchUserMore();
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateDiscover.pageDiscover]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished) {
+    if (!isFinished.current) {
       setLoading(stateDiscover.isLoadingDiscover);
       setNotification(stateDiscover.notificationDiscover);
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateDiscover.isLoadingDiscover, stateDiscover.notificationDiscover]);
 

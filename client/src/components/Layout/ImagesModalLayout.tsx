@@ -3,7 +3,7 @@ import { Modal } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import clsx from 'clsx';
 import SliderImage from './SliderImage';
-import { useClickOutside } from '../../hooks/hooks';
+import { useOuterClick } from '../../hooks/hooks';
 
 interface ImagesModalLayoutProps {
   clicked: boolean;
@@ -15,8 +15,7 @@ interface ImagesModalLayoutProps {
 const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = ({ handleClick, clicked, renderImages }) => {
   const [mouseGrabbing, setMouseGrabbing] = useState(false);
   const sliderInner = useRef<HTMLDivElement | null>(null);
-  const sliderContainer = useRef<HTMLDivElement | null>(null);
-  useClickOutside(sliderContainer, (e: any) => handleClick(e));
+  const sliderContainer = useOuterClick((e: any) => handleClick(e)) as any;
   const [render, setRender] = useState(false);
 
   useEffect(() => {

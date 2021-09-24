@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './LanguageListStyle.scss';
 import { useTrackedStateShared, useTrackedStateStargazers } from '../../../../../selectors/stateContextSelector';
 import { If } from '../../../../../util/react-if/If';
@@ -60,22 +60,22 @@ const RenderLanguageList = () => {
     }
     return output;
   };
+  const isFinished = useRef(false);
+
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished) setSelectedLanguage(stateStargazers.language);
+    if (!isFinished.current) {
+      setSelectedLanguage(stateStargazers.language);
+    }
     return () => {
-      isFinished = true;
+      isFinished.current = true;
     };
   }, []);
   const { dispatch } = useSelectContext();
+
   useEffect(() => {
-    let isFinished = false;
-    if (stateShared.githubLanguages && !isFinished) {
+    if (stateShared.githubLanguages && !isFinished.current) {
       dispatch({ type: 'select index', payload: stateShared.githubLanguages.get(stateStargazers.language)!.index });
     }
-    return () => {
-      isFinished = true;
-    };
   }, [stateShared.githubLanguages]);
   return (
     <th>

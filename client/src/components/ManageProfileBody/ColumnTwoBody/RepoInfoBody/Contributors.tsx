@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Collapse } from '@material-ui/core';
 import useDeepCompareEffect from '../../../../hooks/useDeepCompareEffect';
 import { If } from '../../../../util/react-if/If';
@@ -25,16 +25,20 @@ const Contributors: React.FC<Props> = ({ fullName, openContributors }) => {
   const [contributionRepo, setContributionRepo] = useState<ContributorProps[]>([]);
   const [stateManageProfile] = useTrackedStateManageProfile();
   const location = useLocation();
+  const isFinished = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+
   useDeepCompareEffect(() => {
-    let isFinished = false;
-    if (stateManageProfile.contributors.length > 0 && location.pathname === '/profile' && !isFinished) {
+    if (stateManageProfile.contributors.length > 0 && location.pathname === '/profile' && !isFinished.current) {
       const contribution = stateManageProfile.contributors.find((xx: ContributorsProps) => fullName === xx.fullName);
-      if (contribution && !isFinished) {
+      if (contribution && isFinished.current) {
         setContributionRepo(contribution.contributors);
       }
-      return () => {
-        isFinished = true;
-      };
     }
   }, [stateManageProfile.contributors]);
 
