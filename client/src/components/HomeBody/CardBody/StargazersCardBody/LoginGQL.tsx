@@ -4,11 +4,10 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import '../../../Login.scss';
 import { requestGithubGraphQLLogin, setTokenGQL } from '../../../../services';
 import { Nullable } from '../../../../typing/type';
-import { useClickOutside, useOuterClick } from '../../../../hooks/hooks';
+import { useOuterClick } from '../../../../hooks/hooks';
 import { logoutAction, noop } from '../../../../util/util';
 import { useTrackedStateShared } from '../../../../selectors/stateContextSelector';
 import { useHistory } from 'react-router-dom';
-import { parallel } from 'async';
 import { ShouldRender } from '../../../../typing/enum';
 
 interface LoginGQLProps {
@@ -19,7 +18,7 @@ interface LoginGQLProps {
 const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   const [token, setToken] = useState('');
   const abortController = new AbortController();
-  const [loginLayoutRef, setRef] = useState<Nullable<React.RefObject<HTMLDivElement>>>(null);
+  const [, setRef] = useState<Nullable<React.RefObject<HTMLDivElement>>>(null);
   const [notification, setNotification] = useState('');
   const [data, setData] = useState({ errorMessage: '', isLoading: false });
   const [stateShared, dispatch] = useTrackedStateShared();
@@ -29,29 +28,23 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
       .then((res) => {
         if (abortController.signal.aborted) return;
         if (res.success) {
-          parallel([
-            () => setTokenGQL(token, stateShared.username).then(noop),
-            () => {
-              dispatch({
-                type: 'TOKEN_ADDED',
-                payload: {
-                  tokenGQL: token,
-                },
-              });
-              dispatch({
-                type: 'SET_SHOULD_RENDER',
-                payload: {
-                  shouldRender: ShouldRender.Home,
-                },
-              });
+          setTokenGQL(token, stateShared.username).then(noop);
+          dispatch({
+            type: 'TOKEN_ADDED',
+            payload: {
+              tokenGQL: token,
             },
-            () => setVisible(false),
-          ]);
+          });
+          dispatch({
+            type: 'SET_SHOULD_RENDER',
+            payload: {
+              shouldRender: ShouldRender.Home,
+            },
+          });
+          setVisible(false);
         } else {
-          parallel([
-            () => setNotification('Token is not valid, try again!'),
-            () => setData({ ...data, isLoading: false }),
-          ]);
+          setNotification('Token is not valid, try again!');
+          setData({ ...data, isLoading: false });
         }
       })
       .catch(() => {
@@ -70,23 +63,19 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     event.stopPropagation();
-    parallel([
-      () => setData({ ...data, isLoading: true }),
-      () => verifyTokenGQL().then(noop),
-      () => setRef(null),
-      () => setNotification("Please wait we're verifying the token"),
-    ]);
+    setData({ ...data, isLoading: true });
+    verifyTokenGQL().then(noop);
+    setRef(null);
+    setNotification("Please wait we're verifying the token");
   };
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    parallel([
-      () => setData({ ...data, isLoading: true }),
-      () => verifyTokenGQL().then(noop),
-      () => setRef(null),
-      () => setNotification("Please wait we're verifying the token"),
-    ]);
+    setData({ ...data, isLoading: true });
+    verifyTokenGQL().then(noop);
+    setRef(null);
+    setNotification("Please wait we're verifying the token");
   };
   return (
     <LoginLayout style={style} apiType={'GraphQL'} data={data} notification={notification} ref={innerRef}>

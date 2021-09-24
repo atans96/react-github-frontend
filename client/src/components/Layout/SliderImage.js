@@ -81,8 +81,8 @@ class SliderImage {
   setPos(e) {
     if (!this.isDragging) return;
     this.currentX = this.offX + (e.clientX - this.onX) * this.opts.speed;
-    console.log(this.currentX);
     this.clamp();
+    console.log(this.currentX);
   }
 
   clamp() {
@@ -126,7 +126,7 @@ class SliderImage {
       numbers.push(fromCenter);
     });
 
-    let closest = +(0, numbers);
+    let closest = number(0, numbers);
     closest = numbers[closest];
 
     return {

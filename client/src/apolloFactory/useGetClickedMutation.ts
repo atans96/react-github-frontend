@@ -8,16 +8,13 @@ export const useGetClickedMutation = () => {
   // const { db } = DbCtx.useContainer();
   const [db, setDb] = useDexieDB();
   const oldExistAndProperty = (data: GraphQLClickedData, old: GraphQLClickedData) => {
-    return parallel([
-      () =>
-        db?.getClicked?.update(1, {
-          data: JSON.stringify({
-            getClicked: {
-              clicked: [...data.getClicked.clicked, ...old?.getClicked?.clicked],
-            },
-          }),
-        }),
-    ]);
+    return db?.getClicked?.update(1, {
+      data: JSON.stringify({
+        getClicked: {
+          clicked: [...data.getClicked.clicked, ...old?.getClicked?.clicked],
+        },
+      }),
+    });
   };
   const oldExistAndNoProperty = (data: Nullable<Clicked[] | []>, old: GraphQLClickedData) => {
     return db?.getClicked?.update(1, {

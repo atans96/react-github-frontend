@@ -7,7 +7,7 @@ import sysend from 'sysend';
 import { useApolloClient } from '@apollo/client';
 import useWebSocket from './util/websocket';
 import { readEnvironmentVariable, urlBase64ToUint8Array } from './util';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { associate } from './graphql/queries';
 import { endOfSession, getFile, getTokenGQL, session, startOfSessionDexie, subscribeToApollo } from './services';
 import { logoutAction, noop } from './util/util';
@@ -73,6 +73,7 @@ const Child = React.memo(
   }
 );
 const AppRoutes = () => {
+  const isFinished = useRef(false);
   const history = useHistory();
   const { clear } = DbCtx.useContainer();
   const [db] = useDexieDB();
@@ -98,6 +99,14 @@ const AppRoutes = () => {
   );
 
   useEffect(() => {
+    return () => {
+      isFinished.current = true;
+      getWebSocket()?.close();
+      abortController.abort();
+    };
+  }, []);
+
+  useEffect(() => {
     if (lastJsonMessage?.updateDescription && Object.keys(lastJsonMessage?.updateDescription).length > 0) {
       const updatedFields = lastJsonMessage?.updateDescription.updatedFields;
       for (let [key, value] of Object.entries<any>(updatedFields)) {
@@ -120,8 +129,7 @@ const AppRoutes = () => {
   }, [lastJsonMessage || {}]);
 
   useEffect(() => {
-    let isFinished = false;
-    if ('serviceWorker' in navigator && stateShared.isLoggedIn && !isFinished) {
+    if ('serviceWorker' in navigator && stateShared.isLoggedIn && !isFinished.current) {
       navigator.serviceWorker
         .register('sw.js')
         .then(() => navigator.serviceWorker.ready)
@@ -157,14 +165,11 @@ const AppRoutes = () => {
             username: stateShared.username,
           });
         });
-    } else if ('serviceWorker' in navigator && !stateShared.isLoggedIn && !isFinished) {
+    } else if ('serviceWorker' in navigator && !stateShared.isLoggedIn && !isFinished.current) {
       navigator?.serviceWorker?.controller?.postMessage({
         type: 'logout',
       });
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn]);
   useEffect(() => {
@@ -182,12 +187,11 @@ const AppRoutes = () => {
   }, [stateShared.shouldRender]);
   const [doneFetch, setDoneFetch] = useState(false);
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished) {
+    if (!isFinished.current) {
       session(false, stateShared.username, abortController.signal).then((data) => {
         if (abortController.signal.aborted) return;
         if (data) {
-          if (Boolean(data.data) && data.username.length > 0 && !isFinished) {
+          if (Boolean(data.data) && data.username.length > 0 && !isFinished.current) {
             dispatchShared({
               type: 'SET_USERNAME',
               payload: { username: data.username },
@@ -211,7 +215,7 @@ const AppRoutes = () => {
         });
         getTokenGQL(stateShared.username, abortController.signal).then((res) => {
           if (abortController.signal.aborted) return;
-          if (res.tokenGQL && !isFinished) {
+          if (res.tokenGQL && !isFinished.current) {
             dispatchShared({
               type: 'TOKEN_ADDED',
               payload: {
@@ -223,9 +227,6 @@ const AppRoutes = () => {
         // endOfSession(stateShared.username, client.cache.extract()).then(noop);
       }
     }
-    return () => {
-      isFinished = true;
-    };
   }, [stateShared.isLoggedIn, stateShared.username]);
 
   useEffect(() => {
@@ -332,12 +333,6 @@ const AppRoutes = () => {
     abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     return window.close();
   };
-  useEffect(() => {
-    return () => {
-      getWebSocket()?.close();
-      abortController.abort();
-    };
-  }, []);
 
   return <Child isLoggedIn={stateShared.isLoggedIn} shouldRender={stateShared.shouldRender} />;
 };

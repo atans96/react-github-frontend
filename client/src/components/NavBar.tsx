@@ -52,21 +52,27 @@ const NavBar = () => {
   const previousActive = useRef<string>('');
   const [isFinished, setIsFinished] = useState<boolean>(true);
   const history = useHistory();
+  const isFinishedRef = useRef(false);
 
   useEffect(() => {
-    let isFinished = false;
-    if ((state.isLoggedIn ? directionLogin : directionNotLogin).get(Active !== '' ? Active : 'home')) {
+    return () => {
+      isFinishedRef.current = true;
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, []);
+
+  useEffect(() => {
+    if (
+      !isFinishedRef.current &&
+      (state.isLoggedIn ? directionLogin : directionNotLogin).get(Active !== '' ? Active : 'home')
+    ) {
       setActiveBar(Active !== '' ? Active : 'home'); //handle the case where you enter /profile directly instead of clicking
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (location.pathname !== '/' && !isFinished) {
+    if (location.pathname !== '/' && !isFinishedRef.current) {
       dispatch({
         //handle the case when the user directly go to /profile url
         type: 'SET_SHOULD_RENDER',
@@ -76,10 +82,6 @@ const NavBar = () => {
       });
       setActiveBar(Active !== '' ? Active : 'home');
     }
-    return () => {
-      abortController.abort();
-      isFinished = true;
-    };
   }, []);
 
   const handleClick = useStableCallback((event: React.MouseEvent<HTMLElement>) => {
@@ -123,8 +125,7 @@ const NavBar = () => {
   });
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
+    if (!isFinishedRef.current && state.isLoggedIn && active && !directionLogin?.get(active.toLowerCase())?.explored) {
       setIsFinished(true);
       directionLogin.set(
         active.toLowerCase(),
@@ -142,7 +143,7 @@ const NavBar = () => {
           pathname: `/${active.toLowerCase()}`,
         });
       }
-    } else if (!isFinished && directionLogin?.get(active.toLowerCase())?.explored) {
+    } else if (!isFinishedRef.current && directionLogin?.get(active.toLowerCase())?.explored) {
       setIsFinished(true);
       if (active === 'home') {
         history.push('/');
@@ -153,9 +154,6 @@ const NavBar = () => {
         history.push({ pathname: `/${active.toLowerCase()}` });
       }
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
@@ -191,7 +189,7 @@ const NavBar = () => {
               }}
             />
           </NavLink>
-          {!isFinished && previousActive.current === 'home' && nextClickedId > 0 && (
+          {!isFinishedRef.current && previousActive.current === 'home' && nextClickedId > 0 && (
             <ProgressNavBarLayout
               nextClickedId={nextClickedId}
               previousClickedId={previousClickedId.current}
@@ -233,7 +231,7 @@ const NavBar = () => {
                   }}
                 />
               </NavLink>
-              {!isFinished && previousActive.current === 'discover' && nextClickedId > 0 && (
+              {!isFinishedRef.current && previousActive.current === 'discover' && nextClickedId > 0 && (
                 <ProgressNavBarLayout
                   nextClickedId={nextClickedId}
                   previousClickedId={previousClickedId.current}
@@ -278,7 +276,7 @@ const NavBar = () => {
                   }}
                 />
               </NavLink>
-              {!isFinished && previousActive.current === 'profile' && nextClickedId > 0 && (
+              {!isFinishedRef.current && previousActive.current === 'profile' && nextClickedId > 0 && (
                 <ProgressNavBarLayout
                   nextClickedId={nextClickedId}
                   previousClickedId={previousClickedId.current}
@@ -359,7 +357,7 @@ const NavBar = () => {
                   }}
                 />
               </NavLink>
-              {!isFinished && previousActive.current === 'login' && nextClickedId > 0 && (
+              {!isFinishedRef.current && previousActive.current === 'login' && nextClickedId > 0 && (
                 <ProgressNavBarLayout
                   nextClickedId={nextClickedId}
                   previousClickedId={previousClickedId.current}

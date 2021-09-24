@@ -2,7 +2,7 @@ import { ActionResolvePromise, IDataOne } from '../typing/interface';
 import { fastFilter, useStableCallback } from '../util';
 import { Clicked, LanguagePreference, MergedDataProps, SeenProps } from '../typing/type';
 import { filterActionResolvedPromiseData, noop } from '../util/util';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
 import { parallel } from 'async';
@@ -27,7 +27,7 @@ const useActionResolvePromise = () => {
     });
 
   const [db] = useDexieDB();
-
+  const isFinished = useRef(false);
   const [, setNotification] = useNotification();
   const [, setIsFetchFinish] = useIsFetchFinish();
   const [, setIsLoading] = useIsLoading();
@@ -120,8 +120,13 @@ const useActionResolvePromise = () => {
   };
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && !seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length > 0 && data) {
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isFinished.current && !seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length > 0 && data) {
       parallel(
         [
           () =>
@@ -162,14 +167,10 @@ const useActionResolvePromise = () => {
     } else if (!seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length > 0 && data) {
       actionAppend(data)!.then(noop);
     }
-    return () => {
-      isFinished = true;
-    };
   }, [seenDataLoading, seenDataError, data]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && !clickedLoading && !clickedError && clicked?.getClicked?.clicked?.length > 0 && data) {
+    if (!isFinished.current && !clickedLoading && !clickedError && clicked?.getClicked?.clicked?.length > 0 && data) {
       parallel(
         [
           () =>
@@ -200,15 +201,11 @@ const useActionResolvePromise = () => {
     } else if (!clickedLoading && !clickedError && clicked?.getClicked?.clicked?.length === 0 && data) {
       actionAppend(data)!.then(noop);
     }
-    return () => {
-      isFinished = true;
-    };
   }, [clickedLoading, clickedError, data]);
 
   useEffect(() => {
-    let isFinished = false;
     if (
-      !isFinished &&
+      !isFinished.current &&
       !loadingUserStarred &&
       !errorUserStarred &&
       userStarred?.getUserInfoStarred?.starred?.length > 0 &&
@@ -251,9 +248,6 @@ const useActionResolvePromise = () => {
     ) {
       actionAppend(data)!.then(noop);
     }
-    return () => {
-      isFinished = true;
-    };
   }, [loadingUserStarred, errorUserStarred, data]);
 
   const actionResolvePromise = useStableCallback(

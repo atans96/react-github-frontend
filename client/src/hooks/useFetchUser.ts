@@ -12,7 +12,7 @@ import { ShouldRender } from '../typing/enum';
 
 interface useFetchUser {
   component: string;
-  abortController: any;
+  abortController: AbortController;
 }
 
 //TO extract all JSON field
@@ -167,7 +167,15 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     }
     return false;
   };
-
+  const fetcher = (name: string, org: boolean) => {
+    return getUser({
+      signal: abortController.signal,
+      username: name,
+      perPage: stateShared.perPage,
+      page: state.page,
+      org,
+    });
+  };
   const fetchUser = () => {
     return new Promise((resolve) => {
       if (!isFetchFinish.isFetchFinish) {
@@ -179,6 +187,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         } else {
           userNameTransformed = stateShared.queryUsername;
         }
+        let stopped = false;
         const mainIter = async ({ value, actionController }: { value: any; actionController: any }) => {
           let dataOne: {
             dataOne: MergedDataProps[];
@@ -205,12 +214,15 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                   if (data.id && data.full_name && data.default_branch) {
                     dataOne.dataOne.push(data);
                   } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
+                    stopped = true;
                     dataOne.error_404 = true;
                     return actionController(dataOne);
                   } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
+                    stopped = true;
                     dataOne.error_403 = true;
                     return actionController(dataOne);
                   } else {
+                    stopped = true;
                     dataOne.error_message = data.message;
                     return actionController(dataOne);
                   }
@@ -224,22 +236,16 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
             //When the regex is global, if you call a method on the same regex object,
             // it will start from the index past the end of the last match. so we need to reset it to start the new loop
             regexJSON.lastIndex = 0;
-            if (dataOne.dataOne.length > 0) return actionController(dataOne);
-            if (chunk === '[\n\n]\n') {
+            if (dataOne.dataOne.length > 0) {
+              return actionController(dataOne);
+            }
+            if (chunk === '[\n\n]\n' || dataOne.dataOne.length === 0) {
               dataOne.end = true;
               return actionController(dataOne);
             }
           }
           return state.mergedData.length === 0 && dataOne.dataOne.length === 0;
         };
-        let fetcher = (name: string, org: boolean) =>
-          getUser({
-            signal: abortController.signal,
-            username: name,
-            perPage: stateShared.perPage,
-            page: state.page,
-            org,
-          });
         let observer: undefined | any;
         userNameTransformed.forEach((name) => {
           const execute = async () => {

@@ -76,29 +76,21 @@ const StargazerDiscover: React.FC<StargazerDiscover> = ({ data }) => {
   };
   const handleClickStar = () => {
     if (!starClicked) {
-      parallel([
-        () => setStarredMe(data.full_name, stateShared.tokenGQL || ''),
-        () => {
-          if (stateShared.isLoggedIn) {
-            addedStarredMe({
-              getUserInfoStarred: {
-                starred: [Object.assign({}, { is_queried: false, id: data.id, full_name: data.full_name })],
-              },
-            }).then(noop);
-          }
-        },
-      ]);
+      setStarredMe(data.full_name, stateShared.tokenGQL || '');
+      if (stateShared.isLoggedIn) {
+        addedStarredMe({
+          getUserInfoStarred: {
+            starred: [Object.assign({}, { is_queried: false, id: data.id, full_name: data.full_name })],
+          },
+        }).then(noop);
+      }
     } else if (starClicked) {
-      parallel([
-        () => removeStarredMe(data.full_name, stateShared.tokenGQL || ''),
-        () => {
-          if (stateShared.isLoggedIn) {
-            removeStarred({
-              removeStarred: data.id,
-            }).then(noop);
-          }
-        },
-      ]);
+      removeStarredMe(data.full_name, stateShared.tokenGQL || '');
+      if (stateShared.isLoggedIn) {
+        removeStarred({
+          removeStarred: data.id,
+        }).then(noop);
+      }
     }
   };
   return (

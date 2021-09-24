@@ -30,11 +30,11 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
   const [getSeen, { data: seenData, loading: seenDataLoading, error: seenDataError }] = useLazyQuery(GET_SEEN, {
     context: { clientName: 'mongo' },
   });
-  const client = useApolloClient();
   const [db] = useDexieDB();
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [clicked, setClicked] = useState(false);
+  const isFinished = useRef(false);
   const handleClickFilterSeenCards = (event: React.MouseEvent): void => {
     event.preventDefault();
     event.stopPropagation();
@@ -129,9 +129,15 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
       });
     }
   };
+
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && !seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length > 0) {
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isFinished.current && !seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length > 0) {
       parallel([
         () =>
           dispatchShared({
@@ -169,7 +175,12 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
             1
           ),
       ]);
-    } else if (!isFinished && !seenDataLoading && !seenDataError && seenData?.getSeen?.seenCards?.length === 0) {
+    } else if (
+      !isFinished.current &&
+      !seenDataLoading &&
+      !seenDataError &&
+      seenData?.getSeen?.seenCards?.length === 0
+    ) {
       dispatch({
         type: 'MERGED_DATA_ADDED',
         payload: {
@@ -183,9 +194,6 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
         },
       });
     }
-    return () => {
-      isFinished = true;
-    };
   }, [seenDataLoading, seenDataError, seenData?.getSeen?.seenCards]);
   return (
     <React.Fragment>

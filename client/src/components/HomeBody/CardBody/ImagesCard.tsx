@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../../DiscoverBody/CardDiscoverBody/ImagesCardStyle.scss';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -51,20 +51,23 @@ const ImagesCard: React.FC<ImagesCard> = ({ index }) => {
   const [renderImages, setRenderImages] = useState<Array<{ webP: string; width: number; height: number }>>([]);
   const [state] = useTrackedState();
   const location = useLocation();
+  const isFinished = useRef(false);
+
+  useEffect(() => {
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
 
   useDeepCompareEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished) {
+    if (location.pathname === '/' && !isFinished.current) {
       if (Array.isArray(state.imagesData) && state.imagesData.length > 0) {
         const temp = state.imagesMapData.get(index)?.value ?? [];
-        if (temp.length > 0 && renderImages.length === 0 && !isFinished) {
+        if (temp.length > 0 && renderImages.length === 0 && !isFinished.current) {
           setRenderImages(temp);
         }
       }
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.imagesData, state.imagesMapData]);
 

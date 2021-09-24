@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Checkbox,
   Collapse,
@@ -60,19 +60,23 @@ const RowOne = () => {
   };
   const languagesPreferenceAdded = useGetUserDataMutation();
   const [languagePreferences, setLanguagePreferences] = useState([] as any);
+  const isFinished = useRef(false);
+
   useEffect(() => {
-    let isFinished = false;
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (
       state?.userData?.languagePreference &&
       state?.userData?.languagePreference?.length > 0 &&
       location.pathname === '/profile' &&
-      !isFinished
+      !isFinished.current
     ) {
       setLanguagePreferences(state.userData.languagePreference);
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.userData.languagePreference]);
 

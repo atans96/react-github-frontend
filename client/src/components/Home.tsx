@@ -54,6 +54,7 @@ export const [useIsLoading] = createStore(defaultIsLoading);
 export const [useNotification] = createStore(defaultNotification);
 
 const Home = () => {
+  const isFinished = useRef(false);
   const seenAdded = useGetSeenMutation();
   const abortController = new AbortController();
   const [notification, setNotification] = useNotification();
@@ -118,6 +119,18 @@ const Home = () => {
       }
     }
   });
+
+  useEffect(() => {
+    return () => {
+      dispatch({
+        type: 'REMOVE_ALL',
+      });
+      axiosCancel.current = true;
+      isFinished.current = true;
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, []);
+
   useBottomHit(
     windowScreenRef,
     handleBottomHit,
@@ -156,13 +169,12 @@ const Home = () => {
     setIsLoading({ isLoading: false });
   };
   useDeepCompareEffect(() => {
-    let isFinished = false;
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
     if (
       stateShared.queryUsername.length > 0 &&
       state.mergedData.length === 0 &&
       location.pathname === '/' &&
-      !isFinished &&
+      !isFinished.current &&
       !isFetchFinish.isFetchFinish &&
       state.filterBySeen
     ) {
@@ -174,9 +186,6 @@ const Home = () => {
       dataAlreadyFetch.current = 0;
       fetchUser().then(() => release());
     }
-    return () => {
-      isFinished = true;
-    };
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
     // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.queryUsername] so stateShared.queryUsername not change so not execute
     // so you need another dependency of stateShared.perPage
@@ -185,8 +194,7 @@ const Home = () => {
   }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel.current]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (location.pathname === '/' && !isFinished && state.page > 1 && !isFetchFinish.isFetchFinish) {
+    if (location.pathname === '/' && !isFinished.current && state.page > 1 && !isFetchFinish.isFetchFinish) {
       dataAlreadyFetch.current = 0;
       if (stateShared.queryUsername.length > 0) {
         fetchUser().then(() => release());
@@ -194,25 +202,11 @@ const Home = () => {
         fetchMoreTopics();
       }
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.page, axiosCancel.current]);
 
   useEffect(() => {
-    return () => {
-      dispatch({
-        type: 'REMOVE_ALL',
-      });
-      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
-      axiosCancel.current = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && isTokenRSSExist && location.pathname === '/') {
+    if (!isFinished.current && isTokenRSSExist && location.pathname === '/') {
       dispatchShared({
         type: 'TOKEN_RSS_ADDED',
         payload: {
@@ -220,15 +214,17 @@ const Home = () => {
         },
       });
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTokenRSSExist]);
 
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && isSeenCardsExist && location.pathname === '/' && !isFinished && !state.filterBySeen) {
+    if (
+      !isFinished.current &&
+      isSeenCardsExist &&
+      location.pathname === '/' &&
+      !isFinished.current &&
+      !state.filterBySeen
+    ) {
       if (notification.notification.length > 0) setNotification({ notification: '' });
       if (isLoading.isLoading) setIsLoading({ isLoading: false });
       dispatch({
@@ -238,19 +234,15 @@ const Home = () => {
         },
       });
     }
-    return () => {
-      isFinished = true;
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSeenCardsExist, location.pathname, state.filterBySeen, state.undisplayMergedData]);
 
   useEffect(
     () => {
-      let isFinished = false;
       (async () => {
         if (
           location.pathname === '/' &&
-          !isFinished &&
+          !isFinished.current &&
           !isFetchFinish.isFetchFinish &&
           isMergedDataExist &&
           state.filterBySeen
@@ -339,23 +331,20 @@ const Home = () => {
             return new Promise((resolve, reject) => {
               for (let index = 0; index < data.length; index++) {
                 const chunk = iters.next();
-                nextExecuteImages(chunk.value, resolve);
+                // nextExecuteImages(chunk.value, resolve);
                 // nextExecuteCrawler(chunk.value, resolve);
               }
             });
           };
-          Promise.all([execute()]).then(() => {
-            release();
-          });
+          // Promise.all([execute()]).then(() => {
+          //   release();
+          // });
           // while (promises.length) {
           //   // 3 concurrent request at at time (batch mode) but if there is two more queue items, it won't go immediately to fill the empty slot so need to use pMap
           //   await Promise.all(promises.splice(0, 3).map((f) => f.then(noop)));
           // }
         }
       })();
-      return () => {
-        isFinished = true;
-      };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.mergedData.length, axiosCancel.current, state.filterBySeen]
@@ -420,13 +409,9 @@ const Home = () => {
   const [visible, setVisible] = useState(stateShared.shouldRender === ShouldRender.LoginGQL);
   useClickOutside(notLoggedInRef, () => setVisible(false));
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished && stateShared.shouldRender === ShouldRender.LoginGQL) {
+    if (!isFinished.current && stateShared.shouldRender === ShouldRender.LoginGQL) {
       setVisible(true);
     }
-    return () => {
-      isFinished = true;
-    };
   }, [mouse.x, mouse.y]);
   return (
     <React.Fragment>

@@ -1,9 +1,10 @@
-import React, { useImperativeHandle } from 'react';
+import React, { useEffect, useImperativeHandle, useRef } from 'react';
 import Grid from '@material-ui/core/Grid';
 import Slider from '@material-ui/core/Slider';
 import Input from '@material-ui/core/Input';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import { Theme } from '@material-ui/core';
+import { useDebouncedValue } from '../../util/util';
 
 interface StyleProps {
   sliderWidth: number;
@@ -45,7 +46,7 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
       icon,
       maxSliderRange = 100,
       minSliderRange = 1,
-      shouldShowInput = false,
+      shouldShowInput = true,
       sliderWidth,
       inputWidth,
     },
@@ -54,22 +55,40 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
     const [value, setValue] = React.useState(defaultValue);
     const styleProps: StyleProps = { sliderWidth: sliderWidth, inputWidth: inputWidth };
     const classes = useStyles(styleProps);
+    const isFinished = useRef(false);
     const handleSliderChange = (event: any, newValue: any) => {
       localStorage.setItem(type, newValue);
       if (newValue <= minSliderRange || !newValue) {
         setValue(minSliderRange); // don't set dispatcher here since it will trigger re-render to all component that
-        dispatch(minSliderRange);
-        // use useContext in the component
       } else {
         setValue(newValue);
-        dispatch(newValue);
       }
     };
+    const debouncedValue = useDebouncedValue(value, 1000);
+    useEffect(() => {
+      return () => {
+        isFinished.current = true;
+      };
+    }, []);
 
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setValue(parseInt(event.target.value));
-      dispatch(event.target.value);
-      localStorage.setItem(type, event.target.value);
+    useEffect(() => {
+      if (!isFinished.current && debouncedValue && debouncedValue >= 0) {
+        handleInputChange(value);
+      }
+    }, [debouncedValue]);
+
+    const handleInputChange = (value: number) => {
+      setValue(value);
+      dispatch(value);
+      localStorage.setItem(type, String(value));
+    };
+
+    const onInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopPropagation();
+      e.persist();
+      setValue(Number(e.currentTarget.value));
     };
     const shouldShowInputFn = () => {
       return (
@@ -79,8 +98,12 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
               className={classes.input}
               value={value}
               margin="dense"
-              onChange={handleInputChange}
-              onBlur={() => dispatch(value)}
+              onChange={(e) => onInputChange(e)}
+              onBlur={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dispatch(value);
+              }}
               inputProps={{
                 step: 100,
                 min: { minSliderRange },
@@ -112,7 +135,11 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
             <Slider
               value={value}
               defaultValue={10}
-              onMouseUp={() => dispatch(value)}
+              onMouseUp={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dispatch(value);
+              }}
               onChange={handleSliderChange}
               aria-labelledby="discrete-slider"
               step={null}
@@ -127,10 +154,5 @@ const InputSlider: React.FC<InputSlider> = React.forwardRef(
     );
   }
 );
-InputSlider.defaultProps = {
-  shouldShowInput: true,
-  maxSliderRange: 100,
-  minSliderRange: 1,
-};
 InputSlider.displayName = 'InputSlider';
 export default InputSlider;

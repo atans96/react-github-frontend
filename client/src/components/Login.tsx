@@ -58,25 +58,20 @@ const Login = () => {
                 });
                 return;
               }
-              parallel([
-                () => localStorage.setItem('token_type', res.token_type),
-                () => localStorage.setItem('access_token', res.token),
-                () =>
-                  dispatchShared({
-                    type: 'LOGIN',
-                    payload: { isLoggedIn: true },
-                  }),
-                () =>
-                  dispatchShared({
-                    type: 'SET_USERNAME',
-                    payload: { username: 'login' in res?.data ? res.data.login : '' },
-                  }),
-                () =>
-                  sysend.broadcast('Login', {
-                    username: 'login' in res?.data ? res.data.login : '',
-                  }),
-                () => history.push('/'),
-              ]);
+              localStorage.setItem('token_type', res.token_type);
+              localStorage.setItem('access_token', res.token);
+              dispatchShared({
+                type: 'LOGIN',
+                payload: { isLoggedIn: true },
+              });
+              dispatchShared({
+                type: 'SET_USERNAME',
+                payload: { username: 'login' in res?.data ? res.data.login : '' },
+              });
+              sysend.broadcast('Login', {
+                username: 'login' in res?.data ? res.data.login : '',
+              });
+              history.push('/');
               window.location.reload(false);
             } else {
               if (!isMounted.current) {

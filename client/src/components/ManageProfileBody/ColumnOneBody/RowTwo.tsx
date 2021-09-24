@@ -1,7 +1,7 @@
 import { If } from '../../../util/react-if/If';
 import { Then } from '../../../util/react-if/Then';
 import { CircularProgress, List } from '@material-ui/core';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import LanguageStarsInfo from './RowTwoBody/LanguageStarsInfo';
 import { Counter } from '../../../util';
 import { useTrackedStateManageProfile } from '../../../selectors/stateContextSelector';
@@ -46,12 +46,23 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
   };
 
   const abortController = new AbortController();
+  const isFinished = useRef(false);
 
   useEffect(() => {
-    let isFinished = false;
-    if (db && !isFinished) {
+    return () => {
+      dispatchManageProfile({
+        type: 'REMOVE_ALL',
+      });
+      axiosCancel = true;
+      isFinished.current = true;
+      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+    };
+  }, []);
+
+  useEffect(() => {
+    if (db && !isFinished.current) {
       db?.getUserInfoData.get(1).then((data: any) => {
-        if (data && !isFinished) {
+        if (data && !isFinished.current) {
           const temp = JSON.parse(data.data).getUserInfoData;
           if (temp.repoInfo.length > 0) {
             dispatchManageProfile({
@@ -79,18 +90,11 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
         }
       });
     }
-    return () => {
-      console.log('abort');
-      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
-      axiosCancel = true;
-      isFinished = true;
-    };
   }, [db]);
 
   useEffect(() => {
-    let isFinished = false;
     if (
-      !isFinished &&
+      !isFinished.current &&
       !userInfoDataLoading &&
       !userInfoDataError &&
       userInfoData?.getUserInfoData?.repoInfo?.length > 0 &&
@@ -143,12 +147,6 @@ const RowTwo: React.FC<RowTwoProps> = ({ handleLanguageFilter }) => {
         },
       ]);
     }
-    return () => {
-      dispatchManageProfile({
-        type: 'REMOVE_ALL',
-      });
-      isFinished = true;
-    };
   }, [userInfoDataLoading, userInfoDataError]);
 
   return (

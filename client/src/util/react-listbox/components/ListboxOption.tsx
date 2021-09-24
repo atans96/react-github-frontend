@@ -37,20 +37,23 @@ const useOptionIndex = ({ value, valuesRef }: IUseOptionIndexArgs) => {
 
 export const ListboxOption = forwardRef<HTMLLIElement, IListboxOptionProps>((props, ref) => {
   const { value } = props;
+  const isFinished = useRef(false);
   const id = `option--${value}--${useId()}`;
   const { options, optionsRef, valuesRef, getOptionProps } = useListboxContext();
   const index = useOptionIndex({ value, valuesRef });
   const optionRef = useRef<HTMLLIElement>(null);
   const mergedRef = useMergeRefs(ref, optionRef);
   const { dispatch } = useSelectContext();
+
   useEffect(() => {
-    let isFinished = false;
-    if (!isFinished) {
+    return () => {
+      isFinished.current = true;
+    };
+  }, []);
+  useEffect(() => {
+    if (!isFinished.current) {
       dispatch({ type: 'increment_size' });
     }
-    return () => {
-      isFinished = true;
-    };
   }, []);
   if (index === -1) {
     return <li>{props.children}</li>;

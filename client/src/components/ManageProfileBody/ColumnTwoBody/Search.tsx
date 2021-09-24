@@ -11,15 +11,18 @@ const Search: React.FC<SearchProps> = React.memo(
     const [, setTypedFilter] = useTypedFilter();
     const [value, setValue] = useState('');
     const debouncedValue = useDebouncedValue(value, 1000);
+    const isFinished = useRef(false);
 
     useEffect(() => {
-      let isFinished = false;
-      if (!isFinished && debouncedValue?.length >= 0) {
+      return () => {
+        isFinished.current = true;
+      };
+    }, []);
+
+    useEffect(() => {
+      if (!isFinished.current && debouncedValue && debouncedValue >= 0) {
         handleInputChange(value);
       }
-      return () => {
-        isFinished = true;
-      };
     }, [debouncedValue]);
     const typedRef = useRef('');
     const onInputChange = (e: React.FormEvent<HTMLInputElement>) => {
