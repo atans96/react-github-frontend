@@ -17,13 +17,14 @@ import useFetchUser from '../hooks/useFetchUser';
 import Empty from './Layout/EmptyLayout';
 import Mutex from '../util/mutex/mutex';
 import { createStore } from '../util/hooksy';
-import { parallel } from 'async';
 import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
 import MasonryCard from './HomeBody/MasonryCard';
 import { noop } from '../util/util';
 import { ShouldRender } from '../typing/enum';
 import { useMouseSpawn } from './HomeBody/CardBody/TopicsCardBody/Topic';
-
+function clear(timeout: any) {
+  return clearTimeout(timeout);
+}
 const mutex = new Mutex();
 
 const LoadingEye = Loadable({
@@ -168,6 +169,7 @@ const Home = () => {
     });
     setIsLoading({ isLoading: false });
   };
+
   useDeepCompareEffect(() => {
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
     if (
@@ -363,10 +365,6 @@ const Home = () => {
   useScrollSaver(location.pathname, '/');
   const [renderLoading, setRenderLoading] = useState(false);
 
-  function clear(timeout: any) {
-    return clearTimeout(timeout);
-  }
-
   const timeoutRef = useRef<any>();
 
   useEffect(() => {
@@ -413,6 +411,7 @@ const Home = () => {
       setVisible(true);
     }
   }, [mouse.x, mouse.y]);
+
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position

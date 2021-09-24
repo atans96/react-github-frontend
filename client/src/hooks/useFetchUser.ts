@@ -39,6 +39,7 @@ const transform = (obj: any) => {
     }
   );
 };
+let context = new Map();
 const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const [, setNotification] = useNotification();
   const [isFetchFinish, setIsFetchFinish] = useIsFetchFinish();
@@ -167,15 +168,26 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     }
     return false;
   };
-  const fetcher = (name: string, org: boolean) => {
-    return getUser({
-      signal: abortController.signal,
-      username: name,
-      perPage: stateShared.perPage,
-      page: state.page,
-      org,
-    });
+  const fetcher = (name: string, context: Map<string, { org: boolean; isExist: boolean; count: number }>) => {
+    if (context.has(name) && !context.get(name)!.org) {
+      return getUser({
+        signal: abortController.signal,
+        url: `https://api.github.com/users/${name}/starred?page=${context.get(name)!.count}&per_page=${Math.min(
+          100,
+          stateShared.perPage
+        )}`,
+      });
+    } else {
+      return getUser({
+        signal: abortController.signal,
+        url: `https://api.github.com/orgs/${name}/repos?page=${context.get(name)!.count}&per_page=${Math.min(
+          100,
+          stateShared.perPage
+        )}`,
+      });
+    }
   };
+
   const fetchUser = () => {
     return new Promise((resolve) => {
       if (!isFetchFinish.isFetchFinish) {
@@ -187,8 +199,17 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         } else {
           userNameTransformed = stateShared.queryUsername;
         }
-        let stopped = false;
-        const mainIter = async ({ value, actionController }: { value: any; actionController: any }) => {
+        const mainIter = async ({
+          name,
+          context,
+          value,
+          actionController,
+        }: {
+          name: string;
+          context: Map<string, { isExist: boolean; count: number; org: boolean }>;
+          value: any;
+          actionController: any;
+        }) => {
           let dataOne: {
             dataOne: MergedDataProps[];
             error_404: boolean;
@@ -205,6 +226,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           let chunk = '';
           for await (const data of value()) {
             let array1;
+            let needMoreChunkData = false;
             chunk += new TextDecoder().decode(data);
             const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
             while ((array1 = regexJSON.exec(chunk)) !== undefined) {
@@ -213,18 +235,20 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                   const data = JSON.parse(array1![0]);
                   if (data.id && data.full_name && data.default_branch) {
                     dataOne.dataOne.push(data);
+                    context.get(name)!.isExist = true;
                   } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
-                    stopped = true;
                     dataOne.error_404 = true;
-                    return actionController(dataOne);
+                    return { shouldFetchOrg: actionController(dataOne), stopped: true };
                   } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
-                    stopped = true;
                     dataOne.error_403 = true;
-                    return actionController(dataOne);
-                  } else {
-                    stopped = true;
+                    return { shouldFetchOrg: actionController(dataOne), stopped: true };
+                  } else if (data.message) {
                     dataOne.error_message = data.message;
-                    return actionController(dataOne);
+                    return { shouldFetchOrg: actionController(dataOne), stopped: true };
+                  } else {
+                    regexJSON.lastIndex = 0;
+                    needMoreChunkData = true;
+                    break;
                   }
                 } catch (e) {
                   break;
@@ -233,31 +257,99 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                 break;
               }
             }
+            if (needMoreChunkData && dataOne.dataOne.length === 0) {
+              regexJSON.lastIndex = 0;
+              continue;
+            }
             //When the regex is global, if you call a method on the same regex object,
             // it will start from the index past the end of the last match. so we need to reset it to start the new loop
             regexJSON.lastIndex = 0;
             if (dataOne.dataOne.length > 0) {
-              return actionController(dataOne);
+              actionController(dataOne);
+              context.set(name, {
+                org: context.get(name)!.org,
+                isExist: context.get(name)!.isExist,
+                count: context.get(name)!.count,
+              });
+              return {
+                shouldFetchOrg: context.get(name)!.org,
+                stopped: !(stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0),
+              };
             }
-            if (chunk === '[\n\n]\n' || dataOne.dataOne.length === 0) {
+            if (chunk === '[\n\n]\n' && context.get(name)!.isExist) {
               dataOne.end = true;
-              return actionController(dataOne);
+              actionController(dataOne);
+              return {
+                shouldFetchOrg: context.get(name)!.org,
+                stopped: true,
+              };
+            }
+            if (dataOne.dataOne.length === 0 && !context.get(name)!.isExist) {
+              context.set(name, {
+                org: true,
+                isExist: context.get(name)!.isExist,
+                count: context.get(name)!.count,
+              });
+              return {
+                shouldFetchOrg: true,
+                stopped: false,
+              };
             }
           }
-          return state.mergedData.length === 0 && dataOne.dataOne.length === 0;
+          return { shouldFetchOrg: state.mergedData.length === 0 && dataOne.dataOne.length === 0, stopped: true };
         };
-        let observer: undefined | any;
         userNameTransformed.forEach((name) => {
+          context.set(name, {
+            count: context.has(name) ? context.get(name).count : 1,
+            isExist: context.has(name) ? context.get(name).isExist : false,
+            org: context.has(name) ? context.get(name).org : false,
+          });
           const execute = async () => {
-            observer = !observer ? fetcher(name, false) : observer;
+            const observer = fetcher(name, context);
             observer.subscribe({
               async next(value: { iterator: any }) {
                 if (value.iterator) {
                   try {
-                    const shouldFetchOrg = await mainIter({ value: value.iterator, actionController });
-                    if (shouldFetchOrg) {
-                      observer = fetcher(name, true);
+                    const { shouldFetchOrg, stopped } = await mainIter({
+                      name,
+                      context,
+                      value: value.iterator,
+                      actionController,
+                    });
+                    if (shouldFetchOrg && !stopped) {
+                      context.set(name, {
+                        org: true,
+                        isExist: context.get(name)!.isExist,
+                        count: context.get(name)!.isExist ? context.get(name)!.count + 1 : context.get(name)!.count,
+                      });
                       execute().then(noop);
+                    } else if (
+                      stateShared.perPage > 100 &&
+                      !stopped &&
+                      stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0
+                    ) {
+                      execute().then(() =>
+                        context.set(name, {
+                          org: context.get(name)!.org,
+                          isExist: context.get(name)!.isExist,
+                          count: context.get(name)!.count + 1,
+                        })
+                      );
+                    } else if (!stopped) {
+                      execute().then(() =>
+                        context.set(name, {
+                          org: context.get(name)!.org,
+                          isExist: context.get(name)!.isExist,
+                          count: context.get(name)!.count + 1,
+                        })
+                      );
+                    } else if (stopped) {
+                      context.set(name, {
+                        org: context.get(name)!.org,
+                        isExist: context.get(name)!.isExist,
+                        count: context.get(name)!.count + 1,
+                      });
+                      resolve();
                     }
                   } catch (e) {
                     throw new Error(e.message);
@@ -287,6 +379,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     });
   };
   const fetchMoreTopics = () => {
+    // TODO streaming render just like fetchUser above
     // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
     // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
     // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
