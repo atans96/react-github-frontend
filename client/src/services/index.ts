@@ -141,34 +141,21 @@ export const removeToken = async () => {
     console.log(e);
   }
 };
-let multiplier = 0;
+
 export const getUser = ({
   signal,
-  username,
-  perPage,
-  page,
-  org = false,
   raw = false,
   AcceptHeader = 'v3',
-  url = undefined,
+  url = '',
 }: {
   signal: any | undefined;
-  username: string;
-  perPage: number;
-  page: number;
-  org?: boolean;
+  url: string;
   raw?: boolean;
   AcceptHeader?: string;
-  url?: string;
 }) => {
   return new Observable((observer) => {
     function execute() {
-      let validUrl =
-        url ||
-        (org
-          ? `https://api.github.com/orgs/${username}/repos?page=${page}&per_page=${Math.min(100, perPage)}`
-          : `https://api.github.com/users/${username}/starred?page=${page}&per_page=${Math.min(100, perPage)}`);
-      return fetch(validUrl, {
+      return fetch(url, {
         method: 'GET',
         signal,
         headers: {
@@ -183,24 +170,6 @@ export const getUser = ({
         .then((res: any) => {
           try {
             const reader = res!.body!.getReader();
-            if (perPage > 100 && res.status === 200) {
-              multiplier += 1;
-              if (perPage - multiplier * 100 > 0) {
-                page += 1;
-                observer.next({
-                  iterator: async function* () {
-                    while (true) {
-                      const { done, value } = await reader.read();
-                      if (done) {
-                        break;
-                      }
-                      yield value; //pause the while loop until the caller below continue to call iterator again
-                    }
-                  },
-                });
-                execute();
-              }
-            }
             observer.next({
               iterator: async function* () {
                 while (true) {
@@ -212,7 +181,7 @@ export const getUser = ({
                 }
               },
             });
-            observer.complete();
+            // observer.complete();
             return true;
           } catch (e) {
             observer.error(e);
