@@ -19,7 +19,6 @@ import Stargazers from './CardBody/Stargazers';
 
 export interface CardProps {
   data: MergedDataProps;
-  columnCount: number;
   index: number;
   getRootProps?: any;
 }
@@ -29,7 +28,7 @@ const ImagesCard = Loadable({
   loader: () => import(/* webpackChunkName: "ImagesCard" */ './CardBody/ImagesCard'),
 });
 
-const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) => {
+const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
   // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
   const [stateShared] = useTrackedStateShared();
@@ -116,9 +115,11 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, columnCount, index }) =
   if (!data) return <p>No data, sorry</p>;
   return (
     <div
-      className={clsx('card bg-light fade-in', {
-        'card-width-mobile': columnCount === 1,
-      })}
+      className={clsx('card bg-light fade-in')}
+      style={{
+        width: stateShared.width < 760 ? stateShared.width : '',
+        maxWidth: stateShared.width < 760 ? stateShared.width : '',
+      }}
     >
       <UserCard data={userCardMemoizedData()} />
       <CardTitle data={cardTitleMemoize()} />

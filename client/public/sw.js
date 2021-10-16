@@ -7,7 +7,6 @@
 let username = '';
 let cacheData = {};
 const preCache = [
-  '/static/media/new_16-2.d9260786.gif',
   'https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap',
   'https://cdn.jsdelivr.net/npm/bootstrap@3.3.5/dist/css/bootstrap.min.css',
 ];

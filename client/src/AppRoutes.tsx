@@ -314,23 +314,23 @@ const AppRoutes = () => {
       if ((client.cache.extract() as any).ROOT_QUERY.getRSSFeed) {
         Promise.all([endOfSession(stateShared.username, client.cache.extract())]).then(noop);
       }
+      Promise.all([
+        fetch(
+          `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
+            'GOLANG_PORT'
+          )}/images_from_markdown`,
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: '',
+          }
+        ),
+      ]).then(noop);
+      abortController.abort();
     }
-    Promise.all([
-      fetch(
-        `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-          'GOLANG_PORT'
-        )}/images_from_markdown`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: '',
-        }
-      ),
-    ]).then(noop);
-    abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     return window.close();
   };
 

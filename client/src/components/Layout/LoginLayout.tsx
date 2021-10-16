@@ -28,7 +28,7 @@ const LoginLayout: React.FC<LoginLayout> = React.forwardRef(({ style, notificati
         <span>
           {notification !== '' ? notification : `Login to get 5000 API ${apiType} requests and full features access`}
         </span>
-        <span>{data?.errorMessage}</span>
+        {data?.errorMessage && <span>{data?.errorMessage}</span>}
         <div
           className="login-container"
           style={{

@@ -5,7 +5,6 @@ import { useLocation } from 'react-router-dom';
 import { useTrackedState, useTrackedStateRateLimit } from '../../../selectors/stateContextSelector';
 import { epochToJsDate } from '../../../util';
 import { getRateLimitInfo } from '../../../services';
-import { parallel } from 'async';
 
 const RateLimit = () => {
   const abortController = new AbortController();
