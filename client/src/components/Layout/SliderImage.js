@@ -82,7 +82,6 @@ class SliderImage {
     if (!this.isDragging) return;
     this.currentX = this.offX + (e.clientX - this.onX) * this.opts.speed;
     this.clamp();
-    console.log(this.currentX);
   }
 
   clamp() {

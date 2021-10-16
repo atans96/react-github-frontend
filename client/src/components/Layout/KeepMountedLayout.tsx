@@ -21,6 +21,10 @@ const KeepMountedLayout: React.FC<KeepMountedLayoutProps> = ({ render, mountedCo
     if (mountedCondition && !mount) setMount(true);
   }, [mountedCondition]);
 
-  return <div style={{ contentVisibility: mountedCondition ? 'visible' : 'hidden' }}>{mount ? render() : null}</div>;
+  return mountedCondition ? (
+    <div style={{ contentVisibility: mountedCondition ? 'visible' : 'hidden' }}>{mount ? render() : null}</div>
+  ) : (
+    <></>
+  );
 };
 export default KeepMountedLayout;

@@ -90,7 +90,7 @@ export function useMasonry<Item>({
               : phaseTwoStyle
           }
         >
-          {createRenderElement(RenderComponent, index, data, columnWidth, columnCount, args)}
+          {createRenderElement(RenderComponent, index, data, columnWidth, args)}
         </ItemComponent>
       );
 
@@ -129,7 +129,7 @@ export function useMasonry<Item>({
           role={itemRole}
           style={typeof itemStyle === 'object' ? Object.assign({}, phaseOneStyle, itemStyle) : phaseOneStyle}
         >
-          {createRenderElement(RenderComponent, index, data, columnWidth, columnCount, args)}
+          {createRenderElement(RenderComponent, index, data, columnWidth, args)}
         </ItemComponent>
       );
     }
@@ -274,7 +274,7 @@ export interface UseMasonryOptions<Item> {
    *
    * Overscanning is important for preventing tearing when scrolling through items in the grid, but setting
    * too high of a vaimport { useForceUpdate } from './use-force-update';
-lue may create too much work for React to handle, so it's best that you tune this
+   lue may create too much work for React to handle, so it's best that you tune this
    * value accordingly.
    * @default 2
    */
@@ -324,7 +324,6 @@ export interface RenderComponentProps<Item> {
    * The rendered width of the cell's column.
    */
   width: number;
-  columnCount: number;
   /**
    * The data at `items[index]` of your `items` prop array.
    */
@@ -338,8 +337,8 @@ export interface RenderComponentProps<Item> {
 // ~5.5x faster than createElement without the memo
 const createRenderElement = trieMemoize(
   [OneKeyMap, {}, WeakMap, OneKeyMap],
-  (RenderComponent, index, data, columnWidth, columnCount, args) => {
-    return <RenderComponent index={data.id} data={data} width={columnWidth} columnCount={columnCount} {...args} />;
+  (RenderComponent, index, data, columnWidth, args) => {
+    return <RenderComponent index={data.id} data={data} width={columnWidth} {...args} />;
   }
 );
 

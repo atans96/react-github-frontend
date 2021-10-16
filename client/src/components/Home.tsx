@@ -333,14 +333,14 @@ const Home = () => {
             return new Promise((resolve, reject) => {
               for (let index = 0; index < data.length; index++) {
                 const chunk = iters.next();
-                // nextExecuteImages(chunk.value, resolve);
+                nextExecuteImages(chunk.value, resolve);
                 // nextExecuteCrawler(chunk.value, resolve);
               }
             });
           };
-          // Promise.all([execute()]).then(() => {
-          //   release();
-          // });
+          Promise.all([execute()]).then(() => {
+            release();
+          });
           // while (promises.length) {
           //   // 3 concurrent request at at time (batch mode) but if there is two more queue items, it won't go immediately to fill the empty slot so need to use pMap
           //   await Promise.all(promises.splice(0, 3).map((f) => f.then(noop)));
@@ -411,7 +411,6 @@ const Home = () => {
       setVisible(true);
     }
   }, [mouse.x, mouse.y]);
-
   return (
     <React.Fragment>
       {/*we want ScrollPositionManager to be unmounted when router changes because the way it works is to save scroll position

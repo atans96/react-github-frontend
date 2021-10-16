@@ -189,13 +189,13 @@ const NavBar = () => {
               }}
             />
           </NavLink>
-          {!isFinishedRef.current && previousActive.current === 'home' && nextClickedId > 0 && (
-            <ProgressNavBarLayout
-              nextClickedId={nextClickedId}
-              previousClickedId={previousClickedId.current}
-              isLeft={1}
-            />
-          )}
+          {/*{state.isLoggedIn && !isFinishedRef.current && previousActive.current === 'home' && nextClickedId > 0 && (*/}
+          {/*  <ProgressNavBarLayout*/}
+          {/*    nextClickedId={nextClickedId}*/}
+          {/*    previousClickedId={previousClickedId.current}*/}
+          {/*    isLeft={1}*/}
+          {/*  />*/}
+          {/*)}*/}
         </div>
 
         <If condition={state.isLoggedIn}>
@@ -231,13 +231,16 @@ const NavBar = () => {
                   }}
                 />
               </NavLink>
-              {!isFinishedRef.current && previousActive.current === 'discover' && nextClickedId > 0 && (
-                <ProgressNavBarLayout
-                  nextClickedId={nextClickedId}
-                  previousClickedId={previousClickedId.current}
-                  isLeft={nextClickedId < previousClickedId.current ? -1 : 1}
-                />
-              )}
+              {/*{state.isLoggedIn &&*/}
+              {/*  !isFinishedRef.current &&*/}
+              {/*  previousActive.current === 'discover' &&*/}
+              {/*  nextClickedId > 0 && (*/}
+              {/*    <ProgressNavBarLayout*/}
+              {/*      nextClickedId={nextClickedId}*/}
+              {/*      previousClickedId={previousClickedId.current}*/}
+              {/*      isLeft={nextClickedId < previousClickedId.current ? -1 : 1}*/}
+              {/*    />*/}
+              {/*  )}*/}
             </div>
           </Then>
         </If>
@@ -276,13 +279,16 @@ const NavBar = () => {
                   }}
                 />
               </NavLink>
-              {!isFinishedRef.current && previousActive.current === 'profile' && nextClickedId > 0 && (
-                <ProgressNavBarLayout
-                  nextClickedId={nextClickedId}
-                  previousClickedId={previousClickedId.current}
-                  isLeft={nextClickedId < previousClickedId.current ? -1 : 1}
-                />
-              )}
+              {/*{state.isLoggedIn &&*/}
+              {/*  !isFinishedRef.current &&*/}
+              {/*  previousActive.current === 'profile' &&*/}
+              {/*  nextClickedId > 0 && (*/}
+              {/*    <ProgressNavBarLayout*/}
+              {/*      nextClickedId={nextClickedId}*/}
+              {/*      previousClickedId={previousClickedId.current}*/}
+              {/*      isLeft={nextClickedId < previousClickedId.current ? -1 : 1}*/}
+              {/*    />*/}
+              {/*  )}*/}
             </div>
           </Then>
         </If>
@@ -357,13 +363,16 @@ const NavBar = () => {
                   }}
                 />
               </NavLink>
-              {!isFinishedRef.current && previousActive.current === 'login' && nextClickedId > 0 && (
-                <ProgressNavBarLayout
-                  nextClickedId={nextClickedId}
-                  previousClickedId={previousClickedId.current}
-                  isLeft={nextClickedId < previousClickedId.current ? -1 : 1}
-                />
-              )}
+              {/*{state.isLoggedIn &&*/}
+              {/*  !isFinishedRef.current &&*/}
+              {/*  previousActive.current === 'login' &&*/}
+              {/*  nextClickedId > 0 && (*/}
+              {/*    <ProgressNavBarLayout*/}
+              {/*      nextClickedId={nextClickedId}*/}
+              {/*      previousClickedId={previousClickedId.current}*/}
+              {/*      isLeft={nextClickedId < previousClickedId.current ? -1 : 1}*/}
+              {/*    />*/}
+              {/*  )}*/}
             </div>
           </Then>
         </If>
