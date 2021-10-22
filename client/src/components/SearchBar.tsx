@@ -28,9 +28,7 @@ const SearchBar = () => {
         <h1>Github Fetcher Dashboard</h1>
       </div>
       <PureSearchBar portalExpandable={portalExpandable} />
-      {portalExpandable.current !== null && (
-        <div className="portal-expandable" ref={portalExpandable} style={{ width: `${stateShared.width}px` }} />
-      )}
+      <div className="portal-expandable" ref={portalExpandable} style={{ width: `${stateShared.width}px` }} />
     </div>
   );
 };
