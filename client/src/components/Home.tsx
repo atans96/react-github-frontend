@@ -139,7 +139,7 @@ const Home = () => {
   );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
-    if (stateShared.width !== entry.contentRect.width) {
+    if (stateShared.width !== entry.contentRect.width && stateShared.shouldRender === ShouldRender.Home) {
       dispatchShared({
         type: 'SET_WIDTH',
         payload: {

@@ -25,7 +25,7 @@ const SearchBar = () => {
       }}
     >
       <div className="title-horizontal-center" style={{ width: `${stateShared.width}px` }}>
-        <h1>Github Fetcher Dashboard</h1>
+        <p>Github Dashboard Fetcher</p>
       </div>
       <PureSearchBar portalExpandable={portalExpandable} />
       <div className="portal-expandable" ref={portalExpandable} style={{ width: `${stateShared.width}px` }} />

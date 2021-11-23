@@ -216,7 +216,20 @@ section.container::after {
 .title-horizontal-center {
   display: flex;
   justify-content: center;
-  text-align: center;
+  align-content: center;
+  height: 100%;
+  p {
+    text-align: center;
+    background-image: url("./teahub.webp");
+    background-size: static;
+    background-clip: text;
+    color: transparent;
+    margin: auto;
+    font-family: "Modak", cursive;
+    font-size: 9rem;
+    -webkit-text-stroke-width: 4px;
+    -webkit-text-stroke-color: black;
+  }
 }
 .selection-tabs {
   height: 0;
@@ -646,4 +659,11 @@ li a.underlining:hover {
   100% {
     opacity: 1;
   }
+}
+.search-bar-container{
+  text-align: center;
+
+  font: bold 13px sans-serif;
+  max-width: 70%;
+  position: relative;
 }

@@ -26,6 +26,7 @@ import {
   SearchBarLoadable,
 } from './AppRoutesLoadable';
 import DbCtx, { useDexieDB } from './db/db.ctx';
+import useResizeObserver from './hooks/useResizeObserver';
 
 interface AppRoutes {
   shouldRender: string;
@@ -36,8 +37,20 @@ const channel = new BroadcastChannel('sw-messages');
 const Child = React.memo(
   ({ shouldRender, isLoggedIn }: AppRoutes) => {
     const location = useLocation();
+    const windowScreenRef = useRef<HTMLDivElement>(null);
+    const [stateShared, dispatchShared] = useTrackedStateShared();
+    useResizeObserver(windowScreenRef, (entry: any) => {
+      if (stateShared.width !== entry.contentRect.width && stateShared.shouldRender === '') {
+        dispatchShared({
+          type: 'SET_WIDTH',
+          payload: {
+            width: entry.contentRect.width,
+          },
+        });
+      }
+    });
     return (
-      <>
+      <div ref={windowScreenRef}>
         <NavBar />
         <KeepMountedLayout
           mountedCondition={location.pathname === '/'}
@@ -65,7 +78,7 @@ const Child = React.memo(
           <Route path="/detail/:id" exact component={DetailsLoadable} />
         </Switch>
         {!/\/|\/profile|\/discover|\/login|\/detail\/^\d+$/.test(location.pathname) && <NotFoundLoadable />}
-      </>
+      </div>
     );
   },
   (prevProps, nextProps) => {
@@ -207,6 +220,7 @@ const AppRoutes = () => {
         setDoneFetch(true);
       });
       if (stateShared.isLoggedIn) {
+        console.log('YY');
         sendJsonMessage({
           open: {
             user: stateShared.username,
@@ -227,7 +241,7 @@ const AppRoutes = () => {
         // endOfSession(stateShared.username, client.cache.extract()).then(noop);
       }
     }
-  }, [stateShared.isLoggedIn, stateShared.username]);
+  }, [stateShared.isLoggedIn, stateShared.username.length]);
 
   useEffect(() => {
     if (db && doneFetch && stateShared.isLoggedIn) {
