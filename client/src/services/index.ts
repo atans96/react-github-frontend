@@ -134,6 +134,7 @@ export const removeToken = async () => {
       {
         method: 'GET',
         credentials: 'include',
+        keepalive: true,
       }
     );
     return await response.json();
