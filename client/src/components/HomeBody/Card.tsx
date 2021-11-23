@@ -34,6 +34,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
   const [stateShared] = useTrackedStateShared();
   const [state] = useTrackedState();
   const clickedAdded = useGetClickedMutation();
+  const [isHover, setIsHover] = React.useState(false);
 
   const userCardMemoizedData = useStableCallback(() => {
     return { owner: data.owner, id: data.id };
@@ -115,12 +116,22 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
   if (!data) return <p>No data, sorry</p>;
   return (
     <div
+      onMouseEnter={() => setIsHover(true)}
+      onMouseLeave={() => setIsHover(false)}
       className={clsx('card bg-light fade-in')}
       style={{
         width: stateShared.width < 760 ? stateShared.width : '',
         maxWidth: stateShared.width < 760 ? stateShared.width : '',
       }}
     >
+      <If condition={isHover}>
+        <Then>
+          <span className={'glow'} />
+          <span className={'glow'} />
+          <span className={'glow'} />
+          <span className={'glow'} />
+        </Then>
+      </If>
       <UserCard data={userCardMemoizedData()} />
       <CardTitle data={cardTitleMemoize()} />
       {state.imagesData.length > 0 && <ImagesCard index={index} />}
