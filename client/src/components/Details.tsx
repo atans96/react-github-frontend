@@ -106,7 +106,6 @@ const Details = () => {
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          e.stopPropagation();
           if (e.target === e.currentTarget) {
             const path = data?.path === '/' ? '/' : '/discover';
             history.push(path);

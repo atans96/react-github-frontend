@@ -187,7 +187,110 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       });
     }
   };
-
+  const mainIter = async ({
+    name,
+    context,
+    value,
+  }: {
+    name: string;
+    context: Map<string, { isExist: boolean; count: number; org: boolean }>;
+    value: any;
+  }) => {
+    let dataOne: {
+      dataOne: MergedDataProps[];
+      error_404: boolean;
+      error_403: boolean;
+      end: boolean;
+      error_message: string | undefined;
+    } = {
+      dataOne: [],
+      error_404: false,
+      error_403: false,
+      end: false,
+      error_message: undefined,
+    };
+    let chunk = '';
+    for await (const data of value()) {
+      let array1;
+      let needMoreChunkData = false;
+      chunk += new TextDecoder().decode(data);
+      const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
+      while ((array1 = regexJSON.exec(chunk)) !== undefined) {
+        if (array1) {
+          try {
+            const data = JSON.parse(array1![0]);
+            if (data.id && data.full_name && data.default_branch) {
+              dataOne.dataOne.push(data);
+              context.get(name)!.isExist = true;
+            } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
+              dataOne.error_404 = true;
+              return { shouldFetchOrg: actionController(dataOne), stopped: true };
+            } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
+              dataOne.error_403 = true;
+              return { shouldFetchOrg: actionController(dataOne), stopped: true };
+            } else if (data.message) {
+              dataOne.error_message = data.message;
+              return { shouldFetchOrg: actionController(dataOne), stopped: true };
+            } else {
+              regexJSON.lastIndex = 0;
+              needMoreChunkData = true;
+              break;
+            }
+          } catch (e) {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+      if (needMoreChunkData && dataOne.dataOne.length === 0) {
+        regexJSON.lastIndex = 0;
+        continue;
+      }
+      //When the regex is global, if you call a method on the same regex object,
+      // it will start from the index past the end of the last match. so we need to reset it to start the new loop
+      regexJSON.lastIndex = 0;
+      const intersectionArr = dataOne.dataOne.filter((n) => !state.undisplayMergedData.some((n2) => n.id == n2.id));
+      if (dataOne.dataOne.length > 0 && intersectionArr.length > 0) {
+        actionController(dataOne);
+        context.set(name, {
+          org: context.get(name)!.org,
+          isExist: context.get(name)!.isExist,
+          count: context.get(name)!.count,
+        });
+        return {
+          shouldFetchOrg: context.get(name)!.org,
+          stopped: !(stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0),
+        };
+      }
+      if (intersectionArr.length === 0) {
+        return {
+          shouldFetchOrg: false,
+          stopped: false,
+        };
+      }
+      if (chunk === '[\n\n]\n' && context.get(name)!.isExist) {
+        dataOne.end = true;
+        actionController(dataOne);
+        return {
+          shouldFetchOrg: context.get(name)!.org,
+          stopped: true,
+        };
+      }
+      if (dataOne.dataOne.length === 0 && !context.get(name)!.isExist) {
+        context.set(name, {
+          org: true,
+          isExist: context.get(name)!.isExist,
+          count: context.get(name)!.count,
+        });
+        return {
+          shouldFetchOrg: true,
+          stopped: false,
+        };
+      }
+    }
+    return { shouldFetchOrg: state.mergedData.length === 0 && dataOne.dataOne.length === 0, stopped: true };
+  };
   const fetchUser = () => {
     return new Promise((resolve) => {
       if (!isFetchFinish.isFetchFinish) {
@@ -199,105 +302,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         } else {
           userNameTransformed = stateShared.queryUsername;
         }
-        const mainIter = async ({
-          name,
-          context,
-          value,
-          actionController,
-        }: {
-          name: string;
-          context: Map<string, { isExist: boolean; count: number; org: boolean }>;
-          value: any;
-          actionController: any;
-        }) => {
-          let dataOne: {
-            dataOne: MergedDataProps[];
-            error_404: boolean;
-            error_403: boolean;
-            end: boolean;
-            error_message: string | undefined;
-          } = {
-            dataOne: [],
-            error_404: false,
-            error_403: false,
-            end: false,
-            error_message: undefined,
-          };
-          let chunk = '';
-          for await (const data of value()) {
-            let array1;
-            let needMoreChunkData = false;
-            chunk += new TextDecoder().decode(data);
-            const regexJSON = new RegExp(/\{(?:[^{}]|(\{(?:[^{}]|(\{[^{}]*\}))*\}))*\}/, 'g');
-            while ((array1 = regexJSON.exec(chunk)) !== undefined) {
-              if (array1) {
-                try {
-                  const data = JSON.parse(array1![0]);
-                  if (data.id && data.full_name && data.default_branch) {
-                    dataOne.dataOne.push(data);
-                    context.get(name)!.isExist = true;
-                  } else if (data.message && data.message.toString().toLowerCase().includes('not found')) {
-                    dataOne.error_404 = true;
-                    return { shouldFetchOrg: actionController(dataOne), stopped: true };
-                  } else if (data.message && data.message.toString().toLowerCase().includes('api')) {
-                    dataOne.error_403 = true;
-                    return { shouldFetchOrg: actionController(dataOne), stopped: true };
-                  } else if (data.message) {
-                    dataOne.error_message = data.message;
-                    return { shouldFetchOrg: actionController(dataOne), stopped: true };
-                  } else {
-                    regexJSON.lastIndex = 0;
-                    needMoreChunkData = true;
-                    break;
-                  }
-                } catch (e) {
-                  break;
-                }
-              } else {
-                break;
-              }
-            }
-            if (needMoreChunkData && dataOne.dataOne.length === 0) {
-              regexJSON.lastIndex = 0;
-              continue;
-            }
-            //When the regex is global, if you call a method on the same regex object,
-            // it will start from the index past the end of the last match. so we need to reset it to start the new loop
-            regexJSON.lastIndex = 0;
-            if (dataOne.dataOne.length > 0) {
-              actionController(dataOne);
-              context.set(name, {
-                org: context.get(name)!.org,
-                isExist: context.get(name)!.isExist,
-                count: context.get(name)!.count,
-              });
-              return {
-                shouldFetchOrg: context.get(name)!.org,
-                stopped: !(stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0),
-              };
-            }
-            if (chunk === '[\n\n]\n' && context.get(name)!.isExist) {
-              dataOne.end = true;
-              actionController(dataOne);
-              return {
-                shouldFetchOrg: context.get(name)!.org,
-                stopped: true,
-              };
-            }
-            if (dataOne.dataOne.length === 0 && !context.get(name)!.isExist) {
-              context.set(name, {
-                org: true,
-                isExist: context.get(name)!.isExist,
-                count: context.get(name)!.count,
-              });
-              return {
-                shouldFetchOrg: true,
-                stopped: false,
-              };
-            }
-          }
-          return { shouldFetchOrg: state.mergedData.length === 0 && dataOne.dataOne.length === 0, stopped: true };
-        };
         userNameTransformed.forEach((name) => {
           context.set(name, {
             count: context.has(name) ? context.get(name).count : 1,
@@ -314,7 +318,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                       name,
                       context,
                       value: value.iterator,
-                      actionController,
                     });
                     if (shouldFetchOrg && !stopped) {
                       context.set(name, {
