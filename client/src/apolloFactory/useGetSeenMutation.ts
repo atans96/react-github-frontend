@@ -20,7 +20,9 @@ export const useGetSeenMutation = () => {
               dispatchShared({
                 type: 'SET_SEEN',
                 payload: {
-                  seenCards: uniqBy([...data, ...old?.getSeen?.seenCards], 'id'),
+                  seenCards: new Map(
+                    uniqBy([...data, ...old?.getSeen?.seenCards], 'id').map((obj: any) => [obj.id, true]) || []
+                  ),
                 },
               }),
             () =>
@@ -43,7 +45,7 @@ export const useGetSeenMutation = () => {
           dispatchShared({
             type: 'SET_SEEN',
             payload: {
-              seenCards: data,
+              seenCards: new Map((data as any).map((obj: SeenProps) => [obj.id, true]) || []),
             },
           });
           dispatch({
@@ -67,7 +69,7 @@ export const useGetSeenMutation = () => {
         dispatchShared({
           type: 'SET_SEEN',
           payload: {
-            seenCards: data,
+            seenCards: new Map((data as any).map((obj: SeenProps) => [obj.id, true]) || []),
           },
         });
         dispatch({

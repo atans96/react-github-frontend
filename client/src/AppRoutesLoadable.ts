@@ -37,3 +37,23 @@ export const SearchBarLoadable = Loadable({
   delay: 300,
   loader: () => import(/* webpackChunkName: "SearchBar" */ './components/SearchBar'),
 });
+export const LoadingEye = Loadable({
+  loading: Empty,
+  loader: () => import(/* webpackChunkName: "LoadingEye" */ './components/LoadingEye'),
+  delay: 300, // 0.3 seconds
+});
+export const LoginGQL = Loadable({
+  loading: Empty,
+  loader: () => import(/* webpackChunkName: "LoginGQL" */ './components/HomeBody/CardBody/StargazersCardBody/LoginGQL'),
+  delay: 300, // 0.3 seconds
+});
+export const BottomNavigationBar = Loadable({
+  loading: Empty,
+  loader: () => import(/* webpackChunkName: "BottomNavigationBar" */ './components/HomeBody/BottomNavigationBar'),
+  delay: 300, // 0.3 seconds
+});
+export const ScrollToTopLayout = Loadable({
+  loading: Empty,
+  loader: () => import(/* webpackChunkName: "ScrollToTopLayout" */ './components/Layout/ScrollToTopLayout'),
+  delay: 300, // 0.3 seconds
+});

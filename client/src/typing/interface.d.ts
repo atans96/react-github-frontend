@@ -71,8 +71,8 @@ export interface IStateShared {
   width: number;
   userData: Partial<UserData>;
   searches: Searches[];
-  clicked: Clicked[];
-  seenCards: number[];
+  clicked: Map<string, boolean>;
+  seenCards: Map<number, boolean>;
   starred: string[];
   shouldRender: string;
   perPage: number;

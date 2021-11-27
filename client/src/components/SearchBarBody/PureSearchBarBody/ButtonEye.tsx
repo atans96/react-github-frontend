@@ -54,10 +54,7 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
                 dispatchShared({
                   type: 'SET_SEEN',
                   payload: {
-                    seenCards: temp.seenCards.reduce((acc: any[], obj: SeenProps) => {
-                      acc.push(obj.id);
-                      return acc;
-                    }, []),
+                    seenCards: new Map(temp.seenCards.map((obj: SeenProps) => [obj.id, true]) || []),
                   },
                 }),
               () =>
@@ -92,12 +89,6 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
       });
     } else {
       setClicked(false);
-      dispatchShared({
-        type: 'SET_SEEN',
-        payload: {
-          seenCards: [],
-        },
-      });
       dispatch({
         type: 'MERGED_DATA_ADDED',
         payload: {
@@ -150,10 +141,7 @@ const ButtonEye: React.FC<ButtonEyeProps> = ({ showTipsText }) => {
           dispatchShared({
             type: 'SET_SEEN',
             payload: {
-              seenCards: seenData?.getSeen?.seenCards?.reduce((acc: any[], obj: SeenProps) => {
-                acc.push(obj.id);
-                return acc;
-              }, []),
+              seenCards: new Map(seenData?.getSeen?.seenCards?.map((obj: SeenProps) => [obj.id, true]) || []),
             },
           }),
         () =>

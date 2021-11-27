@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { MergedDataProps, SeenProps } from '../typing/type';
-import { cleanString, readEnvironmentVariable, useStableCallback } from '../util';
+import { cleanString, useStableCallback } from '../util';
 import { crawlerPython, getRepoImages } from '../services';
 import useBottomHit from '../hooks/useBottomHit';
 import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
@@ -11,42 +11,24 @@ import clsx from 'clsx';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import useResizeObserver from '../hooks/useResizeObserver';
-import Loadable from 'react-loadable';
 import { useLocation } from 'react-router-dom';
 import useFetchUser from '../hooks/useFetchUser';
-import Empty from './Layout/EmptyLayout';
 import Mutex from '../util/mutex/mutex';
 import { createStore } from '../util/hooksy';
 import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
 import MasonryCard from './HomeBody/MasonryCard';
-import { noop } from '../util/util';
 import { ShouldRender } from '../typing/enum';
 import { useMouseSpawn } from './HomeBody/CardBody/TopicsCardBody/Topic';
+import ScrollToTopLayout from './Layout/ScrollToTopLayout';
+import LoadingEye from './LoadingEye';
+import LoginGQL from './HomeBody/CardBody/StargazersCardBody/LoginGQL';
+import BottomNavigationBar from './HomeBody/BottomNavigationBar';
+
 function clear(timeout: any) {
   return clearTimeout(timeout);
 }
-const mutex = new Mutex();
 
-const LoadingEye = Loadable({
-  loading: Empty,
-  loader: () => import(/* webpackChunkName: "LoadingEye" */ './LoadingEye'),
-  delay: 300, // 0.3 seconds
-});
-const LoginGQL = Loadable({
-  loading: Empty,
-  loader: () => import(/* webpackChunkName: "LoginGQL" */ './HomeBody/CardBody/StargazersCardBody/LoginGQL'),
-  delay: 300, // 0.3 seconds
-});
-const BottomNavigationBar = Loadable({
-  loading: Empty,
-  loader: () => import(/* webpackChunkName: "BottomNavigationBar" */ './HomeBody/BottomNavigationBar'),
-  delay: 300, // 0.3 seconds
-});
-const ScrollToTopLayout = Loadable({
-  loading: Empty,
-  loader: () => import(/* webpackChunkName: "ScrollToTopLayout" */ './Layout/ScrollToTopLayout'),
-  delay: 300, // 0.3 seconds
-});
+const mutex = new Mutex();
 export const defaultIsFetchFinish = { isFetchFinish: false };
 export const defaultIsLoading = { isLoading: false };
 export const defaultNotification = { notification: '' };
@@ -77,7 +59,7 @@ const Home = () => {
   const windowScreenRef = useRef<HTMLDivElement>(null);
   const dataAlreadyFetch = useRef<number>();
   const isMergedDataExist = state.mergedData.length > 0;
-  const isSeenCardsExist = stateShared?.seenCards?.length > 0 || false;
+  const isSeenCardsExist = stateShared?.seenCards?.size > 0 || false;
   const isTokenRSSExist = (localStorage.getItem('tokenRSS') || '').length > 0;
   const countRef = useRef(0);
   const handleBottomHit = useStableCallback(() => {
@@ -120,15 +102,17 @@ const Home = () => {
       }
     }
   });
-
   useEffect(() => {
     return () => {
-      dispatch({
-        type: 'REMOVE_ALL',
-      });
-      axiosCancel.current = true;
-      isFinished.current = true;
-      abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
+      if (!window.location.href.includes('detail')) {
+        dispatch({
+          type: 'REMOVE_ALL',
+        });
+        axiosCancel.current = true;
+        isFinished.current = true;
+        abortController.abort();
+      }
+      //cancel the fetch when the user go away from current page or when typing again to search
     };
   }, []);
 
@@ -149,24 +133,6 @@ const Home = () => {
     }
   });
   const release = () => {
-    dispatchShared({
-      type: 'SET_SEEN',
-      payload: {
-        seenCards: [],
-      },
-    });
-    dispatchShared({
-      type: 'SET_CLICKED',
-      payload: {
-        seenCards: [],
-      },
-    });
-    dispatchShared({
-      type: 'SET_STARRED',
-      payload: {
-        seenCards: [],
-      },
-    });
     setIsLoading({ isLoading: false });
   };
 
@@ -338,9 +304,10 @@ const Home = () => {
               }
             });
           };
-          Promise.all([execute()]).then(() => {
-            release();
-          });
+          // TODO: fix the image not showing up
+          // Promise.all([execute()]).then(() => {
+          //   release();
+          // });
           // while (promises.length) {
           //   // 3 concurrent request at at time (batch mode) but if there is two more queue items, it won't go immediately to fill the empty slot so need to use pMap
           //   await Promise.all(promises.splice(0, 3).map((f) => f.then(noop)));
@@ -362,7 +329,7 @@ const Home = () => {
     }
     return state.mergedData; // return this if filteredTopics.length === 0
   };
-  useScrollSaver(location.pathname, '/');
+  useScrollSaver(window.location.href);
   const [renderLoading, setRenderLoading] = useState(false);
 
   const timeoutRef = useRef<any>();
@@ -383,22 +350,8 @@ const Home = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading.isLoading, isMergedDataExist]);
+
   window.onbeforeunload = () => {
-    Promise.all([
-      fetch(
-        `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-          'GOLANG_PORT'
-        )}/images_from_markdown`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: '',
-        }
-      ),
-    ]).then(noop);
     abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search
     return window.close();
   };

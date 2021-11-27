@@ -15,7 +15,6 @@ import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar';
 import KeepMountedLayout from './components/Layout/KeepMountedLayout';
 import { ShouldRender } from './typing/enum';
-import { shallowEqual } from 'fast-equals';
 import {
   DetailsLoadable,
   DiscoverLoadable,
@@ -27,6 +26,8 @@ import {
 } from './AppRoutesLoadable';
 import DbCtx, { useDexieDB } from './db/db.ctx';
 import useResizeObserver from './hooks/useResizeObserver';
+import { SeenProps } from './typing/type';
+import { useFetchDB } from './hooks/useFetchDB';
 
 interface AppRoutes {
   shouldRender: string;
@@ -82,7 +83,7 @@ const Child = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    return shallowEqual(prevProps, nextProps);
+    return prevProps.shouldRender === nextProps.shouldRender && prevProps.isLoggedIn === nextProps.isLoggedIn;
   }
 );
 const AppRoutes = () => {
@@ -92,6 +93,7 @@ const AppRoutes = () => {
   const [db] = useDexieDB();
   const abortController = new AbortController();
   const [stateShared, dispatchShared] = useTrackedStateShared();
+  const setFetchDB = useFetchDB(db);
   sysend.on('Login', function (fn) {
     dispatchShared({
       type: 'LOGIN',
@@ -186,18 +188,20 @@ const AppRoutes = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.isLoggedIn]);
   useEffect(() => {
-    getFile('languages.json', abortController.signal).then((githubLanguages) => {
-      if (abortController.signal.aborted) return;
-      if (githubLanguages) {
-        dispatchShared({
-          type: 'SET_GITHUB_LANGUAGES',
-          payload: {
-            githubLanguages,
-          },
-        });
-      }
-    });
-  }, [stateShared.shouldRender]);
+    if (stateShared.isLoggedIn) {
+      getFile('languages.json', abortController.signal).then((githubLanguages) => {
+        if (abortController.signal.aborted) return;
+        if (githubLanguages) {
+          dispatchShared({
+            type: 'SET_GITHUB_LANGUAGES',
+            payload: {
+              githubLanguages,
+            },
+          });
+        }
+      });
+    }
+  }, [stateShared.shouldRender, stateShared.isLoggedIn]);
   const [doneFetch, setDoneFetch] = useState(false);
   useEffect(() => {
     if (!isFinished.current) {
@@ -220,7 +224,6 @@ const AppRoutes = () => {
         setDoneFetch(true);
       });
       if (stateShared.isLoggedIn) {
-        console.log('YY');
         sendJsonMessage({
           open: {
             user: stateShared.username,
@@ -245,6 +248,7 @@ const AppRoutes = () => {
 
   useEffect(() => {
     if (db && doneFetch && stateShared.isLoggedIn) {
+      setFetchDB();
       Promise.allSettled([
         new Promise((resolve, reject) => {
           db?.getSeen.get(1).then((oldData: any) => {
@@ -328,21 +332,6 @@ const AppRoutes = () => {
       if ((client.cache.extract() as any).ROOT_QUERY.getRSSFeed) {
         Promise.all([endOfSession(stateShared.username, client.cache.extract())]).then(noop);
       }
-      Promise.all([
-        fetch(
-          `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-            'GOLANG_PORT'
-          )}/images_from_markdown`,
-          {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: '',
-          }
-        ),
-      ]).then(noop);
       abortController.abort();
     }
     return window.close();

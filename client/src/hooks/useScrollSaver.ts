@@ -1,13 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
-export const useScrollSaver = (location: string, path: string) => {
-  const scrollLocation = useRef(0);
+let scrollLocation = 0;
+export const useScrollSaver = (location: string) => {
   useEffect(() => {
-    if (scrollLocation.current > 0) {
-      window.scrollTo(0, scrollLocation.current);
+    if (scrollLocation > 0) {
+      window.scrollTo(0, scrollLocation);
     }
     const handleScroll = () => {
-      if (location === path) scrollLocation.current = window.pageYOffset;
+      scrollLocation = window.pageYOffset;
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {

@@ -214,7 +214,7 @@ const Discover = React.memo(() => {
     isFetchFinish.current = false;
     return stateDiscover.mergedDataDiscover; // return this if filteredTopics.length === 0
   };
-  useScrollSaver(location.pathname, '/discover');
+  useScrollSaver(window.location.href);
   if (stateShared.isLoggedIn) return <Redirect to={'/login'} from={'/discover'} />;
   return (
     <React.Fragment>

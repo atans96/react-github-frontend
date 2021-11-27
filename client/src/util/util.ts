@@ -237,14 +237,6 @@ export class SinglyLinkedList<T> {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export const noop = (): void => {};
-export const filterActionResolvedPromiseData = (input: any, filter1: boolean, filter2: boolean) => {
-  if (!!input.language && filter1) {
-    //sometimes the language can be null but we've already seen it
-    return input;
-  } else if (filter1 && filter2) {
-    return input;
-  }
-};
 
 export function millisToMinutesAndSeconds(millis: any) {
   const minutes = Math.floor(millis / 60000);
