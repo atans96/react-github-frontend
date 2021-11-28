@@ -55,7 +55,7 @@ const ToolBar = () => {
       });
     }
   };
-
+  console.log('');
   return (
     <Toolbar>
       <div className={classes.paginationInfo}>
