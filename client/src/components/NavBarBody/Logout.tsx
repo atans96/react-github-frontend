@@ -3,9 +3,9 @@ import { LogoutIcon } from '../../util/icons';
 
 class Logout extends React.Component<any> {
   render() {
-    const { binder, ...rest } = this.props.componentProps;
+    const { ...rest } = this.props.componentProps;
     return (
-      <li {...binder} {...rest}>
+      <li {...rest}>
         <LogoutIcon />
         <small
           style={{

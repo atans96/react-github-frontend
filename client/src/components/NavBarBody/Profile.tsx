@@ -1,9 +1,9 @@
 import React from 'react';
 class Profile extends React.Component<any> {
   render() {
-    const { binder, avatar, ...rest } = this.props.componentProps;
+    const { avatar, ...rest } = this.props.componentProps;
     return (
-      <li {...binder} {...rest}>
+      <li {...rest}>
         <img alt="avatar" className="avatar-img" src={avatar} />
         <small
           style={{

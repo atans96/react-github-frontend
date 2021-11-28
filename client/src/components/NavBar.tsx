@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useHistory, useLocation } from 'react-router-dom';
-import useHover from '../hooks/useHover';
 import Profile from './NavBarBody/Profile';
 import Logout from './NavBarBody/Logout';
 import Login from './NavBarBody/Login';
@@ -10,7 +9,6 @@ import { logoutAction } from '../util/util';
 import { If } from '../util/react-if/If';
 import { Then } from '../util/react-if/Then';
 import { useTrackedStateShared } from '../selectors/stateContextSelector';
-import { ProgressNavBarLayout } from './Layout/ProgressNavBarLayout';
 import { useStableCallback } from '../util';
 import DbCtx from '../db/db.ctx';
 
@@ -38,11 +36,6 @@ const NavBar = () => {
   const navBarRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
-  const [isHoveredLogin, bindLogin] = useHover();
-  const [isHoveredLogout, bindLogout] = useHover();
-  const [isHoveredProfile, bindProfile] = useHover();
-  const [isHoveredDiscover, bindDiscover] = useHover();
-  const [isHoveredHome, bindHome] = useHover();
   const Active = location.pathname.replace('/', '');
 
   const te = Active[1] !== '' ? Active[1] : 'home';
@@ -158,226 +151,148 @@ const NavBar = () => {
   }, [active]);
 
   return (
-    <div className="navbar" ref={navBarRef}>
-      <ul>
-        <div
-          style={{
-            width: '100px',
-            borderBottom: `${(previousActive.current === '' || isFinished) && active === 'home' ? '4px solid' : '0px'}`,
-          }}
-        >
-          <NavLink
-            to={{
-              pathname: `/`,
+    <>
+      <div className="navbar" ref={navBarRef}>
+        <ul>
+          <div
+            style={{
+              width: '100px',
+              borderBottom: `${
+                (previousActive.current === '' || isFinished) && active === 'home' ? '4px solid' : '0px'
+              }`,
             }}
-            className="btn-clear nav-link"
           >
-            <Home
-              componentProps={{
-                id: 'home',
-                className: active === 'home' && isFinished ? 'active' : '',
-                onClick: handleClick,
-                active: active,
-                binder: bindHome,
-                style:
-                  isHoveredHome && active !== 'home'
-                    ? {
-                        backgroundColor: '#f03e76',
-                        cursor: 'pointer',
-                      }
-                    : {},
+            <NavLink
+              to={{
+                pathname: `/`,
               }}
-            />
-          </NavLink>
-          {/*{state.isLoggedIn && !isFinishedRef.current && previousActive.current === 'home' && nextClickedId > 0 && (*/}
-          {/*  <ProgressNavBarLayout*/}
-          {/*    nextClickedId={nextClickedId}*/}
-          {/*    previousClickedId={previousClickedId.current}*/}
-          {/*    isLeft={1}*/}
-          {/*  />*/}
-          {/*)}*/}
-        </div>
-
-        <If condition={state.isLoggedIn}>
-          <Then>
-            <div
-              style={{
-                width: '100px',
-                borderBottom: `${
-                  (previousActive.current === '' || isFinished) && active === 'discover' ? '4px solid' : '0px'
-                }`,
-              }}
+              className="btn-clear nav-link"
             >
-              <NavLink
-                to={{
-                  pathname: `/discover`,
+              <Home
+                componentProps={{
+                  id: 'home',
+                  onClick: handleClick,
+                  active: active,
                 }}
-                className="btn-clear nav-link"
-              >
-                <Discover
-                  componentProps={{
-                    id: 'discover',
-                    className: active === 'discover' && isFinished ? 'active' : '',
-                    onClick: handleClick,
-                    active: active,
-                    binder: bindDiscover,
-                    style:
-                      isHoveredDiscover && active !== 'discover'
-                        ? {
-                            backgroundColor: '#f03e76',
-                            cursor: 'pointer',
-                          }
-                        : {},
-                  }}
-                />
-              </NavLink>
-              {/*{state.isLoggedIn &&*/}
-              {/*  !isFinishedRef.current &&*/}
-              {/*  previousActive.current === 'discover' &&*/}
-              {/*  nextClickedId > 0 && (*/}
-              {/*    <ProgressNavBarLayout*/}
-              {/*      nextClickedId={nextClickedId}*/}
-              {/*      previousClickedId={previousClickedId.current}*/}
-              {/*      isLeft={nextClickedId < previousClickedId.current ? -1 : 1}*/}
-              {/*    />*/}
-              {/*  )}*/}
-            </div>
-          </Then>
-        </If>
+              />
+            </NavLink>
+          </div>
 
-        <If condition={state.isLoggedIn}>
-          <Then>
-            <div
-              style={{
-                width: '100px',
-                borderBottom: `${
-                  (previousActive.current === '' || isFinished) && active === 'profile' ? '4px solid' : '0px'
-                }`,
-              }}
-            >
-              <NavLink
-                to={{
-                  pathname: `/profile`,
+          <If condition={state.isLoggedIn}>
+            <Then>
+              <div
+                style={{
+                  width: '100px',
+                  borderBottom: `${
+                    (previousActive.current === '' || isFinished) && active === 'discover' ? '4px solid' : '0px'
+                  }`,
                 }}
-                className="btn-clear nav-link"
               >
-                <Profile
-                  componentProps={{
-                    id: 'profile',
-                    className: active === 'profile' && isFinished ? 'active' : '',
-                    onClick: handleClick,
-                    active: active,
-                    binder: bindProfile,
-                    avatar: state.userData.avatar || '',
-                    style:
-                      isHoveredProfile && active !== 'profile'
-                        ? {
-                            backgroundColor: '#f03e76',
-                            cursor: 'pointer',
-                          }
-                        : {},
+                <NavLink
+                  to={{
+                    pathname: `/discover`,
                   }}
-                />
-              </NavLink>
-              {/*{state.isLoggedIn &&*/}
-              {/*  !isFinishedRef.current &&*/}
-              {/*  previousActive.current === 'profile' &&*/}
-              {/*  nextClickedId > 0 && (*/}
-              {/*    <ProgressNavBarLayout*/}
-              {/*      nextClickedId={nextClickedId}*/}
-              {/*      previousClickedId={previousClickedId.current}*/}
-              {/*      isLeft={nextClickedId < previousClickedId.current ? -1 : 1}*/}
-              {/*    />*/}
-              {/*  )}*/}
-            </div>
-          </Then>
-        </If>
+                  className="btn-clear nav-link"
+                >
+                  <Discover
+                    componentProps={{
+                      id: 'discover',
+                      onClick: handleClick,
+                      active: active,
+                    }}
+                  />
+                </NavLink>
+              </div>
+            </Then>
+          </If>
 
-        <If condition={state.isLoggedIn}>
-          <Then>
-            <div
-              style={{
-                width: '100px',
-                borderBottom: `${
-                  (previousActive.current === '' || isFinished) && active === 'logout' ? '4px solid' : '0px'
-                }`,
-              }}
-            >
-              <NavLink
-                to={{
-                  pathname: `/logout`,
+          <If condition={state.isLoggedIn}>
+            <Then>
+              <div
+                style={{
+                  width: '100px',
+                  borderBottom: `${
+                    (previousActive.current === '' || isFinished) && active === 'profile' ? '4px solid' : '0px'
+                  }`,
                 }}
-                className="btn-clear nav-link"
               >
-                <Logout
-                  componentProps={{
-                    id: 'logout',
-                    className: active === 'logout' && isFinished ? 'active' : '',
-                    onClick: handleClick,
-                    active: active,
-                    binder: bindLogout,
-                    style:
-                      isHoveredLogout && active !== 'logout'
-                        ? {
-                            backgroundColor: '#f03e76',
-                            cursor: 'pointer',
-                          }
-                        : {},
+                <NavLink
+                  to={{
+                    pathname: `/profile`,
                   }}
-                />
-              </NavLink>
-            </div>
-          </Then>
-        </If>
+                  className="btn-clear nav-link"
+                >
+                  <Profile
+                    componentProps={{
+                      id: 'profile',
+                      onClick: handleClick,
+                      active: active,
+                      avatar: state.userData.avatar || '',
+                    }}
+                  />
+                </NavLink>
+              </div>
+            </Then>
+          </If>
 
-        <If condition={!state.isLoggedIn}>
-          <Then>
-            <div
-              style={{
-                width: '100px',
-                borderBottom: `${
-                  (previousActive.current === '' || isFinished) && active === 'login' ? '4px solid' : '0px'
-                }`,
-              }}
-            >
-              <NavLink
-                to={{
-                  pathname: `/login`,
+          <If condition={state.isLoggedIn}>
+            <Then>
+              <div
+                style={{
+                  width: '100px',
+                  borderBottom: `${
+                    (previousActive.current === '' || isFinished) && active === 'logout' ? '4px solid' : '0px'
+                  }`,
                 }}
-                className="btn-clear nav-link"
               >
-                <Login
-                  componentProps={{
-                    id: 'login',
-                    className: active === 'login' && isFinished ? 'active' : '',
-                    onClick: handleClick,
-                    active: active,
-                    binder: bindLogin,
-                    style:
-                      isHoveredLogin && active !== 'login'
-                        ? {
-                            backgroundColor: '#f03e76',
-                            cursor: 'pointer',
-                          }
-                        : {},
+                <NavLink
+                  to={{
+                    pathname: `/logout`,
                   }}
-                />
-              </NavLink>
-              {/*{state.isLoggedIn &&*/}
-              {/*  !isFinishedRef.current &&*/}
-              {/*  previousActive.current === 'login' &&*/}
-              {/*  nextClickedId > 0 && (*/}
-              {/*    <ProgressNavBarLayout*/}
-              {/*      nextClickedId={nextClickedId}*/}
-              {/*      previousClickedId={previousClickedId.current}*/}
-              {/*      isLeft={nextClickedId < previousClickedId.current ? -1 : 1}*/}
-              {/*    />*/}
-              {/*  )}*/}
-            </div>
-          </Then>
-        </If>
-      </ul>
-    </div>
+                  className="btn-clear nav-link"
+                >
+                  <Logout
+                    componentProps={{
+                      id: 'logout',
+                      onClick: handleClick,
+                      active: active,
+                    }}
+                  />
+                </NavLink>
+              </div>
+            </Then>
+          </If>
+
+          <If condition={!state.isLoggedIn}>
+            <Then>
+              <div
+                style={{
+                  width: '100px',
+                  borderBottom: `${
+                    (previousActive.current === '' || isFinished) && active === 'login' ? '4px solid' : '0px'
+                  }`,
+                }}
+              >
+                <NavLink
+                  to={{
+                    pathname: `/login`,
+                  }}
+                  className="btn-clear nav-link"
+                >
+                  <Login
+                    componentProps={{
+                      id: 'login',
+                      onClick: handleClick,
+                      active: active,
+                    }}
+                  />
+                </NavLink>
+              </div>
+            </Then>
+          </If>
+        </ul>
+      </div>
+    </>
   );
 };
 NavBar.displayName = 'NavBar';

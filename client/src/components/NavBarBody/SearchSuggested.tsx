@@ -3,9 +3,9 @@ import { SearchIcon } from '../../util/icons';
 
 class Discover extends React.Component<any> {
   render() {
-    const { binder, ...rest } = this.props.componentProps;
+    const { ...rest } = this.props.componentProps;
     return (
-      <li {...binder} {...rest}>
+      <li {...rest}>
         <SearchIcon />
         <small
           style={{
