@@ -67,16 +67,18 @@ const ToolBar = () => {
       <div className={classes.paginationInfo}>
         <Pagination
           className={classes.buttonPagination}
-          count={state.page + 1}
+          count={state.filterBySeen ? state.page + 1 : 1}
           page={state.page}
           color="secondary"
           onChange={(event: any, val: any) => {
-            dispatch({
-              type: 'ADVANCE_PAGE1',
-              payload: {
-                page: val,
-              },
-            });
+            if (state.filterBySeen) {
+              dispatch({
+                type: 'ADVANCE_PAGE1',
+                payload: {
+                  page: val,
+                },
+              });
+            }
           }}
         />
       </div>

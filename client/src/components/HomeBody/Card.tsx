@@ -180,7 +180,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
           className="shine-container btn-clear nav-link"
         >
           <p>MORE DETAILS</p>
-          <i className={'shine'} />
+          {state.filterBySeen && <i className={'shine'} />}
         </NavLink>
       </div>
     </div>

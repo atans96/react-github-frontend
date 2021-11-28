@@ -100,7 +100,7 @@ const Home = () => {
     ) {
       dataAlreadyFetch.current = 0;
       fetchUser().then((newData) => {
-        if ((newData as MergedDataProps[]).length > 0 && location.pathname === '/' && state.filterBySeen) {
+        if ((newData as MergedDataProps[])?.length > 0 && location.pathname === '/' && state.filterBySeen) {
           if (stateShared.isLoggedIn) {
             const result = (newData as MergedDataProps[]).reduce((acc, obj: MergedDataProps) => {
               const temp = Object.assign(
@@ -161,7 +161,7 @@ const Home = () => {
       });
       if (stateShared.queryUsername.length > 0) {
         fetchUser().then((newData) => {
-          if ((newData as MergedDataProps[]).length > 0 && location.pathname === '/' && state.filterBySeen) {
+          if ((newData as MergedDataProps[])?.length > 0 && location.pathname === '/' && state.filterBySeen) {
             if (stateShared.isLoggedIn) {
               const result = (newData as MergedDataProps[]).reduce((acc, obj: MergedDataProps) => {
                 const temp = Object.assign(
