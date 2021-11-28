@@ -37,7 +37,7 @@ export const initialStateShared: IStateShared = {
   userData: {},
   starred: [],
   githubLanguages: new Map<string, { obj: GithubLanguages; index: number }>(),
-  perPage: 10, //setting
+  perPage: 40, //setting
   tokenRSS: '', //setting
   tokenGQL: '', //setting
   isLoggedIn: false,
