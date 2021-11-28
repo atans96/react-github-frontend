@@ -233,15 +233,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     });
   };
   const fetchMoreTopics = () => {
-    // TODO streaming render just like fetchUser above
-    // we want to preserve state.page so that when the user navigate away from Home, then go back again, we still want to retain state.page
-    // so when they scroll again, it will fetch the correct next page. However, as the user already scroll, it causes state.page > 1
-    // thus when they navigate away and go back again to Home, this will hit again, thus causing re-fetching the same data.
-    // to prevent that, we need to reset the Home.js is unmounted.
     if (!isFetchFinish.isFetchFinish) {
-      // it's possible the user click Details.js and go back to Home.js again and find out that
-      // that the previous page.current is already 2, but when he/she navigates aways from Home.js, it go back to page.current=1 again
-      // so the scroll won't get fetch immediately. Thus, we need to persist state.page using reducer
       setLoading({ isLoading: true }); // spawn loading spinner at bottom page
       setNotification({ notification: '' });
       if (clickedGQLTopic.variables.queryTopic !== undefined) {
