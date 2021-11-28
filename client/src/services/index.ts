@@ -143,7 +143,7 @@ export const removeToken = async () => {
   }
 };
 
-export const getUser = ({
+export const getUser = async ({
   signal,
   raw = false,
   AcceptHeader = 'v3',
@@ -154,50 +154,24 @@ export const getUser = ({
   raw?: boolean;
   AcceptHeader?: string;
 }) => {
-  return new Observable((observer) => {
-    function execute() {
-      return fetch(url, {
-        method: 'GET',
-        signal,
-        headers: {
-          Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
-          'Content-Type': 'application/json;charset=UTF-8',
-          'User-Agent': `${detectBrowser()}`,
-          Accept: `application/vnd.github.${AcceptHeader}${
-            raw ? '.raw' : '+json'
-          },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
-        },
-      })
-        .then((res: any) => {
-          try {
-            const reader = res!.body!.getReader();
-            observer.next({
-              iterator: async function* () {
-                while (true) {
-                  const { done, value } = await reader.read();
-                  if (done) {
-                    break;
-                  }
-                  yield value; //pause the while loop until the caller below continue to call iterator again
-                }
-              },
-            });
-            // observer.complete();
-            return true;
-          } catch (e) {
-            observer.error(e);
-            observer.complete();
-            return true;
-          }
-        })
-        .catch((e) => {
-          observer.error(e);
-          observer.complete();
-          return true;
-        });
-    }
-    execute().then(noop);
-  }) as Observable<{ iterator: any }>;
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      signal,
+      headers: {
+        Authorization: `${localStorage.getItem('token_type')} ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json;charset=UTF-8',
+        'User-Agent': `${detectBrowser()}`,
+        Accept: `application/vnd.github.${AcceptHeader}${
+          raw ? '.raw' : '+json'
+        },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
+      },
+    });
+    return await response.json();
+  } catch (e) {
+    console.log(e);
+    return undefined;
+  }
 };
 export const markdownParsing = async (username: string, full_name: string, branch: string, signal: any) => {
   try {

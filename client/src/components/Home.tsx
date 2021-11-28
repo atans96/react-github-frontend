@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
 import { MergedDataProps, SeenProps } from '../typing/type';
-import { cleanString, useStableCallback } from '../util';
+import { cleanString } from '../util';
 import { crawlerPython, getRepoImages } from '../services';
-import useBottomHit from '../hooks/useBottomHit';
 import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
 import { useScrollSaver } from '../hooks/useScrollSaver';
@@ -61,47 +60,7 @@ const Home = () => {
   const isMergedDataExist = state.mergedData.length > 0;
   const isSeenCardsExist = stateShared?.seenCards?.size > 0 || false;
   const isTokenRSSExist = (localStorage.getItem('tokenRSS') || '').length > 0;
-  const countRef = useRef(0);
-  const handleBottomHit = useStableCallback(() => {
-    if (countRef.current > 0 && isFetchFinish.isFetchFinish) {
-      return;
-    }
-    if (state.mergedData.length > 0 && location.pathname === '/' && state.filterBySeen) {
-      countRef.current += 1;
-      dispatch({
-        type: 'ADVANCE_PAGE',
-      });
-      if (stateShared.isLoggedIn) {
-        const result = state.mergedData.reduce((acc, obj: MergedDataProps) => {
-          const temp = Object.assign(
-            {},
-            {
-              stargazers_count: Number(obj.stargazers_count),
-              full_name: obj.full_name,
-              default_branch: obj.default_branch,
-              owner: {
-                login: obj.owner.login,
-                avatar_url: obj.owner.avatar_url,
-                html_url: obj.owner.html_url,
-              },
-              description: cleanString(obj.description || ''),
-              language: obj.language,
-              topics: obj.topics,
-              html_url: obj.html_url,
-              id: obj.id,
-              name: obj.name,
-              is_queried: false,
-            }
-          );
-          acc.push(temp);
-          return acc;
-        }, [] as SeenProps[]);
-        if (result.length > 0) {
-          seenAdded(result);
-        }
-      }
-    }
-  });
+
   useEffect(() => {
     return () => {
       if (!window.location.href.includes('detail')) {
@@ -115,13 +74,6 @@ const Home = () => {
       //cancel the fetch when the user go away from current page or when typing again to search
     };
   }, []);
-
-  // TODO: to activate infinite scroll, uncomment below
-  // useBottomHit(
-  //   windowScreenRef,
-  //   handleBottomHit,
-  //   isLoading.isLoading || !isMergedDataExist || (isFetchFinish.isFetchFinish && state.filterBySeen) // include isFetchFinish to indicate not to listen anymore
-  // );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
     if (stateShared.width !== entry.contentRect.width && stateShared.shouldRender === ShouldRender.Home) {
@@ -138,7 +90,6 @@ const Home = () => {
   };
 
   useDeepCompareEffect(() => {
-    // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
     if (
       stateShared.queryUsername.length > 0 &&
       state.mergedData.length === 0 &&
@@ -147,26 +98,102 @@ const Home = () => {
       !isFetchFinish.isFetchFinish &&
       state.filterBySeen
     ) {
-      // we want to preserve stateShared.queryUsername so that when the user navigate away from Home, then go back again, and do the scroll again,
-      // we still want to retain the memory of username so that's why we use reducer of stateShared.queryUsername.
-      // However, as the component unmount, stateShared.queryUsername is not "", thus causing fetchUser to fire in useEffect
-      // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
-      // otherwise, don't re-fetch. in this way, stateShared.queryUsername and state.mergedData are still preserved
       dataAlreadyFetch.current = 0;
-      fetchUser().then(() => release());
+      fetchUser().then((newData) => {
+        if ((newData as MergedDataProps[]).length > 0 && location.pathname === '/' && state.filterBySeen) {
+          if (stateShared.isLoggedIn) {
+            const result = (newData as MergedDataProps[]).reduce((acc, obj: MergedDataProps) => {
+              const temp = Object.assign(
+                {},
+                {
+                  stargazers_count: Number(obj.stargazers_count),
+                  full_name: obj.full_name,
+                  default_branch: obj.default_branch,
+                  owner: {
+                    login: obj.owner.login,
+                    avatar_url: obj.owner.avatar_url,
+                    html_url: obj.owner.html_url,
+                  },
+                  description: cleanString(obj.description || ''),
+                  language: obj.language,
+                  topics: obj.topics,
+                  html_url: obj.html_url,
+                  id: obj.id,
+                  name: obj.name,
+                  is_queried: false,
+                }
+              );
+              acc.push(temp);
+              return acc;
+            }, [] as SeenProps[]);
+            if (result.length > 0) {
+              seenAdded(result);
+            }
+          }
+        }
+        release();
+      });
     }
-    // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
-    // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.queryUsername] so stateShared.queryUsername not change so not execute
-    // so you need another dependency of stateShared.perPage
-    // you also need state.mergedData because on submit in SearchBar.js, you specify dispatchMergedData([])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel.current]);
+
+  useEffect(() => {
+    if (state.page === 1 && state.mergedData.length > 0 && stateShared.queryUsername.length > 0) {
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: [],
+        },
+      });
+      fetchUser().then(() => {
+        release();
+      });
+    }
+  }, [state.page]);
 
   useEffect(() => {
     if (location.pathname === '/' && !isFinished.current && state.page > 1 && !isFetchFinish.isFetchFinish) {
       dataAlreadyFetch.current = 0;
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: [],
+        },
+      });
       if (stateShared.queryUsername.length > 0) {
-        fetchUser().then(() => release());
+        fetchUser().then((newData) => {
+          if ((newData as MergedDataProps[]).length > 0 && location.pathname === '/' && state.filterBySeen) {
+            if (stateShared.isLoggedIn) {
+              const result = (newData as MergedDataProps[]).reduce((acc, obj: MergedDataProps) => {
+                const temp = Object.assign(
+                  {},
+                  {
+                    stargazers_count: Number(obj.stargazers_count),
+                    full_name: obj.full_name,
+                    default_branch: obj.default_branch,
+                    owner: {
+                      login: obj.owner.login,
+                      avatar_url: obj.owner.avatar_url,
+                      html_url: obj.owner.html_url,
+                    },
+                    description: cleanString(obj.description || ''),
+                    language: obj.language,
+                    topics: obj.topics,
+                    html_url: obj.html_url,
+                    id: obj.id,
+                    name: obj.name,
+                    is_queried: false,
+                  }
+                );
+                acc.push(temp);
+                return acc;
+              }, [] as SeenProps[]);
+              if (result.length > 0) {
+                seenAdded(result);
+              }
+            }
+          }
+          release();
+        });
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         fetchMoreTopics();
       }
