@@ -285,13 +285,31 @@ section.container::after {
   vertical-align: middle;
   margin-bottom: 0;
   border: 0;
+  position: fixed;
+  z-index: 9999;
   ul {
     justify-content: center;
     display: flex;
-    background: var(--navbar-theme-color);
+    //background: var(--navbar-theme-color);
+    //background: linear-gradient(45deg,#d350db,teal,#d350db);
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 300% 300%;
+    transition: all .3s;
     -webkit-box-shadow: 0 8px 6px -6px #999;
     -moz-box-shadow: 0 8px 6px -6px #999;
     box-shadow: 0 8px 6px -6px #999;
+    animation: gradient 10s ease infinite;
+    @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
     li {
       padding: 10px;
       display: grid;
@@ -307,11 +325,6 @@ section.container::after {
           text-decoration: none;
         }
       }
-    }
-    li.active {
-      padding: 10px;
-      background: var(--instagram-theme-color);
-      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f09433', endColorstr='#bc1888',GradientType=1 );
     }
   }
 }

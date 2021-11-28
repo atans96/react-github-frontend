@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import UserCard from './CardBody/UserCard';
 import TopicsCard from './CardBody/TopicsCard';
@@ -16,12 +16,14 @@ import './Card.scss';
 import Empty from '../Layout/EmptyLayout';
 import { useGetClickedMutation } from '../../apolloFactory/useGetClickedMutation';
 import Stargazers from './CardBody/Stargazers';
+import { gsap } from 'gsap';
 
 export interface CardProps {
   data: MergedDataProps;
   index: number;
   getRootProps?: any;
 }
+// const tl = gsap.timeline();
 
 const ImagesCard = Loadable({
   loading: Empty,
@@ -32,6 +34,7 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
   // when the autocomplete list are showing, use z-index so that it won't appear in front of the list of autocomplete
   // when autocomplete is hidden, don't use z-index since we want to work with changing the cursor and clickable (z-index -1 can't click it)
   const [stateShared] = useTrackedStateShared();
+  let el = useRef(null);
   const [state] = useTrackedState();
   const clickedAdded = useGetClickedMutation();
   const [isHover, setIsHover] = React.useState(false);
@@ -43,6 +46,15 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
   const cardTitleMemoize = useStableCallback(() => {
     return { name: data.name, id: data.id };
   });
+
+  useEffect(() => {
+    // random fade-in each card
+    gsap.from(el.current, 1, {
+      x: 0,
+      opacity: 0,
+      delay: Math.random(),
+    });
+  }, [el]);
 
   const topicsCardMemoizedData = useStableCallback(() => data.topics);
 
@@ -116,9 +128,10 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
   if (!data) return <p>No data, sorry</p>;
   return (
     <div
+      ref={el}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
-      className={clsx('card bg-light fade-in')}
+      className={clsx('card bg-light')}
       style={{
         width: stateShared.width < 760 ? stateShared.width : '',
         maxWidth: stateShared.width < 760 ? stateShared.width : '',

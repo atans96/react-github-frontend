@@ -15,7 +15,7 @@
     position: relative;
     transform: scale(1.05) translateZ(0);
     z-index: 1000;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    //box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
   .topic {
     display: flex;
@@ -26,23 +26,6 @@
   &.card-width-mobile {
     width: 100%;
     max-width: 100%;
-  }
-  .fade-in {
-    will-change: opacity;
-    opacity: 1;
-    animation-name: fadeInOpacity;
-    animation-iteration-count: 1;
-    animation-timing-function: ease-in;
-    animation-duration: 0.5s;
-  }
-
-  @keyframes fadeInOpacity {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
   }
 
   .language {
@@ -176,8 +159,14 @@
       box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
     }
     @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
+      }
       50% {
-        background-position: 100% 0;
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
       }
     }
   }

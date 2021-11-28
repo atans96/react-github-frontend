@@ -3,9 +3,9 @@ import { HomeIcon } from '../../util/icons';
 
 class Home extends React.Component<any> {
   render() {
-    const { binder, ...rest } = this.props.componentProps;
+    const { ...rest } = this.props.componentProps;
     return (
-      <li {...binder} {...rest}>
+      <li {...rest}>
         <HomeIcon />
         <small
           style={{

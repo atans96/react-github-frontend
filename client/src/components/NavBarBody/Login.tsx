@@ -3,9 +3,9 @@ import { LoginIcon } from '../../util/icons';
 
 class Login extends React.Component<any> {
   render() {
-    const { binder, ...rest } = this.props.componentProps;
+    const { ...rest } = this.props.componentProps;
     return (
-      <li {...binder} {...rest}>
+      <li {...rest}>
         <LoginIcon />
         <small
           style={{
