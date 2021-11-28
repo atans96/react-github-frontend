@@ -266,7 +266,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       if (intersectionArr.length === 0) {
         return {
           shouldFetchOrg: false,
-          stopped: false,
+          stopped: false, //go to next page
         };
       }
       if (chunk === '[\n\n]\n' && context.get(name)!.isExist) {

@@ -2,7 +2,6 @@ import { MergedDataProps } from '../../typing/type';
 import React, { useRef } from 'react';
 import { Masonry } from '../../util/masonic/masonry';
 import Card from './Card';
-import useResizeObserver from '../../hooks/useResizeObserver';
 
 interface MasonryCard {
   getRootProps: any;
@@ -27,6 +26,7 @@ const MasonryCard = React.memo<MasonryCard>(
           columnGutter={10}
           columnWidth={370}
           overscanBy={10}
+          className={'masonic-grid'}
           render={Card}
         />
       </div>

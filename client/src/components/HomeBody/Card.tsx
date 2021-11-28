@@ -164,9 +164,10 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
             pathname: `/detail/${data.id}`,
             state: JSON.stringify({ data: data, path: '/' }),
           }}
-          className="btn-clear nav-link"
+          className="shine-container btn-clear nav-link"
         >
           <p>MORE DETAILS</p>
+          <i className={'shine'} />
         </NavLink>
       </div>
     </div>
