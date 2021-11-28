@@ -81,11 +81,17 @@ const useActionResolvePromise = () => {
                 return obj;
               });
               dispatch({
-                type: 'MERGED_DATA_APPEND',
+                type: 'MERGED_DATA_ADDED',
                 payload: {
                   data: res,
                 },
               });
+              // dispatch({
+              //   type: 'MERGED_DATA_APPEND',
+              //   payload: {
+              //     data: res,
+              //   },
+              // });
             }
             resolve();
             break;

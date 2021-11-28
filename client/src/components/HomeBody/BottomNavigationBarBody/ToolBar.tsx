@@ -35,20 +35,15 @@ const ToolBar = () => {
   const classes = useStyles();
   const [state, dispatch] = useTrackedState();
   const [notification] = useNotification();
+  const paginationRef = useRef<number>(1);
   function checkKey(e: any) {
     e = e || window.event;
     if (e.keyCode == '39' && notification.notification.length === 0) {
+      paginationRef.current += 1;
       dispatch({
         type: 'ADVANCE_PAGE1',
         payload: {
-          page: state.page + 1,
-        },
-      });
-    } else if (e.keyCode == '37' && state.page - 1 >= 1) {
-      dispatch({
-        type: 'ADVANCE_PAGE1',
-        payload: {
-          page: state.page - 1,
+          page: paginationRef.current,
         },
       });
     }

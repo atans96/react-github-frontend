@@ -185,7 +185,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     value,
   }: {
     name: string;
-    context: Map<string, { isExist: boolean; count: number; org: boolean }>;
+    context: Map<string, { isExist: boolean; count: number; org: boolean; data: any }>;
     value: any;
   }) => {
     let dataOne: {
@@ -249,6 +249,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           org: context.get(name)!.org,
           isExist: context.get(name)!.isExist,
           count: context.get(name)!.count,
+          data: dataOne.dataOne,
         });
         return {
           shouldFetchOrg: context.get(name)!.org,
@@ -282,6 +283,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           org: true,
           isExist: context.get(name)!.isExist,
           count: context.get(name)!.count,
+          data: [],
         });
         return {
           shouldFetchOrg: true,
@@ -323,6 +325,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                       context.set(name, {
                         org: true,
                         isExist: context.get(name)!.isExist,
+                        data: context.get(name).data,
                         count: context.get(name)!.isExist ? context.get(name)!.count + 1 : context.get(name)!.count,
                       });
                       execute().then(noop);
@@ -331,6 +334,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                         org: context.get(name)!.org,
                         isExist: context.get(name)!.isExist,
                         count: context.get(name)!.count + 1,
+                        data: context.get(name).data,
                       });
                       execute().then(() => {});
                     } else if (stopped) {
@@ -338,8 +342,9 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                         org: context.get(name)!.org,
                         isExist: context.get(name)!.isExist,
                         count: context.get(name)!.count + 1,
+                        data: context.get(name).data,
                       });
-                      resolve();
+                      resolve(context.get(name).data);
                     }
                   } catch (e) {
                     throw new Error(e.message);
@@ -361,7 +366,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
               },
             });
           };
-          execute().then(noop);
+          execute().then(() => {});
         });
       } else {
         resolve();

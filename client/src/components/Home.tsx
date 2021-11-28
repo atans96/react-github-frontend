@@ -136,7 +136,6 @@ const Home = () => {
   const release = () => {
     setIsLoading({ isLoading: false });
   };
-
   useDeepCompareEffect(() => {
     // when the username changes, that means the user submit form at SearchBar.js + dispatchMergedData([]) there
     if (
@@ -152,8 +151,9 @@ const Home = () => {
       // However, as the component unmount, stateShared.queryUsername is not "", thus causing fetchUser to fire in useEffect
       // to prevent that, use state.mergedData.length === 0 so that when it's indeed 0, that means no data anything yet so need to fetch first time
       // otherwise, don't re-fetch. in this way, stateShared.queryUsername and state.mergedData are still preserved
-      dataAlreadyFetch.current = 0;
-      fetchUser().then(() => release());
+      fetchUser().then(() => {
+        release();
+      });
     }
     // when you type google in SearchBar.js, then perPage=10, you can fetch. then when you change perPage=40 and type google again
     // it cannot fetch because if the dependency array of fetchUser() is only [stateShared.queryUsername] so stateShared.queryUsername not change so not execute
@@ -165,8 +165,50 @@ const Home = () => {
   useEffect(() => {
     if (location.pathname === '/' && !isFinished.current && state.page > 1 && !isFetchFinish.isFetchFinish) {
       dataAlreadyFetch.current = 0;
+      // TODO: implemement rolling window so already seen data is not lost
+      // TODO: when going back (still state.page > 1), need to show previous data
       if (stateShared.queryUsername.length > 0) {
-        fetchUser().then(() => release());
+        if (state.mergedData.length > 0 && location.pathname === '/' && state.filterBySeen) {
+          countRef.current += 1;
+          if (stateShared.isLoggedIn) {
+            const result = state.mergedData.reduce((acc, obj: MergedDataProps) => {
+              const temp = Object.assign(
+                {},
+                {
+                  stargazers_count: Number(obj.stargazers_count),
+                  full_name: obj.full_name,
+                  default_branch: obj.default_branch,
+                  owner: {
+                    login: obj.owner.login,
+                    avatar_url: obj.owner.avatar_url,
+                    html_url: obj.owner.html_url,
+                  },
+                  description: cleanString(obj.description || ''),
+                  language: obj.language,
+                  topics: obj.topics,
+                  html_url: obj.html_url,
+                  id: obj.id,
+                  name: obj.name,
+                  is_queried: false,
+                }
+              );
+              acc.push(temp);
+              return acc;
+            }, [] as SeenProps[]);
+            if (result.length > 0) {
+              seenAdded(result);
+            }
+          }
+        }
+        dispatch({
+          type: 'MERGED_DATA_ADDED',
+          payload: {
+            data: [],
+          },
+        });
+        fetchUser().then((newData) => {
+          release();
+        });
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         fetchMoreTopics();
       }

@@ -2,6 +2,7 @@ import { MergedDataProps } from '../../typing/type';
 import React, { useRef } from 'react';
 import { Masonry } from '../../util/masonic/masonry';
 import Card from './Card';
+import { deepEqual } from 'fast-equals';
 
 interface MasonryCard {
   getRootProps: any;
@@ -33,7 +34,7 @@ const MasonryCard = React.memo<MasonryCard>(
     );
   },
   (prevProps: any, nextProps: any) => {
-    return prevProps.data.length === nextProps.data.length; // when the component receives updated data from state such as load more, or clicked to login to access graphql
+    return deepEqual(prevProps.data, nextProps.data); // when the component receives updated data from state such as load more, or clicked to login to access graphql
     // it needs to get re-render to get new data.
   }
 );
