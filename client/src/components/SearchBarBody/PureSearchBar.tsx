@@ -399,7 +399,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ portalExpandable }) => {
                         we cannot use ENTER keyboard for form submitting */}
             <ButtonQuestion showTipsText={showTipsText} />
             {/* no need to separate since click event is only 1x rendering unlike onChange input at PureInput.tsx */}
-            <ButtonPageSetting showTipsText={showTipsText} portal={portal} />
+            {/*<ButtonPageSetting showTipsText={showTipsText} portal={portal} />*/}
             <ButtonTags showTipsText={showTipsText} portalExpandable={portalExpandable} />
             <ButtonEye showTipsText={showTipsText} />
             <button className="btn btn-primary" type="submit">

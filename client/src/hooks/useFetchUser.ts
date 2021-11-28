@@ -172,18 +172,16 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     if (context.has(name) && !context.get(name)!.org) {
       return getUser({
         signal: abortController.signal,
-        url: `https://api.github.com/users/${name}/starred?page=${context.get(name)!.count}&per_page=${Math.min(
-          100,
+        url: `https://api.github.com/users/${name}/starred?page=${context.get(name)!.count}&per_page=${
           stateShared.perPage
-        )}`,
+        }`,
       });
     } else {
       return getUser({
         signal: abortController.signal,
-        url: `https://api.github.com/orgs/${name}/repos?page=${context.get(name)!.count}&per_page=${Math.min(
-          100,
+        url: `https://api.github.com/orgs/${name}/repos?page=${context.get(name)!.count}&per_page=${
           stateShared.perPage
-        )}`,
+        }`,
       });
     }
   };
@@ -250,7 +248,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       //When the regex is global, if you call a method on the same regex object,
       // it will start from the index past the end of the last match. so we need to reset it to start the new loop
       regexJSON.lastIndex = 0;
-      // TODO: handle not login user
       const intersectionArr = dataOne.dataOne.filter((n) => !state.undisplayMergedData.some((n2) => n.id == n2.id));
       if (dataOne.dataOne.length > 0 && intersectionArr.length > 0) {
         actionController(dataOne);
@@ -261,7 +258,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         });
         return {
           shouldFetchOrg: context.get(name)!.org,
-          stopped: !(stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0),
+          stopped: true,
         };
       }
       if (dataOne.dataOne.length === 0 && intersectionArr.length === 0) {
@@ -335,17 +332,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                         count: context.get(name)!.isExist ? context.get(name)!.count + 1 : context.get(name)!.count,
                       });
                       execute().then(noop);
-                    } else if (
-                      stateShared.perPage > 100 &&
-                      !stopped &&
-                      stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0
-                    ) {
-                      context.set(name, {
-                        org: context.get(name)!.org,
-                        isExist: context.get(name)!.isExist,
-                        count: context.get(name)!.count + 1,
-                      });
-                      execute().then(() => {});
                     } else if (!stopped) {
                       context.set(name, {
                         org: context.get(name)!.org,
