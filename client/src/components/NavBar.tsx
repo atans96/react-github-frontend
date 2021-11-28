@@ -151,148 +151,144 @@ const NavBar = () => {
   }, [active]);
 
   return (
-    <>
-      <div className="navbar" ref={navBarRef}>
-        <ul>
-          <div
-            style={{
-              width: '100px',
-              borderBottom: `${
-                (previousActive.current === '' || isFinished) && active === 'home' ? '4px solid' : '0px'
-              }`,
+    <div className="navbar" ref={navBarRef}>
+      <ul>
+        <div
+          style={{
+            width: '100px',
+            borderBottom: `${(previousActive.current === '' || isFinished) && active === 'home' ? '4px solid' : '0px'}`,
+          }}
+        >
+          <NavLink
+            to={{
+              pathname: `/`,
             }}
+            className="btn-clear nav-link"
           >
-            <NavLink
-              to={{
-                pathname: `/`,
+            <Home
+              componentProps={{
+                id: 'home',
+                onClick: handleClick,
+                active: active,
               }}
-              className="btn-clear nav-link"
+            />
+          </NavLink>
+        </div>
+
+        <If condition={state.isLoggedIn}>
+          <Then>
+            <div
+              style={{
+                width: '100px',
+                borderBottom: `${
+                  (previousActive.current === '' || isFinished) && active === 'discover' ? '4px solid' : '0px'
+                }`,
+              }}
             >
-              <Home
-                componentProps={{
-                  id: 'home',
-                  onClick: handleClick,
-                  active: active,
+              <NavLink
+                to={{
+                  pathname: `/discover`,
                 }}
-              />
-            </NavLink>
-          </div>
-
-          <If condition={state.isLoggedIn}>
-            <Then>
-              <div
-                style={{
-                  width: '100px',
-                  borderBottom: `${
-                    (previousActive.current === '' || isFinished) && active === 'discover' ? '4px solid' : '0px'
-                  }`,
-                }}
+                className="btn-clear nav-link"
               >
-                <NavLink
-                  to={{
-                    pathname: `/discover`,
+                <Discover
+                  componentProps={{
+                    id: 'discover',
+                    onClick: handleClick,
+                    active: active,
                   }}
-                  className="btn-clear nav-link"
-                >
-                  <Discover
-                    componentProps={{
-                      id: 'discover',
-                      onClick: handleClick,
-                      active: active,
-                    }}
-                  />
-                </NavLink>
-              </div>
-            </Then>
-          </If>
+                />
+              </NavLink>
+            </div>
+          </Then>
+        </If>
 
-          <If condition={state.isLoggedIn}>
-            <Then>
-              <div
-                style={{
-                  width: '100px',
-                  borderBottom: `${
-                    (previousActive.current === '' || isFinished) && active === 'profile' ? '4px solid' : '0px'
-                  }`,
+        <If condition={state.isLoggedIn}>
+          <Then>
+            <div
+              style={{
+                width: '100px',
+                borderBottom: `${
+                  (previousActive.current === '' || isFinished) && active === 'profile' ? '4px solid' : '0px'
+                }`,
+              }}
+            >
+              <NavLink
+                to={{
+                  pathname: `/profile`,
                 }}
+                className="btn-clear nav-link"
               >
-                <NavLink
-                  to={{
-                    pathname: `/profile`,
+                <Profile
+                  componentProps={{
+                    id: 'profile',
+                    onClick: handleClick,
+                    active: active,
+                    avatar: state.userData.avatar || '',
                   }}
-                  className="btn-clear nav-link"
-                >
-                  <Profile
-                    componentProps={{
-                      id: 'profile',
-                      onClick: handleClick,
-                      active: active,
-                      avatar: state.userData.avatar || '',
-                    }}
-                  />
-                </NavLink>
-              </div>
-            </Then>
-          </If>
+                />
+              </NavLink>
+            </div>
+          </Then>
+        </If>
 
-          <If condition={state.isLoggedIn}>
-            <Then>
-              <div
-                style={{
-                  width: '100px',
-                  borderBottom: `${
-                    (previousActive.current === '' || isFinished) && active === 'logout' ? '4px solid' : '0px'
-                  }`,
+        <If condition={state.isLoggedIn}>
+          <Then>
+            <div
+              style={{
+                width: '100px',
+                borderBottom: `${
+                  (previousActive.current === '' || isFinished) && active === 'logout' ? '4px solid' : '0px'
+                }`,
+              }}
+            >
+              <NavLink
+                to={{
+                  pathname: `/logout`,
                 }}
+                className="btn-clear nav-link"
               >
-                <NavLink
-                  to={{
-                    pathname: `/logout`,
+                <Logout
+                  componentProps={{
+                    id: 'logout',
+                    onClick: handleClick,
+                    active: active,
                   }}
-                  className="btn-clear nav-link"
-                >
-                  <Logout
-                    componentProps={{
-                      id: 'logout',
-                      onClick: handleClick,
-                      active: active,
-                    }}
-                  />
-                </NavLink>
-              </div>
-            </Then>
-          </If>
+                />
+              </NavLink>
+            </div>
+          </Then>
+        </If>
 
-          <If condition={!state.isLoggedIn}>
-            <Then>
-              <div
-                style={{
-                  width: '100px',
-                  borderBottom: `${
-                    (previousActive.current === '' || isFinished) && active === 'login' ? '4px solid' : '0px'
-                  }`,
+        <If condition={!state.isLoggedIn}>
+          <Then>
+            <div
+              style={{
+                width: '100px',
+                borderBottom: `${
+                  (previousActive.current === '' || isFinished) && active === 'login' ? '4px solid' : '0px'
+                }`,
+              }}
+            >
+              <NavLink
+                to={{
+                  pathname: `/login`,
                 }}
+                className="btn-clear nav-link"
               >
-                <NavLink
-                  to={{
-                    pathname: `/login`,
+                <Login
+                  componentProps={{
+                    id: 'login',
+                    onClick: handleClick,
+                    active: active,
                   }}
-                  className="btn-clear nav-link"
-                >
-                  <Login
-                    componentProps={{
-                      id: 'login',
-                      onClick: handleClick,
-                      active: active,
-                    }}
-                  />
-                </NavLink>
-              </div>
-            </Then>
-          </If>
-        </ul>
-      </div>
-    </>
+                />
+              </NavLink>
+            </div>
+          </Then>
+        </If>
+      </ul>
+    </div>
   );
 };
 NavBar.displayName = 'NavBar';

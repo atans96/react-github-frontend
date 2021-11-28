@@ -250,6 +250,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
       //When the regex is global, if you call a method on the same regex object,
       // it will start from the index past the end of the last match. so we need to reset it to start the new loop
       regexJSON.lastIndex = 0;
+      // TODO: handle not login user
       const intersectionArr = dataOne.dataOne.filter((n) => !state.undisplayMergedData.some((n2) => n.id == n2.id));
       if (dataOne.dataOne.length > 0 && intersectionArr.length > 0) {
         actionController(dataOne);
@@ -261,6 +262,14 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
         return {
           shouldFetchOrg: context.get(name)!.org,
           stopped: !(stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0),
+        };
+      }
+      if (dataOne.dataOne.length === 0 && intersectionArr.length === 0) {
+        dataOne.end = true;
+        actionController(dataOne);
+        return {
+          shouldFetchOrg: false,
+          stopped: true, //go to next page
         };
       }
       if (intersectionArr.length === 0) {
@@ -331,21 +340,19 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                       !stopped &&
                       stateShared.perPage - (context.get(name)!.count - 1) * 100 > 0
                     ) {
-                      execute().then(() =>
-                        context.set(name, {
-                          org: context.get(name)!.org,
-                          isExist: context.get(name)!.isExist,
-                          count: context.get(name)!.count + 1,
-                        })
-                      );
+                      context.set(name, {
+                        org: context.get(name)!.org,
+                        isExist: context.get(name)!.isExist,
+                        count: context.get(name)!.count + 1,
+                      });
+                      execute().then(() => {});
                     } else if (!stopped) {
-                      execute().then(() =>
-                        context.set(name, {
-                          org: context.get(name)!.org,
-                          isExist: context.get(name)!.isExist,
-                          count: context.get(name)!.count + 1,
-                        })
-                      );
+                      context.set(name, {
+                        org: context.get(name)!.org,
+                        isExist: context.get(name)!.isExist,
+                        count: context.get(name)!.count + 1,
+                      });
+                      execute().then(() => {});
                     } else if (stopped) {
                       context.set(name, {
                         org: context.get(name)!.org,
