@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 import Pagination from '@material-ui/lab/Pagination';
 import { Theme } from '@material-ui/core';
 import { useTrackedState } from '../../../selectors/stateContextSelector';
+import { useNotification } from '../../Home';
 
 const useStyles = makeStyles<Theme>((theme) => ({
   buttonPagination: {
@@ -30,18 +31,47 @@ const useStyles = makeStyles<Theme>((theme) => ({
     margin: '0 auto',
   },
 }));
-
 const ToolBar = () => {
   const classes = useStyles();
-  const [state] = useTrackedState();
+  const [state, dispatch] = useTrackedState();
+  const [notification] = useNotification();
+  document.onkeydown = function checkKey(e: any) {
+    e = e || window.event;
+    if (e.keyCode == '39' && notification.notification.length === 0) {
+      console.log(state.page + 1);
+      dispatch({
+        type: 'ADVANCE_PAGE1',
+        payload: {
+          page: state.page + 1,
+        },
+      });
+    } else if (e.keyCode == '37' && state.page - 1 >= 1) {
+      console.log(state.page - 1);
+      dispatch({
+        type: 'ADVANCE_PAGE1',
+        payload: {
+          page: state.page - 1,
+        },
+      });
+    }
+  };
+
   return (
     <Toolbar>
       <div className={classes.paginationInfo}>
         <Pagination
           className={classes.buttonPagination}
+          count={state.page + 1}
           page={state.page}
-          count={state.lastPage > 1 ? state.lastPage : state.page}
           color="secondary"
+          onChange={(event: any, val: any) => {
+            dispatch({
+              type: 'ADVANCE_PAGE1',
+              payload: {
+                page: val,
+              },
+            });
+          }}
         />
       </div>
       <div className={classes.grow} />
