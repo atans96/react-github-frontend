@@ -117,7 +117,7 @@ const ColumnTwo: React.FC<ColumnTwoProps> = ({ languageFilter }) => {
     }
   }, [state.repoInfo, checkedItems, languageFilter, typedFilter]);
   return (
-    <div style={{ display: 'inline-flex', marginLeft: '2px' }}>
+    <div style={{ display: 'inline-flex', marginLeft: '2px', marginTop: '10rem' }}>
       <table>
         <thead>
           <tr>

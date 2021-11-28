@@ -18,7 +18,7 @@ interface LoginLayout {
 const LoginLayout: React.FC<LoginLayout> = React.forwardRef(({ style, notification, data, apiType, children }, ref) => {
   return (
     <section className="container" style={style?.display ? { display: style?.display } : { display: 'flex' }}>
-      <div style={{ backgroundColor: 'white', textAlign: 'center' }}>
+      <div style={{ backgroundColor: 'white', textAlign: 'center', marginTop: '10rem' }}>
         <img
           alt=""
           style={{ maxWidth: '100%', maxHeight: '100%' }}

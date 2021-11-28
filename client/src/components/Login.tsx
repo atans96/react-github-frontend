@@ -5,7 +5,6 @@ import GitHubIcon from '@material-ui/icons/GitHub';
 import LoginLayout from './Layout/LoginLayout';
 import { requestGithubLogin } from '../services';
 import sysend from 'sysend';
-import { parallel } from 'async';
 
 const Login = () => {
   const abortController = new AbortController();

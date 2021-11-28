@@ -58,35 +58,32 @@ const useActionResolvePromise = () => {
           }
           default: {
             let res = [];
-            for (let i = 0; i < data.dataOne.length; i++) {
-              if (
-                languagePreference?.get(data.dataOne[i].language)?.checked &&
-                !stateShared?.seenCards?.has(data.dataOne[i].id) &&
-                !stateShared?.clicked?.has(data.dataOne[i].full_name)
-              ) {
-                res.push(data.dataOne[i]);
+            if (stateShared.isLoggedIn) {
+              for (let i = 0; i < data.dataOne.length; i++) {
+                if (
+                  languagePreference?.get(data.dataOne[i].language)?.checked &&
+                  !stateShared?.seenCards?.has(data.dataOne[i].id) &&
+                  !stateShared?.clicked?.has(data.dataOne[i].full_name)
+                ) {
+                  res.push(data.dataOne[i]);
+                }
               }
+            } else {
+              res = [...data.dataOne];
             }
-            dispatch({
-              type: 'MERGED_DATA_APPEND',
-              payload: {
-                data: res,
-              },
-            });
             if (res.length === 0) {
               dispatch({
                 type: 'ADVANCE_PAGE',
               });
             } else {
-              const temp = data.dataOne || data;
-              temp.map((obj: MergedDataProps) => {
+              res.map((obj: MergedDataProps) => {
                 obj['isQueue'] = false;
                 return obj;
               });
               dispatch({
                 type: 'MERGED_DATA_APPEND',
                 payload: {
-                  data: temp,
+                  data: res,
                 },
               });
             }
