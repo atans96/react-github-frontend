@@ -26,7 +26,6 @@ import {
 } from './AppRoutesLoadable';
 import DbCtx, { useDexieDB } from './db/db.ctx';
 import useResizeObserver from './hooks/useResizeObserver';
-import { SeenProps } from './typing/type';
 import { useFetchDB } from './hooks/useFetchDB';
 
 interface AppRoutes {
