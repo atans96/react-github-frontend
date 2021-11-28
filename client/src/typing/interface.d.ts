@@ -124,7 +124,6 @@ export interface IState {
   visible: boolean;
   isLoading: boolean;
   page: number;
-  lastPage: number;
 }
 
 export interface GraphQLUserData {

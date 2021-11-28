@@ -12,7 +12,7 @@ export type Action =
   | 'MERGED_DATA_ADDED'
   | 'IMAGES_DATA_ADDED'
   | 'ADVANCE_PAGE'
-  | 'LAST_PAGE'
+  | 'ADVANCE_PAGE1'
   | 'SORTING_DATA_ADDED'
   | 'FILTER_CARDS_BY_SEEN'
   | 'SET_TOPICS_TAGS'
@@ -37,7 +37,6 @@ export const initialState: IState = {
   visible: false,
   isLoading: false,
   page: 1,
-  lastPage: 1,
 };
 export const reducer = (state = initialState, action: IAction<Action>): IState => {
   switch (action.type) {
@@ -145,16 +144,16 @@ export const reducer = (state = initialState, action: IAction<Action>): IState =
         ),
       };
     }
-    case 'LAST_PAGE': {
-      return {
-        ...state,
-        lastPage: action.payload.lastPage,
-      };
-    }
     case 'ADVANCE_PAGE': {
       return {
         ...state,
         page: state.page + 1,
+      };
+    }
+    case 'ADVANCE_PAGE1': {
+      return {
+        ...state,
+        page: action.payload.page,
       };
     }
     default:

@@ -109,12 +109,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
               end: false,
               error_message: undefined,
             };
-            dispatch({
-              type: 'LAST_PAGE',
-              payload: {
-                lastPage: result.data.search.repositoryCount,
-              },
-            });
             actionController(dataOne);
           }
         })
