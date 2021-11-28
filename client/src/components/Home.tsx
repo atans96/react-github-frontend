@@ -116,11 +116,12 @@ const Home = () => {
     };
   }, []);
 
-  useBottomHit(
-    windowScreenRef,
-    handleBottomHit,
-    isLoading.isLoading || !isMergedDataExist || (isFetchFinish.isFetchFinish && state.filterBySeen) // include isFetchFinish to indicate not to listen anymore
-  );
+  // TODO: to activate infinite scroll, uncomment below
+  // useBottomHit(
+  //   windowScreenRef,
+  //   handleBottomHit,
+  //   isLoading.isLoading || !isMergedDataExist || (isFetchFinish.isFetchFinish && state.filterBySeen) // include isFetchFinish to indicate not to listen anymore
+  // );
 
   useResizeObserver(windowScreenRef, (entry: any) => {
     if (stateShared.width !== entry.contentRect.width && stateShared.shouldRender === ShouldRender.Home) {
