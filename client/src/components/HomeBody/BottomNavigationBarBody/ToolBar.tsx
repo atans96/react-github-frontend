@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Toolbar from '@material-ui/core/Toolbar';
 import { makeStyles } from '@material-ui/core/styles';
 import Pagination from '@material-ui/lab/Pagination';
@@ -35,10 +35,9 @@ const ToolBar = () => {
   const classes = useStyles();
   const [state, dispatch] = useTrackedState();
   const [notification] = useNotification();
-  document.onkeydown = function checkKey(e: any) {
+  function checkKey(e: any) {
     e = e || window.event;
     if (e.keyCode == '39' && notification.notification.length === 0) {
-      console.log(state.page + 1);
       dispatch({
         type: 'ADVANCE_PAGE1',
         payload: {
@@ -46,7 +45,6 @@ const ToolBar = () => {
         },
       });
     } else if (e.keyCode == '37' && state.page - 1 >= 1) {
-      console.log(state.page - 1);
       dispatch({
         type: 'ADVANCE_PAGE1',
         payload: {
@@ -54,8 +52,13 @@ const ToolBar = () => {
         },
       });
     }
-  };
-  console.log('');
+  }
+  useEffect(() => {
+    document.addEventListener('keydown', checkKey);
+    return () => {
+      document.removeEventListener('keydown', checkKey);
+    };
+  }, []);
   return (
     <Toolbar>
       <div className={classes.paginationInfo}>
