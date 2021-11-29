@@ -467,6 +467,6 @@ export function logoutAction(history: any, dispatch: React.Dispatch<IAction<Acti
     type: 'logout',
   });
   session(true, username).then(noop);
-  removeToken().then(() => {});
+  window.location.reload(false);
   dispatch({ type: 'LOGOUT' });
 }
