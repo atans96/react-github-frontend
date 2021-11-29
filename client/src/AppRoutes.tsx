@@ -138,7 +138,7 @@ const AppRoutes = () => {
       }
     } else if (lastJsonMessage?.newUser) {
       //TODO: show dialog bar Tutorial https://github.com/shipshapecode/shepherd
-      console.log('Welcome');
+      console.log('Welcome!');
     }
   }, [lastJsonMessage || {}]);
 
