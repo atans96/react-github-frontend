@@ -7,9 +7,9 @@ import sysend from 'sysend';
 import { useApolloClient } from '@apollo/client';
 import useWebSocket from './util/websocket';
 import { readEnvironmentVariable, urlBase64ToUint8Array } from './util';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { associate } from './graphql/queries';
-import { endOfSession, getFile, getTokenGQL, session, startOfSessionDexie, subscribeToApollo } from './services';
+import { endOfSession, getFile, startOfSessionDexie, subscribeToApollo } from './services';
 import { logoutAction, noop } from './util/util';
 import { Route, Switch, useHistory, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar';
@@ -28,14 +28,14 @@ import DbCtx, { useDexieDB } from './db/db.ctx';
 import useResizeObserver from './hooks/useResizeObserver';
 import { useFetchDB } from './hooks/useFetchDB';
 
-interface AppRoutes {
+interface AppRoutesProps {
   shouldRender: string;
   isLoggedIn: boolean;
 }
 
 const channel = new BroadcastChannel('sw-messages');
 const Child = React.memo(
-  ({ shouldRender, isLoggedIn }: AppRoutes) => {
+  ({ shouldRender, isLoggedIn }: AppRoutesProps) => {
     const location = useLocation();
     const windowScreenRef = useRef<HTMLDivElement>(null);
     const [stateShared, dispatchShared] = useTrackedStateShared();
@@ -201,53 +201,23 @@ const AppRoutes = () => {
       });
     }
   }, [stateShared.shouldRender, stateShared.isLoggedIn]);
-  const [doneFetch, setDoneFetch] = useState(false);
+  const doneFetchRef = useRef(false);
   useEffect(() => {
-    if (!isFinished.current) {
-      session(false, stateShared.username, abortController.signal).then((data) => {
-        if (abortController.signal.aborted) return;
-        if (data) {
-          if (Boolean(data.data) && data.username.length > 0 && !isFinished.current) {
-            dispatchShared({
-              type: 'SET_USERNAME',
-              payload: { username: data.username },
-            });
-            dispatchShared({
-              type: 'LOGIN',
-              payload: {
-                isLoggedIn: data.data,
-              },
-            });
-          }
-        }
-        setDoneFetch(true);
+    if (!isFinished.current && stateShared.isLoggedIn) {
+      sendJsonMessage({
+        open: {
+          user: stateShared.username,
+          topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO'),
+        },
       });
-      if (stateShared.isLoggedIn) {
-        sendJsonMessage({
-          open: {
-            user: stateShared.username,
-            topic: readEnvironmentVariable('KAFKA_TOPIC_APOLLO'),
-          },
-        });
-        getTokenGQL(stateShared.username, abortController.signal).then((res) => {
-          if (abortController.signal.aborted) return;
-          if (res.tokenGQL && !isFinished.current) {
-            dispatchShared({
-              type: 'TOKEN_ADDED',
-              payload: {
-                tokenGQL: res.tokenGQL,
-              },
-            });
-          }
-        });
-        // endOfSession(stateShared.username, client.cache.extract()).then(noop);
-      }
+      // endOfSession(stateShared.username, client.cache.extract()).then(noop);
     }
   }, [stateShared.isLoggedIn, stateShared.username.length]);
 
   useEffect(() => {
-    if (db && doneFetch && stateShared.isLoggedIn) {
+    if (db && !doneFetchRef.current && stateShared.isLoggedIn) {
       setFetchDB();
+      doneFetchRef.current = true;
       Promise.allSettled([
         new Promise((resolve, reject) => {
           db?.getSeen.get(1).then((oldData: any) => {
@@ -314,14 +284,14 @@ const AppRoutes = () => {
             }
           });
       });
-    } else if (doneFetch && !stateShared.isLoggedIn) {
+    } else if (!stateShared.isLoggedIn) {
       clear();
       localStorage.clear();
       navigator?.serviceWorker?.controller?.postMessage({
         type: 'logout',
       });
     }
-  }, [db, doneFetch]);
+  }, [db, doneFetchRef.current]);
 
   window.onbeforeunload = () => {
     if (stateShared.isLoggedIn) {

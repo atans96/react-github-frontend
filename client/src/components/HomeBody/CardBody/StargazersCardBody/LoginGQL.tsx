@@ -35,6 +35,7 @@ const LoginGQL: React.FC<LoginGQLProps> = ({ setVisible, style }) => {
               tokenGQL: token,
             },
           });
+          localStorage.setItem('tokenGQL', token);
           dispatch({
             type: 'SET_SHOULD_RENDER',
             payload: {

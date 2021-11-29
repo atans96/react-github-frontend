@@ -1,14 +1,16 @@
 import { getUser } from '../services';
 import { IDataOne } from '../typing/interface';
-import { ActionResolvedPromise, MergedDataProps } from '../typing/type';
+import { ActionResolvedPromise, MergedDataProps, SeenProps } from '../typing/type';
 import { noop } from '../util/util';
 import { useState } from 'react';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
-import { useStableCallback } from '../util';
+import { cleanString, useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
 import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
 import { SEARCH_FOR_MORE_TOPICS, SEARCH_FOR_TOPICS } from '../graphql/queries';
 import { ShouldRender } from '../typing/enum';
+import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
+import { useLocation } from 'react-router-dom';
 
 interface useFetchUser {
   component: string;
@@ -42,17 +44,52 @@ const transform = (obj: any) => {
 let context = new Map();
 const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const [, setNotification] = useNotification();
+  const location = useLocation();
   const [isFetchFinish, setIsFetchFinish] = useIsFetchFinish();
   const [, setLoading] = useIsLoading();
   const { actionResolvePromise } = useActionResolvePromise();
+  const seenAdded = useGetSeenMutation();
   const [state, dispatch] = useTrackedState();
   const [stateShared, dispatchShared] = useTrackedStateShared();
   const [, dispatchStargazers] = useTrackedStateStargazers();
   // useState is used when the HTML depends on it directly to render something
   const [clickedGQLTopic, setGQLTopic] = useState({
     variables: '',
-    nextPageUrl: '',
+    page: { '1': { nextPageUrl: '' } },
   } as any);
+  const seenAddedCallback = useStableCallback((data: MergedDataProps[]) => {
+    if ((data as MergedDataProps[])?.length > 0 && location.pathname === '/' && state.filterBySeen) {
+      if (stateShared.isLoggedIn) {
+        const result = (data as MergedDataProps[]).reduce((acc, obj: MergedDataProps) => {
+          const temp = Object.assign(
+            {},
+            {
+              stargazers_count: Number(obj.stargazers_count),
+              full_name: obj.full_name,
+              default_branch: obj.default_branch,
+              owner: {
+                login: obj.owner.login,
+                avatar_url: obj.owner.avatar_url,
+                html_url: obj.owner.html_url,
+              },
+              description: cleanString(obj.description || ''),
+              language: obj.language,
+              topics: obj.topics,
+              html_url: obj.html_url,
+              id: obj.id,
+              name: obj.name,
+              is_queried: false,
+            }
+          );
+          acc.push(temp);
+          return acc;
+        }, [] as SeenProps[]);
+        if (result.length > 0) {
+          seenAdded(result);
+        }
+      }
+    }
+  });
   // useRef will assign a reference for each component, while a variable defined outside a function component will only be called once.
   // so don't use let page=1 outside of Home component. useRef makes sure same reference is returned during each render while it won't cause re-render
   // https://stackoverflow.com/questions/57444154/why-need-useref-to-contain-mutable-variable-but-not-define-variable-outside-the
@@ -91,7 +128,15 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           if (result) {
             setGQLTopic({
               variables,
-              nextPageUrl: result.data.search.pageInfo.hasNextPage ? result.data.search.pageInfo.endCursor : '',
+              page: {
+                ...clickedGQLTopic.page,
+                [state.page.toString()]: {
+                  nextPageUrl: result.data.search.pageInfo.hasNextPage ? result.data.search.pageInfo.startCursor : '',
+                },
+                [(state.page + 1).toString()]: {
+                  nextPageUrl: result.data.search.pageInfo.hasNextPage ? result.data.search.pageInfo.endCursor : '',
+                },
+              },
             });
             const data = result.data.search.nodes.map((obj: any) => {
               return transform(obj);
@@ -109,6 +154,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
               end: false,
               error_message: undefined,
             };
+            seenAddedCallback(data);
             actionController(dataOne);
           }
         })
@@ -194,7 +240,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
           });
           const execute = async () => {
             const res = await fetcher(name, context);
-            if (res.length === 0) {
+            if (res && res.length === 0) {
               const ja = {
                 dataOne: [],
                 end: false,
@@ -204,14 +250,14 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
               };
               actionController(ja);
             } else {
-              const intersectionArr = res.filter((n: any) => !state.undisplayMergedData.some((n2) => n.id == n2.id));
-              if (intersectionArr.length === 0) {
+              const intersectionArr = res?.filter((n: any) => !state.undisplayMergedData.some((n2) => n.id == n2.id));
+              if (intersectionArr?.length === 0) {
                 // data already seen
                 dispatch({
                   type: 'ADVANCE_PAGE',
                 });
                 resolve();
-              } else if (res.length > 0 && intersectionArr.length > 0) {
+              } else if (res && res.length > 0 && intersectionArr && intersectionArr.length > 0) {
                 // data not seen yet
                 const ja = {
                   dataOne: [...res],
@@ -220,6 +266,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
                   error_403: false,
                   error_message: undefined,
                 };
+                seenAddedCallback(res);
                 actionController(ja);
                 resolve(res);
               }
@@ -233,63 +280,79 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
     });
   };
   const fetchMoreTopics = () => {
-    if (!isFetchFinish.isFetchFinish) {
-      setLoading({ isLoading: true }); // spawn loading spinner at bottom page
-      setNotification({ notification: '' });
-      if (clickedGQLTopic.variables.queryTopic !== undefined) {
-        fetch('https://api.github.com/graphql', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${stateShared.tokenGQL}`,
-          },
-          body: JSON.stringify({
-            query: SEARCH_FOR_MORE_TOPICS,
-            variables: {
-              after: clickedGQLTopic.nextPageUrl,
-              queryTopic: clickedGQLTopic.variables.queryTopic + ' sort:updated-desc',
-              perPage: 70,
+    return new Promise((resolve) => {
+      if (!isFetchFinish.isFetchFinish) {
+        setLoading({ isLoading: true }); // spawn loading spinner at bottom page
+        setNotification({ notification: '' });
+        if (clickedGQLTopic.variables.queryTopic !== undefined) {
+          fetch('https://api.github.com/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${stateShared.tokenGQL}`,
             },
-          }),
-        })
-          .then((res) => res.json())
-          .then((result) => {
-            if (result && !abortController.signal.aborted) {
-              setGQLTopic((prev: any) => {
-                return {
-                  ...prev,
-                  nextPageUrl: result.data.search.pageInfo.hasNextPage ? result.data.search.pageInfo.endCursor : '',
-                };
-              });
-              const data = result.data.search.nodes.map((obj: any) => {
-                return transform(obj);
-              });
-              let dataOne: {
-                dataOne: MergedDataProps[];
-                error_404: boolean;
-                error_403: boolean;
-                end: boolean;
-                error_message: string | undefined;
-              } = {
-                dataOne: data,
-                error_404: false,
-                error_403: false,
-                end: false,
-                error_message: undefined,
-              };
-              actionController(dataOne);
-            }
+            body: JSON.stringify({
+              query: SEARCH_FOR_MORE_TOPICS,
+              variables: {
+                after: clickedGQLTopic.page[state.page.toString()].nextPageUrl,
+                queryTopic: clickedGQLTopic.variables.queryTopic + ' sort:updated-desc',
+                perPage: 70,
+              },
+            }),
           })
-          .catch((error) => {
-            actionResolvePromise({
-              username: stateShared.queryUsername,
-              action: ActionResolvedPromise.error,
-              error: error,
-              displayName: component,
+            .then((res) => res.json())
+            .then((result) => {
+              if (result && !abortController.signal.aborted) {
+                setGQLTopic((prev: any) => {
+                  return {
+                    ...prev,
+                    page: {
+                      ...clickedGQLTopic.page,
+                      [state.page.toString()]: {
+                        nextPageUrl: result.data.search.pageInfo.hasNextPage
+                          ? result.data.search.pageInfo.startCursor
+                          : '',
+                      },
+                      [(state.page + 1).toString()]: {
+                        nextPageUrl: result.data.search.pageInfo.hasNextPage
+                          ? result.data.search.pageInfo.endCursor
+                          : '',
+                      },
+                    },
+                  };
+                });
+                const data = result.data.search.nodes.map((obj: any) => {
+                  return transform(obj);
+                });
+                let dataOne: {
+                  dataOne: MergedDataProps[];
+                  error_404: boolean;
+                  error_403: boolean;
+                  end: boolean;
+                  error_message: string | undefined;
+                } = {
+                  dataOne: data,
+                  error_404: false,
+                  error_403: false,
+                  end: false,
+                  error_message: undefined,
+                };
+                seenAddedCallback(data);
+                resolve();
+                actionController(dataOne);
+              }
+            })
+            .catch((error) => {
+              actionResolvePromise({
+                username: stateShared.queryUsername,
+                action: ActionResolvedPromise.error,
+                error: error,
+                displayName: component,
+              });
             });
-          });
+        }
       }
-    }
+    });
   };
   return {
     fetchMoreTopics,

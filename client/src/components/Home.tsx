@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTrackedState, useTrackedStateShared } from '../selectors/stateContextSelector';
-import { MergedDataProps, SeenProps } from '../typing/type';
-import { cleanString } from '../util';
 import { crawlerPython, getRepoImages } from '../services';
 import { useClickOutside, useEventHandlerComposer } from '../hooks/hooks';
 import useDeepCompareEffect from '../hooks/useDeepCompareEffect';
@@ -14,7 +12,6 @@ import { useLocation } from 'react-router-dom';
 import useFetchUser from '../hooks/useFetchUser';
 import Mutex from '../util/mutex/mutex';
 import { createStore } from '../util/hooksy';
-import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
 import MasonryCard from './HomeBody/MasonryCard';
 import { ShouldRender } from '../typing/enum';
 import { useMouseSpawn } from './HomeBody/CardBody/TopicsCardBody/Topic';
@@ -37,7 +34,6 @@ export const [useNotification] = createStore(defaultNotification);
 
 const Home = () => {
   const isFinished = useRef(false);
-  const seenAdded = useGetSeenMutation();
   const abortController = new AbortController();
   const [notification, setNotification] = useNotification();
   const [isFetchFinish] = useIsFetchFinish();
@@ -87,6 +83,7 @@ const Home = () => {
   });
   const release = () => {
     setIsLoading({ isLoading: false });
+    setRenderLoading(false);
   };
 
   useDeepCompareEffect(() => {
@@ -99,39 +96,7 @@ const Home = () => {
       state.filterBySeen
     ) {
       dataAlreadyFetch.current = 0;
-      fetchUser().then((newData) => {
-        setRenderLoading(false);
-        if ((newData as MergedDataProps[])?.length > 0 && location.pathname === '/' && state.filterBySeen) {
-          if (stateShared.isLoggedIn) {
-            const result = (newData as MergedDataProps[]).reduce((acc, obj: MergedDataProps) => {
-              const temp = Object.assign(
-                {},
-                {
-                  stargazers_count: Number(obj.stargazers_count),
-                  full_name: obj.full_name,
-                  default_branch: obj.default_branch,
-                  owner: {
-                    login: obj.owner.login,
-                    avatar_url: obj.owner.avatar_url,
-                    html_url: obj.owner.html_url,
-                  },
-                  description: cleanString(obj.description || ''),
-                  language: obj.language,
-                  topics: obj.topics,
-                  html_url: obj.html_url,
-                  id: obj.id,
-                  name: obj.name,
-                  is_queried: false,
-                }
-              );
-              acc.push(temp);
-              return acc;
-            }, [] as SeenProps[]);
-            if (result.length > 0) {
-              seenAdded(result);
-            }
-          }
-        }
+      fetchUser().then(() => {
         release();
       });
     }
@@ -148,6 +113,21 @@ const Home = () => {
       fetchUser().then(() => {
         release();
       });
+    } else if (
+      stateShared.queryUsername.length === 0 &&
+      clickedGQLTopic.queryTopic !== '' &&
+      state.filterBySeen &&
+      state.page === 1
+    ) {
+      dispatch({
+        type: 'MERGED_DATA_ADDED',
+        payload: {
+          data: [],
+        },
+      });
+      fetchMoreTopics().then(() => {
+        release();
+      });
     }
   }, [state.page]);
 
@@ -161,43 +141,19 @@ const Home = () => {
         },
       });
       if (stateShared.queryUsername.length > 0) {
-        fetchUser().then((newData) => {
-          setRenderLoading(false);
-          if ((newData as MergedDataProps[])?.length > 0 && location.pathname === '/' && state.filterBySeen) {
-            if (stateShared.isLoggedIn) {
-              const result = (newData as MergedDataProps[]).reduce((acc, obj: MergedDataProps) => {
-                const temp = Object.assign(
-                  {},
-                  {
-                    stargazers_count: Number(obj.stargazers_count),
-                    full_name: obj.full_name,
-                    default_branch: obj.default_branch,
-                    owner: {
-                      login: obj.owner.login,
-                      avatar_url: obj.owner.avatar_url,
-                      html_url: obj.owner.html_url,
-                    },
-                    description: cleanString(obj.description || ''),
-                    language: obj.language,
-                    topics: obj.topics,
-                    html_url: obj.html_url,
-                    id: obj.id,
-                    name: obj.name,
-                    is_queried: false,
-                  }
-                );
-                acc.push(temp);
-                return acc;
-              }, [] as SeenProps[]);
-              if (result.length > 0) {
-                seenAdded(result);
-              }
-            }
-          }
+        fetchUser().then(() => {
           release();
         });
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
-        fetchMoreTopics();
+        dispatch({
+          type: 'MERGED_DATA_ADDED',
+          payload: {
+            data: [],
+          },
+        });
+        fetchMoreTopics().then(() => {
+          release();
+        });
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -428,11 +384,11 @@ const Home = () => {
           </Then>
         </If>
 
-        {state.filterBySeen &&
-          isLoading &&
-          renderLoading &&
-          notification.notification.length === 0 &&
-          !isFetchFinish.isFetchFinish && <LoadingEye queryUsername={stateShared.queryUsername} />}
+        {/*{state.filterBySeen &&*/}
+        {/*  isLoading &&*/}
+        {/*  renderLoading &&*/}
+        {/*  notification.notification.length === 0 &&*/}
+        {/*  !isFetchFinish.isFetchFinish && <LoadingEye queryUsername={stateShared.queryUsername} />}*/}
 
         <If condition={notification.notification}>
           <Then>

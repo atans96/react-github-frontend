@@ -37,11 +37,17 @@ export const initialStateShared: IStateShared = {
   userData: {},
   starred: [],
   githubLanguages: new Map<string, { obj: GithubLanguages; index: number }>(),
-  perPage: 40, //setting
+  perPage: 20, //setting
   tokenRSS: '', //setting
-  tokenGQL: '', //setting
-  isLoggedIn: false,
-  username: '',
+  tokenGQL:
+    localStorage.getItem('tokenGQL') && localStorage.getItem('tokenGQL')!.length > 0
+      ? localStorage.getItem('tokenGQL')!
+      : '', //setting
+  isLoggedIn: localStorage.getItem('isLoggedIn') === 'true',
+  username:
+    localStorage.getItem('username') && localStorage.getItem('username')!.length > 0
+      ? localStorage.getItem('username')!
+      : '',
   queryUsername: [], //multiple username or queue
   drawerWidth: 0, //persist drawer width once it's dragged and moved by the user
   client_id: readEnvironmentVariable('CLIENT_ID'), //setting

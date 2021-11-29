@@ -36,7 +36,7 @@ const Contributors: React.FC<Props> = ({ fullName, openContributors }) => {
   useDeepCompareEffect(() => {
     if (stateManageProfile.contributors.length > 0 && location.pathname === '/profile' && !isFinished.current) {
       const contribution = stateManageProfile.contributors.find((xx: ContributorsProps) => fullName === xx.fullName);
-      if (contribution && isFinished.current) {
+      if (contribution && !isFinished.current) {
         setContributionRepo(contribution.contributors);
       }
     }

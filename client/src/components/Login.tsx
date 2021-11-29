@@ -59,6 +59,8 @@ const Login = () => {
               }
               localStorage.setItem('token_type', res.token_type);
               localStorage.setItem('access_token', res.token);
+              localStorage.setItem('isLoggedIn', 'true');
+              localStorage.setItem('username', 'login' in res?.data ? res.data.login : '');
               dispatchShared({
                 type: 'LOGIN',
                 payload: { isLoggedIn: true },

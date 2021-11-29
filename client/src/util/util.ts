@@ -2,7 +2,7 @@ import React, { RefObject, useCallback, useDebugValue, useEffect, useLayoutEffec
 import warning from 'tiny-warning';
 import { AssignableRef, IAction } from '../typing/interface';
 import { RSSSource } from './RSSSource';
-import { removeToken, session } from '../services';
+import { session } from '../services';
 import { ActionShared } from '../store/Shared/reducer';
 import { Key } from '../typing/enum';
 

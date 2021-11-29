@@ -1,7 +1,6 @@
 import { detectBrowser, readEnvironmentVariable } from '../util';
 import { ImagesDataProps, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
-import { Observable } from '../link/observables/Observable';
 
 export const getRSSFeed = async (username: string, rssUrl: string, signal: any) => {
   try {
@@ -108,40 +107,6 @@ export const setTokenGQL = async (tokenGQL: string, username: string) => {
     console.log(e);
   }
 };
-export const getTokenGQL = async (username: string, signal: any) => {
-  try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/getTokenGQL?username=${username}`,
-      {
-        method: 'GET',
-        signal,
-      }
-    );
-    return (await response.json()) as { tokenGQL: string };
-  } catch (e) {
-    console.log(e);
-    return { tokenGQL: '' };
-  }
-};
-export const removeToken = async () => {
-  try {
-    const response = await fetch(
-      `https://${readEnvironmentVariable('GOLANG_HOST')}:${readEnvironmentVariable(
-        'GOLANG_PORT'
-      )}/server_uwebsocket/destroyToken`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        keepalive: true,
-      }
-    );
-    return await response.json();
-  } catch (e) {
-    console.log(e);
-  }
-};
 
 export const getUser = async ({
   signal,
@@ -167,7 +132,7 @@ export const getUser = async ({
         },application/vnd.github.mercy-preview+json,application/vnd.github.nebula-preview+json`,
       },
     });
-    return await response.json();
+    return (await response.json()) as MergedDataProps[];
   } catch (e) {
     console.log(e);
     return undefined;
