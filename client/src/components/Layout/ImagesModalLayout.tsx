@@ -65,7 +65,8 @@ const ImagesModalLayout: React.FC<ImagesModalLayoutProps> = ({ handleClick, clic
             {React.useMemo(() => {
               return renderImages.map((image, idx: number) => (
                 <div className={'slide'} key={idx}>
-                  <img src={`data:image/webp;base64, ${image.webP}`} className={'images'} alt="" />
+                  {/*<img src={`data:image/webp;base64, ${image.webP}`} className={'images'} alt="" />*/}
+                  <img src={`${image.webP}`} className={'images'} alt="" />
                 </div>
               ));
             }, [renderImages.length])}

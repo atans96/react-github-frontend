@@ -111,7 +111,6 @@ class SliderImage {
     this.snap();
     this.isDragging = false;
     this.offX = this.currentX;
-    console.log(this.offX);
     this.slider.classList.remove('is-grabbing');
   }
 

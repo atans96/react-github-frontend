@@ -23,8 +23,9 @@ const ImageComponentLayout: React.FC<ImageComponentProps> = ({ urlLink, height, 
           fillAvailableSpace={false}
           cursorStyle={'pointer'}
           fillAlignTop={true}
-          alwaysInPlace={false}
-          imageSrc={`data:image/webp;base64, ${urlLink}`}
+          alwaysInPlace={true}
+          // imageSrc={`data:image/webp;base64, ${urlLink}`}
+          imageSrc={`${urlLink}`}
         />
       </div>
     </React.Fragment>

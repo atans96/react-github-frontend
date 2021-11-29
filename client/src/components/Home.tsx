@@ -333,9 +333,9 @@ const Home = () => {
             });
           };
           // TODO: fix the image not showing up
-          // Promise.all([execute()]).then(() => {
-          //   release();
-          // });
+          Promise.all([execute()]).then(() => {
+            release();
+          });
           // while (promises.length) {
           //   // 3 concurrent request at at time (batch mode) but if there is two more queue items, it won't go immediately to fill the empty slot so need to use pMap
           //   await Promise.all(promises.splice(0, 3).map((f) => f.then(noop)));
@@ -371,7 +371,7 @@ const Home = () => {
         } else {
           clear(timeoutRef.current);
         }
-      }, 1000);
+      }, 3000);
     }
     return () => {
       clearTimeout(timeoutRef.current);
