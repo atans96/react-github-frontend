@@ -4,13 +4,12 @@ import { LanguagePreference, MergedDataProps } from '../typing/type';
 import { noop } from '../util/util';
 import React from 'react';
 import { useTrackedState, useTrackedStateDiscover, useTrackedStateShared } from '../selectors/stateContextSelector';
-import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
+import { useIsFetchFinish, useNotification } from '../components/Home';
 import { useLocation } from 'react-router-dom';
 
 const useActionResolvePromise = () => {
   const [, setNotification] = useNotification();
   const [, setIsFetchFinish] = useIsFetchFinish();
-  const [, setIsLoading] = useIsLoading();
   const location = useLocation();
 
   const [stateShared] = useTrackedStateShared();
@@ -99,10 +98,8 @@ const useActionResolvePromise = () => {
     ({ action, username, data = undefined, displayName, error = undefined }: ActionResolvePromise) => {
       if (data && action === 'append') {
         actionAppend(data)!.then(noop);
-        setIsLoading({ isLoading: false });
       }
       if (action === 'noData') {
-        setIsLoading({ isLoading: false });
         setIsFetchFinish({ isFetchFinish: true });
         if (username.length > 2) {
           setNotification({ notification: 'Sorry, no more data found' });
@@ -111,7 +108,6 @@ const useActionResolvePromise = () => {
         }
       }
       if (action === 'end') {
-        setIsLoading({ isLoading: false });
         setIsFetchFinish({ isFetchFinish: true });
         if (username.length > 2) {
           setNotification({ notification: "That's all the data we get" });
@@ -120,18 +116,14 @@ const useActionResolvePromise = () => {
         }
       }
       if (action === 'error' && error) {
-        setIsLoading({ isLoading: false });
         throw new Error(`Something wrong at ${displayName} ${error}`);
       }
       if (data && data.error_404) {
-        setIsLoading({ isLoading: false });
         setNotification({ notification: `Sorry, no data found for ${username}` });
       } else if (data && data.error_403) {
-        setIsLoading({ isLoading: false });
         setIsFetchFinish({ isFetchFinish: true });
         setNotification({ notification: 'Sorry, API rate limit exceeded.' });
       } else if (data && data.error_message) {
-        setIsLoading({ isLoading: false });
         setIsFetchFinish({ isFetchFinish: true });
         setNotification({ notification: `${data.error_message}` });
       }

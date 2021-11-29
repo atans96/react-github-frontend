@@ -16,20 +16,13 @@ import MasonryCard from './HomeBody/MasonryCard';
 import { ShouldRender } from '../typing/enum';
 import { useMouseSpawn } from './HomeBody/CardBody/TopicsCardBody/Topic';
 import ScrollToTopLayout from './Layout/ScrollToTopLayout';
-import LoadingEye from './LoadingEye';
 import LoginGQL from './HomeBody/CardBody/StargazersCardBody/LoginGQL';
 import BottomNavigationBar from './HomeBody/BottomNavigationBar';
 
-function clear(timeout: any) {
-  return clearTimeout(timeout);
-}
-
 const mutex = new Mutex();
 export const defaultIsFetchFinish = { isFetchFinish: false };
-export const defaultIsLoading = { isLoading: false };
 export const defaultNotification = { notification: '' };
 export const [useIsFetchFinish] = createStore(defaultIsFetchFinish);
-export const [useIsLoading] = createStore(defaultIsLoading);
 export const [useNotification] = createStore(defaultNotification);
 
 const Home = () => {
@@ -37,7 +30,6 @@ const Home = () => {
   const abortController = new AbortController();
   const [notification, setNotification] = useNotification();
   const [isFetchFinish] = useIsFetchFinish();
-  const [isLoading, setIsLoading] = useIsLoading();
 
   const displayName: string = (Home as React.ComponentType<any>).displayName || '';
   const { fetchMoreTopics, fetchUser, onClickTopic, clickedGQLTopic } = useFetchUser({
@@ -81,10 +73,6 @@ const Home = () => {
       });
     }
   });
-  const release = () => {
-    setIsLoading({ isLoading: false });
-    setRenderLoading(false);
-  };
 
   useDeepCompareEffect(() => {
     if (
@@ -96,9 +84,7 @@ const Home = () => {
       state.filterBySeen
     ) {
       dataAlreadyFetch.current = 0;
-      fetchUser().then(() => {
-        release();
-      });
+      fetchUser().then(() => {});
     }
   }, [stateShared.queryUsername, stateShared.perPage, state.mergedData, axiosCancel.current]);
 
@@ -110,9 +96,7 @@ const Home = () => {
           data: [],
         },
       });
-      fetchUser().then(() => {
-        release();
-      });
+      fetchUser().then(() => {});
     } else if (
       stateShared.queryUsername.length === 0 &&
       clickedGQLTopic.queryTopic !== '' &&
@@ -125,9 +109,7 @@ const Home = () => {
           data: [],
         },
       });
-      fetchMoreTopics().then(() => {
-        release();
-      });
+      fetchMoreTopics().then(() => {});
     }
   }, [state.page]);
 
@@ -141,9 +123,7 @@ const Home = () => {
         },
       });
       if (stateShared.queryUsername.length > 0) {
-        fetchUser().then(() => {
-          release();
-        });
+        fetchUser().then(() => {});
       } else if (stateShared.queryUsername.length === 0 && clickedGQLTopic.queryTopic !== '' && state.filterBySeen) {
         dispatch({
           type: 'MERGED_DATA_ADDED',
@@ -151,9 +131,7 @@ const Home = () => {
             data: [],
           },
         });
-        fetchMoreTopics().then(() => {
-          release();
-        });
+        fetchMoreTopics().then(() => {});
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -180,7 +158,6 @@ const Home = () => {
       !state.filterBySeen
     ) {
       if (notification.notification.length > 0) setNotification({ notification: '' });
-      if (isLoading.isLoading) setIsLoading({ isLoading: false });
       dispatch({
         type: 'MERGED_DATA_ADDED',
         payload: {
@@ -315,26 +292,6 @@ const Home = () => {
     return state.mergedData; // return this if filteredTopics.length === 0
   };
   useScrollSaver(window.location.href);
-  const [renderLoading, setRenderLoading] = useState(false);
-
-  const timeoutRef = useRef<any>();
-
-  useEffect(() => {
-    if (isLoading.isLoading && !isMergedDataExist) {
-      timeoutRef.current = setTimeout(() => {
-        clear(timeoutRef.current);
-        if (isLoading.isLoading) {
-          setRenderLoading(isLoading.isLoading);
-        } else {
-          clear(timeoutRef.current);
-        }
-      }, 3000);
-    }
-    return () => {
-      clearTimeout(timeoutRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading.isLoading, isMergedDataExist]);
 
   window.onbeforeunload = () => {
     abortController.abort(); //cancel the fetch when the user go away from current page or when typing again to search

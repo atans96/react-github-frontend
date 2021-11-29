@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useTrackedState, useTrackedStateShared, useTrackedStateStargazers } from '../selectors/stateContextSelector';
 import { cleanString, useStableCallback } from '../util';
 import useActionResolvePromise from './useActionResolvePromise';
-import { useIsFetchFinish, useIsLoading, useNotification } from '../components/Home';
+import { useIsFetchFinish, useNotification } from '../components/Home';
 import { SEARCH_FOR_MORE_TOPICS, SEARCH_FOR_TOPICS } from '../graphql/queries';
 import { ShouldRender } from '../typing/enum';
 import { useGetSeenMutation } from '../apolloFactory/useGetSeenMutation';
@@ -46,7 +46,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const [, setNotification] = useNotification();
   const location = useLocation();
   const [isFetchFinish, setIsFetchFinish] = useIsFetchFinish();
-  const [, setLoading] = useIsLoading();
   const { actionResolvePromise } = useActionResolvePromise();
   const seenAdded = useGetSeenMutation();
   const [state, dispatch] = useTrackedState();
@@ -96,7 +95,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const onClickTopic = useStableCallback(async ({ variables }: any) => {
     if (abortController.signal.aborted) return;
     if (stateShared.tokenGQL !== '') {
-      setLoading({ isLoading: true });
       dispatch({
         type: 'REMOVE_ALL',
       });
@@ -224,7 +222,6 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const fetchUser = () => {
     return new Promise((resolve) => {
       if (!isFetchFinish.isFetchFinish) {
-        setLoading({ isLoading: true });
         setNotification({ notification: '' });
         let userNameTransformed: string[];
         if (!Array.isArray(stateShared.queryUsername)) {
@@ -282,7 +279,7 @@ const useFetchUser = ({ component, abortController }: useFetchUser) => {
   const fetchMoreTopics = () => {
     return new Promise((resolve) => {
       if (!isFetchFinish.isFetchFinish) {
-        setLoading({ isLoading: true }); // spawn loading spinner at bottom page
+        // spawn loading spinner at bottom page
         setNotification({ notification: '' });
         if (clickedGQLTopic.variables.queryTopic !== undefined) {
           fetch('https://api.github.com/graphql', {
