@@ -171,7 +171,11 @@ const Card: React.FC<CardProps> = ({ data, getRootProps, index }) => {
           <GitHubIcon />
         </a>
       </div>
-      <div className="details" onClick={handleDetailsClicked} onMouseDown={mouseDownHandler}>
+      <div
+        className={`details ${isHover ? 'details--spinner' : ''}`}
+        onClick={handleDetailsClicked}
+        onMouseDown={mouseDownHandler}
+      >
         <NavLink
           to={{
             pathname: `/detail/${data.id}`,
