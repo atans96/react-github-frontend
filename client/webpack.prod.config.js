@@ -1,5 +1,4 @@
 /* eslint-disable */
-const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
@@ -12,7 +11,7 @@ const autoprefixer = require('autoprefixer');
 const cssnano = require('cssnano');
 const { ESBuildMinifyPlugin } = require('esbuild-loader');
 
-const config: webpack.Configuration = {
+const config = {
   mode: 'production',
   entry: './src/index.tsx',
   output: {

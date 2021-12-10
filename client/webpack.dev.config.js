@@ -5,14 +5,38 @@ const path = require('path');
 const CompressionPlugin = require('compression-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
-const autoprefixer = require('autoprefixer');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
-const config: webpack.Configuration = {
+module.exports = {
   mode: 'development',
   output: {
-    publicPath: '/',
+    path: path.resolve(__dirname, 'dist'),
+    filename: 'bundle.js',
   },
-  entry: './src/index.tsx',
+  entry: path.join(__dirname, 'src', 'index.tsx'),
+  optimization: {
+    minimizer: [
+      new UglifyJsPlugin({
+        cache: true,
+        parallel: true,
+        sourceMap: false,
+        extractComments: 'all',
+        uglifyOptions: {
+          compress: true,
+          output: null,
+        },
+      }),
+      new OptimizeCSSAssetsPlugin({
+        cssProcessorOptions: {
+          safe: true,
+          discardComments: {
+            removeAll: true,
+          },
+        },
+      }),
+    ],
+  },
   module: {
     rules: [
       {
@@ -36,60 +60,49 @@ const config: webpack.Configuration = {
         ],
       },
       {
-        test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
-      },
-      {
-        test: /\.s[ac]ss$/i,
+        test: /\.scss$/,
         use: [
-          // Creates `style` nodes from JS strings
-          'style-loader',
-          // Translates CSS into CommonJS
+          'style-loader', // creates style nodes from JS strings
           {
-            loader: require.resolve('css-loader'),
+            loader: 'css-loader', // translates CSS into CommonJS
             options: {
               importLoaders: 1,
-              modules: true, // Add this option
-              localIdentName: '[name]__[local]__[hash:base64:5]', // Add this option
+              sourceMap: true,
             },
           },
-          // Compiles Sass to CSS
+          'postcss-loader', // post process the compiled CSS
+          'sass-loader', // compiles Sass to CSS, using Node Sass by default
+        ],
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+      {
+        test: /\.(png|svg|webp|jpe?g|gif)$/,
+        use: [
           {
-            loader: require.resolve('sass-loader'),
+            loader: 'file-loader',
             options: {
-              includePaths: [path.styles],
+              name: '[name].[ext]',
+              outputPath: 'images/',
+              publicPath: 'images/',
             },
           },
           {
-            loader: 'postcss-loader',
-            options: {
-              // Necessary for external CSS imports to work
-              // https://github.com/facebookincubator/create-react-app/issues/2677
-              ident: 'postcss',
-              plugins: () => [
-                require('postcss-flexbugs-fixes'),
-                autoprefixer({
-                  browsers: [
-                    '>1%',
-                    'last 4 versions',
-                    'Firefox ESR',
-                    'not ie < 9', // React doesn't support IE8 anyway
-                  ],
-                  flexbox: 'no-2009',
-                }),
-              ],
-            },
-          }, // post process the compiled CSS
+            loader: 'webp-loader',
+          },
         ],
       },
     ],
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './public/index.html',
+      template: path.join(__dirname, 'public', 'index.html'),
     }),
     new webpack.HotModuleReplacementPlugin(),
     new NodePolyfillPlugin(),
+    new UglifyJsPlugin(),
     new CompressionPlugin({
       test: /\.(js|css)/,
     }),
@@ -98,21 +111,22 @@ const config: webpack.Configuration = {
       chunkFilename: '[id].css',
     }),
   ],
-  devtool: 'inline-source-map',
+  resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
+  },
+  devtool: 'source-map',
   devServer: {
     contentBase: path.join(__dirname, 'build'),
     historyApiFallback: true,
     host: 'localhost', // Defaults to `localhost`
-    port: +`${process.env.CLIENT_PORT}`,
+    port: +`3000`,
     open: true,
     hot: true,
-    proxy: {
-      '^/server_uwebsocket/*': {
-        target: `${process.env.REACT_APP_UWEBSOCKET_ADDRESS}/`,
-        secure: false,
-      },
-    },
+    // proxy: {
+    //   '^/server_uwebsocket/*': {
+    //     target: `${process.env.REACT_APP_UWEBSOCKET_ADDRESS}/`,
+    //     secure: false,
+    //   },
+    // },
   },
 };
-
-export default config;
