@@ -57,7 +57,7 @@ export class Concast<T> extends Observable<T> {
   // Not only can the individual elements of the iterable be promises, but
   // also the iterable itself can be wrapped in a promise.
   constructor(sources: MaybeAsync<ConcastSourcesIterable<T>> | Subscriber<T>) {
-    super((observer) => {
+    super((observer: any) => {
       this.addObserver(observer);
       return () => this.removeObserver(observer);
     });

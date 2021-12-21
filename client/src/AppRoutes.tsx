@@ -105,12 +105,9 @@ const AppRoutes = () => {
   });
   const client = useApolloClient();
 
-  const { lastJsonMessage, getWebSocket, sendJsonMessage } = useWebSocket(
-    readEnvironmentVariable('GRAPHQL_WS_ADDRESS_NODEJS')!,
-    {
-      shouldReconnect: (closeEvent) => true,
-    }
-  );
+  const { lastJsonMessage, getWebSocket, sendJsonMessage } = useWebSocket('wss://127.0.0.1:5001/graphqlws', {
+    shouldReconnect: (closeEvent) => true,
+  });
 
   useEffect(() => {
     return () => {
@@ -145,7 +142,7 @@ const AppRoutes = () => {
   useEffect(() => {
     if ('serviceWorker' in navigator && stateShared.isLoggedIn && !isFinished.current) {
       navigator.serviceWorker
-        .register('sw.js')
+        .register('/public/sw.js')
         .then(() => navigator.serviceWorker.ready)
         .then(async (reg) => {
           const permission = await window.Notification.requestPermission();

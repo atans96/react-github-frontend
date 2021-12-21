@@ -38,6 +38,7 @@
     "@types/react-dom": "^16.9.8",
     "@types/react-loadable": "^5.5.5",
     "@types/react-router-dom": "^5.1.5",
+    "@types/zen-observable": "^0.8.3",
     "async": "^2.6.3",
     "autoprefixer": "^10.4.0",
     "babel-loader": "^8.2.2",
@@ -52,6 +53,7 @@
     "cssnano": "^4.1.10",
     "dexie": "^3.0.3",
     "dexie-encrypted": "^2.0.0",
+    "dotenv": "^10.0.0",
     "fast-equals": "^2.0.3",
     "file-loader": "^6.2.0",
     "graphql": "^15.4.0",
@@ -91,8 +93,7 @@
     "unstated-next": "^1.1.0",
     "webp-loader": "^0.6.0",
     "webpack": "^5.24.4",
-    "webpack-cli": "^4.5.0",
-    "webpack-dev-server": "^3.11.2"
+    "webpack-cli": "^4.5.0"
   },
   "scripts": {
     "start": "set HTTPS=true&&set SSL_CRT_FILE=https-server/localhost.crt&&set SSL_KEY_FILE=https-server/localhost.decrypted.key&&react-scripts start",
@@ -117,10 +118,13 @@
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
+    "copy-webpack-plugin": "^10.2.0",
     "eslint": "^7.21.0",
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.2.0",
     "eslint-plugin-you-dont-need-lodash-underscore": "^6.12.0",
-    "react-scripts": "3.4.1"
+    "extract-text-webpack-plugin": "^3.0.2",
+    "react-scripts": "3.4.1",
+    "webpack-dev-server": "^4.6.0"
   }
 }

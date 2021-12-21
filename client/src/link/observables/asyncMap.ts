@@ -7,7 +7,7 @@ export function asyncMap<V, R>(
   mapFn: (value: V) => R | PromiseLike<R>,
   catchFn?: (error: any) => R | PromiseLike<R>
 ): Observable<R> {
-  return new Observable<R>((observer) => {
+  return new Observable<R>((observer: any) => {
     const { next, error, complete } = observer;
     let activeCallbackCount = 0;
     let completed = false;

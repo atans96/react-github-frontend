@@ -223,6 +223,7 @@ section.container::after {
     background-image: url("./teahub.webp");
     background-size: static;
     background-clip: text;
+    -webkit-background-clip: text;
     color: transparent;
     margin: auto;
     font-family: "Modak", cursive;
